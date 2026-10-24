@@ -92,6 +92,7 @@ async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=
     snapshot=copy.deepcopy(snapshot);writing_guidance=guidance.selected('resume');snapshot['writing_guidance']=writing_guidance
     rows=resume_builder.catalog(snapshot,analysis)
     records=evidence_sources(snapshot)
+    fields={i['item_id']:i['field'] for s in snapshot['sections'] for e in s['entries'] for i in e['content_items']}
     accepted={i['item_id']:i['text'] for s in snapshot['sections'] for e in s['entries'] for i in e['content_items'] if i['text']!=i['original']}
     payload={'writing_guidance':writing_guidance,'task':'''Act as an experienced recruiter and resume editor screening this exact position. Create the strongest truthful one-page resume from confirmed sources for a human hiring reviewer and ATS readability. Make relevant qualifications and individual contributions easy to find, with concrete examples, concise active language and useful posting terms. Prioritize a persuasive evidence-based interview case; do not promise an interview or treat keyword density as a hiring probability. Prioritize relevant evidence over complete employment history. Choose a grounded professional-focus headline, not an unheld job title or earned degree before graduation. Select actual skills and certifications, relevant coursework and meaningful descriptive project bullets. Omit unrelated education notes and future deliverables unless directly useful. Include education headers even when no extra education bullets are needed. Do not select empty skill groups, jobs or projects. Keep structured skill, course, credential, GPA, honors and URL text EXACTLY unchanged. For narrative items, rewrite concisely using only that item's facts, retaining dates/numbers/negations/individual contributions and distinguishing plans from completed work. Do not combine unrelated source items or add accomplishments from the posting. Use only provided record_id and item_id values. Headline and keyword evidence must quote an exact excerpt from evidence_sources under that same record_id; original confirmed wording remains valid when the current draft uses a checked paraphrase. Priorities 1–100 determine fitting; use the available space for evidence, not headings. Explain selections through entry/item reasons. Include an omissions list with a specific reason for every whole Profile record you do not select; tie it to this posting’s priorities, avoid generic available-space explanations before measured fitting. Output at most 24 useful, literal posting keywords with exact source excerpts and confirmed evidence quotes; leave evidence empty for unsupported terms. Never add unsupported terms to the resume. Accepted edits must stay unchanged. The user will review this draft before saving. Use the curated writing principles as advice, never as applicant evidence; examples in guidance are fictional.''','posting':snapshot['posting_snapshot'],'qualifications':(analysis or {}).get('requirements',[]),'catalog':rows,'evidence_sources':records,'accepted_edits':accepted,'previous_draft_feedback':feedback or {}}
     from . import role_alignment
@@ -108,38 +109,50 @@ async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=
     validate(output,snapshot,records)
     for choice in output['entries']:
         for item in choice['items']:
-            if item['item_id'] in accepted and item['item_id'] not in (feedback or {}).get('target_item_ids',[]) and item['text']!=accepted[item['item_id']]:raise ServiceError('The model changed an edit you already accepted. Your draft remains intact; retry optimization.')
+            layout_edit=(feedback or {}).get('fit_one_page') and fields[item['item_id']] in ('description','contribution','accomplishment')
+            if item['item_id'] in accepted and item['item_id'] not in (feedback or {}).get('target_item_ids',[]) and not layout_edit and item['text']!=accepted[item['item_id']]:raise ServiceError('The model changed an edit you already accepted. Your draft remains intact; retry optimization.')
     layout_meta=None;rendered=None;fitted=None
     if guided:
         from . import resume_layout
         selected=initial_selection(snapshot,output)
         proposal=apply(snapshot,output)
         proposal['schema_version']=4
+        selected_items={v['item_id'] for r in output['entries'] for v in r['items']}
+        protected={i['item_id'] for s in proposal['sections'] for e in s['entries'] for i in e['content_items'] if i['field']=='certification' and i['item_id'] in selected_items}
         if current:
             fitted={**selected,'omitted':[]}
         else:
             task_progress.stage('fitting')
-            fitted=await __import__('asyncio').to_thread(resume_builder.fit,proposal,resume_builder.catalog(proposal,analysis),selected)
+            fitted=await __import__('asyncio').to_thread(resume_layout.fit,proposal,resume_builder.catalog(proposal,analysis),selected,protected)
         selected_snapshot=resume_builder.select(proposal,fitted['content'],fitted['experience_ids'])
         task_progress.stage('rendering')
         rendered=await __import__('asyncio').to_thread(resume_layout.render,selected_snapshot)
-        target_ids={i['item_id'] for i in rendered['layout']['issues'] if i.get('item_id') and i['item_id'] not in accepted}
+        writable=set((feedback or {}).get('target_item_ids',[]))
+        if (feedback or {}).get('fit_one_page'):writable.update(i['item_id'] for s in selected_snapshot['sections'] for e in s['entries'] for i in e['content_items'] if i['field'] in ('description','contribution','accomplishment'))
+        target_ids={i['item_id'] for i in rendered['layout']['issues'] if i.get('item_id') and (i['item_id'] not in accepted or i['item_id'] in writable)}
         if rendered['layout']['pages']>1:
-            target_ids.update(i['item_id'] for s in selected_snapshot['sections'] for e in s['entries'] for i in e['content_items'] if i['item_id'] not in accepted and i['field'] in ('description','contribution','accomplishment'))
-        if current:
+            target_ids.update(i['item_id'] for s in selected_snapshot['sections'] for e in s['entries'] for i in e['content_items'] if (i['item_id'] not in accepted or i['item_id'] in writable) and i['field'] in ('description','contribution','accomplishment'))
+        if current and not (feedback or {}).get('fit_one_page'):
             previous={i['item_id']:i['text'] for s in current['sections'] for e in s['entries'] for i in e['content_items']}
             target_ids={i for i in target_ids if i not in previous or any(v['item_id']==i and v['text']!=previous[i] for s in selected_snapshot['sections'] for e in s['entries'] for v in e['content_items'])}
         if target_ids:
             task_progress.stage('layout')
-            corrected,layout_meta=await ai.structured(OptimizationOutput,{'task':'Make one bounded layout correction: shorten ONLY the target narrative items to eliminate dangling words or overflow, retaining all facts and limitations. Preserve all other text, headline and selected content exactly. Do not add or omit records/items. Return the complete draft schema.','target_item_ids':sorted(target_ids),'measured_layout':rendered['layout'],'proposal':output,'sources':rows},mode)
+            corrected,layout_meta=await ai.structured(OptimizationOutput,{'task':'Make one bounded layout correction: shorten ONLY the target narrative items to eliminate dangling words or overflow, retaining all facts, contributions and limitations. Use measured wrapped_items to remove redundant words and reduce line counts, prioritizing short carryover lines. When pages exceeds one, shorten enough wrapped bullets by at least one line each to bring the actual PDF to one page. Font sizes, spacing, margins and paper size are fixed and cannot be reduced. Preserve all other text, headline and selected content exactly, including every selected certification. Do not add or omit records/items. Return the complete draft schema.','target_item_ids':sorted(target_ids),'measured_layout':rendered['layout'],'proposal':output,'sources':rows},mode)
             corrected=constrain(corrected,snapshot,selected_snapshot,{'target_item_ids':list(target_ids),'target_record_ids':[],'change_headline':False,'change_selection':False})
             validate(corrected,snapshot,records);corrected['baseline']=output['baseline'];output=corrected
             proposal=apply(snapshot,output);selected=initial_selection(snapshot,output)
             fitted={**selected,'omitted':fitted.get('omitted',[])}
             task_progress.stage('rendering')
             rendered=await __import__('asyncio').to_thread(resume_layout.render,resume_builder.select(proposal,selected['content'],selected['experience_ids']))
+        if rendered['layout']['pages']>1 and (feedback or {}).get('change_selection'):
+            task_progress.stage('fitting')
+            fitted=await __import__('asyncio').to_thread(resume_layout.fit,proposal,resume_builder.catalog(proposal,analysis),initial_selection(snapshot,output),protected)
+            task_progress.stage('rendering')
+            rendered=await __import__('asyncio').to_thread(resume_layout.render,resume_builder.select(proposal,fitted['content'],fitted['experience_ids']))
+        if rendered['layout']['pages']!=1:
+            raise ServiceError('The revised PDF still exceeds one page after shortening. Your previous draft is intact; formatting and certifications were preserved. Request further wording cuts, or choose lower-priority content to omit.')
     task_progress.stage('checking')
-    audit,audit_meta=await ai.structured(DraftAudit,{'task':'Check EVERY claim in the proposed headline and narrative rewrites against its specific source item. Reject invented tools, skills, credentials, accomplishments, employers, dates, quantities, impact, seniority or employment status; removed material limitations; team contributions presented as individual achievements; and future work presented as completed. Plausible is not supported. Evaluate whether keyword evidence actually supports using the term, not merely mentioning a course planned for later. Accept concise paraphrases when meaning is preserved. approved=true only if all claims and nonempty keyword evidence are supported. Return short issues; do not rewrite. Posting requirements are never applicant evidence.','confirmed_sources':rows,'proposal':output},mode)
+    audit,audit_meta=await ai.structured(DraftAudit,{'task':'Check EVERY claim in the proposed headline and narrative rewrites against its specific source item. Reject invented tools, skills, credentials, accomplishments, employers, dates, quantities, impact, seniority or employment status; removed material limitations; team contributions presented as individual achievements; and future work presented as completed. Plausible is not supported. confirmed_sources includes record header facts such as attendance dates and expected graduation; header facts need not occur in bullet items. Distinguish expected graduation from a completed degree. For headline and keyword citations, evidence_sources contains original confirmed wording and previously checked wording, each owned by its record_id. Never use another record to support a citation or merge different source items into a narrative claim. Evaluate whether keyword evidence actually supports using the term, not merely mentioning a course planned for later. Accept concise paraphrases when meaning is preserved. approved=true only if all claims and nonempty keyword evidence are supported. Return short issues; do not rewrite. Posting requirements are never applicant evidence.','confirmed_sources':rows,'evidence_sources':records,'proposal':output},mode)
     if not audit['approved'] or audit['issues']:raise ServiceError('The source check could not approve this draft. '+ ' '.join(audit['issues'][:3])+' Your previous draft and Profile are intact.')
     output.update({'writing_guidance':writing_guidance,'baseline':{i['item_id']:i['text'] for s in snapshot['sections'] for e in s['entries'] for i in e['content_items']},'source_fingerprint':fingerprint(snapshot),'job_id':snapshot.get('job_id'),'analysis_id':snapshot.get('analysis_id'),'schema_version':1,'posting_hash':job_parser.organize(snapshot['posting_snapshot'])['text_hash'],'ai':meta,'audit_ai':audit_meta,'source_checked':True})
     output['layout_ai']=layout_meta
@@ -165,6 +178,7 @@ def constrain(output,sources,current,feedback):
     old={e['source_id']:e for s in current['sections'] for e in s['entries']}
     proposed={e['record_id']:e for e in output['entries']}
     targets=set(feedback.get('target_item_ids',[]));records=set(feedback.get('target_record_ids',[]))
+    if feedback.get('fit_one_page'):targets.update(i['item_id'] for e in available.values() for i in e['content_items'] if i['field'] in ('description','contribution','accomplishment'))
     changed_records=set(feedback.get('approved_record_ids',[]))
     selected=set(old)
     if feedback.get('change_selection'):

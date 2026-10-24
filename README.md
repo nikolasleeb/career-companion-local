@@ -4,6 +4,8 @@ A personal career workspace that runs at **http://localhost:3000** on the comput
 
 Each installation starts empty. Accounts, documents, saved API keys, and encrypted private disclosures belong to that installation. Each account supplies its own OpenAI API key in Settings. Manual features work without one.
 
+Latest update: **app 1.0.7 · extension 1.0.3**. The Application Assistant now has live popup progress and one Start / Review / Resume button. See [release notes](docs/RELEASE-NOTES.md).
+
 ## Run from source
 
 Install a current Docker Desktop, or Docker Engine 28+ with Compose. Clone this repository and open a terminal in its project folder:

@@ -122,3 +122,10 @@
 .optional-prebuild-details>summary,.resume-clarification-questions>summary{cursor:pointer;font-weight:600}
 .optional-prebuild-details form{margin-top:16px}
 .update-panel{margin-bottom:24px}.update-panel .section-header{align-items:center;flex-wrap:wrap;gap:12px}.update-panel h2{margin:0}.update-versions{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin:24px 0}.update-versions dt{font-size:.85rem;color:#58697e}.update-versions dd{margin:6px 0 0;overflow-wrap:anywhere}.update-panel .card-actions{flex-wrap:wrap;gap:12px}
+
+.application-workflow .workflow-status-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;flex-shrink:0}
+.application-workflow .workflow-status-actions .button{min-height:44px;white-space:nowrap;margin:0}
+.assistant-app-address{display:block;margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:#f3f6fa;overflow-wrap:anywhere;user-select:all;font-size:.9em}
+.assistant-install-help{margin-top:18px}
+.assistant-install-help summary{cursor:pointer;font-weight:600}
+@media(max-width:640px){.application-workflow>.section-header{flex-direction:column;align-items:stretch;gap:16px}.application-workflow .workflow-status-actions{justify-content:flex-start;flex-shrink:1}}

@@ -15,6 +15,9 @@ from pydantic import Field, model_validator
 from . import auth, config, db
 from .models import StrictModel
 
+# Country/territory dropdowns routinely contain more than sixty choices. Share
+# this bounded limit with scans so a reviewed answer retains the exact list.
+MAX_OPTIONS = 500
 CATEGORIES = ('veteran','protected_veteran','disability','gender','sex','citizenship','race_ethnicity','clearance_current','clearance_previous','government_employment','family_connection','conflict','additional')
 
 class Answer(StrictModel):
@@ -22,7 +25,7 @@ class Answer(StrictModel):
     question: str = Field(min_length=1,max_length=500)
     description: str = Field(default='',max_length=1500)
     context: str = Field(default='',max_length=1000)
-    options: list[str] = Field(default_factory=list,max_length=60)
+    options: list[str] = Field(default_factory=list,max_length=MAX_OPTIONS)
     value: str = Field(min_length=1,max_length=3000)
     scope: Literal['account','employer','application'] = 'account'
     employer: str = Field(default='',max_length=250)

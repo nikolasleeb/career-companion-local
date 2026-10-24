@@ -12,8 +12,16 @@ from .network import ServiceError
 
 def words(value):return re.findall(r'[a-z0-9]+',value.casefold())
 
-def inspect(pdf,snapshot):
-    snapshot=resume_presentation.display(snapshot)
+def one_page_request(text):
+    return bool(re.search(r'\b(?:one|single|1)[\s-]+page\b',text,re.I))
+
+def fit(snapshot,rows,initial,protected_item_ids=None):
+    def measure(value):
+        result=render(value)
+        return result['layout']['pages'],result['artifacts']
+    return resume_builder.fit(snapshot,rows,initial,protected_item_ids,measure)
+
+def text_lines(pdf):
     executable=shutil.which('pdftotext')
     if not executable:raise ServiceError('Layout inspection needs the PDF tools bundled in the Docker app.')
     with tempfile.TemporaryDirectory(prefix='nextstep-layout-') as folder:
@@ -27,7 +35,31 @@ def inspect(pdf,snapshot):
         for line in page.findall('.//{*}line'):
             text=' '.join(w.text or '' for w in line.findall('{*}word'))
             if text.strip():lines.append({'page':page_number,'text':text,'tokens':words(text),'width':float(line.get('xMax','0'))-float(line.get('xMin','0'))})
-    issues=[]
+    return lines
+
+def wrapped_items(pdf,snapshot):
+    """Measure actual narrative wrapping, not character-count estimates."""
+    lines=text_lines(pdf);result=[]
+    for section in snapshot['sections']:
+        for entry in section['entries']:
+            for item in entry.get('content_items',[]):
+                if item['field'] not in ('description','contribution','accomplishment'):continue
+                expected=words(item['text'])
+                if len(expected)<4:continue
+                for n,line in enumerate(lines):
+                    if line['tokens'][:4]!=expected[:4]:continue
+                    found=[];matched=[]
+                    for candidate in lines[n:n+12]:
+                        found+=candidate['tokens'];matched.append(candidate)
+                        if found==expected or found!=expected[:len(found)]:break
+                    if found==expected and len(matched)>1:
+                        result.append({'record_id':entry['source_id'],'item_id':item['item_id'],'line_count':len(matched),'target_lines':len(matched)-1,'last_line_words':len(matched[-1]['tokens']),'last_line':matched[-1]['text']})
+                    break
+    return result
+
+def inspect(pdf,snapshot):
+    snapshot=resume_presentation.display(snapshot)
+    lines=text_lines(pdf);issues=[]
     for section in snapshot['sections']:
         for entry in section['entries']:
             items=entry.get('content_items',[])
@@ -53,6 +85,6 @@ def render(snapshot):
     if pages!=1:
         longest=sorted([e for s in value['sections'] for e in s['entries']],key=lambda e:-sum(len(b) for b in e['bullets']))[:3]
         issues.insert(0,{'kind':'overflow','record_id':'','item_id':'','text':f'This draft fills {pages} pages. Review '+', '.join(e['title'] for e in longest)+'. Shorten content or omit lower-priority items before saving.'})
-    value['layout']={'pages':pages,'body_font_pt':10.5,'validated':pages==1,'issues':issues,'renderer':'DOCX → PDF','format_version':4}
+    value['layout']={'pages':pages,'body_font_pt':10.5,'validated':pages==1,'issues':issues,'wrapped_items':wrapped_items(base64.b64decode(artifacts['pdf']),value),'renderer':'DOCX → PDF','format_version':4}
     value['artifacts']=artifacts
     return value

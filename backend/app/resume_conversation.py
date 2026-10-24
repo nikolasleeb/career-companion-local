@@ -224,7 +224,7 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
         task_progress.stage('saving')
         return save_revision(user,id,version,rendered,resume_builder.catalog(snapshot),'Built a locally fitted draft. Review the content before saving.',token,source_snapshot=snapshot)
     analysis=require(user,data['analysis_id'],'analysis')['data'] if data.get('analysis_id') else None
-    feedback={**(feedback or {}),'approved_record_ids':data['approved_record_ids']}
+    feedback={'fit_one_page':data.get('one_page_requested',False),**(feedback or {}),'approved_record_ids':data['approved_record_ids']}
     if prepared and prepared.headline is not None and prepared.headline!=db.settings(user).get('headline',''):feedback['prepared_headline']=prepared.headline
     draft=await optimization.create(user,snapshot,analysis,mode,feedback,guided=True,current=current['snapshot'] if current else None)
     result=draft['data'];rendered=result['rendered_snapshot'];rendered['draft_id']=draft['id']
@@ -281,17 +281,19 @@ async def send(user,id,body):
         proposals.append(item)
     project_questions=[{'text':q['text'],'reason':'Clarify this project for the posting','criterion_id':None,'project_refs':project_context.references(q['project_context_ids'],materials)} for q in output.get('project_questions',[])]
     revising=bool(current and output['action']=='revise' and not proposals)
+    output['fit_one_page']=resume_layout.one_page_request(body.text) or data.get('one_page_requested',False)
     assistant_id=db.uid()
     def append(d,c):
         d['messages'].append({'id':assistant_id,'role':'assistant','text':output['message'],'created_at':db.now(),'usage':{'ai':meta,'actual_cost_usd':meta.get('estimated_token_cost_usd')},**({'revision_status':'pending'} if revising else {})})
         if revising:d['pending_revision_message_id']=assistant_id
+        if output['fit_one_page']:d['one_page_requested']=True
         seen={q['text'].strip().casefold() for q in d.get('asked_questions',d['questions'])}
         new=[{'text':q,'reason':'Improve the resume evidence','criterion_id':None} for q in output['questions'] if q.strip().casefold() not in seen]
         new.extend(q for q in project_questions if q['text'].strip().casefold() not in seen)
         new=project_context.fresh_questions(user,new)[:3]
         d['questions']=new;d.setdefault('asked_questions',[]).extend(new)
         d['proposals']+=proposals;d.pop('last_message_input',None)
-        if proposals or revising:d['pending_feedback']={k:output.get(k) for k in ('revision_instruction','target_item_ids','target_record_ids','change_headline','change_selection','template')}
+        if proposals or revising:d['pending_feedback']={k:output.get(k) for k in ('revision_instruction','target_item_ids','target_record_ids','change_headline','change_selection','template','fit_one_page')}
     updated=mutate(user,id,version,append)
     if revising:
         try:return await build(user,id,updated['data']['version'],body.mode,feedback=output)

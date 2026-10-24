@@ -162,6 +162,99 @@ def test_overflow_shows_all_pages_and_blocks_export(env,monkeypatch):
     assert db.list_entities(user,'resume')==[]
 
 
+def test_ai_revision_does_not_commit_an_overflowing_pdf(env,monkeypatch):
+    user,job,rows,session,calls=env;state=build(env);head=state['current']['id']
+    revisions=len(db.list_entities(user,'resume_revision'));drafts=len(db.list_entities(user,'resume_draft'))
+    original_render=resume_layout.render
+    def overflow(snapshot):
+        value=original_render(snapshot);value['layout'].update({'pages':2,'validated':False});return value
+    monkeypatch.setattr(resume_layout,'render',overflow)
+    with pytest.raises(ServiceError,match='still exceeds one page'):
+        asyncio.run(guided.build(user,state['id'],state['data']['version'],'economy'))
+    assert guided.state(user,state['id'])['current']['id']==head
+    assert len(db.list_entities(user,'resume_revision'))==revisions
+    assert len(db.list_entities(user,'resume_draft'))==drafts
+
+
+def test_onepage_chat_uses_measured_fitting_and_keeps_both_certifications(env,monkeypatch):
+    user,job,rows,session,calls=env
+    cert=rows[-1];db.save(user,'experience',{**cert['data'],'tools':'Example Cloud Certificate; Example AI Certificate'},cert['id'])
+    state=build(env);head=state['current']['id'];original_model=ai.structured;original_render=resume_layout.render
+    old=state['current']['data']['snapshot']
+    original_count=sum(len(e['content_items']) for s in old['sections'] for e in s['entries'])
+    async def model(schema,payload,*args,**kwargs):
+        if schema.__name__=='ResumeChatOutput':return {**response(action='revise'),'message':'I will fit it to one page.','revision_instruction':'Fit to one page, keeping both certificates.','change_selection':True},META
+        return await original_model(schema,payload,*args,**kwargs)
+    def overflow(snapshot):
+        value=original_render(snapshot)
+        count=sum(len(e['content_items']) for s in snapshot['sections'] for e in s['entries'])
+        if count>=original_count:value['layout'].update({'pages':2,'validated':False})
+        return value
+    monkeypatch.setattr(ai,'structured',model);monkeypatch.setattr(resume_layout,'render',overflow)
+    state=asyncio.run(guided.send(user,state['id'],ConversationMessage(text='Keep it to one page and keep both certifications. Omit lower-priority material if necessary.',expected_version=state['data']['version'])))
+    assert state['current']['id']!=head and state['data']['one_page_requested']
+    saved=db.get(user,state['current']['id'],'resume_revision')['data']['snapshot']
+    assert saved['layout']['pages']==1 and saved['layout']['validated']
+    certs=[i['text'] for s in saved['sections'] for e in s['entries'] for i in e['content_items'] if i['field']=='certification']
+    assert certs==['Example Cloud Certificate','Example AI Certificate']
+
+
+def test_onepage_layout_can_shorten_previously_rewritten_narrative(env,monkeypatch):
+    user,job,rows,session,calls=env;state=build(env);original_model=ai.structured
+    record=db.get(user,state['current']['id'],'resume_revision');snapshot=record['data']['snapshot']
+    project=next(e for s in snapshot['sections'] for e in s['entries'] if e['category']=='project')
+    target=project['content_items'][0]['item_id']
+    old='Analyzed demand data using Python and presented findings clearly to classmates.'
+    new='Analyzed demand data in Python; presented findings to classmates.'
+    project['content_items'][0]['text']=old;project['bullets'][0]=old
+    db.save(user,'resume_revision',record['data'],record['id'])
+    original_render=resume_layout.render;layout_calls=[]
+    def overflow(value):
+        rendered=original_render(value)
+        text=next(i['text'] for s in value['sections'] for e in s['entries'] for i in e['content_items'] if i['item_id']==target)
+        if text!=new:rendered['layout'].update({'pages':2,'validated':False})
+        return rendered
+    async def model(schema,payload,*args,**kwargs):
+        if schema.__name__=='ResumeChatOutput':return {**response(action='revise'),'message':'I will tighten the wording.','revision_instruction':'Keep it to one page.'},META
+        value,meta=await original_model(schema,payload,*args,**kwargs)
+        if schema.__name__=='OptimizationOutput' and 'target_item_ids' in payload:
+            assert target in payload['target_item_ids']
+            layout_calls.append(payload)
+            for entry in value['entries']:
+                for item in entry['items']:
+                    if item['item_id']==target:item['text']=new
+        return value,meta
+    monkeypatch.setattr(ai,'structured',model);monkeypatch.setattr(resume_layout,'render',overflow)
+    changed=asyncio.run(guided.send(user,state['id'],ConversationMessage(text='Keep it to one page by shortening wording.',expected_version=state['data']['version'])))
+    result=db.get(user,changed['current']['id'],'resume_revision')['data']['snapshot']
+    assert len(layout_calls)==1 and result['layout']['pages']==1
+    assert result['experience_ids']==snapshot['experience_ids']
+    before={i['item_id']:i['text'] for s in snapshot['sections'] for e in s['entries'] for i in e['content_items']}
+    after={i['item_id']:i['text'] for s in result['sections'] for e in s['entries'] for i in e['content_items']}
+    assert before.keys()==after.keys() and after[target]==new
+    assert all(after[k]==v for k,v in before.items() if k!=target)
+    for revision in (snapshot,result):
+        doc=Document(io.BytesIO(base64.b64decode(revision['artifacts']['docx'])))
+        assert doc.styles['Normal'].font.size.pt==10.5
+        assert doc.styles['List Bullet'].paragraph_format.space_after.pt==3
+        assert doc.styles['Normal'].paragraph_format.line_spacing==pytest.approx(1.03,abs=.001)
+        assert doc.sections[0].left_margin.inches==.7
+
+
+def test_real_pdf_wrapping_is_measured_for_wording_corrections(env):
+    user,job,rows,session,calls=env;snapshot=guided.source(user,session['data'])
+    entry=next(e for s in snapshot['sections'] for e in s['entries'] if e['category']=='project')
+    item=entry['content_items'][0]
+    item['text']='Analyzed operational demand data using Python, documented source limitations, prepared clear visual reports for the review team, and presented analytical findings and recommendations to classmates.'
+    entry['bullets'][0]=item['text']
+    result=resume_layout.render(snapshot)
+    metrics=next(v for v in result['layout']['wrapped_items'] if v['item_id']==item['item_id'])
+    assert metrics['record_id']==entry['source_id'] and metrics['line_count']>=2
+    assert metrics['target_lines']==metrics['line_count']-1 and metrics['last_line_words']>0
+    assert metrics['last_line'].rstrip('.') in item['text']
+    assert not calls
+
+
 def test_refinement_constrains_untargeted_edits_and_selections(env,monkeypatch):
     user,job,rows,session,calls=env;state=build(env)
     original=db.get(user,state['current']['id'],'resume_revision')['data']['snapshot']

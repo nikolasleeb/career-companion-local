@@ -14,7 +14,7 @@ from .models import StrictModel
 STATES=('disconnected','scanning','filling','advancing','needs_input','paused','ready_for_final_review','stopped','failed')
 TERMINAL={'stopped','failed','ready_for_final_review'}
 PRIVATE=re.compile(r'veteran|disab|gender|\bsex\b|race|ethnic|clearance|government employ|family|relativ|conflict|citizen|nationalit|hispanic|latino|sponsor|authoriz',re.I)
-BOUNDARY=re.compile(r'captcha|recaptcha|hcaptcha|signature|attest|certif(?:y|ication of)|under penalty|payment|credit card|password|sign[ -]?in|log[ -]?in|submit application|submit my application',re.I)
+BOUNDARY=re.compile(r'consent|i agree|i confirm|opt[ -]?in|subscribe|captcha|recaptcha|hcaptcha|signature|attest|certif(?:y|ication of)|under penalty|payment|credit card|password|sign[ -]?in|log[ -]?in|submit application|submit my application',re.I)
 
 def init(c):
     c.executescript('''
@@ -27,7 +27,7 @@ def init(c):
     # Restart recovery never dispatches again or resumes a browser automatically.
     for row in c.execute('SELECT * FROM cc_runs').fetchall():
         value=json.loads(row['payload'])
-        if value['state'] not in TERMINAL:
+        if value['state'] in ('scanning','filling','advancing'):
             value.update(state='paused',reason='Server restarted. Reactivate the extension to continue.',version=value['version']+1)
             c.execute('UPDATE cc_runs SET payload=? WHERE id=?',(json.dumps(value),row['id']))
     c.execute("UPDATE cc_ai_requests SET state='unknown' WHERE state='dispatching'")
@@ -51,12 +51,14 @@ class Relay(StrictModel):
     pairing_id: str = Field(min_length=32,max_length=32)
     secret: str = Field(min_length=43,max_length=100)
 class CreateRun(Relay):
+    protocol_version: Literal[1,2] = 1
     application_id: str = Field(max_length=64)
     allowed_origin: str = Field(max_length=2000)
     tab_id: int = Field(ge=0)
     resume_id: str = Field(max_length=64)
     cover_letter_id: str = Field(default='',max_length=64)
     documents_approved: Literal[True]
+    document_versions: dict[str,str] | None = None
     @field_validator('allowed_origin')
     @classmethod
     def valid_origin(cls,v):return origin(v)
@@ -67,7 +69,7 @@ class FieldInfo(StrictModel):
     context: str = Field(default='',max_length=1000)
     control: Literal['text','email','tel','url','number','date','textarea','select','radio','checkbox','combobox','file','unsupported']
     autocomplete: str = Field(default='',max_length=100)
-    options: list[str] = Field(default_factory=list,max_length=60)
+    options: list[str] = Field(default_factory=list,max_length=private_answers.MAX_OPTIONS)
     has_value: bool = False
     required: bool = False
     section: Literal['','education','employment'] = ''
@@ -77,6 +79,10 @@ class FieldInfo(StrictModel):
     def valid_options(cls,v):
         if any(len(x)>500 for x in v):raise ValueError('Choice too long.')
         return v
+class ScanMetadata(StrictModel):
+    version: Literal[2]
+    manual_fields: list[str] = Field(default_factory=list,max_length=120)
+
 class Scan(Relay):
     expected_version: int = Field(ge=1)
     origin: str = Field(max_length=2000)
@@ -85,6 +91,7 @@ class Scan(Relay):
     fields: list[FieldInfo] = Field(max_length=120)
     boundaries: list[Literal['login','captcha','signature','attestation','payment','inaccessible_frame','unsupported_control']] = Field(default_factory=list,max_length=7)
     final_review: bool = False
+    metadata: ScanMetadata | None = None
 class Progress(Relay):
     expected_version: int
     origin: str = Field(max_length=2000)
@@ -93,7 +100,13 @@ class Progress(Relay):
     write_ids: list[str] = Field(default_factory=list,max_length=120)
     failed_ids: list[str] = Field(default_factory=list,max_length=120)
     reason: Literal['','manual_handoff','conflict','validation','stalled_navigation','unsupported_control','boundary','user_action','final_review','connection_lost'] = ''
+class Reactivation(Relay):
+    tab_id: int = Field(ge=0)
+    origin: str = Field(max_length=2000)
+
 class Control(StrictModel):
+    activation: Reactivation | None = None
+    protocol_version: Literal[2] | None = None
     action: Literal['pause','stop','resume']
     expected_version: int
 class ReviewedAnswer(StrictModel):
@@ -143,6 +156,11 @@ def owned(user,id,kind):
     if not record:raise HTTPException(404,'Selected record not found.')
     return record
 
+def check_documents(user,run):
+    for selection in run['documents']:
+        record=owned(user,selection['id'],selection['kind'])
+        if record['updated_at']!=selection['updated_at']:raise HTTPException(409,'Document changed. Stop this run and approve the new document version before starting again.')
+
 def revoke_session(user,csrf=None):
     with db.connect() as c:
         sql="UPDATE cc_pairings SET status='revoked' WHERE user_id=?"
@@ -163,7 +181,7 @@ def local_value(user,field,application):
     if private_answers.classify(field.label,field.description,field.context) in private_answers.REVIEW_CATEGORIES|{'family_connection'}:return None
     if field.control=='checkbox':return private_answers.match(user,field.label,field.options,application,field.description,field.context)
     if PRIVATE.search(' '.join((field.label,field.description,field.context))):return private_answers.match(user,field.label,field.options,application,field.description,field.context)
-    mapping={'name':'name','full name':'name','email':'email','email address':'email','phone':'phone','phone number':'phone','city':'city','state':'state','country':'country','linkedin':'linkedin','linkedin profile':'linkedin','website':'website','portfolio website':'website'}
+    mapping={'name':'name','full name':'name','email':'email','email address':'email','confirm email':'email','confirm email address':'email','phone':'phone','phone number':'phone','city':'city','state':'state','country':'country','linkedin':'linkedin','linkedin profile':'linkedin','website':'website','portfolio website':'website'}
     auto={'name':'name','email':'email','tel':'phone','address-level2':'city','address-level1':'state','country-name':'country','url':'website'}
     key=auto.get(field.autocomplete) or mapping.get(label)
     value=settings.get(key,'') if key else ''
@@ -190,7 +208,7 @@ def status(user=Depends(auth.current)):
     with db.connect() as c:
         pairs=[{k:r[k] for k in ('id','label','code','status','expires')} for r in c.execute('SELECT * FROM cc_pairings WHERE user_id=? AND session_hash=? AND expires>? ORDER BY created_at DESC',(user['id'],session_hash(user),time.time()))]
         runs=[public(json.loads(r['payload'])) for r in c.execute('SELECT payload FROM cc_runs WHERE user_id=? ORDER BY updated_at DESC LIMIT 30',(user['id'],))]
-    return {'pairings':pairs,'runs':runs,'states':STATES,'ai_model':'gpt-6-luna','run_budget_usd':0.25,'daily_budget_usd':2,'routine_model_cost_usd':0}
+    return {'protocol_version':2,'pairings':pairs,'runs':runs,'states':STATES,'ai_model':'gpt-6-luna','run_budget_usd':0.25,'daily_budget_usd':2,'routine_model_cost_usd':0}
 @router.post('/pairings/request')
 def request_pair(body:PairRequest,user=Depends(auth.current)):
     auth.throttle(('pair',user['id']));id=db.uid();code=f'{secrets.randbelow(1000000):06d}'
@@ -215,7 +233,7 @@ def revoke_pair(id:str,user=Depends(auth.current)):
 @router.post('/relay/context')
 def relay_context(body:Relay,user=Depends(auth.current)):
     paired(user,body)
-    return {'account_id':user['id'],'applications':[{'id':a['id'],'title':a['data']['title'],'company':a['data'].get('company',''),'resume_ids':a['data'].get('resume_ids',[]),'cover_letter_ids':[x['record_id'] for x in a['data'].get('attachments',[])]} for a in db.list_entities(user['id'],'application')], 'resumes':[{'id':r['id'],'title':r['data'].get('title','Resume'),'updated_at':r['updated_at']} for r in db.list_entities(user['id'],'resume')], 'cover_letters':[{'id':r['id'],'title':r['data'].get('title','Cover letter'),'updated_at':r['updated_at']} for r in db.list_entities(user['id'],'cover_letter')]}
+    return {'protocol_version':2,'account_id':user['id'],'applications':[{'id':a['id'],'title':a['data']['title'],'company':a['data'].get('company',''),'resume_ids':a['data'].get('resume_ids',[]),'cover_letter_ids':[x['record_id'] for x in a['data'].get('attachments',[])]} for a in db.list_entities(user['id'],'application')], 'resumes':[{'id':r['id'],'title':r['data'].get('title','Resume'),'updated_at':r['updated_at']} for r in db.list_entities(user['id'],'resume')], 'cover_letters':[{'id':r['id'],'title':r['data'].get('title','Cover letter'),'updated_at':r['updated_at']} for r in db.list_entities(user['id'],'cover_letter')]}
 @router.post('/runs')
 def create_run(body:CreateRun,user=Depends(auth.current)):
     paired(user,body);application=owned(user['id'],body.application_id,'application')
@@ -228,7 +246,8 @@ def create_run(body:CreateRun,user=Depends(auth.current)):
         letter=owned(user['id'],body.cover_letter_id,'cover_letter')
         if letter['data'].get('resume_id')!=resume['id']:raise HTTPException(422,'Cover letter belongs to a different resume version.')
         docs.append({'id':letter['id'],'kind':'cover_letter','updated_at':letter['updated_at']})
-    id=db.uid();run={'id':id,'application_id':application['id'],'account_id':user['id'],'pairing_id':body.pairing_id,'session_hash':session_hash(user),'tab_id':body.tab_id,'allowed_origin':body.allowed_origin,'documents':docs,'state':'scanning','reason':'','version':1,'pages':0,'writes':0,'signatures':[],'plan_ids':[],'unresolved':[],'activity':[],'expires':time.time()+3600}
+    if body.document_versions is not None and body.document_versions!={d['id']:d['updated_at'] for d in docs}:raise HTTPException(409,'Document versions changed. Review and approve the exact versions again.')
+    id=db.uid();run={'id':id,'protocol_version':body.protocol_version,'application_id':application['id'],'account_id':user['id'],'pairing_id':body.pairing_id,'session_hash':session_hash(user),'tab_id':body.tab_id,'allowed_origin':body.allowed_origin,'documents':docs,'state':'scanning','reason':'','version':1,'pages':0,'writes':0,'signatures':[],'plan_ids':[],'unresolved':[],'activity':[],'expires':time.time()+3600}
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE')
         for previous in c.execute('SELECT payload FROM cc_runs WHERE user_id=?',(user['id'],)):
@@ -252,8 +271,13 @@ def scan(id:str,body:Scan,user=Depends(auth.current)):
     if run['version']!=body.expected_version:raise HTTPException(409,'Run changed. Refresh before scanning.')
     if run['state'] in TERMINAL or run['state']=='paused':raise HTTPException(409,'Reactivate or start a run before scanning.')
     if len({f.id for f in body.fields})!=len(body.fields):raise HTTPException(422,'Duplicate field IDs.')
+    check_documents(user['id'],run)
     run['activity']=(run['activity']+[{'event':'scan','at':db.now(),'field_count':len(body.fields)}])[-100:]
-    if body.boundaries or any(BOUNDARY.search(' '.join((f.label,f.description,f.context))) for f in body.fields):
+    manual=set(body.metadata.manual_fields) if body.metadata else set()
+    if manual-{f.id for f in body.fields}:raise HTTPException(422,'Manual handoff references an unknown field.')
+    hard=re.compile(r'captcha|payment|credit card|password|sign[ -]?in|log[ -]?in',re.I)
+    blocked=bool(body.boundaries) or any((hard if body.metadata else BOUNDARY).search(' '.join((f.label,f.description,f.context))) for f in body.fields)
+    if blocked:
         run.update(state='needs_input',reason='A login, verification, attestation, signature, payment, frame or unsupported control requires your action.',plan_ids=[])
         return {'run':persist(user['id'],run,body.expected_version),'writes':[]}
     if body.final_review and not body.fields:
@@ -266,7 +290,11 @@ def scan(id:str,body:Scan,user=Depends(auth.current)):
     application=owned(user['id'],run['application_id'],'application')
     with db.connect() as c:once={r['id']:private_answers.unseal(user['id'],r['id'],r['ciphertext']) for r in c.execute('SELECT * FROM cc_run_answers WHERE user_id=? AND run_id=?',(user['id'],id))}
     for f in body.fields:
+        protected=bool(BOUNDARY.search(' '.join((f.label,f.description,f.context))))
         if f.has_value:continue
+        if f.id in manual or protected:
+            run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'private':bool(PRIVATE.search(f.label)),'reason':'manual_handoff','manual_only':True})
+            continue
         category=private_answers.category_for(user['id'],f.label,f.description,f.context)
         saved=next((v['value'] for v in once.values() if v['question']==f.label and v['options']==f.options and v.get('description','')==f.description and v.get('context','')==f.context),None)
         value=None if category=='family_connection' else saved or (None if category in private_answers.REVIEW_CATEGORIES else local_value(user['id'],f,application))
@@ -288,9 +316,13 @@ def question_suggestions(id:str,question_id:str,user=Depends(auth.current)):
 @router.post('/runs/{id}/progress')
 def progress(id:str,body:Progress,user=Depends(auth.current)):
     run=relay_run(user,id,body)
+    if run['version']!=body.expected_version:raise HTTPException(409,'Run changed. Refresh before reporting progress.')
     if run['state'] in TERMINAL or run['state']=='paused':raise HTTPException(409,'Run is stopped or paused.')
     if set(body.write_ids+body.failed_ids)-set(run['plan_ids']) or len(set(body.write_ids))!=len(body.write_ids):raise HTTPException(422,'Progress does not match the approved write plan.')
-    run['writes']+=len(body.write_ids);run['plan_ids']=[]
+    if len(set(body.failed_ids))!=len(body.failed_ids) or set(body.write_ids)&set(body.failed_ids):raise HTTPException(422,'Duplicate progress IDs.')
+    run['writes']+=len(body.write_ids)
+    completed=set(body.write_ids+body.failed_ids)
+    run['plan_ids']=[i for i in run['plan_ids'] if i not in completed] if body.state=='filling' else []
     if run['writes']>300:raise HTTPException(422,'Write limit exceeded.')
     run.update(state=body.state,reason=body.reason)
     if body.failed_ids:run.update(state='needs_input',reason='Some fields did not pass readback or validation. Review them personally.')
@@ -300,10 +332,19 @@ def progress(id:str,body:Progress,user=Depends(auth.current)):
 def control(id:str,body:Control,user=Depends(auth.current)):
     run=load(user['id'],id)
     if run['state'] in TERMINAL:raise HTTPException(409,'This run has ended. Start a new run.')
+    if body.action=='resume':
+        if run['expires']<=time.time() or run['session_hash']!=session_hash(user):raise HTTPException(403,'Run session expired. Review it in Career Companion and start a new activation.')
+        check_documents(user['id'],run)
+        if body.activation:
+            pair=paired(user,body.activation)
+            if run['state']!='paused' or body.activation.tab_id!=run['tab_id'] or body.activation.origin!=run['allowed_origin']:raise HTTPException(403,'Recovery requires the original employer tab and website, with this run paused.')
+            run['pairing_id']=pair['id']
     if body.action=='resume' and run['state'] not in ('paused','needs_input'):raise HTTPException(409,'Pause or review this run before resuming.')
     run.update(state={'pause':'paused','stop':'stopped','resume':'scanning'}[body.action],reason='User requested '+body.action,plan_ids=[])
     # Resume is explicit and rescans the current page after reviewed answers.
-    if body.action=='resume':run['signatures']=[]
+    if body.action=='resume':
+        run['signatures']=[]
+        if body.protocol_version:run['protocol_version']=body.protocol_version
     return persist(user['id'],run,body.expected_version)
 @router.post('/runs/{id}/answers')
 def review_answer(id:str,body:ReviewedAnswer,user=Depends(auth.current)):
@@ -311,7 +352,7 @@ def review_answer(id:str,body:ReviewedAnswer,user=Depends(auth.current)):
     if run['state'] not in ('needs_input','filling'):raise HTTPException(409,'This run is not awaiting an answer.')
     if run['version']!=body.expected_version:raise HTTPException(409,'Run changed. Refresh before reviewing.')
     q=next((q for q in run['unresolved'] if q['id']==body.question_id),None)
-    if not q or q['control'] in ('file','unsupported'):raise HTTPException(422,'Use the browser for this manual handoff.')
+    if not q or q.get('manual_only') or q['control'] in ('file','unsupported'):raise HTTPException(422,'Use the browser for this manual handoff.')
     category=q.get('private_category') or private_answers.category_for(user['id'],q['label'],q.get('description',''),q.get('context',''))
     if category=='family_connection':raise HTTPException(422,'Complete this employer family-connection question manually on the employer website.')
     if category in private_answers.REVIEW_CATEGORIES and (body.decision!='once' or body.answer_kind!='private'):raise HTTPException(422,'Review this private answer for this run only; manage defaults in your private profile.')

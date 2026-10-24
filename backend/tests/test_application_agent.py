@@ -97,6 +97,42 @@ def test_native_fill_preserves_values_and_does_not_mark_applied(client,account):
     assert db.get(account['id'],app['id'])['data']['status']=='preparing'
     assert client.post('/api/application-agent/runs/'+r['id']+'/progress',json=progress).status_code==409
 
+
+@pytest.mark.parametrize('size',[61,250,500])
+def test_large_dropdown_does_not_block_routine_scan_or_use_ai(client,account,monkeypatch,size):
+    from app import ai
+    async def no_ai(*args,**kwargs):raise AssertionError('Routine scanning must not invoke a model.')
+    monkeypatch.setattr(ai,'structured',no_ai)
+    db.update_settings(account['id'],{'email':'fictional@example.test'})
+    r,c,app=run(client,account['id'])
+    options=['Office '+str(i) for i in range(size)]
+    response=scan(client,r,c,[field(),field('f1','Preferred office',control='select',options=options)])
+    assert response.status_code==200,response.text
+    result=response.json()
+    assert result['writes']==[{'id':'f0','value':'fictional@example.test'}]
+    assert result['run']['unresolved'][0]['options']==options # No truncation or guessed choice.
+    assert db.get(account['id'],app['id'])['data']['status']=='preparing'
+    with db.connect() as conn:assert conn.execute('SELECT count(*) FROM cc_ai_requests').fetchone()[0]==0
+
+
+def test_large_dropdown_retains_exact_reviewed_answer_choices(client,account):
+    r,c,app=run(client,account['id'])
+    options=['Office '+str(i) for i in range(250)]
+    result=scan(client,r,c,[field(label='Preferred office',control='select',options=options)]).json()['run']
+    a=answer(category='additional',question='Preferred office',options=options,value=options[-1])
+    reviewed=client.post('/api/application-agent/runs/'+r['id']+'/answers',json={'question_id':'f0','expected_version':result['version'],'value':options[-1],'decision':'save','private_answer':a})
+    assert reviewed.status_code==200,reviewed.text
+    saved=client.get('/api/private-application-answers').json()['answers'][0]['data']
+    assert saved['options']==options and saved['value']==options[-1]
+
+
+def test_oversized_dropdown_still_rejected_without_changing_run(client,account):
+    r,c,app=run(client,account['id'])
+    response=scan(client,r,c,[field(control='select',options=['Choice '+str(i) for i in range(private_answers.MAX_OPTIONS+1)])])
+    assert response.status_code==422
+    current=client.get('/api/application-agent/runs/'+r['id']).json()
+    assert current['version']==r['version'] and current['pages']==0 and current['writes']==0
+
 @pytest.mark.parametrize('boundary',['login','captcha','signature','attestation','payment','inaccessible_frame','unsupported_control'])
 def test_boundary_yields_no_write_plan(client,account,boundary):
     db.update_settings(account['id'],{'email':'fictional@example.test'})
@@ -241,6 +277,7 @@ def test_production_model_key_fallback_disabled(client,account,monkeypatch):
 
 
 
+
 def test_full_single_page_form_fills_and_stops_before_final_submit(client,account):
     db.update_settings(account['id'],{'email':'fictional@example.test'})
     r,c,_=run(client,account['id']);result=scan(client,r,c,[field()],final_review=True).json()
@@ -266,6 +303,7 @@ def test_expired_pairing_is_checked_before_each_browser_write(client,account):
     assert client.post('/api/application-agent/runs/'+r['id']+'/relay-status',json=c).status_code==200
     with db.connect() as conn:conn.execute('UPDATE cc_pairings SET expires=? WHERE id=?',(time.time()-1,c['pairing_id']))
     assert client.post('/api/application-agent/runs/'+r['id']+'/relay-status',json=c).status_code==403
+
 
 
 
@@ -338,3 +376,82 @@ def test_optional_ai_sanitizes_labels_and_never_uses_credential_text():
     assert 'fixture@example.test' not in result
     assert 'token=secret' not in result
     assert 'sk-fictionalcredential' not in result
+
+
+def test_protocol2_manual_controls_do_not_block_supported_fields(client,account,monkeypatch):
+    from app import ai
+    async def no_ai(*a,**k):raise AssertionError('No model calls allowed')
+    monkeypatch.setattr(ai,'structured',no_ai)
+    db.update_settings(account['id'],{'email':'fixture@example.test'})
+    r,c,app=run(client,account['id'])
+    assert client.get('/api/application-agent/status').json()['protocol_version']==2
+    fields=[field(),field('f1','Upload resume',control='file'),field('f2','Custom control',control='unsupported'),field('f3','I certify that this is true',control='checkbox',options=['Yes','No']),field('f4','Preferred office',control='select',options=['Office '+str(i) for i in range(250)])]
+    result=scan(client,r,c,fields,metadata={'version':2,'manual_fields':['f1','f2','f3']}).json()
+    assert result['writes']==[{'id':'f0','value':'fixture@example.test'}]
+    assert len(result['run']['unresolved'])==4
+    protected=next(q for q in result['run']['unresolved'] if q['id']=='f3')
+    assert protected['manual_only']
+    response=client.post('/api/application-agent/runs/'+r['id']+'/answers',json={'question_id':'f3','value':'Yes','answer_kind':'private','decision':'once','expected_version':result['run']['version']})
+    assert response.status_code==422
+    assert db.get(account['id'],app['id'])['data']['status']=='preparing'
+
+
+@pytest.mark.parametrize('label',['Password','CAPTCHA','Credit card payment'])
+def test_protocol2_hard_stops_still_block_all_fields(client,account,label):
+    db.update_settings(account['id'],{'email':'fixture@example.test'})
+    r,c,_=run(client,account['id'])
+    response=scan(client,r,c,[field(),field('f1',label)],metadata={'version':2,'manual_fields':['f1']})
+    assert response.status_code==200
+    assert response.json()['writes']==[]
+
+
+def test_partial_verified_progress_reconciles_once_and_resume_is_single_control(client,account):
+    db.update_settings(account['id'],{'email':'fixture@example.test','name':'Fixture Applicant'})
+    r,c,_=run(client,account['id'])
+    plan=scan(client,r,c,[field(),field('f1','Full name')]).json()
+    progress={**c,'origin':r['allowed_origin'],'tab_id':12,'expected_version':plan['run']['version'],'state':'filling','write_ids':['f0']}
+    saved=client.post('/api/application-agent/runs/'+r['id']+'/progress',json=progress)
+    assert saved.status_code==200,saved.text
+    assert saved.json()['writes']==1
+    assert client.post('/api/application-agent/runs/'+r['id']+'/progress',json=progress).status_code==409
+    progress.update(expected_version=saved.json()['version'],write_ids=['f0'])
+    assert client.post('/api/application-agent/runs/'+r['id']+'/progress',json=progress).status_code==422
+    progress.update(write_ids=['f1'],state='needs_input')
+    saved=client.post('/api/application-agent/runs/'+r['id']+'/progress',json=progress).json()
+    assert saved['writes']==2
+    resumed=client.post('/api/application-agent/runs/'+r['id']+'/control',json={'action':'resume','protocol_version':2,'expected_version':saved['version']})
+    assert resumed.status_code==200
+    assert resumed.json()['state']=='scanning' and resumed.json()['protocol_version']==2
+
+
+def test_restart_preserves_already_paused_run_exactly(client,account):
+    r,c,_=run(client,account['id'])
+    paused=client.post('/api/application-agent/runs/'+r['id']+'/control',json={'action':'pause','expected_version':r['version']}).json()
+    with db.connect() as conn:agent.init(conn)
+    assert client.get('/api/application-agent/runs/'+r['id']).json()==paused
+
+
+def test_changed_document_requires_new_approval_even_for_resume(client,account):
+    r,c,_=run(client,account['id'])
+    paused=client.post('/api/application-agent/runs/'+r['id']+'/control',json={'action':'pause','expected_version':r['version']}).json()
+    with db.connect() as conn:conn.execute('UPDATE entities SET updated_at=? WHERE id=?',('2099-01-01',r['documents'][0]['id']))
+    response=client.post('/api/application-agent/runs/'+r['id']+'/control',json={'action':'resume','protocol_version':2,'expected_version':paused['version']})
+    assert response.status_code==409 and 'Document changed' in response.text
+    assert client.get('/api/application-agent/runs/'+r['id']).json()==paused
+
+
+def test_reconnected_extension_recovers_only_paused_original_tab(client,account):
+    r,c,_=run(client,account['id'])
+    paused=client.post('/api/application-agent/runs/'+r['id']+'/control',json={'action':'pause','expected_version':r['version']}).json()
+    new_pair=pair(client)
+    payload={'action':'resume','protocol_version':2,'expected_version':paused['version'],'activation':{**new_pair,'origin':r['allowed_origin'],'tab_id':99}}
+    endpoint='/api/application-agent/runs/'+r['id']+'/control'
+    assert client.post(endpoint,json=payload).status_code==403
+    assert client.get('/api/application-agent/runs/'+r['id']).json()==paused
+    payload['activation']['tab_id']=12
+    recovered=client.post(endpoint,json=payload)
+    assert recovered.status_code==200,recovered.text
+    assert recovered.json()['pairing_id']==new_pair['pairing_id']
+    assert recovered.json()['documents']==r['documents']
+    assert scan(client,recovered.json(),c,[field()]).status_code==403
+    assert scan(client,recovered.json(),new_pair,[field()]).status_code==200

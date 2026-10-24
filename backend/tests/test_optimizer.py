@@ -55,7 +55,7 @@ def mock_model(monkeypatch,mutate=None,audit=True):
     calls=[]
     async def fake(body):
         payload=json.loads(body['input']);calls.append((body,payload))
-        if body['text']['format']['name']=='DraftAudit':result={'approved':audit,'issues':[] if audit else ['Unsupported accomplishment.']}
+        if body['text']['format']['name']=='DraftAudit':result=audit(payload) if callable(audit) else {'approved':audit,'issues':[] if audit else ['Unsupported accomplishment.']}
         else:
             result=fake_draft(payload)
             if mutate:mutate(result)
@@ -144,7 +144,7 @@ def test_invalid_draft_preserves_inputs_no_save(client,account,monkeypatch,kind)
 def test_draft_ownership_and_project_description(client,account,monkeypatch):
     job,rows,body=setup(client,account);calls=mock_model(monkeypatch)
     result=wait_task(client,client.post('/api/resumes/optimize',json=body));draft=result['result']
-    other=TestClient(app,base_url='http://localhost');me=other.post('/api/auth/register',json={'username':'another','password':'another-fictional-password'}).json();other.headers['X-CSRF-Token']=me['csrf']
+    other=TestClient(app,base_url="http://localhost");me=other.post('/api/auth/register',json={'username':'another','password':'another-fictional-password'}).json();other.headers['X-CSRF-Token']=me['csrf']
     onboard_test_account(me)
     assert other.get('/api/resume-drafts/'+draft['id']).status_code==404
     assert other.post('/api/resumes',json={**body,'draft_id':draft['id']}).status_code==400
@@ -236,3 +236,43 @@ def test_citations_keep_original_and_checked_wording_separate_and_record_bound()
     snapshot['sections'][0]['entries'].append(other)
     bad=copy.deepcopy(output);bad['headline_evidence']=[{'record_id':'other','quote':original}]
     with pytest.raises(ServiceError,match='source could not be verified'):optimization.validate(bad,snapshot,optimization.evidence_sources(snapshot))
+
+
+@pytest.mark.parametrize('expected', [False, True])
+def test_date_citations_reach_independent_audit_from_confirmed_headers(client,account,monkeypatch,expected):
+    job,rows,body=setup(client,account)
+    education=rows[0]
+    dates={'start_date':'September 2019','end_date':'' if expected else 'June 2023','expected_graduation':'June 2028' if expected else ''}
+    result=client.put('/api/experience/'+education['id'],json={**education['data'],**dates})
+    assert result.status_code==200,result.text
+    quote='Expected graduation June 2028' if expected else 'September 2019 – June 2023'
+    def mutate(draft):
+        draft['entries'][0]['reason']='Relevant education: '+quote
+        draft['keywords'][0]['evidence']=[{'record_id':education['id'],'quote':quote}]
+    def audit(payload):
+        # Model boundary: a shortened catalog must fail this check, even though
+        # the deterministic citation check can already see the snapshot header.
+        source=next(r for r in payload['confirmed_sources'] if r['id']==education['id'])
+        assert all(quote not in i['text'] for i in source['items'])
+        assert source['start_date']==dates['start_date']
+        assert source['end_date']==dates['end_date']
+        assert source['expected_graduation']==dates['expected_graduation']
+        supported=quote in source.get('dates','') and quote in source.get('details','')
+        variants=payload.get('evidence_sources',{}).get(education['id'],[])
+        assert any(quote in text for text in variants)
+        assert all('authorized_us' not in r and 'sponsorship_now' not in r for r in payload['confirmed_sources'])
+        return {'approved':supported,'issues':[] if supported else ['Degree dates are missing from the confirmed sources.']}
+    calls=mock_model(monkeypatch,mutate,audit=audit)
+    task=wait_task(client,client.post('/api/resumes/optimize',json=body))
+    assert task['status']=='completed',task
+    assert task['result']['data']['source_checked'] and len(calls)==2
+
+
+@pytest.mark.parametrize('foreign_record',[False,True])
+def test_header_date_citations_reject_invented_dates_and_other_records(foreign_record):
+    education=resume_data.entry_snapshot({'category':'education','title':'BS Computing','organization':'Example University','start_date':'September 2019','end_date':'June 2023'},'degree',True)
+    project=resume_data.entry_snapshot({'category':'project','title':'Reporting','description':'Analyzed reports using Python.'},'project',True)
+    snapshot={'sections':[{'entries':[education,project]}],'posting_snapshot':{'description':'Python reporting'}}
+    output={'headline':'Computing','headline_evidence':[{'record_id':'degree','quote':'BS Computing'}],'entries':[{'record_id':'degree','items':[]}],'keywords':[{'term':'Python','job_quote':'Python reporting','evidence':[{'record_id':'project' if foreign_record else 'degree','quote':'September 2019 – June 2023' if foreign_record else 'September 2019 – June 2024'}]}]}
+    with pytest.raises(ServiceError,match='source could not be verified'):
+        optimization.validate(output,snapshot,optimization.evidence_sources(snapshot))

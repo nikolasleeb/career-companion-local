@@ -7,7 +7,7 @@ on:
       tag:
         description: Existing release tag to build
         required: true
-        default: v1.0.6
+        default: v1.0.7
 permissions:
   contents: read
 concurrency:
@@ -68,6 +68,13 @@ jobs:
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Audit the public source
         run: python3 scripts/audit_public.py
+      - name: Test the extension protocol and popup
+        run: |
+          python3 extensions/build.py
+          node extensions/tests/simplified-flow.cjs
+          node extensions/tests/popup-state.cjs
+          node extensions/tests/connection-origins.cjs
+          node extensions/tests/relay-security.cjs
       - name: Build the native image
         env:
           ARCH: ${{ matrix.arch }}
@@ -169,6 +176,8 @@ jobs:
           PYVERSION
           (cd release-assets && cat *.tar.gz.sha256 > SHA256SUMS)
           cp published-image.txt release-assets/
+          cp frontend/public/extensions/career-companion-{chrome,safari}.zip release-assets/
+          (cd release-assets && sha256sum career-companion-*.zip >> SHA256SUMS)
       - name: Publish the release after both architectures pass
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
