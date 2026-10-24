@@ -2,6 +2,7 @@
 
 A personal career workspace that runs at **http://localhost:3000** on the computer where you install it. Build a master resume, organize supporting details, compare job postings, prepare applications, and explore private work styles.
 
+Applications can also use your own uploaded resume or be saved without a resume. Attach interview prep, email copies, and other documents to an entry. See [Application documents](docs/APPLICATION-DOCUMENTS.md) for the full workflow and file limits.
 Each installation starts empty. Accounts, documents, saved API keys, and encrypted private disclosures belong to that installation. Each account supplies its own OpenAI API key in Settings. Manual features work without one.
 
 Latest update: **app 1.0.7 · extension 1.0.3**. The Application Assistant now has live popup progress and one Start / Review / Resume button. See [release notes](docs/RELEASE-NOTES.md).

@@ -9,6 +9,7 @@ export function actionLabel(path:string){
  if(/^\/resume-conversations\/[^/]+\/answers\/review$/.test(path))return 'Reviewing resume answers';
  if(/\/render$/.test(path))return 'Updating the PDF preview locally';
  if(/\/answers$|\/progress$/.test(path))return 'Saving responses locally';
+ if(path==='/analyses/from-document')return 'Reading job posting';
  if(path==='/analyses')return 'Comparing your Profile to the posting';
  if(/\/analyze$/.test(path))return 'Analyzing project materials';
  if(/\/build$/.test(path))return 'Building the resume draft';

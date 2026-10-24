@@ -411,7 +411,7 @@ class InterviewRound(StrictModel):
     _date = field_validator('date')(classmethod(lambda cls,v: ApplicationEvent.valid_date(v)))
 
 class ApplicationAttachment(StrictModel):
-    kind:Literal['cover_letter']='cover_letter'
+    kind:Literal['cover_letter','document']='cover_letter'
     record_id:str=Field(min_length=1,max_length=64)
 
 class ApplicationInput(StrictModel):

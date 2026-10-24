@@ -241,3 +241,11 @@ img.pdf-preview{height:auto;object-fit:contain;display:block;min-height:0} .cont
 }
 
 .resume-preview-viewer{width:100%;min-width:0}.preview-zoom-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:12px 0}.preview-zoom-controls .button{min-width:44px;min-height:44px;margin:0}.preview-zoom-controls output{min-width:48px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}.preview-zoom-controls [aria-pressed=true]{background:#e9f0fa;border-color:#315d8b;color:#0c234b}.resume-preview-viewport{box-sizing:border-box;max-height:min(76vh,1100px);overflow:auto;padding:16px;background:#e9edf3;border:1px solid #c7d3e5;border-radius:8px;overscroll-behavior:contain}.resume-preview-viewport:focus-visible{outline:3px solid #315d8b;outline-offset:2px}.resume-preview-pages{margin:0 auto;flex-shrink:0}.working-preview .resume-preview-pages .pdf-preview{display:block;width:100%;max-width:none;height:auto;box-sizing:border-box;margin:0 0 16px;box-shadow:0 2px 10px #0c234b22}.working-preview .resume-preview-pages .pdf-preview:last-child{margin-bottom:0}@media(max-width:700px){.preview-zoom-controls .small{flex-basis:100%}}
+
+/* Keep tracker status distinct from its action at every viewport width. */
+.application-workflow .workflow-status-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;flex-shrink:0}
+.application-workflow .workflow-status-actions .button{min-height:44px;white-space:nowrap;margin:0}
+.assistant-app-address{display:block;margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:#f3f6fa;overflow-wrap:anywhere;user-select:all;font-size:.9em}
+.assistant-install-help{margin-top:18px}
+.assistant-install-help summary{cursor:pointer;font-weight:600}
+@media(max-width:640px){.application-workflow>.section-header{flex-direction:column;align-items:stretch;gap:16px}.application-workflow .workflow-status-actions{justify-content:flex-start;flex-shrink:1}}

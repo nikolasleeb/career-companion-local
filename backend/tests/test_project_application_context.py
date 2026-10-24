@@ -1,3 +1,4 @@
+from conftest import cached_posting_fixture
 import asyncio
 import copy
 import json
@@ -21,6 +22,7 @@ def project(client,user,title='Demand study',linked=True):
 
 def resume_with_question(client,user,refs):
     job=client.post('/api/jobs',json={'title':'ML Engineer','description':POSTING}).json()
+    job=cached_posting_fixture(user,job)
     state=resumes.start(user,ConversationStart(job_id=job['id']))
     def seed(data,c):
         q={'text':'Which validation checks did you personally run for this modeling project?','reason':'Clarify model validation for this posting.','project_refs':refs}
@@ -76,6 +78,7 @@ def test_material_context_and_refs_are_account_owned(client,account):
 def test_project_observations_inform_comparison_questions_but_never_evidence(client,account,monkeypatch):
     user=account['id'];record,snap,analysis=project(client,user);monkeypatch.setattr(config,'OPENAI_KEY','fictional-no-network')
     job=client.post('/api/jobs',json={'title':'ML Engineer','description':POSTING}).json();calls=[]
+    job=cached_posting_fixture(user,job)
     async def provider(body):
         calls.append(body);payload=json.loads(body['input']);context=payload['project_material_for_questions_only'];assert context[0]['analysis_id']==analysis['id']
         assert not any(s['quote']=='Contains model-fitting code.' for s in payload['professional_evidence_catalog'])

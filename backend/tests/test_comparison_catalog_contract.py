@@ -1,3 +1,4 @@
+from conftest import cached_posting_fixture
 import asyncio
 import copy
 import json
@@ -22,6 +23,7 @@ Document your work clearly and present findings to technical audiences.
 def comparison_case(client,account,monkeypatch):
     monkeypatch.setattr(config,'OPENAI_KEY','fictional-fixture-no-network')
     job=client.post('/api/jobs',json={'title':'ML Engineer','description':POSTING}).json()
+    job=cached_posting_fixture(account['id'],job)
     record=client.post('/api/experience',json={'title':'Fictional project','category':'project','gpa':'4.0','description':'Documented a data-preparation workflow and presented findings.','confirmed':True}).json()
     return job,record
 

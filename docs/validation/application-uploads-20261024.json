@@ -1,0 +1,37 @@
+{
+  "feature": "Application documents and optional resume generation",
+  "date": "2026-10-24",
+  "active_app_backend": {
+    "passed": 656,
+    "skipped": 1,
+    "environment": "isolated production image; network disabled"
+  },
+  "uploaded_document_backend": {
+    "passed": 13,
+    "environment": "fictional account and files"
+  },
+  "public_localhost_backend": {
+    "passed": 676,
+    "skipped": 1,
+    "environment": "isolated app runtime with localhost source; network disabled"
+  },
+  "frontend": {
+    "active_app_passed": 131,
+    "public_localhost_passed": 132,
+    "both_production_builds_passed": true
+  },
+  "verified": [
+    "AI posting extraction without Profile comparison or resume generation",
+    "application save without resume",
+    "original PDF DOCX TXT bytes retained",
+    "uploaded resume text review and cover-letter generation",
+    "supporting files excluded from AI and extension disclosure",
+    "submitted version and background completion selection preserved",
+    "account isolation and exact-version approval",
+    "backup restore remaps references and retains file bytes",
+    "editable local status-change date",
+    "actual file-picker upload and cover-letter review in browser"
+  ],
+  "paid_provider_calls": 0,
+  "public_release_created": false
+}

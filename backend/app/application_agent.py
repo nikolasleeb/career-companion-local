@@ -233,7 +233,7 @@ def revoke_pair(id:str,user=Depends(auth.current)):
 @router.post('/relay/context')
 def relay_context(body:Relay,user=Depends(auth.current)):
     paired(user,body)
-    return {'protocol_version':2,'account_id':user['id'],'applications':[{'id':a['id'],'title':a['data']['title'],'company':a['data'].get('company',''),'resume_ids':a['data'].get('resume_ids',[]),'cover_letter_ids':[x['record_id'] for x in a['data'].get('attachments',[])]} for a in db.list_entities(user['id'],'application')], 'resumes':[{'id':r['id'],'title':r['data'].get('title','Resume'),'updated_at':r['updated_at']} for r in db.list_entities(user['id'],'resume')], 'cover_letters':[{'id':r['id'],'title':r['data'].get('title','Cover letter'),'updated_at':r['updated_at']} for r in db.list_entities(user['id'],'cover_letter')]}
+    return {'protocol_version':2,'account_id':user['id'],'applications':[{'id':a['id'],'title':a['data']['title'],'company':a['data'].get('company',''),'resume_ids':a['data'].get('resume_ids',[]),'cover_letter_ids':[x['record_id'] for x in a['data'].get('attachments',[]) if x['kind']=='cover_letter']} for a in db.list_entities(user['id'],'application')], 'resumes':[{'id':r['id'],'title':r['data'].get('title','Resume'),'updated_at':r['updated_at']} for r in db.list_entities(user['id'],'resume')], 'cover_letters':[{'id':r['id'],'title':r['data'].get('title','Cover letter'),'updated_at':r['updated_at']} for r in db.list_entities(user['id'],'cover_letter')]}
 @router.post('/runs')
 def create_run(body:CreateRun,user=Depends(auth.current)):
     paired(user,body);application=owned(user['id'],body.application_id,'application')
@@ -379,6 +379,10 @@ def approved_document(id:str,document_id:str,user=Depends(auth.current)):
     if not selection:raise HTTPException(403,'This document was not approved for this run.')
     record=owned(user['id'],document_id,selection['kind'])
     if record['updated_at']!=selection['updated_at']:raise HTTPException(409,'Document changed. Confirm the new version in a new run.')
+    if record['kind']=='resume' and record['data'].get('origin')=='uploaded':
+        from .application_documents import uploaded_original,response_file
+        document,raw=uploaded_original(user['id'],record)
+        return response_file(raw,document['data']['filename'],document['data']['mime'])
     if record['kind']=='resume':raw,mime=documents.export_resume(record['data'],'pdf')
     else:raw,mime=cover_letters.export_data(record['data'],'pdf')
     return Response(raw,media_type=mime,headers={'Content-Disposition':f'attachment; filename="career-companion-{record["kind"]}-{document_id[:8]}.pdf"','Cache-Control':'private, no-store'})

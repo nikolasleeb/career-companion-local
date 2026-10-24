@@ -15,7 +15,7 @@ CLOSED = {'accepted','rejected','withdrawn','declined'}
 def public(record):
     if not record: return None
     data={k:v for k,v in record['data'].items() if k!='artifacts'}
-    if record['kind']=='resume':data['title']=resume_data.resume_title(data.get('posting_snapshot'),data.get('title') or 'Resume',data.get('name') or '')
+    if record['kind']=='resume' and data.get('origin')!='uploaded':data['title']=resume_data.resume_title(data.get('posting_snapshot'),data.get('title') or 'Resume',data.get('name') or '')
     return {**record,'data':data}
 
 def attach_resume(user, resume):
@@ -33,9 +33,9 @@ def attach_resume(user, resume):
         if existing:
             updated=dict(existing['data'])
             updated['resume_ids']=list(dict.fromkeys(updated.get('resume_ids',[])+[resume['id']]))
-            if resume['id'] not in existing['data'].get('resume_ids',[]):
+            if resume['id'] not in existing['data'].get('resume_ids',[]) and not existing['data'].get('workflow',{}).get('resume_id') and not existing['data'].get('submitted_resume_id'):
                 updated['workflow']={'step':'resume','resume_id':resume['id'],'cover_letter_id':'','cover_skipped':False}
-                db.save(user,'application',updated,existing['id'])
+            if updated!=existing['data']:db.save(user,'application',updated,existing['id'])
         else:
             entity_id=hashlib.sha256((user+':application:'+job_id).encode()).hexdigest()[:32]
             db.save(user,'application',{'job_id':job_id,'posting_snapshot':snapshot,'title':snapshot.get('title','Opportunity'),'company':snapshot.get('company',''),'url':snapshot.get('url',''),'resume_ids':[resume['id']],'submitted_resume_id':'','status':'preparing','applied_date':'','history':[],'interviews':[],'notes':'','archived':False,'attachments':[],'workflow':{'step':'resume','resume_id':resume['id'],'cover_letter_id':'','cover_skipped':False}},entity_id)
@@ -52,8 +52,14 @@ def validate_links(user, data):
     for entity_id in data.get('resume_ids',[]):
         if not db.get(user,entity_id,'resume'): raise ServiceError('Choose only your own saved resume versions.')
     if data.get('submitted_resume_id') and data['submitted_resume_id'] not in data.get('resume_ids',[]): raise ServiceError('The submitted resume must be one of the versions attached to this application.')
-    if len({a['record_id'] for a in data.get('attachments',[])})!=len(data.get('attachments',[])):raise ServiceError('Attach each cover letter only once.')
+    if len({a['record_id'] for a in data.get('attachments',[])})!=len(data.get('attachments',[])):raise ServiceError('Attach each document only once.')
     for attachment in data.get('attachments',[]):
+        if attachment['kind']=='document':
+            document=db.get(user,attachment['record_id'],'document')
+            if not document or document['data'].get('purpose')!='application':raise ServiceError('Choose only your own application documents.')
+            owner=db.get(user,document['data'].get('application_id',''),'application')
+            if not owner or owner['data'].get('job_id')!=data.get('job_id') or not any(a.get('kind')=='document' and a['record_id']==document['id'] for a in owner['data'].get('attachments',[])):raise ServiceError('Keep each uploaded file with its original application.')
+            continue
         letter=db.get(user,attachment['record_id'],'cover_letter')
         if not letter:raise ServiceError('Choose only your own saved cover letters.')
         if letter['data']['job_id']!=data.get('job_id') or letter['data']['resume_id'] not in data.get('resume_ids',[]):raise ServiceError('A cover letter must match this posting and one of its attached resume versions.')

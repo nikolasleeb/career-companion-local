@@ -166,6 +166,9 @@ def paragraphs(text):
 
 
 def organize(data):
+ from .posting_extraction import cached
+ extracted=cached(data)
+ if extracted is not None:return extracted
  text=data.get('description','');parts=paragraphs(text)
  fact_parts=[{'text':display_line(line) if p['group']=='intro' else p['text'],'quote':line,'group':p['group']} for p in parts for line in (p['quote'].splitlines() if p['group']=='intro' else [p['quote']]) if compact(line) and not print_noise(display_line(line))]
  lines=[compact(l) for l in text.splitlines() if compact(l)]
@@ -291,6 +294,11 @@ def organize(data):
   company,origin=company_hint(text,data.get('title',''))
   if origin:identity_sources['company']=origin
  return {'parser_version':VERSION,'text_hash':hashlib.sha256(text.encode()).hexdigest(),'title':data.get('title','Job posting'),'company':company,'identity_sources':identity_sources,'facts':facts,'summary':summary[:1],'sections':sections,'notes':(['The posting mentions more than one work arrangement. Check its onsite schedule.'] if len(arrangements)>1 else [])+list(dict.fromkeys(logistics_notes)),'original_text':text}
+
+
+def posting_hash(data):
+    overview=organize(data)
+    return overview.get('catalog_hash',overview['text_hash'])
 
 
 def criteria(data):

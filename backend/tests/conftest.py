@@ -13,8 +13,6 @@ def client(tmp_path,monkeypatch):
     monkeypatch.setattr(config,'DB_PATH',tmp_path/'test.sqlite3')
     monkeypatch.setattr(config,'VAULT_KEY_FILE',tmp_path/'secrets'/'vault.key')
     monkeypatch.setattr(config,'OPENAI_KEY','')
-    # Legacy provider-contract fixtures inject a fictional installation key.
-    # The distributed configuration is separately verified to disable fallback.
     monkeypatch.setattr(config,'ALLOW_SERVER_AI_KEY',True)
     monkeypatch.setattr(config,'ONET_KEY','')
     monkeypatch.setattr(config,'ADZUNA_ID','')
@@ -43,7 +41,15 @@ def account(client):
 def sample(client,account):
     response=client.post('/api/demo/analyst')
     assert response.status_code==200,response.text
-    return response.json()['job']
+    return cached_posting_fixture(account['id'],response.json()['job'])
+
+
+def cached_posting_fixture(user,job):
+    """Comparison-contract tests start after extraction; extraction has its own tests."""
+    from app import job_parser,posting_extraction
+    overview=job_parser.organize(job['data'])
+    overview['extraction_version']=posting_extraction.VERSION
+    return db.save(user,'job',{**job['data'],'structured_posting':overview},job['id'])
 
 def comparison_wire(value,job,payload):
     """Convert legacy fixture results to the ID-only provider contract."""

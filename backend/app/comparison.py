@@ -3,6 +3,7 @@ import re
 import hashlib
 from .network import ServiceError
 from . import job_parser
+from .posting_extraction import source_quote_valid
 
 PRIVATE_FIELDS=('us_citizen','authorized_us','sponsorship_now','sponsorship_future')
 EDITABLE_FIELDS=('description','contribution','accomplishments','honors','relevant_courses')
@@ -31,7 +32,7 @@ def posting_catalogs(job):
     from .ai import valid_quote
     catalogs={'requirements':job_parser.criteria(job),'duty_assessments':role_alignment.catalog(job)}
     for rows in catalogs.values():
-        if len({row['id'] for row in rows})!=len(rows) or any(not valid_quote(row['source'],job['description']) for row in rows):
+        if len({row['id'] for row in rows})!=len(rows) or any(not source_quote_valid(row['source'],job) for row in rows):
             raise ServiceError('The posting criteria could not be traced to the saved posting. Review the posting before comparing; no OpenAI request was started.')
     return catalogs
 
@@ -127,7 +128,7 @@ def validate(output,job,retrieved,profile):
     records.update({'profile:'+k:k+' = '+profile[k] for k in PRIVATE_FIELDS if profile.get(k)})
     catalog=job_parser.criteria(job);assessed={}
     for r in output['requirements']:
-        if not valid_quote(r['job_quote'],job['description']): raise ServiceError('A comparison requirement did not cite the posting. Retry the comparison.')
+        if not source_quote_valid(r['job_quote'],job): raise ServiceError('A comparison requirement did not cite the posting. Retry the comparison.')
         for e in r['evidence']:
             if e['record_id'] not in records or not valid_quote(e['quote'],records[e['record_id']]): raise ServiceError('A comparison reference could not be verified. No result was saved.')
         if r.get('criterion_id') and r['criterion_id'] not in {c['id'] for c in catalog}:raise ServiceError('The comparison used a criterion outside the posting catalog.')
@@ -178,5 +179,5 @@ def validate(output,job,retrieved,profile):
         for e in keyword['evidence']:
             if e['record_id'].startswith('profile:') or e['record_id'] not in records or not valid_quote(e['quote'],records[e['record_id']]):raise ServiceError('A keyword had invalid Profile evidence.')
     output['score']=score(requirements);output['schema_version']=3
-    output['posting_hash']=job_parser.organize(job)['text_hash']
+    output['posting_hash']=job_parser.posting_hash(job)
     return output

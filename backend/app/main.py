@@ -8,14 +8,14 @@ import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlparse, quote
-from fastapi import FastAPI, Request, Response, Depends, UploadFile, File, HTTPException, Query
+from fastapi import FastAPI, Request, Response, Depends, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from . import config, db, auth, ai, documents, integrations, resume_data, resume_parser, transcript_parser, credentials, ai_settings, applications, resume_builder, job_parser, optimization, resume_conversation, cover_letters, guidance, cover_context, profile_answers, question_answers, onboarding, certifications, cost_history, updates
 from .models import *
 from .network import ServiceError, public_fetch, html_job
-from . import task_progress
+from . import task_progress, posting_extraction
 
 workers={}
 
@@ -42,11 +42,13 @@ from . import private_answers, private_profile, application_agent, assistant_ai
 app.include_router(private_answers.router)
 app.include_router(private_profile.router)
 app.include_router(application_agent.router)
+from . import application_documents
+app.include_router(application_documents.router)
 
 @app.middleware('http')
 async def boundaries(request, call_next):
     length=request.headers.get('content-length','0')
-    maximum=51*1024*1024 if request.url.path=='/api/jobs/import-document' else 52*1024*1024 if request.url.path=='/api/account/import' else 33*1024*1024 if request.url.path=='/api/project-sources/upload' else 11*1024*1024 if request.url.path in ('/api/documents','/api/transcripts/parse','/api/certificates') else 1024*1024
+    maximum=11*1024*1024 if re.fullmatch(r'/api/applications/[^/]+/documents',request.url.path) else 51*1024*1024 if request.url.path in ('/api/jobs/import-document','/api/jobs/from-document','/api/analyses/from-document') else 52*1024*1024 if request.url.path=='/api/account/import' else 33*1024*1024 if request.url.path=='/api/project-sources/upload' else 11*1024*1024 if request.url.path in ('/api/documents','/api/transcripts/parse','/api/certificates') else 1024*1024
     try:
         if int(length)<0:return JSONResponse({'detail':'Invalid request size.'},400)
         if int(length)>maximum: return JSONResponse({'detail':'This request exceeds the size limit.'},413)
@@ -105,16 +107,17 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','project_analysis','story_prompts') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
     progress_token=task_progress.bind(user,task_id,row['kind']) if row and row['kind'] in task_progress.KINDS else None
     try:
         if progress_token is not None:task_progress.stage('starting')
-        result=await asyncio.wait_for(work(),timeout=600)
+        result=await asyncio.wait_for(work(),timeout=1200 if row and row['kind']=='analysis' else 600)
         finish_task(task_id,user,'completed',result=result,saved_inputs=saved_inputs)
     except asyncio.TimeoutError:
-        finish_task(task_id,user,'failed',error='This action reached the ten-minute limit. Saved inputs remain available for retry.')
+        limit='twenty' if row and row['kind']=='analysis' else 'ten'
+        finish_task(task_id,user,'failed',error='This action reached the '+limit+'-minute limit. Saved inputs remain available for retry.')
     except asyncio.CancelledError:
         finish_task(task_id,user,'interrupted',error='The operation was interrupted. Saved inputs remain available for retry.')
         raise
@@ -132,7 +135,7 @@ def start_task(user,kind,work,inputs=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','project_analysis','story_prompts') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -327,6 +330,10 @@ def get_task(task_id:str,user=Depends(auth.current)):
     with db.connect() as c: row=c.execute('SELECT * FROM tasks WHERE id=? AND user_id=?',(task_id,user['id'])).fetchone()
     if not row: raise HTTPException(404,'Task not found.')
     result=dict(row);result['result']=json.loads(result['result']) if result['result'] else None
+    payload=result['result'] if isinstance(result['result'],dict) else {}
+    inputs=payload.get('_task_inputs',payload.get('inputs',{}))
+    if inputs.get('operation') in ('document_upload','posting_upload') and db.get(user['id'],inputs.get('job_id',''),'job'):
+        result['job_id']=inputs['job_id']
     result['progress']=result['result'].pop('_task_progress',None) if isinstance(result['result'],dict) else None
     if isinstance(result['result'],dict) and '_task_result' in result['result']:result['result']=result['result']['_task_result']
     return result
@@ -354,6 +361,8 @@ def edit_experience(entity_id:str,body:ExperienceItem,user=Depends(auth.current)
 def remove_record(entity_id:str,user=Depends(auth.current)):
     record=db.get(user['id'],entity_id)
     if not record: raise HTTPException(404,'Record not found.')
+    blocker=application_documents.removal_blocker(user['id'],record)
+    if blocker:raise HTTPException(409,blocker)
     if record['kind']=='usage_event':raise HTTPException(409,'Cost history is preserved until account deletion.')
     if record['kind'] in ('onboarding','profile_answer','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts'):raise HTTPException(409,'Archive reviewed answers to preserve their source history.')
     if record['kind'] in ('job','analysis','resume','resume_draft','resume_revision','resume_conversation','application','cover_workspace','cover_revision','cover_letter','prep','interview','search'):onboarding.require_complete(user['id'])
@@ -441,12 +450,13 @@ class DocumentReview(StrictModel):
 @app.put('/api/documents/{entity_id}/review')
 def review_document(entity_id:str,body:DocumentReview,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'document')
+    if record['data'].get('purpose')=='application':raise HTTPException(400,'Review application resume text within its application.')
     return db.save(user['id'],'document',{**record['data'],'text':body.text,'reviewed':True},entity_id)
 
 @app.post('/api/documents/{entity_id}/parse')
 def parse_resume_document(entity_id:str,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'document');data=dict(record['data'])
-    if data.get('purpose')=='certificate': raise HTTPException(400,'Certificates are managed in Skills & certifications.')
+    if record['data'].get('purpose') in ('certificate','application'): raise HTTPException(400,'Manage this document in its original application or certification.')
     text=data['text']
     if data.get('format')=='docx' and not data.get('reviewed'):
         path=config.DATA_DIR/'uploads'/user['id']/entity_id
@@ -472,7 +482,9 @@ def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(a
         c.execute('BEGIN IMMEDIATE')
         row=c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='document'",(entity_id,user['id'])).fetchone()
         if not row: raise HTTPException(404,'Document not found.')
-        document=json.loads(row['payload']);parsed=document.get('resume_parse') or {}
+        document=json.loads(row['payload'])
+        if document.get('purpose')=='application':raise HTTPException(400,'Application files are not Profile imports.')
+        parsed=document.get('resume_parse') or {}
         if body.text_hash!=parsed.get('text_hash') or hashlib.sha256(document['text'].encode()).hexdigest()!=body.text_hash:
             raise HTTPException(409,'The source changed. Parse the updated text and review its suggestions again.')
         allowed={entry['id'] for entry in parsed.get('entries',[])}
@@ -519,9 +531,12 @@ def job_overview(entity_id:str,user=Depends(auth.current)):
 
 @app.put('/api/jobs/{entity_id}')
 def update_job(entity_id:str,body:JobPosting,user=Depends(auth.current)):
-    require(user['id'],entity_id,'job')
+    previous=require(user['id'],entity_id,'job')
     if body.url and not integrations.canonical_url(body.url): raise HTTPException(422,'Use a public HTTP(S) posting URL or leave the URL blank.')
-    return db.save(user['id'],'job',body.model_dump(),entity_id)
+    data=body.model_dump()
+    if body.description==previous['data']['description'] and posting_extraction.cached(previous['data']):
+        data['structured_posting']=previous['data']['structured_posting']
+    return db.save(user['id'],'job',data,entity_id)
 
 @app.post('/api/jobs/import-url')
 async def import_url(body:ImportURL,user=Depends(auth.current)):
@@ -536,9 +551,75 @@ async def import_url(body:ImportURL,user=Depends(auth.current)):
 async def analyze_job(body:AnalysisRequest,user=Depends(auth.current)):
     require_ai(user['id']);job=require(user['id'],body.job_id,'job')
     async def work():
-        result=await ai.analyze(user['id'],job['data'],body.mode)
+        prepared=await posting_extraction.prepare_saved(user['id'],job,body.mode)
+        task_progress.stage('comparing_profile')
+        result=await ai.analyze(user['id'],prepared['data'],body.mode)
+        task_progress.stage('saving_comparison')
         return db.save(user['id'],'analysis',{**result,'job_id':job['id']})
     return start_task(user['id'],'analysis',work,body.model_dump())
+
+
+@app.get('/api/analyses/from-document/status')
+def document_comparison_status(request_token:str=Query(min_length=8,max_length=100),user=Depends(auth.current)):
+    return upload_task_status(request_token,user,'analysis','document_upload')
+
+def upload_task_status(request_token,user,kind,operation):
+    with db.connect() as c:
+        rows=c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user['id'],kind)).fetchall()
+    for row in rows:
+        payload=json.loads(row['result'] or '{}')
+        inputs=payload.get('_task_inputs',payload.get('inputs',{}))
+        if inputs.get('operation')==operation and inputs.get('request_token')==request_token:
+            return {'task_id':row['id'],'status':row['status']}
+    raise HTTPException(404,'No comparison was started for this upload. Select the document to try again.')
+
+
+@app.get('/api/jobs/from-document/status')
+def posting_upload_status(request_token:str=Query(min_length=8,max_length=100),user=Depends(auth.current)):
+    return upload_task_status(request_token,user,'posting_import','posting_upload')
+
+@app.post('/api/jobs/from-document')
+async def posting_upload(file:UploadFile=File(...),mode:Literal['economy','deep','custom']=Form('economy'),request_token:str=Form(min_length=8,max_length=100),user=Depends(auth.current)):
+    return await analyze_document(file,mode,request_token,user,False)
+
+@app.post('/api/analyses/from-document')
+async def analyze_document(file:UploadFile=File(...),mode:Literal['economy','deep','custom']=Form('economy'),
+                           request_token:str=Form(min_length=8,max_length=100),user=Depends(auth.current),compare_profile:bool=True):
+    require_ai(user['id'])
+    if compare_profile and not profile_answers.records(user['id']):
+        raise HTTPException(400,'Add confirmed Profile experience before starting a comparison.')
+    filename=Path(file.filename or 'job-posting.pdf').name[:250]
+    is_pdf=Path(filename).suffix.lower()=='.pdf'
+    limit=50*1024*1024 if is_pdf else config.MAX_UPLOAD
+    raw=await file.read(limit+1)
+    if is_pdf:
+        context=ai.set_user_context(user['id'])
+        try:posting_extraction.require_pdf_model(mode)
+        finally:ai.reset_user_context(context)
+    extracted=await asyncio.to_thread(documents.extract,filename,raw,max_upload=limit,repair_font_mappings=is_pdf)
+    if is_pdf and len(raw)>=50*1024*1024:
+        raise ServiceError('Choose a PDF smaller than 50 MB for AI comparison.')
+    digest=hashlib.sha256(raw).hexdigest()
+    job_id=hashlib.sha256((user['id']+'\0document\0'+request_token).encode()).hexdigest()[:32]
+    inputs={'request_token':request_token,'operation':'document_upload' if compare_profile else 'posting_upload','mode':mode,
+            'filename':filename,'document_hash':digest,'job_id':job_id}
+
+    async def work():
+        nonlocal raw
+        job={'title':'','company':'','description':extracted['text'],'url':''}
+        try:
+            overview=await posting_extraction.extract(job,mode,filename=filename,raw=raw,document_hash=digest)
+        finally:
+            raw=None
+        data={**job,'title':overview['title'],'company':overview['company'],'structured_posting':overview}
+        saved=db.save(user['id'],'job',data,job_id)
+        if not compare_profile:return saved
+        task_progress.stage('comparing_profile')
+        result=await ai.analyze(user['id'],saved['data'],mode)
+        task_progress.stage('saving_comparison')
+        return db.save(user['id'],'analysis',{**result,'job_id':saved['id']})
+
+    return start_task(user['id'],'analysis' if compare_profile else 'posting_import',work,inputs)
 
 SECTION_NAMES={'education':'Education','coursework':'Relevant Coursework','project':'Projects','employment':'Work Experience','volunteering':'Volunteering','skills':'Skills'}
 
@@ -587,7 +668,7 @@ def build_resume(user,body):
     snapshot={'schema_version':3,'compact_skills':body.compact_skills,'job_id':job_id,'posting_snapshot':dict(job['data']) if job else {},'content':body.content,'title':resume_data.resume_title(job['data'] if job else {},body.title,profile.get('name') or ''),'template':body.template,'name':documents.clean(profile.get('name')),'headline':documents.clean(profile.get('headline')),'contact':'\n'.join(contact_lines),'contact_lines':contact_lines,'profile':{k:profile.get(k) for k in ('name','contact','contact_reviewed','headline','email','phone','city','state','country','county','website','linkedin')},'sections':[{'title':SECTION_NAMES[k],'entries':[e for e in entries if e['category']==k]} for k in order],'warnings':warnings,'experience_ids':ids,'analysis_id':body.analysis_id,'decisions':[d.model_dump() for d in body.decisions],'ai':analysis['data'].get('ai') if analysis else None}
     if body.draft_id:
         draft=require(user,body.draft_id,'resume_draft')['data']
-        if draft.get('posting_hash') and draft['posting_hash']!=job_parser.organize(snapshot['posting_snapshot'])['text_hash']:raise HTTPException(409,'The posting changed after this draft. Create a new draft; the previous one remains available.')
+        if draft.get('posting_hash') and draft['posting_hash']!=job_parser.posting_hash(snapshot['posting_snapshot']):raise HTTPException(409,'The posting changed after this draft. Create a new draft; the previous one remains available.')
         if draft['job_id']!=job_id:raise HTTPException(409,'Choose the AI draft for this posting.')
         if draft['source_fingerprint']!=optimization.fingerprint(snapshot,{r['id'] for r in draft['catalog']}):raise HTTPException(409,'Profile content changed since this AI draft. Create a new draft; your reviewed wording remains available.')
         snapshot=optimization.apply(snapshot,draft,body.overrides)
@@ -666,7 +747,7 @@ async def optimize_resume(body:OptimizationRequest,user=Depends(auth.current)):
     full=body.model_copy(update={'experience_ids':all_ids,'content':None,'draft_id':None,'overrides':{},'headline':None})
     snapshot=build_resume(user['id'],full)
     analysis=require(user['id'],body.analysis_id,'analysis')['data'] if body.analysis_id else None
-    if analysis and analysis.get('posting_hash') and analysis['posting_hash']!=job_parser.organize(snapshot['posting_snapshot'])['text_hash']:raise HTTPException(409,'The posting changed. Rerun its comparison before creating an AI draft.')
+    if analysis and analysis.get('posting_hash') and analysis['posting_hash']!=job_parser.posting_hash(snapshot['posting_snapshot']):raise HTTPException(409,'The posting changed. Rerun its comparison before creating an AI draft.')
     if analysis and analysis.get('schema_version')!=3:raise HTTPException(409,'Rerun the historical comparison, or build without it, before creating an AI draft.')
     async def work():return await optimization.create(user['id'],snapshot,analysis,body.mode,feedback)
     return start_task(user['id'],'resume_optimize',work,body.model_dump())
@@ -763,12 +844,19 @@ def keyword_coverage(body:ResumeRequest,user=Depends(auth.current)):
 @app.get('/api/resumes/{entity_id}/preview-image')
 def preview_resume_image(entity_id:str,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'resume')
-    raw,_=documents.export_resume(record['data'],'pdf')
+    if record['data'].get('origin')=='uploaded':
+        document,raw=application_documents.uploaded_original(user['id'],record)
+        if document['data']['mime']!='application/pdf':raise HTTPException(400,'Download the original file to view this format.')
+    else:raw,_=documents.export_resume(record['data'],'pdf')
     return Response(documents.pdf_preview(raw),media_type='image/png')
 
 @app.get('/api/resumes/{entity_id}/preview')
 def preview_resume(entity_id:str,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'resume')
+    if record['data'].get('origin')=='uploaded':
+        document,raw=application_documents.uploaded_original(user['id'],record)
+        if document['data']['mime']!='application/pdf':raise HTTPException(400,'Download the original file to view this format.')
+        return application_documents.response_file(raw,document['data']['filename'],document['data']['mime'],True)
     raw,mime=documents.export_resume(record['data'],'pdf')
     return Response(raw,media_type=mime,headers={'Content-Disposition':'inline; filename="resume.pdf"'})
 
@@ -776,6 +864,10 @@ def preview_resume(entity_id:str,user=Depends(auth.current)):
 def export(entity_id:str,format:str,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'resume')
     if record['data'].get('schema_version')==2 and record['data'].get('layout',{}).get('pages')!=1: raise ServiceError('Save a validated one-page version before exporting.')
+    if record['data'].get('origin')=='uploaded':
+        document,raw=application_documents.uploaded_original(user['id'],record)
+        if format!='original' and '.'+format!=Path(document['data']['filename']).suffix.lower():raise HTTPException(400,'Download the original uploaded format; no converted version is implied.')
+        return application_documents.response_file(raw,document['data']['filename'],document['data']['mime'])
     raw,mime=documents.export_resume(record['data'],format)
     filename=resume_data.resume_filename(record['data'],format)
     fallback=re.sub(r'[^a-zA-Z0-9 ._-]','_',filename)
@@ -884,6 +976,12 @@ def add_application(body:ApplicationInput,user=Depends(auth.current)):
 def edit_application(entity_id:str,body:ApplicationInput,user=Depends(auth.current)):
     with applications.LOCK:
         old=require(user['id'],entity_id,'application');data=body.model_dump();applications.validate_links(user['id'],data)
+        old_files={a['record_id'] for a in old['data'].get('attachments',[]) if a['kind']=='document'}
+        new_files={a['record_id'] for a in data.get('attachments',[]) if a['kind']=='document'}
+        if old_files!=new_files:raise HTTPException(409,'Application files changed. Reopen details; use document controls to remove files.')
+        for rid in old['data'].get('resume_ids',[]):
+            r=db.get(user['id'],rid,'resume')
+            if r and r['data'].get('origin')=='uploaded' and rid not in data['resume_ids']:raise HTTPException(409,'Use the document controls to remove an uploaded resume.')
         if data['job_id']!=old['data'].get('job_id',''): raise HTTPException(409,'The linked posting cannot be replaced. Create a separate application.')
         data['posting_snapshot']=old['data'].get('posting_snapshot',{})
         if data['status']!=old['data']['status'] and (not data['history'] or data['history'][-1]['status']!=data['status']): data['history'].append({'status':data['status'],'date':data['applied_date'] if data['status']=='applied' else '', 'note':''})
@@ -891,6 +989,8 @@ def edit_application(entity_id:str,body:ApplicationInput,user=Depends(auth.curre
 
 @app.delete('/api/applications/{entity_id}')
 def delete_application(entity_id:str,user=Depends(auth.current)):
+    record=require(user['id'],entity_id,'application')
+    if any(a.get('kind')=='document' for a in record['data'].get('attachments',[])):raise HTTPException(409,'Remove uploaded files first, or archive this application to preserve its documents.')
     require(user['id'],entity_id,'application');db.delete(user['id'],entity_id)
     return {'ok':True}
 
@@ -1014,6 +1114,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if record['kind']=='onboarding':onboarding.validate_backup(record['data'])
             if record['kind']=='usage_event':cost_history.UsageEvent.model_validate(record['data'])
             project_routes.validate_nested_references(record['data'],kinds,by_id)
+            application_documents.validate_backup(record,kinds,by_id,payload.get('files',{}))
             if record['kind']=='experience':
                 ExperienceItem.model_validate(record['data'])
                 for credential in record['data'].get('certification_items',[]):
@@ -1083,7 +1184,8 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 if application.job_id and kinds.get(application.job_id)!='job': raise ValueError()
                 if application.submitted_resume_id and application.submitted_resume_id not in application.resume_ids: raise ValueError()
                 for attachment in application.attachments:
-                    if kinds.get(attachment.record_id)!='cover_letter':raise ValueError()
+                    if kinds.get(attachment.record_id)!=attachment.kind:raise ValueError()
+                    if attachment.kind=='document' and by_id[attachment.record_id]['data'].get('application_id')!=record['id']:raise ValueError()
                 if application.workflow:
                     flow=ApplicationWorkflow.model_validate(application.workflow)
                     if flow.resume_id and flow.resume_id not in application.resume_ids:raise ValueError()
@@ -1096,6 +1198,9 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if old not in ids or not any(r['id']==old and r['kind']=='document' for r in records): raise ValueError()
             decoded[ids[old]]=base64.b64decode(content,validate=True)
             if len(decoded[ids[old]])>config.MAX_UPLOAD: raise ValueError()
+            if by_id[old]['data'].get('purpose')=='application':
+                checked=application_documents.inspect(by_id[old]['data']['filename'],decoded[ids[old]])
+                if checked['sha256']!=by_id[old]['data'].get('sha256'):raise ValueError()
             if by_id[old]['data'].get('purpose')=='certificate':
                 certifications.inspect_file(by_id[old]['data']['filename'],decoded[ids[old]])
         profile=SettingsUpdate.model_validate(payload.get('profile',{})).model_dump(exclude_none=True)

@@ -1,3 +1,4 @@
+from conftest import cached_posting_fixture
 import copy
 import json
 import pytest
@@ -13,6 +14,7 @@ from test_comparison_catalog_contract import POSTING,wire
 def case(client,account,monkeypatch):
     monkeypatch.setattr(config,'OPENAI_KEY','fictional-no-network')
     job=client.post('/api/jobs',json={'title':'ML Engineer','description':POSTING}).json()
+    job=cached_posting_fixture(account['id'],job)
     record=client.post('/api/experience',json={'category':'project','title':'Fictional project','gpa':'4.0','description':'Documented a workflow for classmates.','contribution':'I have not trained a model.','confirmed':True}).json()
     return job,record
 

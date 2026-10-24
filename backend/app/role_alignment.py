@@ -8,7 +8,7 @@ VERSION=1
 
 def catalog(job):
     rows=job_parser.organize(job)['sections']['responsibilities']
-    if not rows:
+    if not rows and not job.get('structured_posting'):
         # Unheaded descriptions still contain useful duties. Keep an exact quote;
         # do not promote employer marketing, benefits or generic traits to duties.
         rows=[]

@@ -142,7 +142,7 @@ def require_initial_comparison(user,id):
     analysis=db.get(user,data.get('analysis_id'),'analysis') if data.get('analysis_id') else None
     posting=require(user,data['job_id'],'job')['data']
     checked=(analysis or {}).get('data',{})
-    if not analysis or checked.get('schema_version')!=3 or checked.get('posting_hash')!=job_parser.organize(posting)['text_hash']:
+    if not analysis or checked.get('schema_version')!=3 or checked.get('posting_hash')!=job_parser.posting_hash(posting):
         raise HTTPException(409,'Compare your Profile to this posting first. The comparison reviews saved experience before asking for missing details.')
 
 def empty_preparation(data):
@@ -192,7 +192,7 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
 
     if not manual and data.get('analysis_id') and not data['profile_dirty']:
         checked=require(user,data['analysis_id'],'analysis')['data'];posting=require(user,data['job_id'],'job')['data']
-        if checked.get('schema_version')!=3 or checked.get('posting_hash')!=job_parser.organize(posting)['text_hash']:raise HTTPException(409,'Rerun the comparison for this posting before building an AI revision. The previous draft remains available.')
+        if checked.get('schema_version')!=3 or checked.get('posting_hash')!=job_parser.posting_hash(posting):raise HTTPException(409,'Rerun the comparison for this posting before building an AI revision. The previous draft remains available.')
     if feedback is None and data.get('pending_feedback'):feedback=data['pending_feedback']
     token=db.uid();record=begin(user,id,version,token,preparation=prepared.model_dump() if prepared else None);version=record['data']['version'];data=record['data']
     current=require(user,data['current_revision_id'],'resume_revision')['data'] if data.get('current_revision_id') else None
@@ -435,7 +435,7 @@ def adopt(user,id,body):
     if draft['job_id']!=data['job_id']:raise HTTPException(409,'That draft belongs to another posting.')
     snapshot=source(user,data)
     if draft.get('source_fingerprint')!=optimization.fingerprint(snapshot):raise HTTPException(409,'The Profile changed since this historical draft. Its wording remains available, but build a fresh draft to use current sources.')
-    if draft.get('posting_hash')!=job_parser.organize(snapshot['posting_snapshot'])['text_hash']:raise HTTPException(409,'The posting changed since this historical draft. Build a fresh draft for the current posting.')
+    if draft.get('posting_hash')!=job_parser.posting_hash(snapshot['posting_snapshot']):raise HTTPException(409,'The posting changed since this historical draft. Build a fresh draft for the current posting.')
     for section in snapshot['sections']:
         for entry in section['entries']:
             for n,item in enumerate(entry['content_items']):

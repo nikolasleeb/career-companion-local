@@ -144,7 +144,7 @@ def test_invalid_draft_preserves_inputs_no_save(client,account,monkeypatch,kind)
 def test_draft_ownership_and_project_description(client,account,monkeypatch):
     job,rows,body=setup(client,account);calls=mock_model(monkeypatch)
     result=wait_task(client,client.post('/api/resumes/optimize',json=body));draft=result['result']
-    other=TestClient(app,base_url="http://localhost");me=other.post('/api/auth/register',json={'username':'another','password':'another-fictional-password'}).json();other.headers['X-CSRF-Token']=me['csrf']
+    other=TestClient(app,base_url='http://localhost');me=other.post('/api/auth/register',json={'username':'another','password':'another-fictional-password'}).json();other.headers['X-CSRF-Token']=me['csrf']
     onboard_test_account(me)
     assert other.get('/api/resume-drafts/'+draft['id']).status_code==404
     assert other.post('/api/resumes',json={**body,'draft_id':draft['id']}).status_code==400

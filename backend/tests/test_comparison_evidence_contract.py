@@ -1,3 +1,4 @@
+from conftest import cached_posting_fixture
 import copy
 import json
 import pytest
@@ -71,6 +72,7 @@ def test_first_comparison_binds_multiple_professional_passages_once_without_priv
     monkeypatch.setattr(config,'OPENAI_KEY','fictional-fixture-no-network')
     client.put('/api/settings',json={'us_citizen':'yes'})
     job=client.post('/api/jobs',json={'title':'ML Engineer','description':POSTING}).json()
+    job=cached_posting_fixture(account['id'],job)
     record=client.post('/api/experience',json={'category':'project','title':'Fictional project','gpa':'4.0','description':'Prepared the data.\nDocumented the workflow.','contribution':'Presented findings to classmates.\nI have not trained a model.','confirmed':True}).json()
     calls=[]
     async def fake(body):
@@ -103,6 +105,7 @@ def test_first_comparison_binds_multiple_professional_passages_once_without_priv
 def test_invalid_passage_fails_once_keeps_previous_result(client,account,monkeypatch,identity):
     monkeypatch.setattr(config,'OPENAI_KEY','fictional-fixture-no-network')
     job=client.post('/api/jobs',json={'title':'ML Engineer','description':POSTING}).json()
+    job=cached_posting_fixture(account['id'],job)
     record=client.post('/api/experience',json={'category':'project','title':'Fictional','gpa':'4.0','confirmed':True}).json()
     old=db.save(account['id'],'analysis',{'job_id':job['id'],'summary':'Previous result'})
     calls=[]

@@ -15,9 +15,7 @@ from test_app import fixture_analysis
 
 def wait_task(client,response):
     assert response.status_code==200,response.text
-    # Real document conversion takes longer on small CI runners.
-    deadline=time.monotonic()+120
-    while time.monotonic()<deadline:
+    for _ in range(1000):
         task=client.get('/api/tasks/'+response.json()['task_id']).json()
         if task['status'] not in ('queued','running'): return task
         time.sleep(.02)

@@ -30,6 +30,12 @@ def source_resume(user,job_id,resume_id):
     if not linked and data.get('analysis_id'):
         analysis=require(user,data['analysis_id'],'analysis');linked=analysis['data'].get('job_id')
     if linked!=job_id:raise HTTPException(409,'Choose a resume saved for this posting.')
+    if data.get('origin')=='uploaded':
+        from .application_documents import uploaded_original
+        uploaded_original(user,resume)
+        if not data.get('source_reviewed'):raise HTTPException(409,'Review the uploaded resume text before drafting a cover letter.')
+        snapshot={'name':db.settings(user).get('name',''),'headline':'','contact_lines':[],'sections':[],'origin':'uploaded','source_text':data['source_text'],'document_id':data['document_id']}
+        return resume,snapshot,copy.deepcopy(data.get('posting_snapshot') or job['data'])
     snapshot={'name':data.get('name',''),'headline':data.get('headline',''),'contact_lines':data.get('contact_lines',str(data.get('contact','')).splitlines()),'sections':[]}
     for section in data['sections']:
         snapshot['sections'].append({'title':section['title'],'entries':[{k:copy.deepcopy(entry.get(k,'' if k!='bullets' else [])) for k in ('title','organization','dates','location','details','category','bullets')} for entry in section['entries']]})
@@ -44,6 +50,9 @@ def title(snapshot,posting):
 def sources(data):
     """Only employer-visible selected resume content. Never full Profile entry fields."""
     rows=[];snapshot=data['resume_snapshot']
+    if snapshot.get('origin')=='uploaded':
+        for index,text in enumerate(snapshot['source_text'].splitlines()):
+            if text.strip():rows.append({'id':f'resume:uploaded:{index}','label':'Reviewed uploaded resume','text':text.strip()})
     if snapshot.get('headline'):rows.append({'id':'resume:headline','label':'Resume headline','text':snapshot['headline']})
     for si,section in enumerate(snapshot['sections']):
         for ei,entry in enumerate(section['entries']):

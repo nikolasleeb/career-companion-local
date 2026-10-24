@@ -4,9 +4,12 @@ from contextvars import ContextVar
 from . import db
 
 _context=ContextVar('task_progress',default=None)
-KINDS={'resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
-LABELS={'cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
+KINDS={'posting_import','resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
+LABELS={'posting_import':'job posting import','cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
 STAGES={
+    'reading_posting':('Reading job posting','provider'),
+    'comparing_profile':('Comparing with your Profile','provider'),
+    'saving_comparison':('Saving results','local'),
     'starting':('Preparing resume action','local'),
     'provider':('Waiting for AI response','provider'),
     'processing':('Processing the returned response','local'),
@@ -60,4 +63,8 @@ def provider_wait():
 
 def provider_done():
     context=_context.get()
-    if context and context[2]!='resume_guided':stage('processing')
+    if context and context[2]!='resume_guided':
+        with db.connect() as c:
+            row=c.execute('SELECT result FROM tasks WHERE id=? AND user_id=?',(context[1],context[0])).fetchone()
+        progress=json.loads(row['result'] or '{}').get('_task_progress',{}) if row else {}
+        if progress.get('code') not in ('reading_posting','comparing_profile'):stage('processing')
