@@ -11,7 +11,7 @@ function worker({saved={},run=null,context={protocol_version:2,applications:[],r
 }
 const connection={appOrigin:'http://localhost:3100',relayTab:7,pairingId:'pair',secret:'f'.repeat(64),accountId:'account',employerTab:12,employerOrigin:'https://employer.example',runId:'r'.repeat(32)};
 const run={account_id:'account',pairing_id:'pair',id:'r'.repeat(32),state:'paused',version:1,pages:0,writes:0,unresolved:[],documents:[],expires:Date.now()/1000+3600};
-async function idle(w){for(let i=0;i<50;i++){const s=await w.send('state');if(!s.result.busy)return s.result;await new Promise(r=>setImmediate(r));}throw Error('Worker never stopped');}
+async function idle(w){const deadline=Date.now()+5000;while(Date.now()<deadline){const s=await w.send('state');if(!s.result.busy)return s.result;await new Promise(r=>setTimeout(r,10));}throw Error('Worker never stopped');}
 (async()=>{
  const w=worker({saved:{connection},run});const first=await w.send('state');assert.equal(first.result.busy,false);assert(!w.calls.some(c=>['control','scan','create'].includes(c[0])),'Opening popup must never start a run');
  await w.send('selection',{applicationId:'app',resumeId:'resume',coverLetterId:'',fingerprint:'["app"]'});assert.deepEqual(w.memory.selections.account,{applicationId:'app',resumeId:'resume',coverLetterId:'',fingerprint:'["app"]'});
