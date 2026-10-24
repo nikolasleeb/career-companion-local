@@ -204,8 +204,8 @@ img.pdf-preview{height:auto;object-fit:contain;display:block;min-height:0} .cont
 .guided-builder .compact-progress{position:static;margin-bottom:20px}
 @media(max-width:700px){.resume-task-progress{flex-wrap:wrap}.resume-task-progress .task-elapsed{margin-left:0;flex-direction:row;flex-wrap:wrap;gap:6px 20px}.resume-task-progress .status-copy{min-width:0;flex:1 1 190px}}
 /* Shared foreground processing remains visible while reading or answering below. */
-.global-processing.active{position:sticky;top:8px;z-index:40;isolation:isolate;background:var(--paper);border-radius:8px;box-shadow:0 4px 16px #0c234b18;max-height:48vh;overflow:auto}.global-processing .status-banner{margin-bottom:8px}.processing-count{padding:8px 18px 0;margin:0;font-weight:700}.processing-reconnect{margin:0 18px 10px}
-@media(max-width:700px){.global-processing.active{top:4px;max-height:42vh}.global-processing .status-banner.is-working{padding:12px 14px;min-height:70px}.global-processing .task-elapsed{font-size:11px}}
+.global-processing.active{position:sticky;top:0;z-index:100;isolation:isolate;background:var(--paper);border-radius:8px;box-shadow:0 4px 16px #0c234b18;max-height:48vh;overflow:auto}.global-processing .status-banner{position:static;margin:0 0 8px}.processing-recovery{padding:12px 18px;background:#fff6dd;color:#604700;border-left:6px solid #c99315}.processing-recovery p{margin:6px 0}.processing-recovery .card-actions{align-items:center}.processing-recovery a{color:inherit;text-decoration:underline}.processing-count{padding:8px 18px 0;margin:0;font-weight:700}.processing-reconnect{margin:0 18px 10px}
+@media(max-width:700px){.global-processing.active{top:0;max-height:42vh}.global-processing .status-banner.is-working{padding:12px 14px;min-height:70px}.global-processing .task-elapsed{font-size:11px}}
 
 /* One expanded flow chart, followed by chart-only controls and the independent list. */
 .application-chart-display{min-height:280px}.application-flow-scroll{height:280px;max-width:100%;overflow-x:auto;overflow-y:hidden}

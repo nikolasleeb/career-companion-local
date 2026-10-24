@@ -15,9 +15,9 @@ test('local work never claims AI is thinking and legacy tasks have an honest fal
  assert.match(progressView({...task,progress:{...task.progress,kind:'local',label:'Rendering and inspecting the PDF'}},Date.now()).detail,/Processing locally/);
  const legacy=progressView({status:'running',created_at:start},Date.now());assert.equal(legacy.label,'Resume action running');assert.equal(legacy.stage,null);assert.match(legacy.detail,/Checking saved task status/);
 });
-test('unknown connection freezes last-known stage timing while total wait continues',()=>{
+test('unknown connection freezes both clocks at the last confirmed update',()=>{
  const v=progressView({...task,connection_lost:true,checked_at:'2026-10-22T17:45:24Z'},Date.parse('2026-10-22T17:48:40Z'));
- assert.equal(v.running,false);assert.equal(v.unknown,true);assert.equal(v.label,'Status connection lost');assert.equal(v.stage,'1:00');assert.equal(v.total,'7:00');assert.match(v.detail,/may still be running/);
+ assert.equal(v.running,false);assert.equal(v.unknown,true);assert.equal(v.label,'Status connection lost');assert.equal(v.stage,'1:00');assert.equal(v.total,'3:44');assert.deepEqual(progressView({...task,connection_lost:true,checked_at:'2026-10-22T17:45:24Z'},Date.parse('2026-10-22T18:48:40Z')),v);assert.match(v.detail,/may still be running/);
 });
 test('completed and failed tasks stop clocks at server completion',()=>{
  for(const status of ['completed','failed','interrupted']){

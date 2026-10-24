@@ -8,7 +8,7 @@ const immediate=async()=>{};
 const storage=()=>{const rows=new Map();return {getItem:k=>rows.get(k)||null,setItem:(k,v)=>rows.set(k,v),removeItem:k=>rows.delete(k)};};
 test('network error gives a useful message without echoing fetch internals',async()=>{
  const original=globalThis.fetch;globalThis.fetch=async()=>{throw Error('Load failed PRIVATE');};
- try{await assert.rejects(()=>requestJSON('/analyses','POST',{},'csrf'),e=>e instanceof ApiError&&e.transient&&!e.message.includes('PRIVATE')&&e.message.includes('local app'));}finally{globalThis.fetch=original;}
+ try{await assert.rejects(()=>requestJSON('/analyses','POST',{},'csrf'),e=>e instanceof ApiError&&e.transient&&!e.message.includes('PRIVATE')&&e.message.includes('app'));}finally{globalThis.fetch=original;}
 });
 test('HTTP and malformed JSON errors retain status',async()=>{
  const original=globalThis.fetch;
@@ -80,4 +80,10 @@ test('transient disconnection reports unknown status and successful polling reco
  const updates=[];let n=0;
  await pollTask('t',async()=>{n++;if(n===2)throw new ApiError('offline');return n===1?{status:'running',progress:{label:'Checking claims'}}:{status:'completed',result:{}};},immediate,5,v=>updates.push(v));
  assert.equal(updates[1].connection_lost,true);assert.equal(updates[1].progress.label,'Checking claims');assert.equal(updates[2].connection_lost,false);
+});
+
+test('AJAX authentication failures remain actionable even when the gateway returns HTML',async()=>{
+ const original=globalThis.fetch;let attempts=0;
+ globalThis.fetch=async(url,options)=>{attempts++;assert.equal(options.headers['X-Requested-With'],'XMLHttpRequest');assert.equal(options.credentials,'same-origin');return new Response('<html>Sign in</html>',{status:401});};
+ try{await assert.rejects(()=>requestJSON('/tasks/active'),e=>e.status===401&&!e.transient&&e.message.includes('Keep this tab open'));assert.equal(attempts,1);}finally{globalThis.fetch=original;}
 });

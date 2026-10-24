@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import ts from 'typescript';
 const code=ts.transpileModule(readFileSync(new URL('../src/processing.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
-const {ProcessingStore,actionLabel}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+const {ProcessingStore,actionLabel,processingGroups}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
 const task=(id,status='running')=>({id,status,kind:'cover_letter',created_at:'2026-10-22T12:00:00Z'});
 test('Review answers is visible before start response and remains visible through task completion',async()=>{
@@ -48,4 +48,13 @@ test('lost start response remains unknown until GET recovery; no dispatch is rep
 test('rejected requests clear sending state and owner changes ignore old completions',async()=>{
  const store=new ProcessingStore();await assert.rejects(store.request('/cover-workspaces/c/message','POST',async()=>{throw Object.assign(new Error('conflict'),{status:409});}));assert.equal(store.snapshot().length,0);
  store.setOwner('one');const d=deferred(),request=store.request('/analyses','POST',()=>d.promise);store.setOwner('two');d.resolve({task_id:'private-old-task'});await request;assert.equal(store.snapshot().length,0);
+});
+
+test('uncertain writes are separated from active work and cleared by read-only recovery',async()=>{
+ const store=new ProcessingStore();let posts=0;
+ for(let n=0;n<2;n++)await assert.rejects(store.request('/resume-conversations/r/messages','POST',async()=>{posts++;throw new Error('offline');}));
+ const lost=store.snapshot();assert.equal(processingGroups(lost).confirmed.length,0);assert.equal(processingGroups(lost).uncertain.length,2);assert.ok(lost.every(v=>v.checked_at));
+ store.disconnected();assert.deepEqual(store.snapshot().map(v=>v.checked_at),lost.map(v=>v.checked_at));
+ store.update(task('real'));assert.equal(processingGroups(store.snapshot()).confirmed.length,1);
+ store.reconcile([],store.serial);assert.equal(store.snapshot().length,0);assert.equal(posts,2);
 });

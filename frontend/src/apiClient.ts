@@ -4,17 +4,18 @@ export class ApiError extends Error{
 }
 
 export async function requestJSON(path:string,method='GET',body?:unknown,csrf=''){
- const headers:Record<string,string>={};
+ const headers:Record<string,string>={'X-Requested-With':'XMLHttpRequest'};
  if(method!=='GET')headers['X-CSRF-Token']=csrf;
  if(body!==undefined&&!(body instanceof FormData))headers['Content-Type']='application/json';
  let response:Response;
  try{response=await fetch('/api'+path,{method,headers,credentials:'same-origin',body:body===undefined?undefined:body instanceof FormData?body:JSON.stringify(body)});}
- catch{throw new ApiError('The connection to your local app was interrupted. Your saved inputs remain available. Check the connection and try again.');}
+ catch{throw new ApiError('The connection to the app was interrupted. Your saved inputs remain available. Check the connection and try again.');}
+ if(response.status===401&&path!=='/auth/login')throw new ApiError('Your session expired. Sign in in a new tab, then check saved status here. Keep this tab open to preserve unsent changes.',401);
  if(response.status===204)return null;
  let data:any;
- try{data=await response.json();}catch{throw new ApiError('The local app returned an unreadable response. Your saved inputs remain available. Try checking the status again.',response.ok?502:response.status);}
+ try{data=await response.json();}catch{throw new ApiError('The app returned an unreadable response. Your saved inputs remain available. Try checking the status again.',response.ok?502:response.status);}
  if(!response.ok){
-  const fallback=response.status===401?'Your session expired. Sign in again to continue with your saved work.':response.status===403?'This action was not authorized. Sign in again before retrying.':response.status===409?'This information changed while you were working. Check the latest saved version before retrying.':response.status>=500?'Your local app could not complete the request. Your saved inputs remain available; try again shortly.':'The request could not finish. Check your inputs and try again.';
+  const fallback=response.status===401?'Your session expired. Sign in again to continue with your saved work.':response.status===403?'This action was not authorized. Sign in again before retrying.':response.status===409?'This information changed while you were working. Check the latest saved version before retrying.':response.status>=500?'The app could not complete the request. Your saved inputs remain available; try again shortly.':'The request could not finish. Check your inputs and try again.';
   throw new ApiError(typeof data?.detail==='string'?data.detail:fallback,response.status);
  }
  return data;

@@ -18,6 +18,9 @@ export function actionLabel(path:string){
  if(path==='/jobs/search')return 'Searching job sources';
  return 'Processing your request';
 }
+export function processingGroups(entries:ProcessingEntry[]){
+ return {confirmed:entries.filter(v=>!v.connection_lost&&v.status!=='unknown'),uncertain:entries.filter(v=>v.connection_lost||v.status==='unknown')};
+}
 export class ProcessingStore{
  owner='';epoch=0;serial=0;records=new Map<string,ProcessingEntry>();listeners=new Set<()=>void>();failure='';
  subscribe=(fn:()=>void)=>{this.listeners.add(fn);return()=>{this.listeners.delete(fn);};};
@@ -37,7 +40,7 @@ export class ProcessingStore{
   for(const value of values)this.records.set(value.id,{...this.records.get(value.id),...value,serial:++this.serial,checked_at:new Date().toISOString(),connection_lost:false});
   this.emit();
  }
- disconnected(){for(const [id,value] of this.records)if(!value.request||value.settled)this.records.set(id,{...value,connection_lost:true,status:'unknown'});this.emit();}
+ disconnected(){for(const [id,value] of this.records)if(!value.request||value.settled)this.records.set(id,{...value,connection_lost:true,status:'unknown',checked_at:value.checked_at||new Date().toISOString()});this.emit();}
  async request(path:string,method:string,call:()=>Promise<any>){
   const epoch=this.epoch,write=method!=='GET'&&method!=='HEAD',id='request:'+String(++this.serial),stamp=new Date().toISOString();
   if(write){this.records.set(id,{id,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
@@ -52,7 +55,7 @@ export class ProcessingStore{
    if(epoch===this.epoch){
     if(write){
      const status=(error as any)?.status||0;
-     if(!status||status>=500){const old=this.records.get(id);if(old)this.records.set(id,{...old,status:'unknown',connection_lost:true,settled:true,serial:++this.serial});}
+     if(!status||status>=500){const old=this.records.get(id);if(old)this.records.set(id,{...old,status:'unknown',connection_lost:true,checked_at:new Date().toISOString(),settled:true,serial:++this.serial});}
      else this.records.delete(id);
      this.emit();
     }
