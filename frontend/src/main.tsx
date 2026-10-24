@@ -23,6 +23,7 @@ import {setupView,restoredSetup} from './setupFlow';
 import {CostHistory} from './CostHistory';
 import {StatusBanner} from './StatusBanner';
 import {GlobalProcessing} from './GlobalProcessing';
+import {ResumePreview as ResumePDFPreview} from './ResumePreview';
 import {processing} from './processing';
 import {TaskStatus} from './taskProgress';
 import {ProfileProjectRequest,projectLinks,projectMaterialsStatus} from './projectFlow';
@@ -615,7 +616,7 @@ function GuidedResumeBuilder({analysis,decisions,onRestoreDecisions,onKeywords,o
  <div className="working-preview"><div className="section-header"><h3>{taskStatus&&busy?taskStatus.connection_lost||taskStatus.status==='unknown'?'Task status unavailable':taskStatus.progress?.label||'Resume action running':failed?'Could not update':updating?'Updating preview':overflow?'Needs shortening':current?'Current draft':'Your first draft will appear here'}</h3>{current&&<small>Revision {session.data.revision_ids.indexOf(current.id)+1}</small>}</div>
 
  {current&&<>{updating&&<p role="status">The PDF below is the previous successful preview while your changes render. Saving is disabled.</p>}{failed&&<p>The PDF below is the previous successful preview; it does not reflect the failed changes.</p>}
- {Array.from({length:snapshot.layout.pages},(_,i)=><img className={'pdf-preview '+(updating||failed?'preview-previous':'')} alt={'Working resume PDF, page '+(i+1)} src={'/api/resume-revisions/'+current.id+'/pages/'+(i+1)} key={current.id+':'+i}/>)}
+ <ResumePDFPreview revision={current.id} pages={snapshot.layout.pages} previous={updating||failed}/>
 
  </>}
  {!current&&<div className="empty-card compact">{needsClarification?'Review the questions above, then choose Build first draft.':'Choose Build first draft to create your resume.'} The generated PDF will appear here before you save.</div>}

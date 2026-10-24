@@ -1,11 +1,10 @@
-# Career Companion Local 1.0.2
+# Career Companion Local 1.0.3
 
-Connection recovery and progress feedback improvements:
+Resume preview zoom:
 
-- Keep one red, white and blue progress area at the top while scrolling on desktop and mobile.
-- Separate confirmed active work from unconfirmed requests; combine connection-loss warnings and remove duplicate resume timers.
-- Stop disconnected clocks at the last confirmed update.
-- Recognize sign-in failures before parsing JSON, offer sign-in in a separate tab, and check saved status without repeating an AI request.
-- Preserve unsent draft text during recovery.
+- Start at Fit page for a smaller full-page preview on large monitors.
+- Zoom in or out, view at 100%, or choose Fit width.
+- Scroll inside the preview when enlarged, with keyboard-accessible controls and a visible zoom percentage.
+- Zoom changes only the on-screen view. Saved content, PDF layout, and downloads stay the same.
 
-Localhost restrictions and account-owned API keys remain in place. Save unsent work and back up both data volumes before updating.
+Includes the connection recovery and sticky progress improvements from 1.0.2. Save unsent work and back up both data volumes before updating.
