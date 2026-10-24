@@ -1,0 +1,251 @@
+[
+  {
+    "id": "guide_evidence",
+    "title": "Describe your own contribution",
+    "url": "https://www.careeronestop.org/JobSearch/Resumes/ResumeGuide/work-experience.aspx",
+    "text": "App guidance: choose relevant work and explain your own tasks and accomplishments. Separate coursework, team outcomes, and individual contributions. Use only results and numbers you can substantiate. Ask for missing context instead of supplying it.",
+    "attribution": "Career Companion editorial guidance informed by CareerOneStop Resume Guide; not a quotation.",
+    "publisher": "CareerOneStop",
+    "topic": "resume",
+    "reviewed_at": "2026-10-21",
+    "context": "General guidance; Career Companion employer resume exports use one page.",
+    "checklist": [],
+    "example": null
+  },
+  {
+    "id": "guide_format",
+    "title": "Keep the resume easy to read",
+    "url": "https://www.careeronestop.org/JobSearch/Resumes/ResumeGuide/formatting.aspx",
+    "text": "App guidance: use a simple single-column layout, standard section headings, consistent spacing, and readable type. Keep important contact information in the document body. Choose a format that makes relevant experience easy to find. Formatting cannot guarantee an ATS or hiring outcome.",
+    "attribution": "Career Companion editorial guidance informed by CareerOneStop formatting guidance and Greenhouse parsing guidance; not a quotation.",
+    "publisher": "CareerOneStop",
+    "topic": "formatting",
+    "reviewed_at": "2026-10-21",
+    "context": "General guidance; Career Companion employer resume exports use one page.",
+    "checklist": [],
+    "example": null
+  },
+  {
+    "id": "guide_ats",
+    "title": "Check what the parser can read",
+    "url": "https://support.greenhouse.io/hc/en-us/articles/200989175-Unsuccessful-resume-parse",
+    "text": "App guidance: complex tables, columns, images, and contact details in headers or text boxes can be difficult for some parsers. Review extracted text and the actual document. A text overlap count is not an ATS score.",
+    "attribution": "Career Companion editorial guidance informed by Greenhouse Support; not a quotation.",
+    "publisher": "Greenhouse",
+    "topic": "formatting",
+    "reviewed_at": "2026-10-21",
+    "context": "General guidance; Career Companion employer resume exports use one page.",
+    "checklist": [],
+    "example": null
+  },
+  {
+    "id": "guide_master",
+    "title": "Tailor from a detailed master record",
+    "url": "https://www.careeronestop.org/Veterans/JobSearch/ResumesAndApplications/target-your-resume.aspx",
+    "text": "App guidance: keep a detailed master record of your experience and select relevant evidence for each opportunity. Reword confirmed information for clarity. Do not treat a desired job qualification as evidence that you have it.",
+    "attribution": "Career Companion editorial guidance informed by CareerOneStop targeting guidance; not a quotation.",
+    "publisher": "CareerOneStop",
+    "topic": "resume",
+    "reviewed_at": "2026-10-21",
+    "context": "General guidance; Career Companion employer resume exports use one page.",
+    "checklist": [],
+    "example": null
+  },
+  {
+    "id": "guide_harvard_resume",
+    "title": "Make relevant evidence easy to find",
+    "topic": "resume",
+    "publisher": "Harvard Mignone Center",
+    "url": "https://careerservices.fas.harvard.edu/resources/hes-create-impactful-resumes-and-cover-letters/",
+    "text": "Tailor the resume to the employer’s priorities. Prefer specific, active, factual statements that make useful experience easy to scan.",
+    "attribution": "Career Companion editorial summary informed by Harvard Mignone Center; not a quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Adapt to the position and employer instructions.",
+    "checklist": [
+      "Choose evidence for this posting.",
+      "Start with a precise action.",
+      "Keep facts and individual contributions accurate."
+    ],
+    "example": null
+  },
+  {
+    "id": "guide_ua_skills",
+    "title": "Show communication and teamwork through actions",
+    "topic": "resume",
+    "publisher": "University of Arizona · Eller",
+    "url": "https://eller.arizona.edu/programs/undergraduate/professional-development/career-preparation/resume-cover-letter",
+    "text": "Name actual technical tools when relevant. Demonstrate interpersonal skills through what you did, rather than relying on a list of adjectives.",
+    "attribution": "Career Companion editorial summary informed by University of Arizona · Eller; not a quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Eller guidance is written for undergraduate business students; apply its broader principles to your own field.",
+    "checklist": [
+      "Name the tool or method used.",
+      "Describe your own action and audience.",
+      "Separate team results from your contribution."
+    ],
+    "example": null
+  },
+  {
+    "id": "guide_harvard_motivation",
+    "title": "Explain why this particular opportunity",
+    "topic": "cover",
+    "publisher": "Harvard Mignone Center",
+    "url": "https://careerservices.fas.harvard.edu/resources/hes-create-impactful-resumes-and-cover-letters/",
+    "text": "Connect genuine motivation to a specific feature of the role or organization. Ask the applicant what interests them; do not invent enthusiasm or unsupported company claims.",
+    "attribution": "Career Companion editorial summary informed by Harvard Mignone Center; not a quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Adapt to the position and employer instructions.",
+    "checklist": [
+      "Identify a specific aspect of the posting.",
+      "Explain why it interests you.",
+      "Connect that interest to a useful contribution."
+    ],
+    "example": null
+  },
+  {
+    "id": "guide_ua_story",
+    "title": "Tell the story behind one or two examples",
+    "topic": "cover",
+    "publisher": "University of Arizona · Eller",
+    "url": "https://eller.arizona.edu/programs/undergraduate/professional-development/career-preparation/resume-cover-letter",
+    "text": "A cover letter should develop useful examples and connect them to the employer’s needs. Add context, decisions or lessons instead of retelling every resume bullet.",
+    "attribution": "Career Companion editorial summary informed by University of Arizona · Eller; not a quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Eller-specific formatting preferences are not mandatory for other programs or employers.",
+    "checklist": [
+      "Choose one or two relevant examples.",
+      "Explain a challenge or decision.",
+      "Show what you could contribute, using supported facts."
+    ],
+    "example": null
+  },
+  {
+    "id": "guide_cos_letter",
+    "title": "Build a concise, purposeful letter",
+    "topic": "cover",
+    "publisher": "CareerOneStop",
+    "url": "https://cloudfront.careeronestop.org/JobSearch/Resumes/cover-letters.aspx",
+    "text": "A tailored cover letter can introduce your interest, develop relevant highlights and close professionally. A short, useful letter is better than repetition added to reach a length target.",
+    "attribution": "Career Companion editorial summary informed by CareerOneStop; not a quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Adapt to the position and employer instructions.",
+    "checklist": [
+      "Open with your reason for writing.",
+      "Develop relevant evidence.",
+      "Close with appreciation and interest in a conversation."
+    ],
+    "example": null
+  },
+  {
+    "id": "guide_harvard_voice",
+    "title": "Keep your own voice and factual limits",
+    "topic": "cover",
+    "publisher": "Harvard Mignone Center",
+    "url": "https://careerservices.fas.harvard.edu/resources/hes-create-impactful-resumes-and-cover-letters/",
+    "text": "Use AI to organize and edit your own material. Review wording so it reflects your experience and voice. Avoid generic praise, exaggerated claims and invented metrics.",
+    "attribution": "Career Companion editorial summary informed by Harvard Mignone Center; not a quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Adapt to the position and employer instructions.",
+    "checklist": [
+      "Read the draft aloud.",
+      "Replace vague praise with a specific connection.",
+      "Check every factual statement."
+    ],
+    "example": null
+  },
+  {
+    "id": "guide_ua_readability",
+    "title": "Balance readable text and white space",
+    "topic": "formatting",
+    "publisher": "University of Arizona · Eller",
+    "url": "https://eller.arizona.edu/programs/undergraduate/professional-development/career-preparation/resume-cover-letter",
+    "text": "Use consistent paragraph breaks, margins and readable type. Institution-specific font and address preferences are examples of conventions, not universal hiring requirements.",
+    "attribution": "Career Companion editorial summary informed by University of Arizona · Eller; not a quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Career Companion uses its own readable one-column layout and one-page export policy; the app’s two-thirds-page target is not a universal rule.",
+    "checklist": [
+      "Keep paragraphs visually distinct.",
+      "Check headers and links.",
+      "Inspect the exported PDF, not only the editor."
+    ],
+    "example": null
+  },
+  {
+    "id": "guide_harvard_proofread",
+    "title": "Review the exported document",
+    "topic": "formatting",
+    "publisher": "Harvard Mignone Center",
+    "url": "https://careerservices.fas.harvard.edu/resources/hes-create-impactful-resumes-and-cover-letters/",
+    "text": "Proofread names, dates, spelling and organization-specific references. Check that PDF conversion preserves the intended layout.",
+    "attribution": "Career Companion editorial summary informed by Harvard Mignone Center; not a quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Adapt to the position and employer instructions.",
+    "checklist": [
+      "Check the employer and position name.",
+      "Check tense, dates and quantities.",
+      "Inspect wrapping, spacing and all exported pages."
+    ],
+    "example": null
+  },
+  {
+    "id": "guide_mit_examples",
+    "title": "Learn from examples without copying the applicant",
+    "topic": "examples",
+    "publisher": "MIT CAPD",
+    "url": "https://capd.mit.edu/resources/sample-resumes/",
+    "text": "Browse official sample resumes and cover letters across experience levels. Use them to study organization and presentation, not as a source of claims about your experience.",
+    "attribution": "Career Companion editorial summary informed by MIT CAPD; not a quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Examples may target different fields and experience levels. Follow the employer’s instructions; do not assume every sample must fit this app’s layout.",
+    "checklist": [
+      "Choose an example with a useful structure.",
+      "Identify what makes it readable.",
+      "Write your own content from your evidence."
+    ],
+    "example": null
+  },
+  {
+    "id": "guide_resume_example",
+    "title": "From a vague task to a specific contribution",
+    "topic": "examples",
+    "publisher": "Career Companion · informed by Harvard and U of A",
+    "url": "https://eller.arizona.edu/programs/undergraduate/professional-development/career-preparation/resume-cover-letter",
+    "text": "A useful bullet adds a specific action and audience without manufacturing a result. Both versions below use the same fictional facts.",
+    "attribution": "Original Career Companion teaching example illustrating principles from the linked career guide; not a source quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Adapt to the position and employer instructions.",
+    "checklist": [
+      "Identify the action.",
+      "Include useful context.",
+      "Keep the outcome within the evidence."
+    ],
+    "example": {
+      "label": "Fictional teaching example · not applicant evidence",
+      "before": "Helped with data and presentations.",
+      "after": "Used SQL to summarize service-request categories and presented the findings to classmates.",
+      "facts": "The fictional student used SQL, summarized service-request categories and presented the findings to classmates. No business impact was measured."
+    }
+  },
+  {
+    "id": "guide_letter_example",
+    "title": "Add context instead of copying a bullet",
+    "topic": "examples",
+    "publisher": "Career Companion · informed by Harvard and U of A",
+    "url": "https://careerservices.fas.harvard.edu/resources/hes-create-impactful-resumes-and-cover-letters/",
+    "text": "A letter can explain a decision and its relevance. The extra context in this example would need to come from the applicant, not an AI guess.",
+    "attribution": "Original Career Companion teaching example illustrating principles from the linked career guide; not a source quotation or endorsement.",
+    "reviewed_at": "2026-10-21",
+    "context": "Adapt to the position and employer instructions.",
+    "checklist": [
+      "Ask what made the work difficult.",
+      "Explain an individual decision.",
+      "Connect the example to the role."
+    ],
+    "example": {
+      "label": "Fictional teaching example · not applicant evidence",
+      "before": "My resume shows that I made a dashboard.",
+      "after": "When classmates found the first dashboard difficult to follow, I reorganized it around their main question. That experience showed me why explaining an analysis is part of the analytical work itself.",
+      "facts": "In this fictional example, the applicant confirmed that classmates found the dashboard difficult to follow and that they personally reorganized it around the main question."
+    }
+  }
+]

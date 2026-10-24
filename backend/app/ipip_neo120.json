@@ -1,0 +1,785 @@
+{
+  "source_url": "https://ipip.ori.org/30FacetNEO-PI-RItems.htm",
+  "facets": [
+    {
+      "id": "N1",
+      "name": "Anxiety",
+      "items": [
+        {
+          "id": "N1-1",
+          "text": "Worry about things.",
+          "positive": true
+        },
+        {
+          "id": "N1-2",
+          "text": "Fear for the worst.",
+          "positive": true
+        },
+        {
+          "id": "N1-3",
+          "text": "Am afraid of many things.",
+          "positive": true
+        },
+        {
+          "id": "N1-4",
+          "text": "Get stressed out easily.",
+          "positive": true
+        }
+      ]
+    },
+    {
+      "id": "N2",
+      "name": "Anger",
+      "items": [
+        {
+          "id": "N2-1",
+          "text": "Get angry easily.",
+          "positive": true
+        },
+        {
+          "id": "N2-2",
+          "text": "Get irritated easily.",
+          "positive": true
+        },
+        {
+          "id": "N2-3",
+          "text": "Lose my temper.",
+          "positive": true
+        },
+        {
+          "id": "N2-4",
+          "text": "Am not easily annoyed.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "N3",
+      "name": "Depression",
+      "items": [
+        {
+          "id": "N3-1",
+          "text": "Often feel blue.",
+          "positive": true
+        },
+        {
+          "id": "N3-2",
+          "text": "Dislike myself.",
+          "positive": true
+        },
+        {
+          "id": "N3-3",
+          "text": "Am often down in the dumps.",
+          "positive": true
+        },
+        {
+          "id": "N3-4",
+          "text": "Feel comfortable with myself.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "N4",
+      "name": "Self-Consciousness",
+      "items": [
+        {
+          "id": "N4-1",
+          "text": "Find it difficult to approach others.",
+          "positive": true
+        },
+        {
+          "id": "N4-2",
+          "text": "Am afraid to draw attention to myself.",
+          "positive": true
+        },
+        {
+          "id": "N4-3",
+          "text": "Only feel comfortable with friends.",
+          "positive": true
+        },
+        {
+          "id": "N4-4",
+          "text": "Am not bothered by difficult social situations.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "N5",
+      "name": "Immoderation",
+      "items": [
+        {
+          "id": "N5-1",
+          "text": "Go on binges.",
+          "positive": true
+        },
+        {
+          "id": "N5-2",
+          "text": "Rarely overindulge.",
+          "positive": false
+        },
+        {
+          "id": "N5-3",
+          "text": "Easily resist temptations.",
+          "positive": false
+        },
+        {
+          "id": "N5-4",
+          "text": "Am able to control my cravings.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "N6",
+      "name": "Vulnerability",
+      "items": [
+        {
+          "id": "N6-1",
+          "text": "Panic easily.",
+          "positive": true
+        },
+        {
+          "id": "N6-2",
+          "text": "Become overwhelmed by events.",
+          "positive": true
+        },
+        {
+          "id": "N6-3",
+          "text": "Feel that I'm unable to deal with things.",
+          "positive": true
+        },
+        {
+          "id": "N6-4",
+          "text": "Remain calm under pressure.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "E1",
+      "name": "Friendliness",
+      "items": [
+        {
+          "id": "E1-1",
+          "text": "Make friends easily.",
+          "positive": true
+        },
+        {
+          "id": "E1-2",
+          "text": "Feel comfortable around people.",
+          "positive": true
+        },
+        {
+          "id": "E1-3",
+          "text": "Avoid contacts with others.",
+          "positive": false
+        },
+        {
+          "id": "E1-4",
+          "text": "Keep others at a distance.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "E2",
+      "name": "Gregariousness",
+      "items": [
+        {
+          "id": "E2-1",
+          "text": "Love large parties.",
+          "positive": true
+        },
+        {
+          "id": "E2-2",
+          "text": "Talk to a lot of different people at parties.",
+          "positive": true
+        },
+        {
+          "id": "E2-3",
+          "text": "Prefer to be alone.",
+          "positive": false
+        },
+        {
+          "id": "E2-4",
+          "text": "Avoid crowds.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "E3",
+      "name": "Assertiveness",
+      "items": [
+        {
+          "id": "E3-1",
+          "text": "Take charge.",
+          "positive": true
+        },
+        {
+          "id": "E3-2",
+          "text": "Try to lead others.",
+          "positive": true
+        },
+        {
+          "id": "E3-3",
+          "text": "Take control of things.",
+          "positive": true
+        },
+        {
+          "id": "E3-4",
+          "text": "Wait for others to lead the way.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "E4",
+      "name": "Activity Level",
+      "items": [
+        {
+          "id": "E4-1",
+          "text": "Am always busy.",
+          "positive": true
+        },
+        {
+          "id": "E4-2",
+          "text": "Am always on the go.",
+          "positive": true
+        },
+        {
+          "id": "E4-3",
+          "text": "Do a lot in my spare time.",
+          "positive": true
+        },
+        {
+          "id": "E4-4",
+          "text": "Like to take it easy.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "E5",
+      "name": "Excitement-Seeking",
+      "items": [
+        {
+          "id": "E5-1",
+          "text": "Love excitement.",
+          "positive": true
+        },
+        {
+          "id": "E5-2",
+          "text": "Seek adventure.",
+          "positive": true
+        },
+        {
+          "id": "E5-3",
+          "text": "Enjoy being reckless.",
+          "positive": true
+        },
+        {
+          "id": "E5-4",
+          "text": "Act wild and crazy.",
+          "positive": true
+        }
+      ]
+    },
+    {
+      "id": "E6",
+      "name": "Cheerfulness",
+      "items": [
+        {
+          "id": "E6-1",
+          "text": "Radiate joy.",
+          "positive": true
+        },
+        {
+          "id": "E6-2",
+          "text": "Have a lot of fun.",
+          "positive": true
+        },
+        {
+          "id": "E6-3",
+          "text": "Love life.",
+          "positive": true
+        },
+        {
+          "id": "E6-4",
+          "text": "Look at the bright side of life.",
+          "positive": true
+        }
+      ]
+    },
+    {
+      "id": "O1",
+      "name": "Imagination",
+      "items": [
+        {
+          "id": "O1-1",
+          "text": "Have a vivid imagination.",
+          "positive": true
+        },
+        {
+          "id": "O1-2",
+          "text": "Enjoy wild flights of fantasy.",
+          "positive": true
+        },
+        {
+          "id": "O1-3",
+          "text": "Love to daydream.",
+          "positive": true
+        },
+        {
+          "id": "O1-4",
+          "text": "Like to get lost in thought.",
+          "positive": true
+        }
+      ]
+    },
+    {
+      "id": "O2",
+      "name": "Artistic Interests",
+      "items": [
+        {
+          "id": "O2-1",
+          "text": "Believe in the importance of art.",
+          "positive": true
+        },
+        {
+          "id": "O2-2",
+          "text": "See beauty in things that others might not notice.",
+          "positive": true
+        },
+        {
+          "id": "O2-3",
+          "text": "Do not like poetry.",
+          "positive": false
+        },
+        {
+          "id": "O2-4",
+          "text": "Do not enjoy going to art museums.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "O3",
+      "name": "Emotionality",
+      "items": [
+        {
+          "id": "O3-1",
+          "text": "Experience my emotions intensely.",
+          "positive": true
+        },
+        {
+          "id": "O3-2",
+          "text": "Feel others' emotions.",
+          "positive": true
+        },
+        {
+          "id": "O3-3",
+          "text": "Rarely notice my emotional reactions.",
+          "positive": false
+        },
+        {
+          "id": "O3-4",
+          "text": "Don't understand people who get emotional.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "O4",
+      "name": "Adventurousness",
+      "items": [
+        {
+          "id": "O4-1",
+          "text": "Prefer variety to routine.",
+          "positive": true
+        },
+        {
+          "id": "O4-2",
+          "text": "Prefer to stick with things that I know.",
+          "positive": false
+        },
+        {
+          "id": "O4-3",
+          "text": "Dislike changes.",
+          "positive": false
+        },
+        {
+          "id": "O4-4",
+          "text": "Am attached to conventional ways.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "O5",
+      "name": "Intellect",
+      "items": [
+        {
+          "id": "O5-1",
+          "text": "Love to read challenging material.",
+          "positive": true
+        },
+        {
+          "id": "O5-2",
+          "text": "Avoid philosophical discussions.",
+          "positive": false
+        },
+        {
+          "id": "O5-3",
+          "text": "Have difficulty understanding abstract ideas.",
+          "positive": false
+        },
+        {
+          "id": "O5-4",
+          "text": "Am not interested in theoretical discussions.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "O6",
+      "name": "Liberalism",
+      "items": [
+        {
+          "id": "O6-1",
+          "text": "Tend to vote for liberal political candidates.",
+          "positive": true
+        },
+        {
+          "id": "O6-2",
+          "text": "Believe that there is no absolute right and wrong.",
+          "positive": true
+        },
+        {
+          "id": "O6-3",
+          "text": "Tend to vote for conservative political candidates.",
+          "positive": false
+        },
+        {
+          "id": "O6-4",
+          "text": "Believe that we should be tough on crime.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "A1",
+      "name": "Trust",
+      "items": [
+        {
+          "id": "A1-1",
+          "text": "Trust others.",
+          "positive": true
+        },
+        {
+          "id": "A1-2",
+          "text": "Believe that others have good intentions.",
+          "positive": true
+        },
+        {
+          "id": "A1-3",
+          "text": "Trust what people say.",
+          "positive": true
+        },
+        {
+          "id": "A1-4",
+          "text": "Distrust people.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "A2",
+      "name": "Morality",
+      "items": [
+        {
+          "id": "A2-1",
+          "text": "Use others for my own ends.",
+          "positive": false
+        },
+        {
+          "id": "A2-2",
+          "text": "Cheat to get ahead.",
+          "positive": false
+        },
+        {
+          "id": "A2-3",
+          "text": "Take advantage of others.",
+          "positive": false
+        },
+        {
+          "id": "A2-4",
+          "text": "Obstruct others' plans.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "A3",
+      "name": "Altruism",
+      "items": [
+        {
+          "id": "A3-1",
+          "text": "Am concerned about others.",
+          "positive": true
+        },
+        {
+          "id": "A3-2",
+          "text": "Love to help others.",
+          "positive": true
+        },
+        {
+          "id": "A3-3",
+          "text": "Am indifferent to the feelings of others.",
+          "positive": false
+        },
+        {
+          "id": "A3-4",
+          "text": "Take no time for others.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "A4",
+      "name": "Cooperation",
+      "items": [
+        {
+          "id": "A4-1",
+          "text": "Love a good fight.",
+          "positive": false
+        },
+        {
+          "id": "A4-2",
+          "text": "Yell at people.",
+          "positive": false
+        },
+        {
+          "id": "A4-3",
+          "text": "Insult people.",
+          "positive": false
+        },
+        {
+          "id": "A4-4",
+          "text": "Get back at others.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "A5",
+      "name": "Modesty",
+      "items": [
+        {
+          "id": "A5-1",
+          "text": "Believe that I am better than others.",
+          "positive": false
+        },
+        {
+          "id": "A5-2",
+          "text": "Think highly of myself.",
+          "positive": false
+        },
+        {
+          "id": "A5-3",
+          "text": "Have a high opinion of myself.",
+          "positive": false
+        },
+        {
+          "id": "A5-4",
+          "text": "Boast about my virtues.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "A6",
+      "name": "Sympathy",
+      "items": [
+        {
+          "id": "A6-1",
+          "text": "Sympathize with the homeless.",
+          "positive": true
+        },
+        {
+          "id": "A6-2",
+          "text": "Feel sympathy for those who are worse off than myself.",
+          "positive": true
+        },
+        {
+          "id": "A6-3",
+          "text": "Am not interested in other people's problems.",
+          "positive": false
+        },
+        {
+          "id": "A6-4",
+          "text": "Try not to think about the needy.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "C1",
+      "name": "Self-Efficacy",
+      "items": [
+        {
+          "id": "C1-1",
+          "text": "Complete tasks successfully.",
+          "positive": true
+        },
+        {
+          "id": "C1-2",
+          "text": "Excel in what I do.",
+          "positive": true
+        },
+        {
+          "id": "C1-3",
+          "text": "Handle tasks smoothly.",
+          "positive": true
+        },
+        {
+          "id": "C1-4",
+          "text": "Know how to get things done.",
+          "positive": true
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "name": "Orderliness",
+      "items": [
+        {
+          "id": "C2-1",
+          "text": "Like to tidy up.",
+          "positive": true
+        },
+        {
+          "id": "C2-2",
+          "text": "Often forget to put things back in their proper place.",
+          "positive": false
+        },
+        {
+          "id": "C2-3",
+          "text": "Leave a mess in my room.",
+          "positive": false
+        },
+        {
+          "id": "C2-4",
+          "text": "Leave my belongings around.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "C3",
+      "name": "Dutifulness",
+      "items": [
+        {
+          "id": "C3-1",
+          "text": "Keep my promises.",
+          "positive": true
+        },
+        {
+          "id": "C3-2",
+          "text": "Tell the truth.",
+          "positive": true
+        },
+        {
+          "id": "C3-3",
+          "text": "Break rules.",
+          "positive": false
+        },
+        {
+          "id": "C3-4",
+          "text": "Break my promises.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "C4",
+      "name": "Achievement-Striving",
+      "items": [
+        {
+          "id": "C4-1",
+          "text": "Do more than what's expected of me.",
+          "positive": true
+        },
+        {
+          "id": "C4-2",
+          "text": "Work hard.",
+          "positive": true
+        },
+        {
+          "id": "C4-3",
+          "text": "Put little time and effort into my work.",
+          "positive": false
+        },
+        {
+          "id": "C4-4",
+          "text": "Do just enough work to get by.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "C5",
+      "name": "Self-Discipline",
+      "items": [
+        {
+          "id": "C5-1",
+          "text": "Am always prepared.",
+          "positive": true
+        },
+        {
+          "id": "C5-2",
+          "text": "Carry out my plans.",
+          "positive": true
+        },
+        {
+          "id": "C5-3",
+          "text": "Waste my time.",
+          "positive": false
+        },
+        {
+          "id": "C5-4",
+          "text": "Have difficulty starting tasks.",
+          "positive": false
+        }
+      ]
+    },
+    {
+      "id": "C6",
+      "name": "Cautiousness",
+      "items": [
+        {
+          "id": "C6-1",
+          "text": "Jump into things without thinking.",
+          "positive": false
+        },
+        {
+          "id": "C6-2",
+          "text": "Make rash decisions.",
+          "positive": false
+        },
+        {
+          "id": "C6-3",
+          "text": "Rush into things.",
+          "positive": false
+        },
+        {
+          "id": "C6-4",
+          "text": "Act without thinking.",
+          "positive": false
+        }
+      ]
+    }
+  ]
+}

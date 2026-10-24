@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Fictional Popup Regression</title></head><body>
+<h1>Fictional popup regression</h1>
+<label>Full name<input id="name" autocomplete="name"></label>
+<label>Email<input id="email" type="email" autocomplete="email"></label>
+<label>City<input id="city" value="Manual quick city"></label>
+<label>Country<select id="country"><option value="">Choose</option><option value="US">United States</option><option value="CA">Canada</option></select></label>
+<button type="button" onclick="sessionStorage.setItem('cc-fixture-quick',JSON.stringify({name:document.getElementById('name').value,email:document.getElementById('email').value,city:document.getElementById('city').value,country:document.getElementById('country').value}));location.href='review.html'">Next</button>
+</body></html>

@@ -1,0 +1,168 @@
+name: Publish localhost images
+on:
+  push:
+    tags: [v*]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build
+        required: true
+        default: v1.0.0
+permissions:
+  contents: read
+concurrency:
+  group: image-release-${{ inputs.tag || github.ref }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          persist-credentials: false
+      - name: Prepare a draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]
+          if gh release view "$RELEASE_TAG" --json isDraft > /tmp/existing-release.json 2>/dev/null; then
+            python3 -c 'import json; assert json.load(open("/tmp/existing-release.json"))["isDraft"], "Published releases are immutable; choose a new tag."'
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "Career Companion ${RELEASE_TAG#v}" \
+              --notes-file docs/RELEASE-NOTES.md
+          fi
+  build:
+    needs: prepare
+    name: Build and test ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          persist-credentials: false
+      - name: Resolve release identifiers
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]
+          echo "VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+          echo "REVISION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Audit the public source
+        run: python3 scripts/audit_public.py
+      - name: Build the native image
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          docker buildx build --platform "linux/$ARCH" --load \
+            --build-arg "APP_VERSION=$VERSION" --build-arg "APP_REVISION=$REVISION" \
+            --build-arg "APP_BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" --build-arg APP_CHANNEL=release \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$REVISION" \
+            --label "org.opencontainers.image.version=$VERSION" \
+            --tag "$IMAGE:$VERSION-linux-$ARCH" .
+      - name: Run backend tests without networking
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          docker run --rm --network none --tmpfs /data --tmpfs /secrets \
+            -v "$PWD:/source:ro" -e CAREER_TEST_SOURCE=/source --entrypoint python \
+            "$IMAGE:$VERSION-linux-$ARCH" -m pytest -q -p no:cacheprovider tests
+      - name: Check frontend behavior
+        if: matrix.arch == 'amd64'
+        run: |
+          docker buildx build --load --target frontend --tag career-companion-frontend-tests .
+          docker run --rm --network none --entrypoint sh career-companion-frontend-tests \
+            -c 'node --test tests/*.test.mjs'
+      - name: Smoke-test the clean image
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: python3 scripts/smoke_image.py "$IMAGE:$VERSION-linux-$ARCH"
+      - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push the tested native image and export a downloadable copy
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          docker push "$IMAGE:$VERSION-linux-$ARCH"
+          mkdir -p release-assets
+          docker tag "$IMAGE:$VERSION-linux-$ARCH" "$IMAGE:$VERSION"
+          FILE="career-companion-$VERSION-linux-$ARCH.tar.gz"
+          docker save "$IMAGE:$VERSION" | gzip -1 > "release-assets/$FILE"
+          (cd release-assets && sha256sum "$FILE" > "$FILE.sha256")
+          docker image rm "$IMAGE:$VERSION"
+          docker load --input "release-assets/$FILE"
+          python3 scripts/smoke_image.py "$IMAGE:$VERSION"
+      - name: Attach the tested archive to the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: gh release upload "$RELEASE_TAG" release-assets/* --clobber
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          persist-credentials: false
+      - name: Resolve release identifiers
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          echo "TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish the multi-platform tag
+        run: |
+          docker buildx imagetools create --tag "$IMAGE:$VERSION" --tag "$IMAGE:latest" \
+            "$IMAGE:$VERSION-linux-amd64" "$IMAGE:$VERSION-linux-arm64"
+          docker buildx imagetools inspect "$IMAGE:$VERSION" > published-image.txt
+      - name: Prepare teammate files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p release-assets
+          gh release download "$TAG" --pattern '*.tar.gz.sha256' --dir release-assets
+          test "$(find release-assets -name '*.tar.gz.sha256' | wc -l)" -eq 2
+          cp compose.localhost.yaml LOCALHOST-QUICKSTART.md release-assets/
+          (cd release-assets && cat *.tar.gz.sha256 > SHA256SUMS)
+          cp published-image.txt release-assets/
+      - name: Publish the release after both architectures pass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$TAG" release-assets/* --clobber
+          gh release edit "$TAG" --draft=false --latest

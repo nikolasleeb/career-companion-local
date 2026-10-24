@@ -1,0 +1,10 @@
+[
+ {"title":"Junior Analyst","company":"Fictional Mesa Analytics","status":"rejected","applied_date":"2026-10-01","history":[{"status":"applied","date":"2026-10-01","note":"Fictional example"},{"status":"rejected","date":"2026-10-06","note":"Fictional example"}]},
+ {"title":"Data Science Intern","company":"Fictional Canyon Data","status":"interviewing","applied_date":"2026-10-05","history":[{"status":"applied","date":"2026-10-05","note":""},{"status":"screening","date":"2026-10-08","note":""},{"status":"interviewing","date":"2026-10-12","note":""}],"interviews":[{"date":"2026-10-12","type":"Phone","outcome":"Technical round scheduled"},{"date":"2026-10-22","type":"Technical","outcome":"Scheduled — fictional"}]},
+ {"title":"IT Support Intern","company":"Fictional Desert Systems","status":"applied","applied_date":"2026-10-12"},
+ {"title":"Business Analyst","company":"Fictional Copper Research","status":"offer","applied_date":"2026-10-02","history":[{"status":"applied","date":"2026-10-02","note":""},{"status":"interviewing","date":"2026-10-09","note":""},{"status":"offer","date":"2026-10-19","note":""}]},
+ {"title":"Reporting Assistant","company":"Fictional Saguaro Labs","status":"withdrawn","applied_date":"2026-10-06","history":[{"status":"applied","date":"2026-10-06","note":""},{"status":"screening","date":"2026-10-08","note":""},{"status":"withdrawn","date":"2026-10-13","note":"Fictional example"}]},
+ {"title":"Cloud Analytics Intern","company":"Fictional Sonoran Cloud","status":"screening","applied_date":"2026-10-15"},
+ {"title":"Data Operations Intern","company":"Fictional Catalina Services","status":"accepted","applied_date":"2026-09-21","history":[{"status":"applied","date":"2026-09-21","note":""},{"status":"interviewing","date":"2026-09-29","note":""},{"status":"offer","date":"2026-10-05","note":""},{"status":"accepted","date":"2026-10-07","note":"Fictional example"}]},
+ {"title":"Junior SQL Analyst","company":"Fictional Tucson Insights","status":"applied","applied_date":""}
+]

@@ -1,0 +1,18 @@
+export type ChartRange='2w'|'1m'|'3m'|'6m'|'9m'|'year'|'custom';
+export function localToday(now=new Date()){return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;}
+const parsed=(value:string)=>new Date(value+'T00:00:00Z');
+const iso=(value:Date)=>value.toISOString().slice(0,10);
+export function shiftDays(value:string,days:number){const d=parsed(value);d.setUTCDate(d.getUTCDate()+days);return iso(d);}
+function priorMonths(value:string,count:number){const d=parsed(value),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()-count);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return iso(d);}
+export function chartRange(range:Exclude<ChartRange,'custom'>,today=localToday()){const months={'1m':1,'3m':3,'6m':6,'9m':9,year:12};return {start:range==='2w'?shiftDays(today,-13):shiftDays(priorMonths(today,months[range]),1),end:today};}
+export function chartRangeError(start:string,end:string){if(!start||!end)return 'Choose both dates for the chart.';const a=parsed(start),b=parsed(end);if(!Number.isFinite(+a)||!Number.isFinite(+b)||iso(a)!==start||iso(b)!==end)return 'Choose valid chart dates.';if(a>b)return 'From must be on or before Through.';if((+b-+a)/86400000>365)return 'Choose a chart range of up to one year (366 days).';return '';}
+export function bucketLabel(value:string,period:string){return new Intl.DateTimeFormat(undefined,{month:'short',...(period==='month'?{year:'numeric'}:{day:'numeric',year:'numeric'}),timeZone:'UTC'}).format(parsed(value));}
+export function applicationStatusChange(data:any,status:string,today=localToday()){return {...data,status,...(data.status==='preparing'&&status==='applied'&&!data.applied_date?{applied_date:today}:{})};}
+// Current-status counts partition the cohort; historical path nodes can overlap.
+export function applicationChartSummary(records:any[],dashboard:any){const seen=new Set<string>(),statuses:Record<string,number>={};let archived=0;for(const r of records){if(!dashboard?.chart_dates?.[r.id]||seen.has(r.id))continue;seen.add(r.id);statuses[r.data.status]=(statuses[r.data.status]||0)+1;if(r.data.archived)archived++;}return {total:seen.size,archived,statuses};}
+// Table search/status remains independent; a clicked chart filter uses only its cohort.
+export function applicationInChartStage(record:any,stage:string,dashboard:any){if(!stage)return true;if(stage==='added')return !!dashboard?.added_date_ids.includes(record.id);if(stage==='missing')return !!dashboard?.missing_date_ids.includes(record.id);if(stage==='all')return !!dashboard?.chart_dates?.[record.id];if(stage.startsWith('current:'))return !!dashboard?.chart_dates?.[record.id]&&record.data.status===stage.slice(8);return !!dashboard?.paths[record.id]?.includes(stage);}
+
+export type ApplicationListScope='current'|'archived'|'all';
+export function filteredApplications(records:any[],search:string,status:string,scope:ApplicationListScope){const query=search.toLowerCase();return records.filter(r=>(scope==='all'||!!r.data.archived===(scope==='archived'))&&(!status||r.data.status===status)&&(!query||[r.data.title,r.data.company,r.data.notes].join(' ').toLowerCase().includes(query)));}
+export function applicationDeletionPrompt(record:any){return `Delete the tracker entry for ${record.data.title||'Untitled role'} at ${record.data.company||'Company not provided'}? This permanently removes the tracker entry and its application history. Saved postings, resumes and cover letters are kept.`;}

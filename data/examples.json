@@ -1,0 +1,142 @@
+{
+  "analyst": {
+    "name": "Alex Morgan",
+    "contact": "alex.morgan@example.com | Phoenix, AZ",
+    "role": "Junior Data Analyst",
+    "posting": "FICTIONAL CLASSROOM OPPORTUNITY \u2014 Junior Data Analyst. Use SQL and Excel to prepare reports. Clean datasets with Python, build Tableau dashboards, document data quality, and communicate findings. Statistics coursework is helpful. Git is preferred.",
+    "experience": [
+      {
+        "category": "education",
+        "title": "BS Information Science",
+        "organization": "Example University",
+        "dates": "Expected May 2027",
+        "description": "Coursework in databases, information organization, and introductory statistics.",
+        "contribution": "",
+        "tools": "",
+        "confirmed": true,
+        "degree": "BS",
+        "major": "Information Science",
+        "expected_graduation": "May 2027",
+        "gpa": "3.7",
+        "gpa_scale": "4.0",
+        "honors": "Fictional academic achievement award",
+        "relevant_courses": "Database systems; Information organization; Introductory statistics"
+      },
+      {
+        "category": "project",
+        "title": "Campus service requests project",
+        "organization": "Database systems course",
+        "dates": "Spring 2026",
+        "description": "Used SQL to join three fictional tables and summarize request categories. Built an Excel dashboard showing weekly request volumes.",
+        "contribution": "I wrote the SQL queries and presented the dashboard to a class of 20 students. Other group members designed the data collection survey.",
+        "tools": "SQL, Excel",
+        "confirmed": true
+      },
+      {
+        "category": "employment",
+        "title": "Bookstore assistant",
+        "organization": "Example campus bookstore",
+        "dates": "2025\u20132026",
+        "description": "Used Excel to track weekly inventory and summarize sales for a supervisor.",
+        "contribution": "",
+        "tools": "Excel",
+        "confirmed": true
+      }
+    ],
+    "profile": {
+      "name": "Alex Morgan",
+      "contact": "",
+      "contact_reviewed": true,
+      "email": "alex.morgan@example.com",
+      "city": "Phoenix",
+      "state": "AZ",
+      "country": "United States"
+    }
+  },
+  "science": {
+    "name": "Jordan Lee",
+    "contact": "jordan.lee@example.com | United States",
+    "role": "Data Science Intern",
+    "posting": "FICTIONAL CLASSROOM OPPORTUNITY \u2014 Data Science Intern. Explore data with Python and SQL, perform data cleaning, apply statistics, and compare machine learning models against a baseline. Create visualizations, use Git, and explain limitations. AWS is preferred.",
+    "experience": [
+      {
+        "category": "education",
+        "title": "BS Data Science",
+        "organization": "Example University",
+        "dates": "Expected December 2027",
+        "description": "Studied statistics, hypothesis testing, and regression.",
+        "contribution": "",
+        "tools": "",
+        "confirmed": true,
+        "degree": "BS",
+        "major": "Data Science",
+        "expected_graduation": "December 2027"
+      },
+      {
+        "category": "project",
+        "title": "Bicycle demand analysis",
+        "organization": "Data science course",
+        "dates": "2026",
+        "description": "Used Python, pandas, and scikit-learn to compare regression models on practice data. Kept a separate test split and summarized prediction errors.",
+        "contribution": "I cleaned missing values, trained the baseline, and explained limitations during the class presentation.",
+        "tools": "Python, pandas, scikit-learn",
+        "confirmed": true
+      }
+    ],
+    "profile": {
+      "name": "Jordan Lee",
+      "contact": "",
+      "contact_reviewed": true,
+      "email": "jordan.lee@example.com",
+      "country": "United States"
+    }
+  },
+  "it": {
+    "name": "Taylor Rivera",
+    "contact": "taylor.rivera@example.com | United States",
+    "role": "IT Support Intern",
+    "posting": "FICTIONAL CLASSROOM OPPORTUNITY \u2014 IT Support Intern. Troubleshoot Windows devices, document support tickets, communicate with users, and escalate unresolved issues. Use networking fundamentals including DNS and DHCP. Linux experience is helpful; Azure is preferred.",
+    "experience": [
+      {
+        "category": "education",
+        "title": "BS Information Science",
+        "organization": "Example University",
+        "dates": "Expected May 2027",
+        "description": "Course labs in operating systems and information technology.",
+        "contribution": "",
+        "tools": "",
+        "confirmed": true,
+        "degree": "BS",
+        "major": "Information Science",
+        "expected_graduation": "May 2027"
+      },
+      {
+        "category": "volunteering",
+        "title": "Student technology volunteer",
+        "organization": "Example student technology club",
+        "dates": "2026",
+        "description": "Helped classmates diagnose Windows login and printer problems. Reproduced symptoms, checked settings, and verified each fix.",
+        "contribution": "I wrote troubleshooting notes and escalated issues outside my access permissions.",
+        "tools": "Windows",
+        "confirmed": true
+      },
+      {
+        "category": "project",
+        "title": "Linux virtual machine lab",
+        "organization": "Operating systems course",
+        "dates": "2026",
+        "description": "Configured a Linux virtual machine and practiced file permissions. Used Git to track a class project.",
+        "contribution": "",
+        "tools": "Linux, Git",
+        "confirmed": true
+      }
+    ],
+    "profile": {
+      "name": "Taylor Rivera",
+      "contact": "",
+      "contact_reviewed": true,
+      "email": "taylor.rivera@example.com",
+      "country": "United States"
+    }
+  }
+}

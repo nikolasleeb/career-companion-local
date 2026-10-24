@@ -1,0 +1,9 @@
+export type TaskStatus={id?:string;status:string;created_at?:string;updated_at?:string;checked_at?:string;connection_lost?:boolean;job_id?:string;operation?:string;label?:string;kind?:string;progress?:{code:string;label:string;kind:string;started_at:string;stage_started_at:string;finished_at?:string}|null};
+export function elapsed(start:string|undefined,now:number){const stamp=Date.parse(start||'');return Number.isFinite(stamp)?Math.max(0,Math.floor((now-stamp)/1000)):0;}
+export function duration(seconds:number){const m=Math.floor(seconds/60),s=seconds%60;return m+':'+String(s).padStart(2,'0');}
+export function progressView(task:TaskStatus,now:number){
+ const unknown=task.connection_lost||task.status==='unknown';
+ const running=['queued','running'].includes(task.status)&&!unknown;
+ const end=running||unknown?now:Date.parse(task.progress?.finished_at||task.updated_at||'')||now;
+ return {running,unknown,label:unknown?'Status connection lost':task.progress?.label||task.label||(task.status==='queued'?'Waiting to start':task.kind==='resume_guided'||!task.kind?'Resume action running':'Processing '+task.kind.replaceAll('_',' ')),detail:unknown?'The task may still be running. Reconnect or reload to check its saved status before starting another request.':task.progress?.kind==='request'?'Sending your request to the app. Waiting for confirmation.':task.progress?.kind==='provider'?'Waiting for AI response. This stage can take several minutes.':task.progress?.kind==='local'?'Processing locally; no AI request in this stage.':'Checking saved task status; no additional AI request.',total:duration(elapsed(task.progress?.started_at||task.created_at,end)),stage:task.progress?.stage_started_at?duration(elapsed(task.progress.stage_started_at,unknown?Date.parse(task.checked_at||task.updated_at||'')||end:end)):null};
+}

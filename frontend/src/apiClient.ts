@@ -1,0 +1,82 @@
+export class ApiError extends Error{
+ constructor(message:string,public status=0){super(message);this.name='ApiError';}
+ get transient(){return this.status===0||this.status===429||this.status>=500;}
+}
+
+export async function requestJSON(path:string,method='GET',body?:unknown,csrf=''){
+ const headers:Record<string,string>={};
+ if(method!=='GET')headers['X-CSRF-Token']=csrf;
+ if(body!==undefined&&!(body instanceof FormData))headers['Content-Type']='application/json';
+ let response:Response;
+ try{response=await fetch('/api'+path,{method,headers,credentials:'same-origin',body:body===undefined?undefined:body instanceof FormData?body:JSON.stringify(body)});}
+ catch{throw new ApiError('The connection to your local app was interrupted. Your saved inputs remain available. Check the connection and try again.');}
+ if(response.status===204)return null;
+ let data:any;
+ try{data=await response.json();}catch{throw new ApiError('The local app returned an unreadable response. Your saved inputs remain available. Try checking the status again.',response.ok?502:response.status);}
+ if(!response.ok){
+  const fallback=response.status===401?'Your session expired. Sign in again to continue with your saved work.':response.status===403?'This action was not authorized. Sign in again before retrying.':response.status===409?'This information changed while you were working. Check the latest saved version before retrying.':response.status>=500?'Your local app could not complete the request. Your saved inputs remain available; try again shortly.':'The request could not finish. Check your inputs and try again.';
+  throw new ApiError(typeof data?.detail==='string'?data.detail:fallback,response.status);
+ }
+ return data;
+}
+
+type Call=(path:string,method?:string,body?:any)=>Promise<any>;
+const sleep=(ms:number)=>new Promise<void>(resolve=>setTimeout(resolve,ms));
+export async function pollTask(id:string,call:Call,wait=sleep,limit=600,onUpdate?:(value:any)=>void){
+ let connectionFailures=0;let lastStatus:any={id,status:'running'};
+ for(let i=0;i<limit;i++){
+  await wait(connectionFailures?Math.min(1000*2**connectionFailures,10000):1200);
+  let status:any;
+  try{status=await call('/tasks/'+encodeURIComponent(id));connectionFailures=0;}
+  catch(error){
+   if(error instanceof ApiError&&error.transient){onUpdate?.({...lastStatus,connection_lost:true});if(++connectionFailures<=5)continue;}
+   if(error instanceof ApiError&&error.transient)throw new ApiError('The connection was lost while checking this task. It may still be running. Your inputs are saved; check its status before starting another request.');
+   throw error;
+  }
+  lastStatus={...status,checked_at:new Date().toISOString(),connection_lost:false};onUpdate?.(lastStatus);
+  if(status?.status==='completed'){
+   if(status.result==null)throw new ApiError('This task finished without a readable result. Check its status before starting another request.',502);
+   return status.result;
+  }
+  if(['failed','interrupted'].includes(status?.status))throw new ApiError(status.error||'This operation was interrupted. Your saved inputs remain available for retry.',422);
+  if(!['queued','running'].includes(status?.status))throw new ApiError('The task status could not be read. Check its status before starting another request.',502);
+ }
+ onUpdate?.({...lastStatus,status:'unknown',connection_lost:true});
+ throw new ApiError('This task is taking longer than expected. It may still be running. Check its status before starting another request.');
+}
+
+const pendingKey=(account:string,job:string)=>'next-step-comparison:'+account+':'+job;
+export function pendingComparison(account:string,job:string,storage:Storage=localStorage){
+ try{const record=JSON.parse(storage.getItem(pendingKey(account,job))||'null');return record&&typeof record.token==='string'?record:null;}catch{return null;}
+}
+export async function comparisonTask(account:string,body:any,call:Call,storage:Storage=localStorage,wait=sleep){
+ const key=pendingKey(account,body.job_id);
+ const pending=pendingComparison(account,body.job_id,storage)||{token:crypto.randomUUID(),mode:body.mode};
+ // Record the token before POST: even a lost start response can be recovered.
+ storage.setItem(key,JSON.stringify(pending));
+ if(!pending.id){
+  try{const initial=await call('/analyses','POST',{...body,mode:pending.mode,request_token:pending.token});if(typeof initial?.task_id!=='string'||!initial.task_id)throw new ApiError('The comparison start could not be confirmed. Check its status before starting another request.',502);pending.id=initial.task_id;storage.setItem(key,JSON.stringify(pending));}
+  catch(error){if(error instanceof ApiError&&error.status>=400&&error.status<500&&error.status!==429)storage.removeItem(key);throw error;}
+ }
+ try{const result=await pollTask(pending.id,call,wait);storage.removeItem(key);return result;}
+ catch(error){if(error instanceof ApiError&&[401,403,404,422].includes(error.status))storage.removeItem(key);throw error;}
+}
+
+const projectKey=(account:string,snapshot:string)=>'next-step-project-task:'+account+':'+snapshot;
+export async function projectTask(account:string,snapshot:string,body:any,call:Call,storage:Storage=localStorage,wait=sleep){
+ const key=projectKey(account,snapshot);
+ let pending:any=null;try{pending=JSON.parse(storage.getItem(key)||'null');}catch{}
+ if(!pending||typeof pending.token!=='string')pending={token:body.request_token||crypto.randomUUID(),mode:body.mode};
+ storage.setItem(key,JSON.stringify(pending));
+ if(!pending.id){
+  try{
+   const initial=await call('/project-snapshots/'+encodeURIComponent(snapshot)+'/analyze','POST',{mode:pending.mode,request_token:pending.token});
+   if(typeof initial?.task_id!=='string'||!initial.task_id)throw new ApiError('The project analysis start could not be confirmed. Check its status before starting another request.',502);
+   pending.id=initial.task_id;storage.setItem(key,JSON.stringify(pending));
+  }catch(error){if(error instanceof ApiError&&error.status>=400&&error.status<500&&error.status!==429)storage.removeItem(key);throw error;}
+ }
+ try{const result=await pollTask(pending.id,call,wait);storage.removeItem(key);return result;}
+ catch(error){if(error instanceof ApiError&&[401,403,404,422].includes(error.status))storage.removeItem(key);throw error;}
+}
+
+export function clearProjectTask(account:string,snapshot:string,storage:Storage=localStorage){storage.removeItem(projectKey(account,snapshot));}

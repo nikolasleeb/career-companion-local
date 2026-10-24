@@ -1,0 +1,13 @@
+# Local browser extension
+
+Chrome: download the Chrome package from Application Assistant, unzip it, open chrome://extensions, enable Developer mode, and select Load unpacked. Choose the extracted folder.
+
+Safari: the source package requires conversion with Xcode and signing with your own Apple development configuration. Native Safari installation has not been validated for this public edition.
+
+Open this local app in the same browser. In the extension, enter the exact localhost origin, including the port, and choose Connect this browser. Approve the matching pairing code in the app. Only localhost and 127.0.0.1 connections are accepted. Each local installation has its own accounts and pairings.
+
+On an employer form, activate the extension yourself, select your application and approved documents, and review private answers before filling. Login, uploads, CAPTCHA, signatures, custom controls, ambiguous navigation and final submission require your action. Repeated or unknown page layouts pause safely.
+
+The extension keeps a random pairing secret and connection metadata. It does not keep employer passwords, employer cookies, private disclosure answers, or OpenAI keys. Logging out or revoking pairing stops the connection.
+
+For development, run python3 extensions/build.py. This regenerates localhost-only Chrome and Safari source packages. Do not add remote host permissions.

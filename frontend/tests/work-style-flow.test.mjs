@@ -1,0 +1,12 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+const code=ts.transpileModule(readFileSync(new URL('../src/workStyleFlow.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const {assessmentLayout,missingRatings,restoreResponses}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+const cat={items:Array.from({length:120},(_,i)=>({id:'q'+i})),page_size:8,comparisons:Array(12).fill({})};
+test('new ratings use 15 pages of eight and two optional comparison pages',()=>{assert.deepEqual(assessmentLayout(cat),{count:120,size:8,ratingPages:15,comparisonPages:2,pages:17});});
+test('legacy saved catalogs retain five pages and no comparisons',()=>{assert.deepEqual(assessmentLayout({items:Array(50).fill({})}),{count:50,size:10,ratingPages:5,comparisonPages:0,pages:5});});
+test('only valid responses to actual questions count; missing navigation follows saved item order',()=>{assert.equal(missingRatings(cat,{q0:5,q1:0,q2:6,foreign:3}).length,119);assert.equal(missingRatings(cat,{q0:5,q1:3})[0].id,'q2');assert.equal(missingRatings(cat,Object.fromEntries(cat.items.map(q=>[q.id,3]))).length,0);});
+test('reload retains unsaved ratings, comparison choices and page with conflict surfaced',()=>{const row={data:{status:'draft',version:4,answers:{q0:1},page:0}};const saved={version:3,answers:{q0:5},pairs:{p1:'left'},page:15};assert.deepEqual(restoreResponses(row,saved),{answers:{q0:5},pairs:{p1:'left'},page:15,dirty:true,conflict:true});assert.equal(restoreResponses(row,{...saved,version:4}).conflict,false);});
+test('completed attempts ignore stale editable buffers',()=>{assert.deepEqual(restoreResponses({data:{status:'completed',version:4,answers:{q0:1},page:2}},{version:4,answers:{q0:5},page:15}),{answers:{q0:1},pairs:{},page:2,dirty:false,conflict:false});});
