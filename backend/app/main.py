@@ -972,10 +972,16 @@ def add_application(body:ApplicationInput,user=Depends(auth.current)):
         if data['status']!='preparing' and not data['history']: data['history']=[{'status':data['status'],'date':data['applied_date'] if data['status']=='applied' else '', 'note':''}]
         return db.save(user['id'],'application',data)
 
+@app.get('/api/applications/{entity_id}')
+def get_application(entity_id:str,user=Depends(auth.current)):
+    return require(user['id'],entity_id,'application')
+
 @app.put('/api/applications/{entity_id}')
-def edit_application(entity_id:str,body:ApplicationInput,user=Depends(auth.current)):
+def edit_application(entity_id:str,body:ApplicationInput,expected_updated_at:str=Query(''),user=Depends(auth.current)):
     with applications.LOCK:
-        old=require(user['id'],entity_id,'application');data=body.model_dump();applications.validate_links(user['id'],data)
+        old=require(user['id'],entity_id,'application')
+        if expected_updated_at and expected_updated_at!=old['updated_at']:raise HTTPException(409,'This application changed in another window. Reload saved changes before saving again.')
+        data=body.model_dump();applications.validate_links(user['id'],data)
         old_files={a['record_id'] for a in old['data'].get('attachments',[]) if a['kind']=='document'}
         new_files={a['record_id'] for a in data.get('attachments',[]) if a['kind']=='document'}
         if old_files!=new_files:raise HTTPException(409,'Application files changed. Reopen details; use document controls to remove files.')

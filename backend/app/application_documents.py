@@ -110,6 +110,33 @@ def rename(application_id:str,document_id:str,body:Rename,user=Depends(auth.curr
         _,document=linked(user['id'],application_id,document_id)
         return db.save(user['id'],'document',{**document['data'],'display_name':body.display_name},document_id)
 
+class Promote(StrictModel):
+    expected_updated_at:str
+
+@router.post('/applications/{application_id}/documents/{document_id}/use-as-resume')
+def promote_resume(application_id:str,document_id:str,body:Promote,user=Depends(auth.current)):
+    """Promote a stored file atomically; retries cannot create another version."""
+    uid=user['id']
+    with applications.LOCK,db.connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        app,document=linked(uid,application_id,document_id);data=document['data']
+        if data.get('resume_id'):
+            resume=owned(uid,data['resume_id'],'resume')
+            if data.get('category')!='resume' or resume['id'] not in app['data'].get('resume_ids',[]):raise HTTPException(409,'This document reference needs review before it can be used.')
+            return {'application':app,'document':document,'resume':resume}
+        if document['updated_at']!=body.expected_updated_at:raise HTTPException(409,'This file changed. Refresh its details before using it as a resume.')
+        raw_file(uid,document)
+        if len(app['data'].get('resume_ids',[]))>=100:raise ServiceError('This application already has 100 resume versions.')
+        from .resume_conversation import write
+        resume_id=db.uid();job=db.get(uid,app['data'].get('job_id',''),'job')
+        value={'origin':'uploaded','document_id':document_id,'job_id':app['data'].get('job_id',''),'posting_snapshot':copy.deepcopy(app['data'].get('posting_snapshot') or (job or {}).get('data',{})),'title':data['display_name'],'name':'','headline':'','contact_lines':[],'sections':[],'source_text':'','source_reviewed':False}
+        write(c,uid,'resume',value,resume_id)
+        write(c,uid,'document',{**data,'category':'resume','resume_id':resume_id},document_id)
+        updated=copy.deepcopy(app['data']);updated['resume_ids']=list(dict.fromkeys(updated.get('resume_ids',[])+[resume_id]))
+        updated['workflow']={'step':'resume','resume_id':resume_id,'cover_letter_id':'','cover_skipped':False}
+        write(c,uid,'application',updated,application_id)
+    return {'application':owned(uid,application_id,'application'),'document':owned(uid,document_id,'document'),'resume':owned(uid,resume_id,'resume')}
+
 @router.get('/applications/{application_id}/documents/{document_id}/text')
 def extracted_text(application_id:str,document_id:str,user=Depends(auth.current)):
     _,document=linked(user['id'],application_id,document_id)

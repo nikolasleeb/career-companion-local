@@ -4,9 +4,9 @@
 2. Choose **Upload my resume**, **Generate a resume**, or **Save without a resume**. You can save and return to Applications with no resume attached.
 3. After uploading, choose **Save & return to Applications** or **Continue to cover letter**. Before drafting a cover letter, review and confirm the extracted resume text. If a scan has no selectable text, paste its text for review. The uploaded original remains unchanged.
 
-In Applications, open an entry's details or choose **Progress & history**. Under **Application documents**, select a category and upload a resume, cover letter, interview preparation, email communication, or other supporting file. Files are saved immediately. Other changes, including status and the submitted resume selection, use **Save application**.
+In Applications, open an entry's details or choose **Progress & history**. Open the **Documents** tab. Use **Upload resume** for a resume, or **Add supporting file** and select a type for other files. Existing uploads can be used as resumes without another upload. File actions save immediately. Application edits, including the submitted version, use **Save changes**. See [Application details](APPLICATION-DETAILS.md).
 
-Uploaded and generated resumes are labeled separately. Choose the exact version in **Resume submitted**; uploading a new version never changes that field automatically. A generated draft finishing later does not replace an explicitly selected uploaded resume.
+Uploaded and generated resumes are labeled separately. Choose **Use as submitted** on the exact version, then **Save changes**; uploading a new version never changes that selection automatically. A generated draft finishing later does not replace an explicitly selected uploaded resume.
 
 ## Files and source history
 

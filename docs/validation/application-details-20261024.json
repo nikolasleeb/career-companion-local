@@ -1,0 +1,32 @@
+{
+  "feature": "Tabbed application details",
+  "date": "2026-10-24",
+  "backend": {
+    "active_app_passed": 662,
+    "public_localhost_passed": 681,
+    "skipped_each": 1,
+    "environment": "isolated app runtime; network disabled"
+  },
+  "frontend": {
+    "active_app_passed": 138,
+    "public_localhost_passed": 139,
+    "both_builds_passed": true
+  },
+  "browser_checks": [
+    "Overview/Documents/Activity tabs",
+    "pending status and notes survive file promotion",
+    "submitted resume remains explicit",
+    "save stays open and does not duplicate timeline events",
+    "interview add/edit hides unused fields",
+    "reopen and reload retain saved data",
+    "inline close warning keeps pending edits",
+    "390 pixel viewport and arrow-key tab navigation"
+  ],
+  "provider_calls_made": 0,
+  "existing_data_and_paused_runs_preserved": true,
+  "release_or_tag_created": false,
+  "concurrency_checks": [
+    "conditional application save rejects stale versions",
+    "document refresh preserves pending edits and detects same-field conflicts"
+  ]
+}
