@@ -144,7 +144,7 @@ def test_invalid_draft_preserves_inputs_no_save(client,account,monkeypatch,kind)
 def test_draft_ownership_and_project_description(client,account,monkeypatch):
     job,rows,body=setup(client,account);calls=mock_model(monkeypatch)
     result=wait_task(client,client.post('/api/resumes/optimize',json=body));draft=result['result']
-    other=TestClient(app,base_url='http://localhost');me=other.post('/api/auth/register',json={'username':'another','password':'another-fictional-password'}).json();other.headers['X-CSRF-Token']=me['csrf']
+    other=TestClient(app);me=other.post('/api/auth/register',json={'username':'another','password':'another-fictional-password'}).json();other.headers['X-CSRF-Token']=me['csrf']
     onboard_test_account(me)
     assert other.get('/api/resume-drafts/'+draft['id']).status_code==404
     assert other.post('/api/resumes',json={**body,'draft_id':draft['id']}).status_code==400
@@ -218,3 +218,21 @@ def test_posting_change_rejects_stale_comparison_draft(client,account,monkeypatc
     req={**body,'draft_id':draft['id'],'content':draft['data']['content'],'experience_ids':draft['data']['experience_ids']}
     assert client.post('/api/resumes',json=req).status_code==409
     assert client.get('/api/resume-drafts/'+draft['id']).status_code==200
+
+
+def test_citations_keep_original_and_checked_wording_separate_and_record_bound():
+    original='Built Python reports for operations teams.'
+    rewrite='Prepared operations reports using Python.'
+    item={'item_id':'one','field':'description','original':original,'text':rewrite}
+    entry={'source_id':'project','title':'Operations analysis','details':'Class project','category':'project','bullets':[rewrite],'source_original_bullets':[original],'content_items':[item]}
+    snapshot={'sections':[{'entries':[entry]}],'posting_snapshot':{'description':'Python reporting'}}
+    records=optimization.evidence_sources(snapshot)
+    output={'headline':'Python reporting','headline_evidence':[{'record_id':'project','quote':original}], 'entries':[{'record_id':'project','items':[{'item_id':'one','text':rewrite}]}],'keywords':[{'term':'Python','job_quote':'Python reporting','evidence':[{'record_id':'project','quote':rewrite}]}]}
+    optimization.validate(copy.deepcopy(output),snapshot,records)
+    for evidence in ({'record_id':'foreign','quote':original},{'record_id':'project','quote':'Built Azure billing systems.'},{'record_id':'project','quote':original+' Operations analysis'}):
+        bad=copy.deepcopy(output);bad['headline_evidence']=[evidence]
+        with pytest.raises(ServiceError,match='source could not be verified'):optimization.validate(bad,snapshot,records)
+    other={**entry,'source_id':'other','bullets':['Managed suppliers.'],'source_original_bullets':['Managed suppliers.'],'content_items':[{**item,'original':'Managed suppliers.','text':'Managed suppliers.'}]}
+    snapshot['sections'][0]['entries'].append(other)
+    bad=copy.deepcopy(output);bad['headline_evidence']=[{'record_id':'other','quote':original}]
+    with pytest.raises(ServiceError,match='source could not be verified'):optimization.validate(bad,snapshot,optimization.evidence_sources(snapshot))

@@ -423,3 +423,65 @@ def test_recovered_suggestion_decisions_survive_first_build_and_local_undo(env):
     assert state['current']['data']['snapshot']['decisions'][0]['action']=='reject'
     assert any(i['text']==original for r in state['current']['data']['catalog'] for i in r['items'])
     assert not calls
+
+
+def test_refine_preserves_valid_original_headline_citation_after_checked_rewrite(env,monkeypatch):
+    user,job,rows,session,calls=env
+    original_model=ai.structured
+    async def model(schema,payload,*args,**kwargs):
+        value,meta=await original_model(schema,payload,*args,**kwargs)
+        if schema.__name__=='OptimizationOutput' and 'catalog' in payload:
+            for entry in value['entries']:
+                for item in entry['items']:
+                    if item['text']=='Analyzed demand data using Python and presented findings to classmates.':item['text']='Used Python to analyze demand data and presented findings to classmates.'
+        return value,meta
+    monkeypatch.setattr(ai,'structured',model)
+    first=build(env)
+    assert any(i['text']=='Used Python to analyze demand data and presented findings to classmates.' for s in first['current']['data']['snapshot']['sections'] for e in s['entries'] for i in e['content_items'])
+    second=asyncio.run(guided.build(user,first['id'],first['data']['version'],'economy'))
+    assert second['current']['id']!=first['current']['id']
+    assert second['current']['data']['snapshot']['optimization']['source_checked']
+
+
+def test_failed_chat_revision_retains_feedback_and_retries_without_another_chat(env,monkeypatch):
+    user,job,rows,session,calls=env;first=build(env);old=first['current']['id']
+    artifacts=copy.deepcopy(db.get(user,old,'resume_revision')['data']['snapshot']['artifacts'])
+    original_model=ai.structured;original_create=optimization.create;chat_calls=[]
+    async def model(schema,payload,*args,**kwargs):
+        if schema.__name__=='ResumeChatOutput':
+            chat_calls.append(True)
+            return {**response(action='revise'),'message':'I will clarify the headline.','revision_instruction':'Use Python reporting as the headline.','change_headline':True},META
+        result,meta=await original_model(schema,payload,*args,**kwargs)
+        if schema.__name__=='OptimizationOutput':result['headline']='Python reporting'
+        return result,meta
+    async def fail(*args,**kwargs):raise ServiceError('Source verification failed.')
+    monkeypatch.setattr(ai,'structured',model);monkeypatch.setattr(optimization,'create',fail)
+    with pytest.raises(ServiceError,match='Source verification'):
+        asyncio.run(guided.send(user,first['id'],ConversationMessage(text='Clarify the headline.',expected_version=first['data']['version'])))
+    retained=guided.state(user,first['id']);assert retained['current']['id']==old
+    assert db.get(user,old,'resume_revision')['data']['snapshot']['artifacts']==artifacts
+    assert retained['data']['messages'][-1]['revision_status']=='failed'
+    assert retained['data']['pending_feedback']['change_headline'] is True
+    assert retained['data']['last_message_input']=='Clarify the headline.'
+    monkeypatch.setattr(optimization,'create',original_create)
+    updated=asyncio.run(guided.build(user,first['id'],retained['data']['version'],'economy'))
+    assert updated['current']['id']!=old and updated['current']['data']['snapshot']['headline']=='Python reporting'
+    assert any(m.get('revision_status')=='applied' for m in updated['data']['messages'])
+    assert not updated['data'].get('pending_feedback') and not updated['data'].get('last_message_input')
+    assert len(chat_calls)==1
+
+
+def test_legacy_failed_chat_shows_unapplied_reply_without_rewriting_history(env):
+    user,job,rows,session,calls=env;first=build(env)
+    def append(data,c):
+        data['workspace_token']='failed-preview'
+        data['messages'] += [{'id':'request','role':'user','text':'Clarify this draft.'},{'id':'reply','role':'assistant','text':'I will clarify it.'}]
+    saved=guided.mutate(user,first['id'],first['data']['version'],append)
+    with db.connect() as c:
+        stamp=db.now();c.execute('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?)',('failed-chat',user,'resume_guided','failed',json.dumps({'inputs':{'conversation_id':first['id'],'text':'Clarify this draft.'}}),'Source could not be verified.',stamp,stamp))
+    value=guided.state(user,first['id'])
+    assert value['data']['messages'][-1]['revision_status']=='failed'
+    assert value['data']['last_message_input']=='Clarify this draft.'
+    raw=db.get(user,first['id'],'resume_conversation')['data']
+    assert 'revision_status' not in raw['messages'][-1] and 'last_message_input' not in raw
+    assert value['current']['id']==first['current']['id']

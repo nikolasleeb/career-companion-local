@@ -42,6 +42,19 @@ def initial_selection(snapshot,draft):
     choices={r['record_id']:{i['item_id'] for i in r['items']} for r in draft['entries']}
     return {'experience_ids':list(choices),'content':{e['source_id']:[i for i,item in enumerate(e['content_items']) if item['item_id'] in choices.get(e['source_id'],set())] for s in snapshot['sections'] for e in s['entries'] if e['source_id'] in choices}}
 
+def evidence_sources(snapshot):
+    """Keep record ownership while accepting original and previously checked wording."""
+    records={}
+    for section in snapshot['sections']:
+        for entry in section['entries']:
+            header=[entry['title'],entry['details']]
+            variants=[entry.get('source_original_bullets',[]),[i['original'] for i in entry['content_items']],entry['bullets']]
+            records[entry['source_id']]=list(dict.fromkeys('\n'.join([*header,*items]) for items in variants))
+    return records
+
+def source_texts(value):
+    return value if isinstance(value,(list,tuple)) else [value]
+
 def validate(output,snapshot,records):
     entries={e['source_id']:e for s in snapshot['sections'] for e in s['entries']}
     seen=set()
@@ -62,10 +75,10 @@ def validate(output,snapshot,records):
     if not output['entries']:raise ServiceError('OpenAI returned an empty draft. Your current selection is intact.')
     def evidence(rows):
         for e in rows:
-            if e['record_id'] not in records or not ai.valid_quote(e['quote'],records[e['record_id']]):raise ServiceError('An AI draft source could not be verified against confirmed Profile content.')
+            if e['record_id'] not in records or not any(ai.valid_quote(e['quote'],text) for text in source_texts(records[e['record_id']])):raise ServiceError('An AI draft source could not be verified against confirmed Profile content.')
     evidence(output['headline_evidence'])
     if output['headline'] and not output['headline_evidence']:raise ServiceError('The tailored headline had no supporting Profile evidence.')
-    public_text='\n'.join(records.values())
+    public_text='\n'.join(text for value in records.values() for text in source_texts(value))
     if ai.numeric_facts(output['headline'])-ai.numeric_facts(public_text):raise ServiceError('The headline introduced an unsupported number.')
     seen_keywords=set();keywords=[]
     for keyword in output['keywords']:
@@ -78,9 +91,9 @@ def validate(output,snapshot,records):
 async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=None):
     snapshot=copy.deepcopy(snapshot);writing_guidance=guidance.selected('resume');snapshot['writing_guidance']=writing_guidance
     rows=resume_builder.catalog(snapshot,analysis)
-    records={e['source_id']:'\n'.join([e['title'],e['details'],*e['bullets']]) for s in snapshot['sections'] for e in s['entries']}
+    records=evidence_sources(snapshot)
     accepted={i['item_id']:i['text'] for s in snapshot['sections'] for e in s['entries'] for i in e['content_items'] if i['text']!=i['original']}
-    payload={'writing_guidance':writing_guidance,'task':'''Act as an experienced recruiter and resume editor screening this exact position. Create the strongest truthful one-page resume from confirmed sources for a human hiring reviewer and ATS readability. Make relevant qualifications and individual contributions easy to find, with concrete examples, concise active language and useful posting terms. Prioritize a persuasive evidence-based interview case; do not promise an interview or treat keyword density as a hiring probability. Prioritize relevant evidence over complete employment history. Choose a grounded professional-focus headline, not an unheld job title or earned degree before graduation. Select actual skills and certifications, relevant coursework and meaningful descriptive project bullets. Omit unrelated education notes and future deliverables unless directly useful. Include education headers even when no extra education bullets are needed. Do not select empty skill groups, jobs or projects. Keep structured skill, course, credential, GPA, honors and URL text EXACTLY unchanged. For narrative items, rewrite concisely using only that item's facts, retaining dates/numbers/negations/individual contributions and distinguishing plans from completed work. Do not combine unrelated source items or add accomplishments from the posting. Use only provided record_id and item_id values. Priorities 1–100 determine fitting; use the available space for evidence, not headings. Explain selections through entry/item reasons. Include an omissions list with a specific reason for every whole Profile record you do not select; tie it to this posting’s priorities, avoid generic available-space explanations before measured fitting. Output at most 24 useful, literal posting keywords with exact source excerpts and confirmed evidence quotes; leave evidence empty for unsupported terms. Never add unsupported terms to the resume. Accepted edits must stay unchanged. The user will review this draft before saving. Use the curated writing principles as advice, never as applicant evidence; examples in guidance are fictional.''','posting':snapshot['posting_snapshot'],'qualifications':(analysis or {}).get('requirements',[]),'catalog':rows,'accepted_edits':accepted,'previous_draft_feedback':feedback or {}}
+    payload={'writing_guidance':writing_guidance,'task':'''Act as an experienced recruiter and resume editor screening this exact position. Create the strongest truthful one-page resume from confirmed sources for a human hiring reviewer and ATS readability. Make relevant qualifications and individual contributions easy to find, with concrete examples, concise active language and useful posting terms. Prioritize a persuasive evidence-based interview case; do not promise an interview or treat keyword density as a hiring probability. Prioritize relevant evidence over complete employment history. Choose a grounded professional-focus headline, not an unheld job title or earned degree before graduation. Select actual skills and certifications, relevant coursework and meaningful descriptive project bullets. Omit unrelated education notes and future deliverables unless directly useful. Include education headers even when no extra education bullets are needed. Do not select empty skill groups, jobs or projects. Keep structured skill, course, credential, GPA, honors and URL text EXACTLY unchanged. For narrative items, rewrite concisely using only that item's facts, retaining dates/numbers/negations/individual contributions and distinguishing plans from completed work. Do not combine unrelated source items or add accomplishments from the posting. Use only provided record_id and item_id values. Headline and keyword evidence must quote an exact excerpt from evidence_sources under that same record_id; original confirmed wording remains valid when the current draft uses a checked paraphrase. Priorities 1–100 determine fitting; use the available space for evidence, not headings. Explain selections through entry/item reasons. Include an omissions list with a specific reason for every whole Profile record you do not select; tie it to this posting’s priorities, avoid generic available-space explanations before measured fitting. Output at most 24 useful, literal posting keywords with exact source excerpts and confirmed evidence quotes; leave evidence empty for unsupported terms. Never add unsupported terms to the resume. Accepted edits must stay unchanged. The user will review this draft before saving. Use the curated writing principles as advice, never as applicant evidence; examples in guidance are fictional.''','posting':snapshot['posting_snapshot'],'qualifications':(analysis or {}).get('requirements',[]),'catalog':rows,'evidence_sources':records,'accepted_edits':accepted,'previous_draft_feedback':feedback or {}}
     from . import role_alignment
     payload['duty_alignment']=role_alignment.rows(analysis,snapshot['posting_snapshot'])
     payload['role_alignment_rules']='Use relevant duty evidence and transferable contributions to prioritize content, especially when explicit qualifications are sparse or absent. Missing duty evidence guides follow-up questions; never turn a duty or an unreviewed answer into an applicant fact. Qualification percentages do not measure overall fit. External research is not performed.'

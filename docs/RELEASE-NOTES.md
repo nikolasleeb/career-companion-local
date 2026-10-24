@@ -1,12 +1,10 @@
-# Career Companion Local 1.0.4
+# Career Companion Local 1.0.5
 
-Resume preview zoom:
+Resume revision source verification and recovery:
 
-- Start at Fit page for a smaller full-page preview on large monitors.
-- Zoom in or out, view at 100%, or choose Fit width.
-- Scroll inside the preview when enlarged, with keyboard-accessible controls and a visible zoom percentage.
-- Zoom changes only the on-screen view. Saved content, PDF layout, and downloads stay the same.
+- Accept valid citations from original confirmed Profile content when the current resume uses a previously checked rewrite. Evidence stays tied to its own record, and unsupported or cross-record quotes remain blocked.
+- Mark proposed changes as pending, applied, or failed; a saved chat reply no longer implies that a new PDF was produced. Older failed responses show their outcome without rewriting saved history.
+- Retain interpreted feedback after a failed revision so Retry can rebuild without repeating chat interpretation. Keep the previous PDF intact on any failure.
+- Preserve the source check, independent audit, immutable revisions, and account isolation.
 
-Includes the connection recovery and sticky progress improvements from 1.0.2. Save unsent work and back up both data volumes before updating.
-
-The downloadable installer now pins this release image, and the release workflow stamps its version into both installer files. The unpublished 1.0.3 candidate was withdrawn when this stale installer pin was found.
+Includes preview zoom and connection recovery from the previous releases. Save unsent work and back up both data volumes before updating.

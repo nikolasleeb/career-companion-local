@@ -126,6 +126,14 @@ def state(user,id):
     result['pending_task']=next((r['id'] for r in own_tasks if r['status'] in ('queued','running')),None)
     result['last_failure']=own_tasks[0]['error'] if own_tasks and own_tasks[0]['status'] in ('failed','interrupted') and own_tasks[0]['updated_at']>record['updated_at'] else None
     result['preview_stale']=bool(current and current['data']['request_token']!=data.get('workspace_token'))
+    if result['last_failure'] and result['preview_stale']:
+        inputs=json.loads(own_tasks[0]['result'] or '{}').get('inputs') or {}
+        messages=result['data']['messages']
+        # Older saved conversations predate revision outcome markers. Describe the
+        # failed response truthfully without rewriting their stored history.
+        if inputs.get('text') and len(messages)>=2 and messages[-1]['role']=='assistant' and messages[-2]['role']=='user' and messages[-2]['text']==inputs['text']:
+            if 'revision_status' not in messages[-1]:messages[-1]['revision_status']='failed'
+            result['data'].setdefault('last_message_input',inputs['text'])
     return result
 
 def require_initial_comparison(user,id):
@@ -156,7 +164,12 @@ def save_revision(user,id,version,snapshot,catalog,summary,token,usage=None,sour
         value={'conversation_id':id,'job_id':data['job_id'],'parent_id':data['current_revision_id'],'snapshot':snapshot,'catalog':catalog,'summary':summary,'request_token':token,'usage':usage,'draft_id':draft_id,'source_snapshot':source_snapshot,'project_snapshot_ids':list(data.get('project_snapshot_ids',[]))}
         write(c,user,'resume_revision',value,revision_id)
         data['revision_ids'].append(revision_id);data['current_revision_id']=revision_id;data.pop('workspace_request',None)
-        if usage:data['approved_record_ids']=[];data.pop('pending_feedback',None)
+        if usage:
+            data['approved_record_ids']=[];data.pop('pending_feedback',None)
+            pending=data.pop('pending_revision_message_id',None)
+            for message in data['messages']:
+                if message['id']==pending:message['revision_status']='applied'
+            data.pop('last_message_input',None)
         if usage:data['messages'].append({'id':db.uid(),'role':'assistant','text':summary,'usage':usage,'created_at':db.now()})
     mutate(user,id,version,change)
     return state(user,id)
@@ -267,18 +280,35 @@ async def send(user,id,body):
         project_context.bind_proposal(user,data,item,'resume')
         proposals.append(item)
     project_questions=[{'text':q['text'],'reason':'Clarify this project for the posting','criterion_id':None,'project_refs':project_context.references(q['project_context_ids'],materials)} for q in output.get('project_questions',[])]
+    revising=bool(current and output['action']=='revise' and not proposals)
+    assistant_id=db.uid()
     def append(d,c):
-        d['messages'].append({'id':db.uid(),'role':'assistant','text':output['message'],'created_at':db.now(),'usage':{'ai':meta,'actual_cost_usd':meta.get('estimated_token_cost_usd')}})
+        d['messages'].append({'id':assistant_id,'role':'assistant','text':output['message'],'created_at':db.now(),'usage':{'ai':meta,'actual_cost_usd':meta.get('estimated_token_cost_usd')},**({'revision_status':'pending'} if revising else {})})
+        if revising:d['pending_revision_message_id']=assistant_id
         seen={q['text'].strip().casefold() for q in d.get('asked_questions',d['questions'])}
         new=[{'text':q,'reason':'Improve the resume evidence','criterion_id':None} for q in output['questions'] if q.strip().casefold() not in seen]
         new.extend(q for q in project_questions if q['text'].strip().casefold() not in seen)
         new=project_context.fresh_questions(user,new)[:3]
         d['questions']=new;d.setdefault('asked_questions',[]).extend(new)
         d['proposals']+=proposals;d.pop('last_message_input',None)
-        if proposals:d['pending_feedback']={k:output.get(k) for k in ('revision_instruction','target_item_ids','target_record_ids','change_headline','change_selection','template')}
+        if proposals or revising:d['pending_feedback']={k:output.get(k) for k in ('revision_instruction','target_item_ids','target_record_ids','change_headline','change_selection','template')}
     updated=mutate(user,id,version,append)
-    if current and output['action']=='revise' and not proposals:
-        return await build(user,id,updated['data']['version'],body.mode,feedback=output)
+    if revising:
+        try:return await build(user,id,updated['data']['version'],body.mode,feedback=output)
+        except (Exception,asyncio.CancelledError):
+            # Retain the interpreted request and mark its response as unapplied, without
+            # changing the current revision or overwriting a concurrent successful head.
+            with db.connect() as c:
+                c.execute('BEGIN IMMEDIATE')
+                row=c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='resume_conversation'",(id,user)).fetchone()
+                if row:
+                    saved=db.decode(row)['data']
+                    if saved.get('pending_revision_message_id')==assistant_id:
+                        for message in saved['messages']:
+                            if message['id']==assistant_id:message['revision_status']='failed'
+                        saved['last_message_input']=body.text;saved['version']+=1
+                        write(c,user,'resume_conversation',saved,id)
+            raise
     return state(user,id)
 
 def approve(user,id,body):
