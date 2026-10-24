@@ -1,4 +1,4 @@
-# Career Companion Local 1.0.5
+# Career Companion Local 1.0.6
 
 Resume revision source verification and recovery:
 

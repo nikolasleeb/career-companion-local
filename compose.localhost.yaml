@@ -1,7 +1,7 @@
 name: career-companion-local
 services:
   app:
-    image: ${CAREER_IMAGE:-ghcr.io/nikolasleeb/career-companion-local:1.0.5}
+    image: ${CAREER_IMAGE:-ghcr.io/nikolasleeb/career-companion-local:1.0.6}
     init: true
     ports:
       - "127.0.0.1:${PORT:-3000}:3000"
