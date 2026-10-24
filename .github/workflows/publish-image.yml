@@ -7,7 +7,7 @@ on:
       tag:
         description: Existing release tag to build
         required: true
-        default: v1.0.3
+        default: v1.0.4
 permissions:
   contents: read
 concurrency:
@@ -157,7 +157,16 @@ jobs:
           mkdir -p release-assets
           gh release download "$TAG" --pattern '*.tar.gz.sha256' --dir release-assets
           test "$(find release-assets -name '*.tar.gz.sha256' | wc -l)" -eq 2
-          cp compose.localhost.yaml LOCALHOST-QUICKSTART.md release-assets/
+          python3 - <<'PYVERSION'
+          import os,re
+          from pathlib import Path
+          version=os.environ['VERSION']
+          for name in ('compose.localhost.yaml','LOCALHOST-QUICKSTART.md'):
+              text=Path(name).read_text()
+              text=re.sub(r'(career-companion(?:-local:|-))\d+\.\d+\.\d+',lambda match:match.group(1)+version,text)
+              assert version in text
+              Path('release-assets',name).write_text(text)
+          PYVERSION
           (cd release-assets && cat *.tar.gz.sha256 > SHA256SUMS)
           cp published-image.txt release-assets/
       - name: Publish the release after both architectures pass

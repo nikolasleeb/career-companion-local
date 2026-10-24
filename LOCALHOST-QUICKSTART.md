@@ -6,7 +6,7 @@
 4. In a terminal in the download folder, load your archive and start the app. Substitute the actual archive filename:
 
 ```sh
-docker load --input career-companion-1.0.1-linux-amd64.tar.gz
+docker load --input career-companion-1.0.4-linux-amd64.tar.gz
 docker compose -f compose.localhost.yaml up -d --pull never
 ```
 
