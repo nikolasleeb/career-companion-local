@@ -4,6 +4,7 @@ Old snapshots and generic records remain readable without rewriting stored data.
 """
 import re
 import hashlib
+import unicodedata
 from .documents import clean
 from .education import subjects
 
@@ -87,19 +88,43 @@ def entry_snapshot(data,source_id,granular=False):
             'organization':clean(data.get('organization')),'bullets':bullets,'content_items':items}
 
 
-def resume_title(posting,fallback='Resume',name=''):
-    """A document label, separate from employer-facing headline and source role."""
-    company=clean((posting or {}).get('company'))
-    role=clean((posting or {}).get('title'))
-    if company and role:
+def _filename_part(value):
+    value=unicodedata.normalize('NFC',clean(value))
+    value=re.sub(r'[<>:"/\\|?*\x00-\x1f\x7f,\s–—]+','-',value)
+    return re.sub(r'-+','-',value).strip(' .-')
+
+
+def _document_role(title,company):
+    """Strip known posting metadata, never an arbitrary role specialization."""
+    role=clean(title)
+    if company:
         role=re.sub(r'^'+re.escape(company)+r'(?:\s*[-–—|:]\s*|\s+)','',role,flags=re.I).strip() or role
-    title='-'.join(v for v in (company,role,'Resume') if v) if company or role else fallback
-    title=re.sub(r'\s+','-',title.strip())
-    person=re.sub(r'\s+','-',clean(name))
-    return person+'-'+title if person and not title.casefold().startswith(person.casefold()+'-') else title
+    metadata=r'(?:United States|United Kingdom|USA|U\.S\.?A?\.?|Canada|Australia)(?:\b|$)|(?:remote|hybrid|on[- ]site)(?:\s*\([^)]*\))?$|(?:Ph\.?D\.?|Masters?|Bachelor\S*|Graduate|Undergraduate)(?:\s+or\s+\w+)*\s+(?:Student|Candidates?)\b|(?:Job|Requisition|Req)\s*(?:ID|Number|#)\b|(?:University|Campus|Talent)\s+(?:Recruiting|Acquisition)\b'
+    for boundary in re.finditer(r'\s+[-–—]\s+|\s*\|\s*|\s*,\s*|[-–—]{2,}',role):
+        tail=role[boundary.end():].strip()
+        if re.match(metadata,tail,re.I) or company and re.match(re.escape(company)+r'\s+(?:Uni\b|University\b|Talent\b|Recruiting\b)',tail,re.I):
+            return role[:boundary.start()].strip() or role
+    return role
+
+
+def resume_title(posting,fallback='Resume',name=''):
+    """Safe short label for display and downloads; source snapshots stay intact."""
+    posting=posting or {}
+    company=clean(posting.get('company'))
+    role=_document_role(posting.get('title'),company)
+    core='-'.join(filter(None,(_filename_part(company),_filename_part(role)))) if company or role else _filename_part(fallback)
+    core=re.sub(r'(?:-?Resume)$','',core,flags=re.I).strip(' .-')
+    person=_filename_part(name)
+    if person and core.casefold()!=person.casefold() and not core.casefold().startswith(person.casefold()+'-'):
+        core='-'.join(filter(None,(person,core)))
+    # Reserve the suffix first, then shorten on a word boundary where possible.
+    budget=180-len('-Resume'.encode())
+    if len(core.encode('utf-8'))>budget:
+        shortened=core.encode('utf-8')[:budget].decode('utf-8','ignore')
+        core=shortened.rsplit('-',1)[0] if '-' in shortened else shortened
+    return core.rstrip(' .-')+'-Resume' if core else 'Resume'
 
 
 def resume_filename(snapshot,format):
     title=resume_title(snapshot.get('posting_snapshot'),snapshot.get('title') or 'Resume',snapshot.get('name') or '')
-    safe=re.sub(r'[<>:"/\\|?*\x00-\x1f\x7f]','-',title).strip(' .') or 'Resume'
-    return safe.encode('utf-8')[:190].decode('utf-8','ignore')+'.'+format
+    return title+'.'+format
