@@ -20,20 +20,10 @@ test('an empty student Profile begins with required education',()=>{assert.deepE
 
 test('unfinished targeting follows the visual order, including coursework inside Education',()=>{assert.deepEqual(setupTarget([{id:'employment',status:'not_started'},{id:'coursework',status:'not_started'},{id:'education',status:'complete'}]),{pane:'education',heading:'profile-coursework-title'});});
 const {setupBlockers}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
-test('finish area names unfinished acknowledgements and the exact draft needing review',()=>{
- const sections=[{id:'education',title:'Education',status:'complete'},{id:'volunteering',title:'Volunteering',status:'not_started'},{id:'skills',title:'Skills',status:'needs_review',draft_count:1},{id:'coursework',status:'complete'}];
- const result=setupBlockers(sections,[{data:{category:'skills',title:'Certifications',confirmed:false}},{data:{category:'skills',title:'Programming',confirmed:true}}]);
- assert.deepEqual(result.map(v=>v.id),['volunteering','skills']);assert.match(result[0].message,/Nothing to add yet/);assert.equal(result[1].message,'Review and confirm: Certifications.');assert.equal(result[1].heading,'profile-skills-title');
-});
-test('finish explanations follow server states and route coursework to Education',()=>{
- assert.deepEqual(setupBlockers(sections.map(s=>({...s,status:'empty'})),[]),[]);
- const result=setupBlockers([{id:'coursework',title:'Coursework',status:'needs_review',draft_count:1}],[]);
- assert.equal(result[0].pane,'education');assert.equal(result[0].heading,'profile-coursework-title');assert.match(result[0].message,/source findings/);
-});
-const {finishSetupReason}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
-test('finish tooltip lists actual blockers and disappears when none remain',()=>{
- const blockers=setupBlockers([{id:'volunteering',title:'Volunteering',status:'not_started'},{id:'skills',status:'needs_review',draft_count:1}],[{data:{category:'skills',title:'Certifications',confirmed:false}}]);
- const reason=finishSetupReason(blockers,'');assert.match(reason,/Volunteering.*Nothing to add yet/);assert.match(reason,/Skills & certifications.*Certifications/);assert.ok(!reason.includes('eligibility'));assert.equal(finishSetupReason([],''),'');assert.match(finishSetupReason([],'Saving progress'),/Please wait: Saving progress/);
+test('only education blocks access; optional pending records stay drafts',()=>{
+ assert.deepEqual(setupBlockers([{id:'education',status:'complete'},{id:'skills',status:'needs_review'}],[]),[]);
+ const blockers=setupBlockers([{id:'education',title:'Education',status:'required'}],[]);
+ assert.equal(blockers.length,1);assert.equal(blockers[0].pane,'education');assert.match(blockers[0].message,/school/);
 });
 
  test('explicit Profile navigation exits stories and clears its filter while preserving expanded sections',()=>{

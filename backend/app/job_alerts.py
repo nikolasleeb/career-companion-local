@@ -2,6 +2,7 @@
 import asyncio,base64,hashlib,html,json,os,re,time,secrets
 from datetime import datetime,timezone,timedelta
 from pathlib import Path
+from typing import Literal
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo,ZoneInfoNotFoundError
 import httpx
@@ -9,7 +10,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from fastapi import APIRouter,Depends,HTTPException
 from pydantic import Field,field_validator,model_validator
-from . import db,config,auth,onboarding,job_search,job_locations
+from . import db,config,auth,onboarding,job_search,job_locations,graduation_defaults,role_catalog,provider_connections
 from .models import StrictModel,SearchRequest
 from .network import ServiceError
 
@@ -22,7 +23,16 @@ def ident(user,kind):return hashlib.sha256((user+':'+kind).encode()).hexdigest()
 def record(user,kind,default):
     rows=db.list_entities(user,kind)
     return rows[0] if rows else {'id':ident(user,kind),'data':default}
-def preferences(user):return record(user,'job_search_preferences',{'query':SearchRequest().model_dump()})
+def preferences(user,zone=None):
+    result=record(user,'job_search_preferences',{'query':{**SearchRequest().model_dump(),'title':'','interests':[]}})
+    data=dict(result['data']);data['query']=dict(data['query'])
+    # Existing stored choices are manual until the user explicitly restores auto.
+    data.setdefault('job_type_mode','manual' if result.get('created_at') else 'automatic')
+    data.setdefault('timezone','UTC')
+    if zone:data['timezone']=zone
+    if data['job_type_mode']=='automatic':data['query']['job_types']=graduation_defaults.for_profile(user,data['timezone'])['job_types']
+    return {**result,'data':data}
+
 def schedule(user):return record(user,'job_alert',Schedule().model_dump())
 def save(user,kind,data):return db.save(user,kind,data,record(user,kind,{})['id'])
 
@@ -40,6 +50,15 @@ class SavedSearch(SearchRequest):
         return self
 class Preferences(StrictModel):
     query:SavedSearch
+    job_type_mode:Literal['automatic','manual']|None=None
+    timezone:str|None=Field(default=None,max_length=100)
+    @field_validator('timezone')
+    @classmethod
+    def valid_timezone(cls,value):
+        if value is not None:
+            try:ZoneInfo(value)
+            except (ValueError,ZoneInfoNotFoundError):raise ValueError('Choose a valid IANA time zone.')
+        return value
     recent_interests:list[str]|None=Field(default=None,max_length=50)
     account_id:str|None=Field(default=None,max_length=64)
     @field_validator('recent_interests')
@@ -122,21 +141,27 @@ def push_key():
         except FileExistsError:pass
     return p
 
-def capabilities():
-    return {'adzuna':bool(config.ADZUNA_ID and config.ADZUNA_KEY),'usajobs':bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL),'email':bool(config.CF_EMAIL_TOKEN and config.CF_EMAIL_ACCOUNT and config.ALERT_FROM),'email_sender':config.ALERT_FROM,'browser_push':True,'scheduler':config.JOB_SCHEDULER_ENABLED,'tech_preset':job_search.TECH,'shared_connections':True,'location_options':job_locations.options(),'location_regions':job_locations.region_details()}
+def capabilities(user=None):
+    return {'adzuna':bool(user and provider_connections.public(user)['configured'] and not provider_connections.public(user)['test_only']),'adzuna_connection':provider_connections.public(user) if user else None,'usajobs_scope':'Shared connection','usajobs':bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL),'email':bool(config.CF_EMAIL_TOKEN and config.CF_EMAIL_ACCOUNT and config.ALERT_FROM),'email_sender':config.ALERT_FROM,'browser_push':True,'scheduler':config.JOB_SCHEDULER_ENABLED,'tech_preset':job_search.TECH,'preset_groups':role_catalog.GROUPS,'role_catalog':[r['label'] for r in role_catalog.CATALOG['roles']],'catalog_version':role_catalog.VERSION,'location_options':job_locations.options(),'location_regions':job_locations.region_details()}
 
 @router.get('/preferences')
-def get_preferences(user=Depends(owner)):
+def get_preferences(timezone:str|None=None,user=Depends(owner)):
+    if timezone:
+        try:Schedule.zone(timezone)
+        except ValueError:raise HTTPException(422,'Choose a valid IANA time zone.') from None
     with db.connect() as c:pushes=c.execute('SELECT count(*) FROM cc_job_push WHERE user_id=?',(user,)).fetchone()[0]
-    return {'preferences':preferences(user),'schedule':schedule(user),'capabilities':capabilities(),'enrolled_browsers':pushes}
+    return {'preferences':preferences(user,timezone),'schedule':schedule(user),'capabilities':capabilities(user),'enrolled_browsers':pushes,'persisted_timezone':preferences(user)['data']['timezone'],'suggestions':role_catalog.suggestions(user),'graduation_default':graduation_defaults.for_profile(user,preferences(user,timezone)['data']['timezone'])}
 
 @router.put('/preferences')
 def put_preferences(body:Preferences,user=Depends(owner)):
     if body.account_id and body.account_id!=user:raise HTTPException(409,'Your account changed. Reload before saving search preferences.')
     query=body.query.model_dump();query['sources']=[v for v in query['sources'] if v not in ('web','jobspy')];query['refresh']=False
     if not query['sources']:raise ServiceError('Choose at least one non-AI source for saved searches and daily alerts.')
-    changed=preferences(user)['data'].get('query')!=query
-    result=save(user,'job_search_preferences',{'query':query,'recent_interests':body.recent_interests if body.recent_interests is not None else preferences(user)['data'].get('recent_interests',[])})
+    previous=preferences(user)['data'];mode=body.job_type_mode or previous['job_type_mode'];zone=body.timezone or previous['timezone']
+    if body.job_type_mode is None and query['job_types']!=previous['query']['job_types']:mode='manual'
+    if mode=='automatic':query['job_types']=graduation_defaults.for_profile(user,zone)['job_types']
+    changed=previous.get('query')!=query
+    result=save(user,'job_search_preferences',{'query':query,'recent_interests':body.recent_interests if body.recent_interests is not None else previous.get('recent_interests',[]),'job_type_mode':mode,'timezone':zone})
     if changed:
         with db.connect() as c:c.execute('DELETE FROM cc_job_baselines WHERE user_id=?',(user,))
     return result
@@ -287,6 +312,7 @@ async def deliver(user,day,batch):
         with db.connect() as c:c.execute('UPDATE cc_job_deliveries SET state=?,detail=? WHERE user_id=? AND day=? AND channel=?',(state,detail,user,day,channel))
 
 async def run_daily(user,now=None,force=False):
+    if not onboarding.status(user)['completed']:return
     now=now or datetime.now(timezone.utc);settings=current_alert(user)
     if not settings.get('enabled'):return
     saved_query=preferences(user)['data']['query']

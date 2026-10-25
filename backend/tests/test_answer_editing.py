@@ -1,3 +1,4 @@
+from conftest import without_setup
 """Human-reviewed wording and shared experience relationships, with mocked AI only."""
 import asyncio
 import copy
@@ -71,7 +72,7 @@ def test_one_story_links_two_roles_without_changing_either_profile_or_duplicatin
  records=db.list_entities(user,'profile_answer');assert len(records)==1
  data=records[0]['data'];assert data['experience_ids']==[contractor['id'],intern['id']] and data['experience_id']==contractor['id']
  assert db.get(user,intern['id'],'experience')==intern and db.get(user,contractor['id'],'experience')==contractor
- effective={r['id']:r['data'] for r in library.records(user)}
+ effective={r['id']:r['data'] for r in without_setup(library.records(user))}
  assert RAW not in effective[intern['id']]['contribution'] and RAW in effective[contractor['id']]['contribution']
  source=effective[contractor['id']]['answer_sources'][0]
  assert source['experience_ids']==data['experience_ids'] and len(source['linked_experiences'])==2

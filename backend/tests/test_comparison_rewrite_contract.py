@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import cached_posting_fixture
 import copy
 import json
@@ -77,7 +78,7 @@ def test_invalid_optional_rewrite_never_discards_valid_comparison_or_other_edit(
     guide=next(r for r in result['retrieved'] if r['id']==suggestion['guide_id'])
     assert suggestion['guide_quote']==guide['data']['text']
     ai.validate_analysis({'requirements':[],'suggestions':result['suggestions']},job['data'],result['retrieved'])
-    assert client.get('/api/workspace').json()['experience']==[record]
+    assert without_setup(client.get('/api/workspace').json()['experience'])==[record]
     assert db.get(account['id'],old['id'],'analysis')==old
 
 

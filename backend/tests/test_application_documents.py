@@ -1,3 +1,4 @@
+from conftest import without_setup
 import io
 import json
 import hashlib
@@ -62,7 +63,7 @@ def test_upload_original_review_cover_and_background_selection(client,account):
     assert client.delete('/api/records/'+doc['id']).status_code==409
     assert client.put('/api/documents/'+doc['id']+'/review',json={'text':'Profile contamination attempt'}).status_code==400
     assert client.post('/api/documents/'+doc['id']+'/parse').status_code==400
-    assert not db.list_entities(account['id'],'experience')
+    assert not without_setup(db.list_entities(account['id'],'experience'))
 
 def test_scanned_pdf_supporting_files_and_removal(client,account):
     _,app=application(client);value=upload(client,app,raw=pdf(True)).json();doc=value['document'];app=value['application']

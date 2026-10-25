@@ -1,3 +1,4 @@
+from conftest import onboard_test_account
 import copy
 import hashlib
 import json
@@ -97,7 +98,7 @@ def test_private_report_backup_restore_and_tamper_detection(client,account):
 
 def test_assessment_ownership_and_csrf(client,account):
     row=start(client)
-    other=client.post('/api/auth/register',json={'username':'other_person','password':'fictional-password-123'}).json();client.headers['X-CSRF-Token']=other['csrf']
+    other=client.post('/api/auth/register',json={'username':'other_person','password':'fictional-password-123'}).json();client.headers['X-CSRF-Token']=other['csrf'];onboard_test_account(other)
     assert client.get('/api/work-style').json()==[]
     assert client.put('/api/work-style/'+row['id']+'/progress',json=payload()).status_code==404
     assert finish(client,row).status_code==404

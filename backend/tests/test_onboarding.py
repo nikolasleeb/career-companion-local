@@ -23,9 +23,9 @@ def test_first_time_checklist_and_resources_without_key(client,fresh,monkeypatch
     s=state(client);assert not s['completed'] and not s['ready'] and len(s['sections'])==6
     assert client.get('/api/me').json()['onboarding']==s
     assert not section(s,'education')['can_mark_empty']
-    for url in ('/api/resources','/api/guidance','/api/work-style/catalog','/api/work-style','/api/workspace','/api/profile-answers','/api/project-sources'):
+    for url in ('/api/workspace','/api/profile-answers','/api/project-sources','/api/settings/job-connections','/api/account/export','/api/tasks/active'):
         assert client.get(url).status_code==200,url
-    assert client.post('/api/work-style').status_code==200
+    assert client.post('/api/work-style').status_code==403
     assert client.post('/api/project-sources/paste',json={'title':'Notes','text':'A course project.'}).status_code==200
     assert client.post('/api/answer-drafts',json={'title':'Example','expected_version':0,'text':'','question':work_style.DIMENSIONS[0]['prompt']}).status_code==200
     assert client.post('/api/onboarding/complete',json=request(s)).status_code==409
@@ -40,7 +40,7 @@ def test_all_application_entrypoints_are_guarded_before_work(client,fresh,monkey
     monkeypatch.setattr(ai,'structured',forbidden)
     response=client.request(method,path,json={} if method not in ('get','delete') else None)
     assert response.status_code==403,(path,response.text)
-    assert 'Complete Profile setup first' in response.json()['detail']
+    assert 'education entry' in response.json()['detail']
     assert response.headers['x-next-step-setup']=='required'
     with db.connect() as c:assert c.execute('SELECT count(*) FROM tasks WHERE user_id=?',(fresh['id'],)).fetchone()[0]==0
 
@@ -50,18 +50,18 @@ def test_education_requires_review_school_and_qualification(client,fresh,values,
     education(client,**values);assert section(state(client),'education')['status']==expected
 
 def test_checklist_empty_decisions_completion_retry_and_no_relock(client,fresh):
-    s=ready(client);assert s['ready'] and not s['completed']
-    assert client.get('/api/applications').status_code==403 # Explicit Finish is required.
+    s=ready(client);assert s['ready'] and s['completed']
+    assert client.get('/api/applications').status_code==200 # Education unlocks immediately.
     response=client.post('/api/onboarding/complete',json=request(s));assert response.status_code==200,response.text
     assert response.json()['completed'] and not response.json()['grandfathered']
     assert client.post('/api/onboarding/complete',json=request(s)).status_code==200
     assert client.get('/api/applications').status_code==200
     for item in db.list_entities(fresh['id'],'experience'):assert client.delete('/api/records/'+item['id']).status_code==200
-    assert state(client)['completed'] and client.get('/api/applications').status_code==200
+    assert not state(client)['completed'] and client.get('/api/applications').status_code==403
     assert not client.get('/api/me').json()['settings'].get('name')
     assert client.post('/api/auth/logout').status_code==200
     login=client.post('/api/auth/login',json={'username':'new_student','password':'fictional-setup-password'}).json()
-    assert login['onboarding']['completed']
+    assert not login['onboarding']['completed']
 
 def test_new_records_clear_empty_even_if_removed_before_reload(client,fresh):
     assert empty(client,'project').status_code==200
@@ -91,8 +91,8 @@ def test_profile_signature_and_concurrent_decisions(client,fresh):
     client.put('/api/settings',json={'name':'Optional Student'}) # Optional contact edit does not invalidate evidence.
     item=db.list_entities(fresh['id'],'experience')[0]
     client.put('/api/experience/'+item['id'],json={**item['data'],'degree':'BA'})
-    assert client.post('/api/onboarding/complete',json=request(s)).status_code==409
-    assert not state(client)['completed']
+    assert client.post('/api/onboarding/complete',json=request(s)).status_code==200
+    assert state(client)['completed']
 
 
 def test_project_analysis_needs_approval_before_it_counts(client,fresh):
@@ -108,14 +108,14 @@ def test_project_analysis_needs_approval_before_it_counts(client,fresh):
     assert section(state(client),'project')['status']=='complete'
     assert client.post('/api/project-snapshots/'+snap['id']+'/attach',json={'builder':'resume','conversation_id':'missing','expected_version':1}).status_code==403
     assert client.post('/api/work-style/prompts',json={'themes':['1'],'job_id':'missing'}).status_code==403
-    assert client.post('/api/work-style/prompts',json={'themes':['1'],'job_id':''}).status_code==503
+    assert client.post('/api/work-style/prompts',json={'themes':['1'],'job_id':''}).status_code==403
 
 
 def test_migration_only_grandfathers_existing_application_users(client,fresh):
     assert not state(client)['completed']
     with db.connect() as c:c.execute("DELETE FROM entities WHERE user_id=? AND kind='onboarding'",(fresh['id'],))
     db.save(fresh['id'],'application',{'title':'Historical application'})
-    s=state(client);assert s['completed'] and s['grandfathered']
+    s=state(client);assert not s['completed'] and not s['grandfathered']
     # The same fresh reset as the user's test workflow removes setup state and history.
     with db.connect() as c:c.execute("DELETE FROM entities WHERE user_id=? AND kind<>'board'",(fresh['id'],))
     assert not state(client)['completed']
@@ -131,7 +131,7 @@ def test_backup_progress_remapping_single_record_and_isolation(client,fresh):
     assert len(db.list_entities(other['id'],'onboarding'))==1
     assert section(state(client),'employment')['status']=='empty' and section(state(client),'education')['status']=='complete'
     assert db.list_entities(other['id'],'experience')[0]['id']!=original_education
-    assert not onboarding.status(fresh['id'])['completed']
+    assert onboarding.status(fresh['id'])['completed']
     corrupt=json.loads(json.dumps(backup));next(r for r in corrupt['records'] if r['kind']=='onboarding')['data']['empty_sections']=['education']
     before=len(db.list_entities(other['id'],'experience'))
     assert client.post('/api/account/import',files={'file':('bad.json',json.dumps(corrupt),'application/json')}).status_code==400
@@ -154,8 +154,8 @@ def test_resume_import_only_counts_after_review_and_never_auto_finishes(client,f
     assert section(state(client),'education')['status']=='required'
     response=client.post('/api/documents/'+document['id']+'/import-resume',json=request_body(document))
     assert response.status_code==200,response.text
-    s=state(client);assert section(s,'education')['status']=='complete' and not s['completed']
-    assert client.get('/api/applications').status_code==403
+    s=state(client);assert section(s,'education')['status']=='complete' and s['completed']
+    assert client.get('/api/applications').status_code==200
 
 
 def test_rejected_source_findings_can_be_marked_empty_and_restore_never_relocks(client,fresh):

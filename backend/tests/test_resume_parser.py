@@ -1,3 +1,4 @@
+from conftest import without_setup
 import copy
 import io
 import json
@@ -124,17 +125,17 @@ def test_resume_upload_is_local_and_approval_is_atomic(client,account,monkeypatc
     from app import ai
     monkeypatch.setattr(ai,'call_api',forbidden)
     document=upload(client)
-    assert client.get('/api/workspace').json()['experience']==[]
+    assert without_setup(client.get('/api/workspace').json()['experience'])==[]
     assert client.get('/api/me').json()['settings']['name']==''
     invalid=request_body(document);invalid['entries'][-1]['id']='forged'
     assert client.post('/api/documents/'+document['id']+'/import-resume',json=invalid).status_code==400
-    assert client.get('/api/workspace').json()['experience']==[]
+    assert without_setup(client.get('/api/workspace').json()['experience'])==[]
     body=request_body(document)
     body['entries'][0]['data']['major']='Edited and reviewed major'
     response=client.post('/api/documents/'+document['id']+'/import-resume',json=body)
     assert response.status_code==200,response.text
     assert response.json()['created']==9
-    records=client.get('/api/workspace').json()['experience']
+    records=without_setup(client.get('/api/workspace').json()['experience'])
     assert all(r['data']['confirmed'] and r['data']['source_document_id']==document['id'] for r in records)
     assert client.get('/api/me').json()['settings']['email']=='morgan@example.com'
     assert len(db.retrieve(account['id'],'SQL'))>0
@@ -143,7 +144,7 @@ def test_resume_upload_is_local_and_approval_is_atomic(client,account,monkeypatc
     second=upload(client)
     again=client.post('/api/documents/'+second['id']+'/import-resume',json=request_body(second))
     assert again.json()['created']==0
-    assert len(client.get('/api/workspace').json()['experience'])==9
+    assert len(without_setup(client.get('/api/workspace').json()['experience']))==9
 
 
 def test_existing_records_versions_and_contact_fields_are_preserved(client,account):
@@ -157,7 +158,7 @@ def test_existing_records_versions_and_contact_fields_are_preserved(client,accou
     settings=client.get('/api/me').json()['settings']
     assert settings['name']=='Existing name' and settings['city']=='Existing city'
     workspace=client.get('/api/workspace').json()
-    assert next(r for r in workspace['experience'] if r['id']==record['id'])==record
+    assert next(r for r in without_setup(workspace['experience']) if r['id']==record['id'])==record
     assert workspace['resume'][0]==version
 
 
@@ -171,7 +172,7 @@ def test_stale_sources_profile_conflicts_and_confirmation(client,account):
     assert reopened['data']['resume_parse']['profile_base']['name']=='Changed after parsing'
     client.put('/api/documents/'+document['id']+'/review',json={'text':RESUME+'\nNew source note'})
     assert client.post('/api/documents/'+document['id']+'/import-resume',json=body).status_code==409
-    assert client.get('/api/workspace').json()['experience']==[]
+    assert without_setup(client.get('/api/workspace').json()['experience'])==[]
 
 
 def test_other_account_cannot_parse_or_approve(client,account):
@@ -230,14 +231,14 @@ def test_delete_uploaded_copy_preserves_imported_records_versions_and_original_o
     response=client.post('/api/documents/'+first['id']+'/import-resume',json=request_body(first))
     assert response.status_code==200
     workspace=client.get('/api/workspace').json()
-    ids=[r['id'] for r in workspace['experience']]
+    ids=[r['id'] for r in without_setup(workspace['experience'])]
     version=client.post('/api/resumes',json={'experience_ids':ids}).json()
     first_path=config.DATA_DIR/'uploads'/account['id']/first['id']
     second_path=config.DATA_DIR/'uploads'/account['id']/second['id']
     assert first_path.exists() and second_path.exists()
     assert client.delete('/api/records/'+first['id']).status_code==200
     after=client.get('/api/workspace').json()
-    assert after['experience']==workspace['experience']
+    assert without_setup(after['experience'])==without_setup(workspace['experience'])
     assert after['resume'][0]==version
     assert [d['id'] for d in after['document']]==[second['id']]
     assert not first_path.exists() and second_path.exists()

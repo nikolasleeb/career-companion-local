@@ -25,8 +25,8 @@ def client(tmp_path,monkeypatch):
 def onboard_test_account(user):
     # Ownership/document regression tests exercise an already-onboarded account.
     # First-time setup itself is tested using real fresh registrations separately.
-    from app import onboarding
-    db.save(user['id'],'onboarding',{'schema_version':1,'version':1,'empty_sections':[],'completed_at':db.now(),'grandfathered':False},onboarding.identity(user['id']))
+    from app.models import ExperienceItem
+    db.save(user['id'],'experience',ExperienceItem(category='education',title='Test setup education',degree='BS',organization='Fictional Setup University',confirmed=True,end_date='2020-05').model_dump())
 
 @pytest.fixture
 def account(client):
@@ -39,9 +39,7 @@ def account(client):
 
 @pytest.fixture
 def sample(client,account):
-    response=client.post('/api/demo/analyst')
-    assert response.status_code==200,response.text
-    return cached_posting_fixture(account['id'],response.json()['job'])
+    return cached_posting_fixture(account['id'],load_example(account['id'],'analyst'))
 
 
 def cached_posting_fixture(user,job):
@@ -69,3 +67,22 @@ def comparison_wire(value,job,payload):
         result[field]=[{**row,'evidence':[{'source_id':next(source['source_id'] for source in sources if source['record_id']==ref['record_id'] and ai.valid_quote(ref['quote'],source['quote']))} for ref in row['evidence']]} for row in result.get(field,[])]
     result['suggestions']=[{'source_id':next(source['source_id'] for source in payload['rewrite_source_catalog'] if source['record_id']==row['record_id'] and ai.valid_quote(row['original'],source['quote'])),'guidance_source_id':next(source['source_id'] for source in payload['rewrite_guidance_catalog'] if source['guide_id']==row['guide_id'] and ai.valid_quote(row['guide_quote'],source['quote'])),'proposed':row['proposed'],'reason':row['reason']} for row in value.get('suggestions',[])]
     return result
+
+
+def load_example(user,scenario):
+    """Seed fictional reviewed data directly; demo UI cannot bypass education setup."""
+    import json
+    from app.models import ExperienceItem
+    example=json.loads((config.CONTENT_DIR/'examples.json').read_text())[scenario]
+    for row in db.list_entities(user,'experience'):db.delete(user,row['id'])
+    db.update_settings(user,example.get('profile',{'name':example['name'],'contact':example['contact']}))
+    for item in example['experience']:db.save(user,'experience',ExperienceItem.model_validate(item).model_dump())
+    return db.save(user,'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
+
+
+def without_setup(records):
+    """Ignore only the explicit education scaffold in unrelated feature assertions.
+    Production queries still receive it, and education tests inspect the full Profile.
+    Imported copies retain their label, so backup assertions test their own records.
+    """
+    return [r for r in records if r.get('data',{}).get('title')!='Test setup education']

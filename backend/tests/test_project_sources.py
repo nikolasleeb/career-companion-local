@@ -1,3 +1,4 @@
+from conftest import without_setup
 import asyncio
 import copy
 import json
@@ -105,7 +106,7 @@ def test_two_repositories_have_distinct_files_one_analysis_and_reusable_links(cl
     draft=db.save(user,'answer_draft',{**draft['data'],'findings':result['analysis']['data']['findings']},draft['id'])
     review=client.post('/api/profile-answers/drafts/'+draft['id']+'/review',json={'expected_version':1,'title':'Extended course project','text':'I cleaned the original data and extended validation.','contribution':'I implemented the checks.','confirmed':True,'create_experience':True})
     assert review.status_code==200,review.text
-    assert db.list_entities(user,'experience')[0]['data']['project_urls']==urls
+    assert without_setup(db.list_entities(user,'experience'))[0]['data']['project_urls']==urls
     assert len(review.json()['data']['sources'][0]['repositories'])==2
     backup=client.get('/api/account/export').json()
     other=client.post('/api/auth/register',json={'username':'two-repo-restore','password':'fictional-restore-password'}).json();client.headers['X-CSRF-Token']=other['csrf']
@@ -113,7 +114,7 @@ def test_two_repositories_have_distinct_files_one_analysis_and_reusable_links(cl
     assert client.post('/api/project-sources/'+source['id']+'/select',json={'file_paths':paths}).status_code==404
     restored=client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup),'application/json')})
     assert restored.status_code==200,restored.text
-    assert db.list_entities(other['id'],'experience')[0]['data']['project_urls']==urls
+    assert without_setup(db.list_entities(other['id'],'experience'))[0]['data']['project_urls']==urls
     assert len(db.list_entities(other['id'],'project_snapshot')[0]['data']['members'])==2
 
 
@@ -159,8 +160,8 @@ def test_project_approval_requires_contribution_is_transactional_repeat_safe_and
     payload.update(contribution='I personally implemented the regression model.',create_experience=True)
     response=client.post(url,json=payload);assert response.status_code==200,response.text
     result=response.json();assert result['data']['status']=='confirmed' and result['data']['sources'][0]['excerpts']
-    assert len(db.list_entities(user,'experience'))==1
-    assert client.post(url,json=payload).json()['id']==result['id'] and len(db.list_entities(user,'experience'))==1
+    assert len(without_setup(db.list_entities(user,'experience')))==1
+    assert client.post(url,json=payload).json()['id']==result['id'] and len(without_setup(db.list_entities(user,'experience')))==1
     assert 'personally implemented' in profile_answers.records(user)[0]['data']['contribution']
     assert profile_answers.records(user)[0]['data']['answer_sources'][0]['provenance'][0]['snapshot_id']==snap['id']
     assert client.post(url,json={**payload,'text':'Changed claim'}).status_code==409
@@ -297,7 +298,7 @@ def test_approved_source_details_reach_snapshot_and_corrections_keep_history(cli
     second=draft_for(user,snap)
     # A second approval of the same professional detail must reuse the existing Profile record.
     result=answer_drafts.review(user,second['id'],Review(expected_version=1,title='Course project',text='I cleaned public data.',contribution='I implemented and evaluated linear regression.',confirmed=True,create_experience=True))
-    assert result['id']==first['id'] and len(db.list_entities(user,'experience'))==1
+    assert result['id']==first['id'] and len(without_setup(db.list_entities(user,'experience')))==1
 
 
 def test_source_analysis_task_token_survives_completion(guided,client,monkeypatch):

@@ -1,9 +1,9 @@
 import React,{useEffect,useId,useRef,useState} from 'react';
 import {addRole,roleChoices} from './jobSearchPreferences';
-type Props={selected:string[];recent:string[];onChange:(values:string[],added?:string[])=>void;disabled?:boolean};
-export function RolePicker({selected,recent,onChange,disabled}:Props){
+type Props={selected:string[];recent:string[];onChange:(values:string[],added?:string[])=>void;disabled?:boolean;catalog?:string[]};
+export function RolePicker({selected,recent,onChange,disabled,catalog=[]}:Props){
  const [text,setText]=useState(''),[open,setOpen]=useState(false),[active,setActive]=useState(-1),[error,setError]=useState('');
- const root=useRef<HTMLDivElement>(null),input=useRef<HTMLInputElement>(null),id=useId();const choices=roleChoices(selected,recent,text);const custom=!!text.trim()&&!choices.some(v=>v.toLocaleLowerCase()===text.trim().toLocaleLowerCase());const options=[...(custom?[text.trim()]:[]),...choices];
+ const root=useRef<HTMLDivElement>(null),input=useRef<HTMLInputElement>(null),id=useId();const choices=roleChoices(selected,recent,text,catalog);const custom=!!text.trim()&&!choices.some(v=>v.toLocaleLowerCase()===text.trim().toLocaleLowerCase());const options=[...(custom?[text.trim()]:[]),...choices];
  useEffect(()=>{if(active>=0)document.getElementById(id+'-option-'+active)?.scrollIntoView({block:'nearest'});},[active,id]);
  useEffect(()=>{function outside(e:PointerEvent){if(!root.current?.contains(e.target as Node))setOpen(false);}document.addEventListener('pointerdown',outside);return()=>document.removeEventListener('pointerdown',outside);},[]);
  function choose(value:string){try{const exists=selected.some(v=>v.toLocaleLowerCase()===value.toLocaleLowerCase());onChange(exists?selected.filter(v=>v.toLocaleLowerCase()!==value.toLocaleLowerCase()):addRole(selected,value),exists?[]:[value]);setText('');setActive(-1);setError('');input.current?.focus();}catch(e){setError((e as Error).message);}}

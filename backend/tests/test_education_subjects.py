@@ -1,3 +1,4 @@
+from conftest import without_setup
 import io
 import json
 import pytest
@@ -32,7 +33,7 @@ def test_all_subjects_survive_endpoints_exports_backup_and_import(client,account
     assert next(r for r in backup['records'] if r['id']==record['id'])['data']['minors']==['Music','History']
     restored=client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup),'application/json')})
     assert restored.status_code==200,restored.text
-    rows=db.list_entities(account['id'],'experience')
+    rows=without_setup(db.list_entities(account['id'],'experience'))
     assert len(rows)==2 and all(r['data']['majors']==data['majors'] for r in rows)
     changed=client.put('/api/experience/'+record['id'],json={**data,'majors':['Physics'],'minors':[]})
     assert changed.status_code==200 and changed.json()['data']['minor']==''
@@ -55,7 +56,7 @@ def test_multiple_subjects_in_reviewed_resume_import(client,account):
     data={**entry['data'],'majors':['Mathematics','Computer Science'],'minors':['Music','History']}
     result=client.post('/api/documents/'+doc['id']+'/import-resume',json={'text_hash':parsed['text_hash'],'profile_updates':{},'entries':[{'id':entry['id'],'data':data}],'reviewed':True})
     assert result.status_code==200,result.text
-    saved=db.list_entities(account['id'],'experience')[0]['data'];assert saved['majors']==data['majors'] and saved['minors']==data['minors']
+    saved=without_setup(db.list_entities(account['id'],'experience'))[0]['data'];assert saved['majors']==data['majors'] and saved['minors']==data['minors']
     assert doc['data']['resume_parse']['entries'][0]['data']['majors']==['Mathematics']
 
 

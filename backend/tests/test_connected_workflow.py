@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import onboard_test_account
 import asyncio
 import copy
@@ -61,7 +62,7 @@ def test_inline_answers_save_without_ai_and_recover_with_stable_ids(guided,clien
     loaded=client.get('/api/cover-workspaces/'+state['id']).json()
     assert loaded['data']['questions'][0]['id']==q['id'] and loaded['data']['questions'][0]['answer'].startswith('I am interested')
     entries=client.get('/api/profile-answers').json();assert len(entries)==1 and entries[0]['data']['status']=='draft'
-    assert not library.confirmed(guided[0]) and not library.records(guided[0])
+    assert not library.confirmed(guided[0]) and not without_setup(library.records(guided[0]))
     stale=client.put('/api/cover-workspaces/'+state['id']+'/answers',json={'expected_version':state['data']['version'],'answers':[{'question_id':q['id'],'text':'Older replacement','expected_answer_version':0}]})
     assert stale.status_code==409
     assert letters.state(guided[0],state['id'])['data']['questions'][0]['answer'].startswith('I am interested')
@@ -79,7 +80,7 @@ def test_batch_review_links_exact_answer_then_approval_creates_reusable_story(gu
     assert entry['data']['text'].startswith('I wrote a QA guide') and entry['data']['sources'][0]['questions'][0]['id']==q['id']
     assert state['data']['questions'][1]['status']=='reviewed'
     library.migrate(user);library.migrate(user);assert len(library.confirmed(user))==1
-    assert any('QA guide' in str(r['data']) for r in library.records(user))
+    assert any('QA guide' in str(r['data']) for r in without_setup(library.records(user)))
 
 
 def test_editing_answer_invalidates_older_pending_proposal(guided):
@@ -106,7 +107,7 @@ def test_manual_review_without_key_and_motivation_explicit_selection(guided,clie
     state=save_answer(user,state,'cover','I am interested in using analysis for planning.',q)
     response=client.post('/api/profile-answers/review',json={'builder':'cover','conversation_id':state['id'],'question_id':q['id'],'expected_answer_version':1,'title':'Why this analytical work interests me','text':'I am interested in using analysis for planning.','answer_kind':'motivation'})
     assert response.status_code==200,response.text
-    motivation=response.json();assert not library.records(user) and not library.reusable(user,job['id'])
+    motivation=response.json();assert not without_setup(library.records(user)) and not library.reusable(user,job['id'])
     assert library.reusable(user,'another-job',[motivation['id']])[0]['id']==motivation['id']
     state=letters.state(user,state['id']);current=state['current']
     response=client.put('/api/cover-workspaces/'+state['id']+'/profile-sources',json={'expected_version':state['data']['version'],'answer_ids':[motivation['id']]});assert response.status_code==200
@@ -125,7 +126,7 @@ def test_corrections_archive_and_history_do_not_rewrite_saved_pdf(guided,client)
     assert any(r['text']==body['text'] for r in state['sources'])
     data=changed.json()['data'];body.update({'expected_version':data['version'],'archived':True})
     assert client.put('/api/profile-answers/'+entry['id'],json=body).status_code==200
-    library.migrate(user);assert not library.confirmed(user) and not library.records(user)
+    library.migrate(user);assert not library.confirmed(user) and not without_setup(library.records(user))
     assert db.get(user,state['current']['id'],'cover_revision')['data']==original
     assert client.put('/api/profile-answers/'+entry['id'],json=body).status_code==409
 
@@ -145,7 +146,7 @@ def test_resume_inline_answer_approval_and_backed_profile_correction(client,acco
     db.save(user,'resume_conversation',state['data'],state['id'])
     state=resumes.approve(user,state['id'],FactApproval(expected_version=state['data']['version'],proposal_id=state['data']['proposals'][0]['id'],action='approve',update_draft=False))
     entry=library.confirmed(user)[0];assert entry['data']['experience_id']==experience['id']
-    assert library.records(user)[0]['data']['contribution'].count('I wrote a report')==1
+    assert without_setup(library.records(user))[0]['data']['contribution'].count('I wrote a report')==1
     current=db.get(user,experience['id'],'experience');new='I wrote a report for a course supervisor.'
     body={'expected_version':1,'title':entry['data']['title'],'text':new,'values':{'contribution':new},'experience_id':experience['id'],'experience_updated_at':current['updated_at']}
     db.save(user,'experience',{**current['data'],'tools':'Excel'},experience['id'])
@@ -196,8 +197,8 @@ def test_multiple_inline_answers_reviewed_in_one_paid_action(guided,monkeypatch)
     from app import cover_context
     state=asyncio.run(cover_context.review(user,state['id'],CoverContextReview(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),build=False,decisions=[CoverReviewDecision(proposal_id=p['id'],action='approve',text=p['text']) for p in state['data']['context_proposals']])))
     assert all(q['status']=='reviewed' for q in state['data']['questions'])
-    assert len(library.confirmed(user))==2 and len(library.records(user))==1
-    assert all('interested in analysis' not in json.dumps(r['data']) for r in library.records(user))
+    assert len(library.confirmed(user))==2 and len(without_setup(library.records(user)))==1
+    assert all('interested in analysis' not in json.dumps(r['data']) for r in without_setup(library.records(user)))
 
 
 def test_reviewed_stories_reach_comparison_resume_and_interview_inputs(guided,monkeypatch):
@@ -205,7 +206,7 @@ def test_reviewed_stories_reach_comparison_resume_and_interview_inputs(guided,mo
     async def model(schema,payload,*args,**kwargs):
         seen.append((schema.__name__,payload))
         if schema.__name__=='CatalogComparisonOutput':
-            criteria=payload['criterion_catalog'];rid=next(r['id'] for r in payload['retrieved'] if r['kind']=='experience')
+            criteria=payload['criterion_catalog'];rid=next(r['id'] for r in payload['retrieved'] if r['kind']=='experience' and text in json.dumps(r['data']))
             return {'summary':'Reviewed project evidence.','requirements':[{'criterion_id':c['id'],'keyword':c['text'],'job_quote':c['source'],'importance':c['importance'],'kind':c['kind'],'status':'supported' if c['kind']=='qualification' and c['importance']=='required' else 'unknown','evidence':[{'source_id':next(s['source_id'] for s in payload['professional_evidence_catalog'] if s['record_id']==rid and ai.valid_quote(text,s['quote']))}] if c['kind']=='qualification' and c['importance']=='required' else [],'explanation':'Reviewed project information.','question':''} for c in criteria],'job_details':[],'recommendations':[],'suggestions':[],'questions':[],'keywords':[]},{'model':'test','estimated_token_cost_usd':.001}
         if schema.__name__=='PrepOutput':return {'summary':'Use your reviewed project story.','priorities':[],'resource_ids':[],'interview_questions':[]},{'model':'test','estimated_token_cost_usd':.001}
         raise AssertionError(schema.__name__)
@@ -249,7 +250,7 @@ def test_changed_linked_profile_facts_do_not_reenter_from_story_history(guided):
     data={'version':1,'status':'confirmed','answer_kind':'experience','title':'Report','text':experience['data']['description'],'experience_id':experience['id'],'backed_fields':{'description':experience['data']['description']},'sources':[],'history':[]}
     db.save(user,'profile_answer',data);assert library.confirmed(user)
     revised={**experience['data'],'description':'I presented a dashboard to classmates.'};db.save(user,'experience',revised,experience['id'])
-    assert not library.confirmed(user) and 'I wrote a report' not in json.dumps(library.records(user))
+    assert not library.confirmed(user) and 'I wrote a report' not in json.dumps(without_setup(library.records(user)))
     assert db.list_entities(user,'profile_answer')[0]['data']['text']==data['text']
 
 

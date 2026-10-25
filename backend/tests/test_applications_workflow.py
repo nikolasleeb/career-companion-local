@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import comparison_wire
 from conftest import onboard_test_account
 import io
@@ -37,7 +38,7 @@ def test_qualification_scoring(rows,expected):
 def test_private_authorization_backup_and_resume_exclusion(client,sample,account):
     private={'authorized_us':'yes','sponsorship_now':'no','sponsorship_future':'unsure'}
     assert client.put('/api/settings',json=private).status_code==200
-    ids=[r['id'] for r in db.list_entities(account['id'],'experience')]
+    ids=[r['id'] for r in without_setup(db.list_entities(account['id'],'experience'))]
     response=client.post('/api/resumes',json={'experience_ids':ids,'job_id':sample['id']})
     assert response.status_code==200,response.text
     version=response.json()
@@ -96,7 +97,7 @@ def save(client,job,ids):
 
 
 def test_auto_tracker_versions_and_submitted_snapshot(client,sample,account):
-    ids=[r['id'] for r in db.list_entities(account['id'],'experience')]
+    ids=[r['id'] for r in without_setup(db.list_entities(account['id'],'experience'))]
     first=save(client,sample,ids)
     entries=client.get('/api/applications').json();assert len(entries)==1
     entry=entries[0];assert entry['data']['status']=='preparing' and entry['data']['applied_date']==''
@@ -120,7 +121,7 @@ def test_auto_tracker_versions_and_submitted_snapshot(client,sample,account):
 
 
 def test_migration_idempotent_and_restore_links(client,sample,account):
-    item=db.list_entities(account['id'],'experience')[0]
+    item=without_setup(db.list_entities(account['id'],'experience'))[0]
     analysis=db.save(account['id'],'analysis',{'job_id':sample['id']})
     old=db.save(account['id'],'resume',{'analysis_id':analysis['id'],'title':'Historical','sections':[],'experience_ids':[item['id']]})
     assert len(client.get('/api/applications').json())==1
@@ -191,13 +192,13 @@ def test_one_page_overflow_fit_and_exports(client,sample,account):
         assert documents.docx_pages(word)==1
         doc=Document(io.BytesIO(word));assert doc.styles['Normal'].font.size.pt==10.5
         assert 'Analyzed SQL datasets' in client.get('/api/resumes/'+version['id']+'/export/txt').text
-    assert len(db.list_entities(account['id'],'experience'))==8
+    assert len(without_setup(db.list_entities(account['id'],'experience')))==8
 
 
 def test_failed_fit_retains_inputs(client,sample,account,monkeypatch):
     def fail(raw): raise ServiceError('Converter unavailable for test')
     monkeypatch.setattr(documents,'docx_pdf',fail)
-    ids=[r['id'] for r in db.list_entities(account['id'],'experience')]
+    ids=[r['id'] for r in without_setup(db.list_entities(account['id'],'experience'))]
     task=wait_task(client,client.post('/api/resumes/fit',json={'experience_ids':ids,'job_id':sample['id']}))
     assert task['status']=='failed' and task['result']['inputs']['experience_ids']==ids
-    assert len(db.list_entities(account['id'],'experience'))==3
+    assert len(without_setup(db.list_entities(account['id'],'experience')))==3

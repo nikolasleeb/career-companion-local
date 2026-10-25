@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import cached_posting_fixture
 import asyncio
 import copy
@@ -59,7 +60,7 @@ def test_first_comparison_succeeds_once_without_model_recopying_posting_sources(
     assert set(assessment['properties'])=={'criterion_id','status','evidence','explanation','question','project_context_ids'}
     assert 'job_quote' not in assessment['required'] and assessment['additionalProperties'] is False
     assert calls[0]['text']['format']['name']=='CatalogComparisonOutput'
-    assert client.get('/api/workspace').json()['experience'][0]==record
+    assert without_setup(client.get('/api/workspace').json()['experience'])[0]==record
 
 
 @pytest.mark.parametrize('tamper',['unknown','wrong_group','duplicate','profile_quote','profile_id','missing_evidence'])

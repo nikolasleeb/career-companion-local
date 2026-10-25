@@ -140,9 +140,10 @@ async def board_jobs(board, query):
         if len(result)>=20: break
     return result
 
-async def adzuna_jobs(query,location):
+async def adzuna_jobs(query,location,*,user=None):
     from .job_search import adzuna
-    return await adzuna(query,location)
+    if not user:raise ServiceError('Adzuna requires an account connection.')
+    return await adzuna(user,query,location)
 
 async def discover(user,request):
     from .job_search import discover as search

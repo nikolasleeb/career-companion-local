@@ -5,18 +5,10 @@ from urllib.parse import urlparse
 from . import config,db,integrations as x,task_progress,ai,job_locations
 from .network import ServiceError,public_fetch,html_job
 
-TECH=['Software engineering','IT and systems','Cloud infrastructure','Data science','Data engineering','Data analysis','Technical solutions']
-ALIASES={
- 'software engineering':['software engineer','software developer','application developer','computer science'],
- 'it and systems':['IT support','IT specialist','information technology','systems engineer','systems administrator','network engineer','help desk','support engineer'],
- 'cloud infrastructure':['cloud','infrastructure','devops','site reliability'],
- 'data science':['data science','data scientist','machine learning','AI engineer'],
- 'data engineering':['data engineer','data engineering','data platform','analytics engineer','ETL'],
- 'data analysis':['data analyst','data analytics','business intelligence','business analyst','product analyst'],
- 'technical solutions':['solutions engineer','integration','technical consultant','technical support'],
- 'data analyst':['data analyst','data analytics','business intelligence analyst'],
-}
-VERSION=3
+from . import role_catalog,provider_connections
+TECH=role_catalog.GROUPS['Tech & Data']
+ALIASES=role_catalog.ALIASES
+VERSION=role_catalog.VERSION
 
 def words(value):return re.findall(r'[^\W_]+',value.casefold(),re.UNICODE)
 def title_match(title,query):
@@ -67,11 +59,12 @@ def review(job,request):
     job.update(review_reasons=issues,review_status='needs_review' if issues else 'matches_preferences',experience_requirements=required[:4],eligibility_passages=eligibility,job_type='internship' if intern else 'full_time_or_unspecified',date_status='recent' if published else 'aggregator' if added else 'unknown',date_kind='republished' if published and (job.get('publication_source') or '').startswith('Ashby') else 'published' if published else 'aggregator_added' if added else 'unknown')
     return job
 
-async def adzuna(query,location):
-    if not(config.ADZUNA_ID and config.ADZUNA_KEY):raise ServiceError('Adzuna needs the server connection configured. Other sources can still search.')
+async def adzuna(user,query,location):
+    secret=provider_connections.resolve(user)
+    if not secret:raise ServiceError('Adzuna is not enabled for regular searches on this account. Configure it in Settings; trial connections are test-only.')
     result=[]
     for page in (1,2):
-        params={'app_id':config.ADZUNA_ID,'app_key':config.ADZUNA_KEY,'what':query,'results_per_page':25,'sort_by':'date'}
+        params={'app_id':secret['app_id'],'app_key':secret['app_key'],'what':query,'results_per_page':25,'sort_by':'date'}
         if not job_locations.region(location) and job_locations.provider_location(location):params['where']=job_locations.provider_location(location)
         data=await x.fetch_json(f'https://api.adzuna.com/v1/api/jobs/us/search/{page}',params)
         for item in data.get('results',[]):
@@ -116,13 +109,13 @@ async def discover(user,request):
             if not chosen:statuses.append({'source':source,'status':'setup','message':'Add an employer career-page URL to search this source.'})
             for board in chosen:calls.append(collect(source+':'+board['board'],lambda b=board:x.board_jobs(b,queries)))
         elif source in ('adzuna','usajobs'):
-            ready=bool(config.ADZUNA_ID and config.ADZUNA_KEY) if source=='adzuna' else bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL)
+            ready=bool(provider_connections.public(user)['configured'] and not provider_connections.public(user)['test_only']) if source=='adzuna' else bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL)
             if not ready:
-                statuses.append({'source':source,'status':'setup','message':source.upper()+' needs the shared server connection configured.'});continue
+                statuses.append({'source':source,'status':'setup','message':('Adzuna needs an account connection enabled for regular searches. Test-only keys are excluded.' if source=='adzuna' else 'USAJOBS needs the shared connection configured.')});continue
             for query in queries:
                 # One bounded provider query per role interest, not one per alias.
                 term=ALIASES.get(query.casefold(),[query])[0]
-                calls.append(collect(source,lambda s=source,q=term:(x.adzuna_jobs(q,request.location) if s=='adzuna' else usajobs(q,request.location))))
+                calls.append(collect(source,lambda s=source,q=term:(adzuna(user,q,request.location) if s=='adzuna' else usajobs(q,request.location))))
         elif source=='jobspy':statuses.append({'source':'jobspy','status':'disabled','message':'Experimental scraping is retired. Indeed is excluded.'})
     await asyncio.gather(*calls)
     if 'web' in request.sources:

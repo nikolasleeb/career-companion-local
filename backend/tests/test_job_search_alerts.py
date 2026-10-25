@@ -56,7 +56,9 @@ def test_providers_map_dates_ids_and_never_expose_keys(client,account,monkeypatc
         if 'adzuna' in url:return {'results':[{'id':'1','title':'Data Analyst','company':{'display_name':'Example'},'location':{'display_name':'Phoenix, AZ'},'description':'A description snippet','redirect_url':'https://www.adzuna.com/land/ad/1?tracking=retain-this-token','created':db.now(),'salary_min':50000,'salary_max':60000}]}
         return {'SearchResult':{'SearchResultItems':[{'MatchedObjectId':'f1','MatchedObjectDescriptor':{'PositionTitle':'IT Specialist','OrganizationName':'Example agency','PositionLocation':[{'CountryCode':'United States'}],'PositionLocationDisplay':'Phoenix, AZ','PositionURI':'https://www.usajobs.gov/job/f1','PublicationStartDate':db.now(),'QualificationSummary':'One year specialized experience.','UserArea':{'Details':{'Education':'Current students may apply.','HiringPath':['student']}}}}]}}
     monkeypatch.setattr(x,'fetch_json',fetch);monkeypatch.setattr(config,'ADZUNA_ID','private-id');monkeypatch.setattr(config,'ADZUNA_KEY','private-key');monkeypatch.setattr(config,'USAJOBS_KEY','federal-key');monkeypatch.setattr(config,'USAJOBS_EMAIL','api-owner@example.com')
-    a=run(search.adzuna('analyst','United States'))[0];u=run(search.usajobs('IT specialist','United States'))[0]
+    from app import provider_connections as pc
+    pc.store(account['id'],pc.Adzuna(app_id='private-id',app_key='private-key',usage='regular'))
+    a=run(search.adzuna(account['id'],'analyst','United States'))[0];u=run(search.usajobs('IT specialist','United States'))[0]
     assert a['source_added_at'] and not a['published_at'] and a['description_incomplete']
     assert a['url']=='https://www.adzuna.com/land/ad/1?tracking=retain-this-token'
     assert u['published_at'] and u['source_identity']=='usajobs:f1'
@@ -82,6 +84,7 @@ def test_preferences_schedule_validation_ownership_and_backup(client,account):
 
 
 def test_daily_baseline_dedup_restart_and_no_ai(client,account,monkeypatch):
+    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True,browser=True).model_dump())
     rows=[job()];count=[]
     async def discover(uid,request):
@@ -102,6 +105,7 @@ def test_daily_baseline_dedup_restart_and_no_ai(client,account,monkeypatch):
 
 
 def test_dst_schedule_runs_once_per_local_date(client,account,monkeypatch):
+    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True,time='01:30',timezone='America/New_York').model_dump())
     calls=[]
     async def discover(*args):calls.append(1);return {'jobs':[],'sources':[]}
@@ -159,6 +163,7 @@ def test_email_code_belongs_to_recipient_and_account(client,account,monkeypatch)
 
 
 def test_failed_source_establishes_baseline_only_after_recovery(client,account,monkeypatch):
+    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True).model_dump());day=datetime(2026,10,25,16,tzinfo=timezone.utc);failed=[True]
     async def discover(uid,request):return {'jobs':[] if failed[0] else [db.save(uid,'job',job(),'found')],'sources':[{'source':'ashby:example','status':'error' if failed[0] else 'ok','message':'Unavailable' if failed[0] else 'Recovered'}]}
     monkeypatch.setattr(search,'discover',discover)
@@ -211,6 +216,7 @@ def test_lever_partial_data_and_timeouts(client,account,monkeypatch):
 
 
 def test_check_now_uses_existing_task_api_without_orphaning_a_run(client,account,monkeypatch):
+    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     from test_app import wait
     async def discover(*args):return {'jobs':[],'sources':[],'query':{},'checked_at':db.now(),'ai_calls':[]}
     monkeypatch.setattr(search,'discover',discover)
@@ -224,6 +230,7 @@ def test_check_now_uses_existing_task_api_without_orphaning_a_run(client,account
 
 
 def test_daily_cross_source_url_dedup(client,account,monkeypatch):
+    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True).model_dump())
     rows=[job()];sources=[{'source':'ashby:example','status':'ok'},{'source':'adzuna','status':'ok'}]
     async def discover(uid,request):return {'jobs':[db.save(uid,'job',v,v['source_identity']) for v in rows],'sources':sources}

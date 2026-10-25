@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import cached_posting_fixture
 import copy
 import json
@@ -98,7 +99,7 @@ def test_first_comparison_binds_multiple_professional_passages_once_without_priv
     for field in ('duty_assessments','recommendations','keywords'):
         assert all(e['record_id']==record['id'] and ai.valid_quote(e['quote'],ai.experience_text(record['data'])) for row in result[field] for e in row['evidence'])
     assert all('source_id' not in e for row in result['requirements'] for e in row['evidence'])
-    assert client.get('/api/workspace').json()['experience']==[record]
+    assert without_setup(client.get('/api/workspace').json()['experience'])==[record]
 
 
 @pytest.mark.parametrize('identity',['foreign-passage','evidence:stale-content'])

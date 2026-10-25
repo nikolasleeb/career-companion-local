@@ -1,3 +1,5 @@
+from conftest import onboard_test_account
+from conftest import without_setup
 """Fictional-only assistant safety, isolation, recovery, vault and cost contracts."""
 import asyncio
 import base64
@@ -194,7 +196,7 @@ def test_use_once_is_encrypted_and_resume_reuses_exact_question(client,account):
 def test_six_fictional_accounts_cannot_access_each_others_resources(client,account):
     first=account;users=[first];r,c,app=run(client,first['id']);vault=client.post('/api/private-application-answers',json=answer()).json();credentials.save(first['id'],'sk-fictional-not-a-real-key')
     for i in range(1,6):
-        user=client.post('/api/auth/register',json={'username':'fictional'+str(i),'password':'fictional-password-only'}).json();users.append(user);client.headers['X-CSRF-Token']=user['csrf']
+        user=client.post('/api/auth/register',json={'username':'fictional'+str(i),'password':'fictional-password-only'}).json();users.append(user);client.headers['X-CSRF-Token']=user['csrf'];onboard_test_account(user)
         assert client.get('/api/application-agent/runs/'+r['id']).status_code==404
         assert client.post('/api/application-agent/relay/context',json=c).status_code==403
         assert client.get('/api/private-application-answers').json()['answers']==[]
@@ -293,7 +295,7 @@ def test_professional_accomplishment_enters_answers_stories_separate_from_vault(
     assert library[0]['data']['text']=='I analyzed a fictional class dataset.'
     assert library[0]['data']['sources'][0]['builder']=='application_agent'
     assert client.get('/api/private-application-answers').json()['answers']==[]
-    assert not db.list_entities(account['id'],'experience')
+    assert not without_setup(db.list_entities(account['id'],'experience'))
 
 
 def test_expired_pairing_is_checked_before_each_browser_write(client,account):

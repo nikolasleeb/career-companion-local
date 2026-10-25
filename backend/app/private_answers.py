@@ -63,7 +63,7 @@ def key():
     target.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
     if not target.exists():
         with db.connect() as c:
-            if c.execute('SELECT count(*) FROM cc_vault').fetchone()[0] or c.execute('SELECT count(*) FROM cc_run_answers').fetchone()[0] or c.execute('SELECT count(*) FROM cc_private_profile').fetchone()[0]:
+            if c.execute("SELECT count(*) FROM cc_provider_connections WHERE ciphertext!=''").fetchone()[0] or c.execute('SELECT count(*) FROM cc_vault').fetchone()[0] or c.execute('SELECT count(*) FROM cc_run_answers').fetchone()[0] or c.execute('SELECT count(*) FROM cc_private_profile').fetchone()[0]:
                 raise HTTPException(503,'Private vault key is unavailable. Restore the protected key before using the vault.')
         try:
             fd=os.open(target,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)

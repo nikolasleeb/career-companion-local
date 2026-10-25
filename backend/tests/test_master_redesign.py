@@ -1,3 +1,4 @@
+from conftest import without_setup
 import copy
 import io
 import json
@@ -78,7 +79,7 @@ def test_legacy_contact_and_education_are_not_guessed(client,account):
     assert second['data']['contact']=='email@example.com'
     assert client.get('/api/me').json()['settings']['contact']==line
     assert first['data']['contact']==line
-    assert db.list_entities(account['id'],'experience')[0]['data']['description']=='Original coursework notes.'
+    assert without_setup(db.list_entities(account['id'],'experience'))[0]['data']['description']=='Original coursework notes.'
 
 
 def test_structured_backup_and_old_backup_import(client,account):
@@ -92,7 +93,7 @@ def test_structured_backup_and_old_backup_import(client,account):
     response=client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup).encode(),'application/json')})
     assert response.status_code==200,response.text
     assert client.get('/api/me').json()['settings']['city']=='Tucson'
-    records=client.get('/api/workspace').json()['experience']
+    records=without_setup(client.get('/api/workspace').json()['experience'])
     assert len(records)==2 and records[0]['id']!=records[1]['id']
     assert all(r['data']['gpa']=='3.6' for r in records)
     old={'schema_version':1,'profile':{'name':'Old profile','contact':'Legacy contact','mode':'economy'},'records':[{'id':'old-record','kind':'experience','data':{'category':'education','title':'Old degree','description':'Unchanged notes','confirmed':True}}],'files':{}}

@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import comparison_wire
 from conftest import onboard_test_account
 import asyncio
@@ -258,7 +259,7 @@ def test_saved_profile_picker_only_returns_confirmed_owned_professional_evidence
     db.save(user,'experience',{'title':'Unreviewed secret','category':'project','confirmed':False})
     client.put('/api/settings',json={'us_citizen':'yes','sponsorship_now':'no'})
     result=client.get('/api/profile-evidence');assert result.status_code==200
-    assert [r['id'] for r in result.json()]==[record['id']]
+    assert [r['id'] for r in without_setup(result.json())]==[record['id']]
     assert 'Unreviewed secret' not in result.text and 'us_citizen' not in result.text
     other=client.post('/api/auth/register',json={'username':'evidence-picker-other','password':'fictional-password'}).json()
     client.headers['X-CSRF-Token']=other['csrf']

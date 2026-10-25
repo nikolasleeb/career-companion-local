@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import onboard_test_account
 import copy
 import io
@@ -130,15 +131,16 @@ def test_ai_draft_roundtrip_keywords_privacy_both_layouts(client,account,monkeyp
 def test_invalid_draft_preserves_inputs_no_save(client,account,monkeypatch,kind):
     job,rows,body=setup(client,account)
     def mutate(d):
-        if kind=='number':d['entries'][1]['items'][0]['text']='Increased revenue by 75% using Python.'
+        project=next(e for e in d['entries'] if e['record_id']==rows[1]['id'])
+        if kind=='number':project['items'][0]['text']='Increased revenue by 75% using Python.'
         elif kind=='credential':d['entries'][3]['items'][0]['text']='AWS Certified Solutions Architect'
         elif kind=='foreign':d['entries'][0]['record_id']='another-users-record'
-        elif kind=='empty':d['entries'][1]['items']=[]
+        elif kind=='empty':project['items']=[]
     calls=mock_model(monkeypatch,mutate,audit=kind!='audit')
     result=wait_task(client,client.post('/api/resumes/optimize',json=body))
     assert result['status']=='failed' and result['result']['inputs']['job_id']==job['id'],result
     assert db.list_entities(account['id'],'resume_draft')==[] and db.list_entities(account['id'],'resume')==[]
-    assert len(db.list_entities(account['id'],'experience'))==4
+    assert len(without_setup(db.list_entities(account['id'],'experience')))==4
 
 
 def test_draft_ownership_and_project_description(client,account,monkeypatch):

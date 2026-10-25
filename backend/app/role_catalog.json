@@ -1,0 +1,460 @@
+{
+  "version": 4,
+  "groups": {
+    "Tech & Data": [
+      "Software engineering",
+      "IT and systems",
+      "Cloud infrastructure",
+      "Data science",
+      "Data engineering",
+      "Data analysis",
+      "Technical solutions"
+    ],
+    "Business & Consulting": [
+      "Management consulting",
+      "Business analysis",
+      "Marketing",
+      "Accounting",
+      "Finance",
+      "Operations"
+    ],
+    "Engineering": [
+      "Mechanical engineering",
+      "Electrical engineering",
+      "Civil engineering",
+      "Aerospace engineering",
+      "Industrial engineering",
+      "Environmental engineering"
+    ],
+    "Health & Medical": [
+      "Nursing",
+      "Public health",
+      "Healthcare administration",
+      "Clinical research",
+      "Medical laboratory science",
+      "Medical assisting"
+    ],
+    "Education & Public Service": [
+      "Education",
+      "Social work",
+      "Public policy",
+      "Government administration"
+    ],
+    "Arts & Communication": [
+      "Graphic design",
+      "UX design",
+      "Communications",
+      "Public relations"
+    ],
+    "Science & Research": [
+      "Biology",
+      "Chemistry",
+      "Environmental science",
+      "Laboratory research"
+    ]
+  },
+  "roles": [
+    {
+      "label": "Software engineering",
+      "group": "Tech & Data",
+      "aliases": [
+        "software engineer",
+        "software developer",
+        "application developer",
+        "computer science"
+      ],
+      "support": [
+        "python",
+        "java",
+        "software",
+        "programming"
+      ]
+    },
+    {
+      "label": "IT and systems",
+      "group": "Tech & Data",
+      "aliases": [
+        "IT support",
+        "IT specialist",
+        "information technology",
+        "systems engineer",
+        "systems administrator",
+        "network engineer",
+        "help desk",
+        "support engineer"
+      ],
+      "support": [
+        "information systems",
+        "network",
+        "information technology"
+      ]
+    },
+    {
+      "label": "Cloud infrastructure",
+      "group": "Tech & Data",
+      "aliases": [
+        "cloud",
+        "infrastructure",
+        "devops",
+        "site reliability"
+      ],
+      "support": [
+        "aws",
+        "azure",
+        "cloud computing",
+        "cloud infrastructure"
+      ]
+    },
+    {
+      "label": "Data science",
+      "group": "Tech & Data",
+      "aliases": [
+        "data science",
+        "data scientist",
+        "machine learning",
+        "AI engineer"
+      ],
+      "support": [
+        "statistics",
+        "machine learning",
+        "data science"
+      ]
+    },
+    {
+      "label": "Data engineering",
+      "group": "Tech & Data",
+      "aliases": [
+        "data engineer",
+        "data engineering",
+        "data platform",
+        "analytics engineer",
+        "ETL"
+      ],
+      "support": [
+        "spark",
+        "etl",
+        "data pipeline",
+        "data warehousing"
+      ]
+    },
+    {
+      "label": "Data analysis",
+      "group": "Tech & Data",
+      "aliases": [
+        "data analyst",
+        "data analytics",
+        "business intelligence",
+        "product analyst"
+      ],
+      "support": [
+        "sql",
+        "analytics",
+        "data analysis"
+      ]
+    },
+    {
+      "label": "Technical solutions",
+      "group": "Tech & Data",
+      "aliases": [
+        "solutions engineer",
+        "integration engineer",
+        "technical consultant",
+        "technical support"
+      ],
+      "support": [
+        "troubleshooting",
+        "technical support"
+      ]
+    },
+    {
+      "label": "Management consulting",
+      "group": "Business & Consulting",
+      "aliases": [
+        "management consultant",
+        "consulting analyst",
+        "strategy consultant"
+      ],
+      "support": []
+    },
+    {
+      "label": "Business analysis",
+      "group": "Business & Consulting",
+      "aliases": [
+        "business analyst",
+        "business analysis"
+      ],
+      "support": []
+    },
+    {
+      "label": "Marketing",
+      "group": "Business & Consulting",
+      "aliases": [
+        "marketing",
+        "digital marketer",
+        "market research"
+      ],
+      "support": [
+        "marketing",
+        "market research"
+      ]
+    },
+    {
+      "label": "Accounting",
+      "group": "Business & Consulting",
+      "aliases": [
+        "accountant",
+        "accounting",
+        "auditor"
+      ],
+      "support": [
+        "audit",
+        "taxation",
+        "accounting"
+      ]
+    },
+    {
+      "label": "Finance",
+      "group": "Business & Consulting",
+      "aliases": [
+        "finance",
+        "financial analyst"
+      ],
+      "support": []
+    },
+    {
+      "label": "Operations",
+      "group": "Business & Consulting",
+      "aliases": [
+        "operations",
+        "operations analyst"
+      ],
+      "support": []
+    },
+    {
+      "label": "Mechanical engineering",
+      "group": "Engineering",
+      "aliases": [
+        "Mechanical engineering",
+        "Mechanical engineer"
+      ],
+      "support": []
+    },
+    {
+      "label": "Electrical engineering",
+      "group": "Engineering",
+      "aliases": [
+        "Electrical engineering",
+        "Electrical engineer"
+      ],
+      "support": []
+    },
+    {
+      "label": "Civil engineering",
+      "group": "Engineering",
+      "aliases": [
+        "Civil engineering",
+        "Civil engineer"
+      ],
+      "support": []
+    },
+    {
+      "label": "Aerospace engineering",
+      "group": "Engineering",
+      "aliases": [
+        "Aerospace engineering",
+        "Aerospace engineer"
+      ],
+      "support": []
+    },
+    {
+      "label": "Industrial engineering",
+      "group": "Engineering",
+      "aliases": [
+        "Industrial engineering",
+        "Industrial engineer"
+      ],
+      "support": []
+    },
+    {
+      "label": "Environmental engineering",
+      "group": "Engineering",
+      "aliases": [
+        "Environmental engineering",
+        "Environmental engineer"
+      ],
+      "support": []
+    },
+    {
+      "label": "Nursing",
+      "group": "Health & Medical",
+      "aliases": [
+        "nursing",
+        "registered nurse",
+        "RN",
+        "licensed practical nurse"
+      ],
+      "support": [
+        "patient care",
+        "nursing"
+      ]
+    },
+    {
+      "label": "Public health",
+      "group": "Health & Medical",
+      "aliases": [
+        "public health",
+        "epidemiology"
+      ],
+      "support": []
+    },
+    {
+      "label": "Healthcare administration",
+      "group": "Health & Medical",
+      "aliases": [
+        "healthcare administration",
+        "health administrator",
+        "health services"
+      ],
+      "support": []
+    },
+    {
+      "label": "Clinical research",
+      "group": "Health & Medical",
+      "aliases": [
+        "clinical research",
+        "clinical trials"
+      ],
+      "support": []
+    },
+    {
+      "label": "Medical laboratory science",
+      "group": "Health & Medical",
+      "aliases": [
+        "medical laboratory scientist",
+        "medical laboratory science",
+        "medical laboratory technician"
+      ],
+      "support": []
+    },
+    {
+      "label": "Medical assisting",
+      "group": "Health & Medical",
+      "aliases": [
+        "medical assistant",
+        "medical assisting"
+      ],
+      "support": []
+    },
+    {
+      "label": "Education",
+      "group": "Education & Public Service",
+      "aliases": [
+        "education",
+        "teacher",
+        "teaching",
+        "educator"
+      ],
+      "support": []
+    },
+    {
+      "label": "Social work",
+      "group": "Education & Public Service",
+      "aliases": [
+        "social work",
+        "social worker"
+      ],
+      "support": []
+    },
+    {
+      "label": "Public policy",
+      "group": "Education & Public Service",
+      "aliases": [
+        "public policy",
+        "policy analyst"
+      ],
+      "support": []
+    },
+    {
+      "label": "Government administration",
+      "group": "Education & Public Service",
+      "aliases": [
+        "government administration",
+        "public administration"
+      ],
+      "support": []
+    },
+    {
+      "label": "Graphic design",
+      "group": "Arts & Communication",
+      "aliases": [
+        "graphic design",
+        "graphic designer"
+      ],
+      "support": []
+    },
+    {
+      "label": "UX design",
+      "group": "Arts & Communication",
+      "aliases": [
+        "UX design",
+        "UX designer",
+        "user experience"
+      ],
+      "support": []
+    },
+    {
+      "label": "Communications",
+      "group": "Arts & Communication",
+      "aliases": [
+        "communications",
+        "communication specialist"
+      ],
+      "support": []
+    },
+    {
+      "label": "Public relations",
+      "group": "Arts & Communication",
+      "aliases": [
+        "public relations"
+      ],
+      "support": []
+    },
+    {
+      "label": "Biology",
+      "group": "Science & Research",
+      "aliases": [
+        "biology",
+        "biologist"
+      ],
+      "support": []
+    },
+    {
+      "label": "Chemistry",
+      "group": "Science & Research",
+      "aliases": [
+        "chemistry",
+        "chemist"
+      ],
+      "support": []
+    },
+    {
+      "label": "Environmental science",
+      "group": "Science & Research",
+      "aliases": [
+        "environmental science",
+        "environmental scientist"
+      ],
+      "support": []
+    },
+    {
+      "label": "Laboratory research",
+      "group": "Science & Research",
+      "aliases": [
+        "laboratory research",
+        "research assistant",
+        "laboratory assistant"
+      ],
+      "support": []
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import comparison_wire
 import asyncio
 import copy
@@ -25,7 +26,7 @@ def wait(client,task_id):
     raise AssertionError('Task did not complete')
 
 def fixture_analysis(user,job):
-    record=db.list_entities(user,'experience')[0]
+    record=without_setup(db.list_entities(user,'experience'))[0]
     guide=json.loads((config.CONTENT_DIR/'guidance.json').read_text())[0]
     original=record['data']['description'].split('. ')[0]
     return {'summary':'Review your confirmed SQL and Excel experience. Python needs clarification.',
@@ -57,9 +58,10 @@ def test_validation_does_not_echo_password(client):
 
 @pytest.mark.parametrize('scenario',['analyst','science','it'])
 def test_fictional_flows_exports_and_master_preservation(client,account,scenario):
-    client.post('/api/demo/'+scenario)
+    from conftest import load_example
+    load_example(account['id'],scenario)
     before=client.get('/api/workspace').json()
-    ids=[r['id'] for r in before['experience']]
+    ids=[r['id'] for r in without_setup(before['experience'])]
     for template in ('education','experience'):
         response=client.post('/api/resumes',json={'title':'Classroom resume','template':template,'experience_ids':ids})
         assert response.status_code==200,response.text
@@ -76,7 +78,7 @@ def test_fictional_flows_exports_and_master_preservation(client,account,scenario
             assert '[missing' not in text.lower()
             assert 'fictional-test-password' not in text
     after=client.get('/api/workspace').json()
-    assert before['experience']==after['experience']
+    assert without_setup(before['experience'])==without_setup(after['experience'])
     assert len(after['resume'])==2
 
 def test_unconfirmed_and_missing_fields(client,account):
@@ -94,7 +96,7 @@ def test_text_pdf_import_boundaries(client,account):
     assert response.status_code==200,response.text
     document=response.json()
     assert not document['data']['reviewed']
-    assert client.get('/api/workspace').json()['experience']==[]
+    assert without_setup(client.get('/api/workspace').json()['experience'])==[]
     review=client.put('/api/documents/'+document['id']+'/review',json={'text':'Reviewed: I wrote the SQL query.'})
     assert review.json()['data']['reviewed']
     assert client.post('/api/documents',files={'file':('wrong.exe',b'test')}).status_code==400
@@ -176,12 +178,12 @@ def test_invalid_ai_output_and_interrupted_tasks(client,sample,monkeypatch):
 def test_edit_decisions_do_not_overwrite_master(client,sample,account):
     output=fixture_analysis(account['id'],sample['data'])
     analysis=db.save(account['id'],'analysis',{**output,'job_id':sample['id']})
-    before=db.list_entities(account['id'],'experience')
+    before=without_setup(db.list_entities(account['id'],'experience'))
     response=client.post('/api/resumes',json={'experience_ids':[r['id'] for r in before],'analysis_id':analysis['id'],'decisions':[{'index':0,'action':'edit','text':'Student-confirmed wording for this classroom exercise.'}]})
     assert response.status_code==200,response.text
     text=client.get('/api/resumes/'+response.json()['id']+'/export/txt').text
     assert 'Student-confirmed wording' in text
-    assert before==db.list_entities(account['id'],'experience')
+    assert before==without_setup(db.list_entities(account['id'],'experience'))
 
 def test_onet_questions_progress_and_official_scoring(client,account,monkeypatch):
     monkeypatch.setattr(config,'ONET_KEY','fixture')
@@ -255,7 +257,7 @@ def test_backup_import_and_account_deletion(client,sample,account):
     assert imported.status_code==200,imported.text
     assert imported.json()['imported']==count
     records=client.get('/api/workspace').json()
-    assert len(records['experience'])==6
+    assert len(without_setup(records['experience']))==6
     bad={**payload,'schema_version':99}
     assert client.post('/api/account/import',files={'file':('bad.json',json.dumps(bad).encode())}).status_code==400
     assert client.request('DELETE','/api/account',json={'username':'student','password':'wrong'}).status_code==401

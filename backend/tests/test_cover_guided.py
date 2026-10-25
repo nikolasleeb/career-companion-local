@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import onboard_test_account
 import asyncio
 import base64
@@ -63,7 +64,7 @@ def test_answer_review_directly_supports_letter_without_new_resume(guided):
     assert current['approved_context'][0]['text'].startswith('I wrote a QA guide')
     assert current['content']['paragraphs'][1].startswith('I wrote a QA guide')
     assert db.get(user,resume['id'],'resume')['data']==original and len(db.list_entities(user,'resume'))==1
-    assert not db.list_entities(user,'experience') # Letter-only approval does not create Profile records.
+    assert not without_setup(db.list_entities(user,'experience')) # Letter-only approval does not create Profile records.
     assert any(e['source_id'].startswith('answer:') for e in current['evidence'][1]['evidence'])
     pdf=base64.b64decode(db.get(user,state['current']['id'],'cover_revision')['data']['artifacts']['pdf'])
     assert 'QA guide' in PdfReader(io.BytesIO(pdf)).pages[0].extract_text()
@@ -84,12 +85,12 @@ def test_correction_rejection_skip_and_build_with_existing(guided):
 
 def test_optional_profile_new_record_and_motivation_stays_private_to_letter(guided):
     state=answer(guided,prepare(guided));state=review(guided,state,build=False,save_to_profile=True,profile_title='Query review guide',profile_category='project')
-    record=db.list_entities(guided[0],'experience')[0]
+    record=without_setup(db.list_entities(guided[0],'experience'))[0]
     assert record['data']['confirmed'] and 'QA guide' in record['data']['contribution']
     assert state['data']['context_proposals'][0]['applied_record_id']==record['id']
     state=answer(guided,state,'I am interested in analytical work that helps colleagues plan.')
     with pytest.raises(HTTPException):review(guided,state,build=False,save_to_profile=True)
-    assert len(db.list_entities(guided[0],'experience'))==1
+    assert len(without_setup(db.list_entities(guided[0],'experience')))==1
 
 
 def test_profile_concurrent_change_rolls_back_approval(guided):
@@ -109,7 +110,7 @@ def test_review_retry_does_not_duplicate_profile_after_draft_failure(guided,monk
     state=letters.state(guided[0],state['id']);p=state['data']['context_proposals'][0];assert p['status']=='approved'
     monkeypatch.setattr(letters,'draft',original)
     state=asyncio.run(context.review(guided[0],state['id'],CoverContextReview(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),decisions=[CoverReviewDecision(proposal_id=p['id'],action='approve',text=p['text'],save_to_profile=True,profile_title='Query review guide')])))
-    assert state['current'] and len(db.list_entities(guided[0],'experience'))==1
+    assert state['current'] and len(without_setup(db.list_entities(guided[0],'experience')))==1
 
 
 def test_forged_quotes_question_refs_private_details_and_guidance_not_evidence(guided,monkeypatch):

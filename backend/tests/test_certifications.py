@@ -1,3 +1,4 @@
+from conftest import without_setup
 import base64
 import io
 from datetime import date,timedelta
@@ -46,7 +47,7 @@ def test_store_download_and_duplicate_certificate(client,account):
     raw=(db.config.DATA_DIR/'uploads'/account['id']/document['id']).read_bytes()
     duplicate=client.post('/api/certificates',files={'file':('copy.pdf',raw)})
     assert duplicate.json()['id']==document['id']
-    assert not db.list_entities(account['id'],'experience')
+    assert not without_setup(db.list_entities(account['id'],'experience'))
 
 
 @pytest.mark.parametrize('name,raw',[('certificate.exe',b'hello'),('certificate.pdf',b'not pdf'),('certificate.png',b'%PDF-1.0'),('certificate.svg',b'<svg onload="alert(1)"/>'),('empty.jpg',b''),('big.pdf',b'x'*(10*1024*1024+1))])
@@ -83,14 +84,14 @@ def test_backup_remaps_attachments_and_rejects_missing_references(client,account
     import json
     response=client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup))})
     assert response.status_code==200,response.text
-    entries=db.list_entities(account['id'],'experience')
+    entries=without_setup(db.list_entities(account['id'],'experience'))
     attachments={e['data']['certification_items'][0]['document_id'] for e in entries}
     assert len(attachments)==2 and document['id'] in attachments
     assert all(client.get('/api/certificates/'+identity+'/download').status_code==200 for identity in attachments)
     backup['files'].pop(document['id'])
-    count=len(db.list_entities(account['id'],'experience'))
+    count=len(without_setup(db.list_entities(account['id'],'experience')))
     assert client.post('/api/account/import',files={'file':('bad.json',json.dumps(backup))}).status_code==400
-    assert len(db.list_entities(account['id'],'experience'))==count
+    assert len(without_setup(db.list_entities(account['id'],'experience')))==count
 
 
 def test_approved_import_and_exports_do_not_use_proficiency(client,account):
@@ -101,7 +102,7 @@ def test_approved_import_and_exports_do_not_use_proficiency(client,account):
     entry['data']=credential(upload(client)['id'])
     response=client.post('/api/documents/'+doc['id']+'/import-resume',json={'text_hash':parsed['text_hash'],'entries':[{'id':entry['id'],'data':entry['data']}],'profile_updates':{},'reviewed':True})
     assert response.status_code==200,response.text
-    record=db.list_entities(account['id'],'experience')[0]
+    record=without_setup(db.list_entities(account['id'],'experience'))[0]
     snapshot=resume_data.entry_snapshot(record['data'],record['id'])
     text=documents.resume_plain({'name':'Fictional Student','sections':[{'title':'Skills','entries':[snapshot]}]})
     assert 'Earned 2024-05-15' in text and 'Expires 2027-05-15' in text and 'Example Training' in text

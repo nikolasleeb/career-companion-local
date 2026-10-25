@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import cached_posting_fixture
 import asyncio
 import copy
@@ -115,7 +116,7 @@ def test_resume_review_saves_linked_evidence_without_mutating_project(client,acc
     assert entry['data']['experience_id']==target['id'] and entry['data']['backed_fields']=={}
     assert entry['data']['sources'][0]['questions'][0]['id']==q['id'] and entry['data']['sources'][0]['project_refs']==refs
     assert db.get(user,record['id'],'experience')==record and db.get(user,target['id'],'experience')==target
-    assert text in next(r['data']['contribution'] for r in library.records(user) if r['id']==target['id'])
+    assert text in next(r['data']['contribution'] for r in without_setup(library.records(user)) if r['id']==target['id'])
     asyncio.run(question_answers.review(user,state['id'],'resume',AnswerBatchReview(expected_version=state['data']['version'],question_ids=[q['id']])))
     assert len(calls)==1
 
@@ -214,5 +215,5 @@ def test_explicit_unlinked_material_can_save_standalone_story_without_creating_p
     state=resumes.approve(user,state['id'],FactApproval(expected_version=state['data']['version'],proposal_id=p['id'],action='approve',keep_standalone=True,update_draft=False))
     entry=library.confirmed(user)[0]
     assert not entry['data']['experience_id'] and entry['id'] in state['data']['approved_record_ids']
-    assert db.list_entities(user,'experience')==[record] and len(calls)==1
+    assert without_setup(db.list_entities(user,'experience'))==[record] and len(calls)==1
     assert entry['data']['sources'][0]['project_refs'][0]['snapshot_id']==snap['id']

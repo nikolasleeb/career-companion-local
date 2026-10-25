@@ -11,7 +11,7 @@ from typing import Literal
 SECTIONS=('education','employment','project','volunteering','skills','coursework')
 TITLES=dict(zip(SECTIONS,('Education','Employment','Projects','Volunteering','Skills','Coursework')))
 LEGACY=('application','resume','cover_letter','resume_draft','resume_revision','cover_revision')
-LOCK_MESSAGE='Complete Profile setup first. Review your master-resume checklist in Profile.'
+LOCK_MESSAGE='Add and review one education entry with a school and degree or program in Profile to unlock the workspace.'
 
 class Decision(StrictModel):
     expected_version:int=Field(ge=1)
@@ -24,15 +24,16 @@ class Finish(StrictModel):
 
 def identity(user):return hashlib.sha256((user+':onboarding-v1').encode()).hexdigest()[:32]
 def restricted(path):
-    return bool(re.match(r'^/api/(?:jobs|analyses|resumes|resume-content|resume-conversations|resume-revisions|resume-drafts|cover-letters|cover-workspaces|cover-revisions|applications|preparation|interviews|boards|demo)(?:/|$)',path))
+    if not path.startswith('/api/'):return False
+    allowed=r'^/api/(?:health|updates|auth|me|workspace|onboarding|experience|documents|transcripts|certificates|profile-evidence|profile-answers|project-sources|project-analysis|project-analyses|project-snapshots|project-builders|answer-drafts|private-application-profile|private-application-answers|settings|account|tasks|records|usage)(?:/|$)'
+    return not bool(re.match(allowed,path))
 def _write(c,user,data):
     stamp=db.now();key=identity(user)
     c.execute('INSERT INTO entities VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at',(key,user,'onboarding',json.dumps(data),stamp,stamp))
 def _ensure(c,user):
     row=c.execute("SELECT payload FROM entities WHERE id=? AND user_id=? AND kind='onboarding'",(identity(user),user)).fetchone()
     if row:return json.loads(row[0])
-    legacy=c.execute("SELECT 1 FROM entities WHERE user_id=? AND kind IN ("+','.join('?' for _ in LEGACY)+") LIMIT 1",(user,*LEGACY)).fetchone()
-    data={'schema_version':1,'version':1,'empty_sections':[],'completed_at':db.now() if legacy else '', 'grandfathered':bool(legacy)}
+    data={'schema_version':1,'version':1,'empty_sections':[],'completed_at':'','grandfathered':False}
     _write(c,user,data);return data
 
 def profile_added(c,user,kind,value):
@@ -86,9 +87,9 @@ def _state(c,user,data):
     sections=[]
     for s in SECTIONS:
         ready=bool(groups[s]) and (s!='education' or education)
-        status='needs_review' if pending[s] else 'complete' if ready else 'empty' if s in empty else 'required' if s=='education' else 'not_started'
+        status='complete' if s=='education' and ready else 'needs_review' if pending[s] else 'complete' if ready else 'empty' if s in empty else 'required' if s=='education' else 'not_started'
         sections.append({'id':s,'title':TITLES[s],'status':status,'confirmed_count':len(groups[s]),'draft_count':pending[s],'can_mark_empty':s!='education' and not groups[s] and not pending[s]})
-    return {**data,'id':identity(user),'profile_signature':signature,'sections':sections,'completed':bool(data['completed_at']),'ready':all(s['status'] in ('complete','empty') for s in sections)}
+    return {**data,'id':identity(user),'profile_signature':signature,'sections':sections,'completed':education,'ready':education,'policy':'reviewed-education-v2'}
 
 def status(user):
     with db.connect() as c:
@@ -106,11 +107,10 @@ def require_complete(user):
 def update(user,body,finish=False):
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE');data=_ensure(c,user);state=_state(c,user,data)
-        if finish and data['completed_at']:return state
+        if finish and state['completed']:return state
         if data['version']!=body.expected_version or state['profile_signature']!=body.profile_signature:raise HTTPException(409,'Your Profile or setup checklist changed. Reload the checklist and review its current information.')
         if finish:
-            if data['completed_at']:return state
-            if not state['ready']:raise HTTPException(409,'Review every section and add confirmed education before finishing setup.')
+            if not state['ready']:raise HTTPException(409,'Add and review education with a school and degree or program before unlocking the workspace.')
             data.update(completed_at=db.now(),grandfathered=False)
         else:
             section=next(s for s in state['sections'] if s['id']==body.section)
@@ -129,7 +129,7 @@ def validate_backup(data):
         datetime.fromisoformat(data['completed_at'])
 
 def restore(user,incoming,legacy=False):
-    """Merge into the one canonical record; never relock an established account."""
+    """Merge legacy metadata; effective access is always re-evaluated from education."""
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE');data=_ensure(c,user)
         if incoming:

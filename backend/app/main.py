@@ -44,6 +44,8 @@ app.add_middleware(LocalAccess)
 from .security import ResourceBoundary
 app.add_middleware(ResourceBoundary)
 app.include_router(job_alerts.router)
+from . import provider_connections
+app.include_router(provider_connections.router)
 from . import private_answers, private_profile, application_agent, assistant_ai
 app.include_router(private_answers.router)
 app.include_router(private_profile.router)
@@ -91,7 +93,7 @@ def capabilities_for(user):
     return {**config.capabilities(),'openai':bool(own or (config.OPENAI_KEY if config.ALLOW_SERVER_AI_KEY else '')),
             'web_search':bool(credentials.effective(user) and config.ENABLE_WEB_SEARCH),
             'openai_key_source':'account' if own else 'installation' if config.OPENAI_KEY and config.ALLOW_SERVER_AI_KEY else 'none',
-            'ai':ai_settings.public(db.settings(user)), 'job_search':job_alerts.capabilities()}
+            'ai':ai_settings.public(db.settings(user)), 'job_search':job_alerts.capabilities(user),'adzuna':job_alerts.capabilities(user)['adzuna']}
 
 def require_ai(user):
     if not credentials.effective(user): raise HTTPException(503,'Add your OpenAI API key in Settings to enable AI. Manual records and exports remain available.')
@@ -264,7 +266,8 @@ def export_usage(start:str='',end:str='',model:str='',process:str='',tz:str='UTC
 @app.get('/api/workspace')
 def workspace(user=Depends(auth.current)):
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
-    return {kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
+    unlocked=onboarding.status(user['id'])['completed']
+    return {kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] if unlocked or kind in ('experience','document','profile_answer','onboarding') else [] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
 
 from . import project_routes
 project_routes.install(app,start_task,require_ai)
@@ -1063,7 +1066,8 @@ def add_board(body:Board,user=Depends(auth.current)):
 @app.post('/api/jobs/search')
 async def search(body:SearchRequest,user=Depends(auth.current)):
     if not body.sources: raise HTTPException(400,'Choose at least one source.')
-    cache_key=json.dumps({'search_version':job_search.VERSION,'query':body.model_dump(exclude={'refresh'}),'ai_configuration':ai_settings.resolve(db.settings(user['id']),body.mode),'provider_availability':job_alerts.capabilities(),'boards':[(b['id'],b['updated_at']) for b in db.list_entities(user['id'],'board')]},sort_keys=True)
+    if 'web' in body.sources and not (credentials.get(user['id']) and config.ENABLE_WEB_SEARCH):raise HTTPException(400,'AI expansion requires your own OpenAI key and enabled web search.')
+    cache_key=json.dumps({'search_version':job_search.VERSION,'query':body.model_dump(exclude={'refresh'}),'ai_configuration':ai_settings.resolve(db.settings(user['id']),body.mode),'provider_availability':job_alerts.capabilities(user['id']),'boards':[(b['id'],b['updated_at']) for b in db.list_entities(user['id'],'board')]},sort_keys=True)
     if not body.refresh:
         for cached in db.list_entities(user['id'],'search'):
             stamp=integrations.parse_date(cached['created_at'])

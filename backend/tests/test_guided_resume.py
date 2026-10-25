@@ -1,3 +1,4 @@
+from conftest import without_setup
 from conftest import onboard_test_account
 import asyncio
 import base64
@@ -90,7 +91,7 @@ def response(proposals=None,action='facts'):
 def test_new_facts_need_approval_and_keep_provenance(env,monkeypatch):
     user,job,rows,session,calls=env;p=proposal(env);chat_mock(monkeypatch,response([p]))
     state=asyncio.run(guided.send(user,session['id'],ConversationMessage(text=p['fields'][0]['value'],expected_version=0)))
-    assert len(db.list_entities(user,'experience'))==len(rows) and state['current'] is None
+    assert len(without_setup(db.list_entities(user,'experience')))==len(rows) and state['current'] is None
     p=state['data']['proposals'][0]
     result=guided.approve(user,session['id'],FactApproval(proposal_id=p['id'],expected_version=state['data']['version'],action='approve',update_draft=False,values={'description':'Wrote analytical reports for sponsors.'}))
     assert result['current'] is None and result['data']['profile_dirty']
@@ -98,7 +99,7 @@ def test_new_facts_need_approval_and_keep_provenance(env,monkeypatch):
     assert record['data']['confirmed'] and record['data']['description']=='Wrote analytical reports for sponsors.'
     assert approved['source_message_id']==result['data']['messages'][0]['id']
     with pytest.raises(HTTPException):guided.approve(user,session['id'],FactApproval(proposal_id=p['id'],expected_version=result['data']['version'],action='approve'))
-    assert len(db.list_entities(user,'experience'))==len(rows)+1
+    assert len(without_setup(db.list_entities(user,'experience')))==len(rows)+1
 
 
 def test_concurrent_profile_update_is_never_overwritten(env,monkeypatch):
@@ -114,7 +115,7 @@ def test_reject_and_invalid_proposal_keep_profile_unchanged(env,monkeypatch):
     user,job,rows,session,calls=env;p=proposal(env);chat_mock(monkeypatch,response([p]))
     state=asyncio.run(guided.send(user,session['id'],ConversationMessage(text=p['fields'][0]['value'],expected_version=0)))
     state=guided.approve(user,session['id'],FactApproval(proposal_id=state['data']['proposals'][0]['id'],expected_version=state['data']['version'],action='reject',update_draft=False))
-    assert not state['data']['profile_dirty'] and len(db.list_entities(user,'experience'))==len(rows)
+    assert not state['data']['profile_dirty'] and len(without_setup(db.list_entities(user,'experience')))==len(rows)
     p['fields'][0]['value']='Increased revenue 50%';chat_mock(monkeypatch,response([p]))
     with pytest.raises(ServiceError):asyncio.run(guided.send(user,session['id'],ConversationMessage(text='I wrote a report.',expected_version=state['data']['version'])))
     assert guided.state(user,session['id'])['data']['messages'][-1]['text']=='I wrote a report.'
@@ -259,8 +260,8 @@ def test_refinement_constrains_untargeted_edits_and_selections(env,monkeypatch):
     user,job,rows,session,calls=env;state=build(env)
     original=db.get(user,state['current']['id'],'resume_revision')['data']['snapshot']
     source=guided.source(user,state['data']);draft=fake_draft({'catalog':resume_builder_catalog(source)})
-    entry=draft['entries'][1];target=entry['items'][0]['item_id'];entry['items'][0]['text']='Analyzed demand data using Python; presented findings to classmates.'
-    draft['headline']='Changed headline';draft['entries'][0]['items'][0]['text']='Wrong unrelated change'
+    entry=next(e for e in draft['entries'] if e['record_id']==rows[1]['id']);target=entry['items'][0]['item_id'];entry['items'][0]['text']='Analyzed demand data using Python; presented findings to classmates.'
+    draft['headline']='Changed headline';next(e for e in draft['entries'] if e['record_id']!=rows[1]['id'] and e['items'])['items'][0]['text']='Wrong unrelated change'
     constrained=optimization.constrain(draft,source,original,{'target_item_ids':[target],'change_headline':False,'change_selection':False})
     assert constrained['headline']==original['headline']
     old={i['item_id']:i['text'] for s in original['sections'] for e in s['entries'] for i in e['content_items']}
@@ -315,7 +316,7 @@ def test_private_authorization_proposal_never_enters_draft(env,monkeypatch):
     state=guided.approve(user,state['id'],FactApproval(proposal_id=state['data']['proposals'][0]['id'],expected_version=state['data']['version'],action='approve',update_draft=False))
     assert db.settings(user)['sponsorship_future']=='no'
     snapshot=guided.source(user,state['data']);assert 'sponsorship_future' not in json.dumps(snapshot)
-    assert len(db.list_entities(user,'experience'))==len(rows)
+    assert len(without_setup(db.list_entities(user,'experience')))==len(rows)
 
 
 def test_backup_restore_remaps_conversation_revision_and_provenance(env,client):
@@ -388,7 +389,7 @@ def test_restored_pending_proposal_can_be_approved(env,client,monkeypatch):
 def test_public_authorization_fact_is_rejected(env,monkeypatch):
     user,job,rows,session,calls=env;p=proposal(env,text='I am authorized to work in the United States.');chat_mock(monkeypatch,response([p]))
     with pytest.raises(ServiceError,match='private Profile'):asyncio.run(guided.send(user,session['id'],ConversationMessage(text=p['fields'][0]['value'],expected_version=0)))
-    assert len(db.list_entities(user,'experience'))==len(rows)
+    assert len(without_setup(db.list_entities(user,'experience')))==len(rows)
 
 
 def test_historical_draft_opens_without_provider_or_changing_saved_versions(env):

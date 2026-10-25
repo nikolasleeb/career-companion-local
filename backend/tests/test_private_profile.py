@@ -1,3 +1,4 @@
+from conftest import onboard_test_account
 """Fictional private-profile contracts: encryption, review boundaries and compatibility."""
 import base64,json,time
 import pytest
@@ -187,5 +188,5 @@ def test_suggestions_cannot_cross_account_or_login_sessions(client,account):
     assert client.get(path).status_code==200
     user=client.post('/api/auth/login',json={'username':'student','password':'fictional-test-password'}).json();client.headers['X-CSRF-Token']=user['csrf']
     assert client.get(path).status_code==403
-    user=client.post('/api/auth/register',json={'username':'otherprofile','password':'fictional-test-password'}).json();client.headers['X-CSRF-Token']=user['csrf']
+    user=client.post('/api/auth/register',json={'username':'otherprofile','password':'fictional-test-password'}).json();client.headers['X-CSRF-Token']=user['csrf'];onboard_test_account(user)
     assert client.get(path).status_code==404
