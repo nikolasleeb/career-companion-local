@@ -33,3 +33,9 @@ Searches and provider pagination are bounded. A failed or capped source does not
 Delivery intent is persisted before contacting a provider. An interrupted or uncertain send is not automatically replayed, because the recipient might already have received it. This favors avoiding duplicates and reports an unconfirmed outcome honestly. Expired browser subscriptions are removed. Provider failures do not turn off website results.
 
 Account backups preserve preferences, saved/dismissed jobs, and schedules. Imports pause restored schedules and require renewed channel verification; push endpoints and private provider credentials are never imported. Keep protected installation backups of the database, uploads, credentials and the secrets volume, including the persistent `job-push.pem` signing key, for service recovery.
+
+## Search preferences
+
+Roles use a searchable multi-select picker. Choose suggestions from any discipline or type a custom role and press Enter. Selected roles, previously added custom choices, location and filters save automatically to the signed-in account, without starting a search or an AI request. Removed choices remain available in the picker for reuse. The picker supports up to 12 selected roles. Failed saves show Retry save.
+
+Location accepts city/state names, state abbreviations, or named regions such as East Coast. Each region displays its included states. USAJOBS receives explicit state names for regional searches; employer feeds use their posting locations for matching. Known outside-region listings are excluded, while location-unknown listings remain marked Needs review. Full state names and abbreviations match consistently; a company-office mention in description text never establishes the work location.

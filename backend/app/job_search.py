@@ -2,7 +2,7 @@
 import asyncio,hashlib,json,re
 from datetime import datetime,timezone,timedelta
 from urllib.parse import urlparse
-from . import config,db,integrations as x,task_progress,ai
+from . import config,db,integrations as x,task_progress,ai,job_locations
 from .network import ServiceError,public_fetch,html_job
 
 TECH=['Software engineering','IT and systems','Cloud infrastructure','Data science','Data engineering','Data analysis','Technical solutions']
@@ -16,7 +16,7 @@ ALIASES={
  'technical solutions':['solutions engineer','integration','technical consultant','technical support'],
  'data analyst':['data analyst','data analytics','business intelligence analyst'],
 }
-VERSION=2
+VERSION=3
 
 def words(value):return re.findall(r'[^\W_]+',value.casefold(),re.UNICODE)
 def title_match(title,query):
@@ -36,7 +36,9 @@ def review(job,request):
     if not x.in_us(job):
         if job.get('location') and re.search(r'\b(?:United Kingdom|Canada|Australia|Germany|France|India|London|Singapore|Ireland)\b',job['location'],re.I):return None
         issues.append('US work location not established')
-    if not x.location_matches(job,request.location):issues.append('Requested location needs review')
+    location_match=job_locations.matches(job,request.location)
+    if location_match is False:return None
+    if location_match is None:issues.append('Requested location needs review')
     if request.workplace!='any' and job.get('workplace')!=request.workplace:
         if job.get('workplace')!='unknown':return None
         issues.append('Work arrangement not stated')
@@ -70,7 +72,7 @@ async def adzuna(query,location):
     result=[]
     for page in (1,2):
         params={'app_id':config.ADZUNA_ID,'app_key':config.ADZUNA_KEY,'what':query,'results_per_page':25,'sort_by':'date'}
-        if location.casefold() not in ('united states','us','usa','nationwide'):params['where']=location
+        if not job_locations.region(location) and job_locations.provider_location(location):params['where']=job_locations.provider_location(location)
         data=await x.fetch_json(f'https://api.adzuna.com/v1/api/jobs/us/search/{page}',params)
         for item in data.get('results',[]):
             salary=' – '.join(str(item[k]) for k in ('salary_min','salary_max') if item.get(k) is not None)
@@ -83,7 +85,7 @@ async def usajobs(query,location):
     result=[]
     for page in (1,2):
         params={'Keyword':query,'ResultsPerPage':25,'Page':page,'Fields':'Full'}
-        if location.casefold() not in ('united states','us','usa','nationwide'):params['LocationName']=location
+        if job_locations.provider_location(location):params['LocationName']=job_locations.provider_location(location)
         data=await x.fetch_json('https://data.usajobs.gov/api/search',params,{'Host':'data.usajobs.gov','User-Agent':config.USAJOBS_EMAIL,'Authorization-Key':config.USAJOBS_KEY})
         items=data.get('SearchResult',{}).get('SearchResultItems',[])
         for item in items:
@@ -91,7 +93,7 @@ async def usajobs(query,location):
             if locations and not any(l.get('CountryCode') in ('United States','US','USA') for l in locations):continue
             text='\n'.join(str(details.get(k) or '') for k in ('JobSummary','MajorDuties','Education','Requirements','Qualifications'))+'\n'+str(v.get('QualificationSummary') or '')
             pay=v.get('PositionRemuneration',[])
-            result.append(x.normalize_job('usajobs',v.get('PositionTitle'),v.get('OrganizationName'),v.get('PositionLocationDisplay'),text,v.get('PositionURI'),source_identity='usajobs:'+str(item.get('MatchedObjectId')),origin_key='usajobs',published_at=v.get('PublicationStartDate'),publication_source='USAJOBS PublicationStartDate',country='US',salary='; '.join(' – '.join(str(p.get(k,'')) for k in ('MinimumRange','MaximumRange'))+' '+p.get('Description','') for p in pay) or 'Not stated',deadline=v.get('ApplicationCloseDate'),employment_type=' '.join(str(s.get('Name','')) for s in v.get('PositionSchedule',[])),hiring_paths=details.get('HiringPath',[]),workplace='remote' if details.get('RemoteIndicator') is True else 'unknown'))
+            result.append(x.normalize_job('usajobs',v.get('PositionTitle'),v.get('OrganizationName'),v.get('PositionLocationDisplay'),text,v.get('PositionURI'),source_identity='usajobs:'+str(item.get('MatchedObjectId')),origin_key='usajobs',published_at=v.get('PublicationStartDate'),publication_source='USAJOBS PublicationStartDate',country='US',locations=[{'location':l.get('LocationName',''),'state':l.get('CountrySubDivisionCode','')} for l in locations if l.get('CountryCode') in ('United States','US','USA')],salary='; '.join(' – '.join(str(p.get(k,'')) for k in ('MinimumRange','MaximumRange'))+' '+p.get('Description','') for p in pay) or 'Not stated',deadline=v.get('ApplicationCloseDate'),employment_type=' '.join(str(s.get('Name','')) for s in v.get('PositionSchedule',[])),hiring_paths=details.get('HiringPath',[]),workplace='remote' if details.get('RemoteIndicator') is True else 'unknown'))
         if len(items)<25:break
     return result
 

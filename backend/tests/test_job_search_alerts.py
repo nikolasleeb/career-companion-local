@@ -241,3 +241,48 @@ def test_salary_summaries_and_missing_metadata_are_visible():
     unknown=search.review(job(),SearchRequest())
     assert unknown['salary']=='Not stated'
     assert 'Salary not stated' in unknown['review_reasons'] and 'Work arrangement not stated' in unknown['review_reasons']
+
+
+def test_role_preferences_remember_custom_choices_and_guard_account_changes(client,account):
+    assert alerts.Preferences(query={'interests':['Nursing']}).query.title=='Nursing'
+    body={'account_id':account['id'],'query':{**SearchRequest().model_dump(),'title':'Museum education','interests':['Museum education']},'recent_interests':['Museum education',' museum   EDUCATION ','Nursing']}
+    assert client.put('/api/job-search/preferences',json=body).status_code==200
+    row=client.get('/api/job-search/preferences').json()['preferences']['data']
+    assert row['recent_interests']==['Museum education','Nursing'] and 'account_id' not in row
+    assert client.put('/api/job-search/preferences',json={**body,'account_id':'someone-else'}).status_code==409
+    # Clearing all selected roles remains saved; remembered custom choices are retained.
+    assert client.put('/api/job-search/preferences',json={'query':{**body['query'],'title':'','interests':[]}}).status_code==200
+    assert client.get('/api/job-search/preferences').json()['preferences']['data']['recent_interests']==row['recent_interests']
+    backup=client.get('/api/account/export').json()
+    other=client.post('/api/auth/register',json={'username':'pickerother','password':'fictional-other-password'}).json();onboard_test_account(other);client.headers['X-CSRF-Token']=other['csrf']
+    assert not client.get('/api/job-search/preferences').json()['preferences']['data'].get('recent_interests')
+    assert client.put('/api/job-search/preferences',json=body).status_code==409
+    assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup))}).status_code==200
+    assert client.get('/api/job-search/preferences').json()['preferences']['data']['recent_interests']==row['recent_interests']
+
+
+def test_cities_states_regions_and_unknown_locations():
+    from app import job_locations as loc
+    assert loc.matches({'location':'Richmond, VA'},'Virginia') is True
+    assert loc.matches({'location':'Richmond, Virginia'},'Richmond, VA') is True
+    assert loc.matches({'location':'Charleston, West Virginia'},'Virginia') is False
+    assert loc.matches({'location':'Washington, DC'},'West Coast') is False
+    assert loc.matches({'location':'Washington, District of Columbia'},'East Coast') is True
+    assert loc.matches({'location':'California, MD'},'California') is False
+    assert loc.matches({'location':'Tucson, AZ','description':'Our offices include Boston.'},'East Coast') is False
+    assert loc.matches({'location':'Boston, MA'},'East Coast') is True
+    assert loc.matches({'location':'Remote, United States'},'East Coast') is None
+    assert loc.matches({'location':'Virginia'},'Richmond, VA') is None
+    request=SearchRequest(location='East Coast')
+    assert search.review({**job(),'location':'Phoenix, AZ'},request) is None
+    assert 'Requested location needs review' in search.review({**job(),'location':'Remote, US'},request)['review_reasons']
+    assert 'Virginia' in loc.provider_location('East Coast').split(';')
+    assert loc.provider_location('Richmond, VA')=='Richmond, Virginia'
+
+
+def test_region_is_expanded_for_usajobs_without_extra_calls(client,account,monkeypatch):
+    calls=[]
+    async def fetch(url,params=None,headers=None):calls.append(params);return {'SearchResult':{'SearchResultItems':[]}}
+    monkeypatch.setattr(x,'fetch_json',fetch);monkeypatch.setattr(config,'USAJOBS_KEY','fictional');monkeypatch.setattr(config,'USAJOBS_EMAIL','api@example.com')
+    assert run(search.usajobs('analyst','East Coast'))==[]
+    assert len(calls)==1 and 'Virginia' in calls[0]['LocationName'].split(';') and 'California' not in calls[0]['LocationName']

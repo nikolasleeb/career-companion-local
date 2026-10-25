@@ -8,8 +8,8 @@ import httpx
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from fastapi import APIRouter,Depends,HTTPException
-from pydantic import Field,field_validator
-from . import db,config,auth,onboarding,job_search
+from pydantic import Field,field_validator,model_validator
+from . import db,config,auth,onboarding,job_search,job_locations
 from .models import StrictModel,SearchRequest
 from .network import ServiceError
 
@@ -26,8 +26,32 @@ def preferences(user):return record(user,'job_search_preferences',{'query':Searc
 def schedule(user):return record(user,'job_alert',Schedule().model_dump())
 def save(user,kind,data):return db.save(user,kind,data,record(user,kind,{})['id'])
 
+class SavedSearch(SearchRequest):
+    # Clearing the picker is a valid saved preference, but cannot start a scan.
+    title:str=Field(default='',max_length=120)
+    @field_validator('title')
+    @classmethod
+    def valid_title(cls,value):
+        if value and len(value.strip())<2:raise ValueError('Choose a role with at least two characters.')
+        return value.strip()
+    @model_validator(mode='after')
+    def legacy_title(self):
+        if not self.title and self.interests:self.title=self.interests[0]
+        return self
 class Preferences(StrictModel):
-    query:SearchRequest
+    query:SavedSearch
+    recent_interests:list[str]|None=Field(default=None,max_length=50)
+    account_id:str|None=Field(default=None,max_length=64)
+    @field_validator('recent_interests')
+    @classmethod
+    def recent(cls,values):
+        if values is None:return None
+        seen=set();result=[]
+        for value in values:
+            value=' '.join(value.split());key=value.casefold()
+            if not 2<=len(value)<=80:raise ValueError('Remembered roles must use 2 to 80 characters.')
+            if key not in seen:result.append(value);seen.add(key)
+        return result
 class Interest(StrictModel):
     state:str=Field(pattern='^(saved|dismissed|none)$')
 class Schedule(StrictModel):
@@ -99,7 +123,7 @@ def push_key():
     return p
 
 def capabilities():
-    return {'adzuna':bool(config.ADZUNA_ID and config.ADZUNA_KEY),'usajobs':bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL),'email':bool(config.CF_EMAIL_TOKEN and config.CF_EMAIL_ACCOUNT and config.ALERT_FROM),'email_sender':config.ALERT_FROM,'browser_push':True,'scheduler':config.JOB_SCHEDULER_ENABLED,'tech_preset':job_search.TECH,'shared_connections':True}
+    return {'adzuna':bool(config.ADZUNA_ID and config.ADZUNA_KEY),'usajobs':bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL),'email':bool(config.CF_EMAIL_TOKEN and config.CF_EMAIL_ACCOUNT and config.ALERT_FROM),'email_sender':config.ALERT_FROM,'browser_push':True,'scheduler':config.JOB_SCHEDULER_ENABLED,'tech_preset':job_search.TECH,'shared_connections':True,'location_options':job_locations.options(),'location_regions':job_locations.region_details()}
 
 @router.get('/preferences')
 def get_preferences(user=Depends(owner)):
@@ -108,10 +132,11 @@ def get_preferences(user=Depends(owner)):
 
 @router.put('/preferences')
 def put_preferences(body:Preferences,user=Depends(owner)):
+    if body.account_id and body.account_id!=user:raise HTTPException(409,'Your account changed. Reload before saving search preferences.')
     query=body.query.model_dump();query['sources']=[v for v in query['sources'] if v not in ('web','jobspy')];query['refresh']=False
     if not query['sources']:raise ServiceError('Choose at least one non-AI source for saved searches and daily alerts.')
     changed=preferences(user)['data'].get('query')!=query
-    result=save(user,'job_search_preferences',{'query':query})
+    result=save(user,'job_search_preferences',{'query':query,'recent_interests':body.recent_interests if body.recent_interests is not None else preferences(user)['data'].get('recent_interests',[])})
     if changed:
         with db.connect() as c:c.execute('DELETE FROM cc_job_baselines WHERE user_id=?',(user,))
     return result
@@ -264,6 +289,8 @@ async def deliver(user,day,batch):
 async def run_daily(user,now=None,force=False):
     now=now or datetime.now(timezone.utc);settings=current_alert(user)
     if not settings.get('enabled'):return
+    saved_query=preferences(user)['data']['query']
+    if not saved_query.get('interests') and not saved_query.get('title','').strip():return
     local=now.astimezone(ZoneInfo(settings.get('timezone','America/Phoenix')))
     if not force and local.strftime('%H:%M')<settings.get('time','08:00'):return
     day=local.date().isoformat();saved=claim(user,day,now.timestamp())
@@ -305,6 +332,8 @@ async def scheduler():
 @router.post('/check-now')
 async def check_now(user=Depends(owner)):
     if not current_alert(user).get('enabled'):raise ServiceError('Save an enabled daily alert before running its daily check. You can use Search jobs without enabling alerts.')
+    saved_query=preferences(user)['data']['query']
+    if not saved_query.get('interests') and not saved_query.get('title','').strip():raise ServiceError('Choose at least one role before running a daily check.')
     from .main import start_task
     async def work():
         await run_daily(user,force=True)
@@ -313,7 +342,7 @@ async def check_now(user=Depends(owner)):
 
 
 def restore_record(user,kind,data):
-    if kind=='job_search_preferences':return save(user,kind,Preferences.model_validate(data).model_dump())
+    if kind=='job_search_preferences':return save(user,kind,Preferences.model_validate(data).model_dump(exclude={'account_id'},exclude_none=True))
     if kind=='job_alert':
         with db.connect() as c:c.execute('DELETE FROM cc_job_email_verifications WHERE user_id=?',(user,))
         return save(user,kind,Schedule.model_validate({**data,'enabled':False,'email_enabled':False,'browser':False}).model_dump())
