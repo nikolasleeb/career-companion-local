@@ -326,7 +326,7 @@ async def run_daily(user,now=None,force=False):
     if saved is None:return
     try:
         if not saved:
-            request=SearchRequest.model_validate(preferences(user)['data']['query']);request.sources=[v for v in request.sources if v not in ('web','jobspy')];request.refresh=True
+            request=SearchRequest.model_validate(preferences(user)['data']['query']);request.sources=[v for v in request.sources if v not in ('web','jobspy')];request.refresh=False
             if provider_connections.public(user).get('usage')!='regular':request.sources=[v for v in request.sources if v!='adzuna']
             result=await asyncio.wait_for(job_search.discover(user,request,execution='scheduled'),600)
             __import__(__package__+'.job_results',fromlist=['save_search']).save_search(user,{**result,'scheduled':True},ident(user,'scheduled-search:'+day))
@@ -337,8 +337,8 @@ async def run_daily(user,now=None,force=False):
                 known={r[0] for r in c.execute('SELECT identity FROM cc_job_seen WHERE user_id=?',(user,))};baselines={r[0] for r in c.execute('SELECT source FROM cc_job_baselines WHERE user_id=?',(user,))}
                 new=[]
                 for row in result['jobs']:
-                    data=row['data'];key=data.get('source_identity') or data['url'];url_key='url:'+job_search.x.canonical_url(data['url']);source=data.get('origin_key',data.get('sources',[{}])[0].get('provider',''))
-                    if not data.get('snapshot_stale') and source in successes and source in baselines and key not in known and url_key not in known and data.get('interest_state')!='dismissed':new.append(row['id'])
+                    data=row['data'];key=data.get('source_identity') or data['url'];url_key='url:'+job_search.x.posting_key(data['url']);source=data.get('origin_key',data.get('sources',[{}])[0].get('provider',''))
+                    if not data.get('snapshot_stale') and source in successes and source in baselines and key not in known and url_key not in known and 'url:'+job_search.x.canonical_url(data['url']) not in known and data.get('interest_state')!='dismissed':new.append(row['id'])
                     c.execute('INSERT OR IGNORE INTO cc_job_seen VALUES(?,?)',(user,key))
                     c.execute('INSERT OR IGNORE INTO cc_job_seen VALUES(?,?)',(user,url_key))
                 for source in successes:c.execute('INSERT OR IGNORE INTO cc_job_baselines VALUES(?,?)',(user,source))

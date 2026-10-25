@@ -55,6 +55,8 @@ def init():
         public_job_feeds.init(c)
         from . import job_results
         job_results.init(c)
+        from . import job_cache
+        job_cache.init(c)
         private_answers.init(c)
         private_profile.init(c)
         application_agent.init(c)

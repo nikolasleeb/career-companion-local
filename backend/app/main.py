@@ -16,7 +16,7 @@ from . import storage
 from . import config, db, auth, ai, documents, integrations, resume_data, resume_parser, transcript_parser, credentials, ai_settings, applications, resume_builder, job_parser, optimization, resume_conversation, cover_letters, guidance, cover_context, profile_answers, question_answers, onboarding, certifications, cost_history, updates
 from .models import *
 from .network import ServiceError, public_fetch, html_job
-from . import task_progress, posting_extraction, job_alerts, job_search, job_results, job_ai
+from . import task_progress, posting_extraction, job_alerts, job_search, job_results, job_ai, job_cache
 
 workers={}
 
@@ -25,8 +25,13 @@ async def lifespan(app):
     db.init()
     onboarding.migrate()
     job_alerts.init()
+    await asyncio.to_thread(job_cache.migrate)
+    await asyncio.to_thread(job_cache.cleanup)
+    maintenance=asyncio.create_task(job_cache.maintain())
     scheduler=asyncio.create_task(job_alerts.scheduler()) if config.JOB_SCHEDULER_ENABLED else None
     yield
+    maintenance.cancel()
+    await asyncio.gather(maintenance,return_exceptions=True)
     if scheduler:
         scheduler.cancel()
         await asyncio.gather(scheduler,return_exceptions=True)
@@ -46,6 +51,7 @@ from .security import ResourceBoundary
 app.add_middleware(ResourceBoundary)
 app.include_router(job_alerts.router)
 app.include_router(job_results.router)
+app.include_router(job_cache.router)
 from . import provider_connections
 app.include_router(provider_connections.router)
 from . import private_answers, private_profile, application_agent, assistant_ai
@@ -274,6 +280,8 @@ def workspace(paged_jobs:bool=False,user=Depends(auth.current)):
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
     unlocked=onboarding.status(user['id'])['completed']
     result={kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] if unlocked or kind in ('experience','document','profile_answer','onboarding') else [] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
+    result['search']=[job_results.public_search(user['id'],r) for r in result['search']]
+    result['job']=job_cache.decorate_records(user['id'],result['job'])
     if paged_jobs:
         for row in result['search']:row['data'].pop('jobs',None)
         linked={r['data'].get('job_id') for kind in ('application','analysis','resume','prep','interview') for r in result[kind]}
@@ -359,6 +367,7 @@ def get_task(task_id:str,user=Depends(auth.current)):
         result['job_id']=inputs['job_id']
     result['progress']=result['result'].pop('_task_progress',None) if isinstance(result['result'],dict) else None
     if isinstance(result['result'],dict) and '_task_result' in result['result']:result['result']=result['result']['_task_result']
+    if isinstance(result.get('result'),dict) and result['result'].get('kind')=='search':result['result']=job_results.public_search(user['id'],result['result'])
     return result
 
 @app.get('/api/analyses/{entity_id}/role-alignment')
@@ -1094,7 +1103,7 @@ async def search(body:SearchRequest,user=Depends(auth.current)):
             if cached['data'].get('cache_key')==cache_key and stamp and (integrations.datetime.now(integrations.timezone.utc)-stamp).total_seconds()<21600:
                 # Returned metadata describes this invocation; stored history is immutable.
                 if cached['data'].get('adzuna_trial'):cached['data']['adzuna_trial']={**cached['data']['adzuna_trial'],'attempted_requests':0,'cached':True}
-                return {'cached':True,'result':cached}
+                return {'cached':True,'result':job_results.public_search(user['id'],cached)}
     async def work():
         result=await integrations.discover(user['id'],body)
         return job_results.save_search(user['id'],{**result,'cache_key':cache_identity()})
@@ -1130,6 +1139,8 @@ def backup(user=Depends(auth.current)):
     cost_history.recover(user['id'])
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
     records=[r for kind in BACKUP_KINDS for r in db.list_entities(user['id'],kind)]
+    cached_jobs={r['id']:r for r in job_cache.decorate_records(user['id'],[r for r in records if r['kind']=='job'])}
+    records=[cached_jobs.get(r['id'],r) for r in records]
     files={}
     for record in records:
         if record['kind']=='document':
@@ -1273,6 +1284,11 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if data['event_key'] not in existing_usage:
                 saved=cost_history.write(user['id'],data);existing_usage[data['event_key']]=saved['id']
         elif record['kind'] in ('job_search_preferences','job_alert'):job_alerts.restore_record(user['id'],record['kind'],record['data'])
+        elif record['kind'] in ('job','job_snapshot'):
+            restored=remap(record['data']);restored['_cache_scope']='account';restored.setdefault('last_verified_at',job_cache.iso(job_cache.epoch(restored.get('_last_verified_epoch'))) or record.get('created_at',''));restored.pop('_last_verified_epoch',None)
+            saved=db.save(user['id'],record['kind'],restored,ids[record['id']])
+            if record['kind']=='job':
+                with db.connect() as c:job_cache.bind(c,user['id'],saved)
         elif record['kind']=='ai_job_match':db.save(user['id'],record['kind'],{**remap(record['data']),'state':'imported','error':'Imported review is read-only. Start a new review to use your current Profile.','profile_revision':'imported','in_flight':None},ids[record['id']])
         elif record['kind']!='onboarding':db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
     onboarding.restore(user['id'],setup_records[0]['data'] if setup_records else None,legacy=any(r['kind'] in onboarding.LEGACY for r in records))
@@ -1314,6 +1330,7 @@ def delete_account(body:DeleteAccount,response:Response,user=Depends(auth.curren
             task=workers.get(row_task['id'])
             if task: task.cancel()
         c.execute('DELETE FROM evidence_fts WHERE user_id=?',(user['id'],))
+        c.execute('DELETE FROM cc_job_observations WHERE scope=?',(user['id'],))
         c.execute('DELETE FROM users WHERE id=?',(user['id'],))
     shutil.rmtree(config.DATA_DIR/'uploads'/user['id'],ignore_errors=True)
     credentials.remove(user['id'])

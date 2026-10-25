@@ -122,26 +122,37 @@ def location_matches(job,query):
     if query.lower().strip() in ('united states','us','usa','nationwide','remote'):return True
     return query.casefold() in job.get('location','').casefold()
 
+class BoardRows(list):
+    """Completeness is asserted by a validated employer endpoint, never by a plain list."""
+    def __init__(self,values=(),*,complete=False):super().__init__(values);self.complete=complete
+
+def complete_payload(payload,rows):
+    if not isinstance(rows,list):raise ServiceError('The employer feed has an invalid jobs list.')
+    return not any(payload.get(k) for k in ('hasMore','has_more','nextCursor','next_cursor','next')) and (not isinstance(payload.get('meta'),dict) or int(payload['meta'].get('total',len(rows)))<=len(rows))
+
 async def board_jobs(board, query):
     provider=board['provider'];token=quote(board['board'],safe='')
     if provider=='lever':
         host='api.eu.lever.co' if board.get('region')=='eu' else 'api.lever.co'
         rows=await fetch_json(f'https://{host}/v0/postings/{token}',{'mode':'json'})
-        return [normalize_job('lever',v.get('text'),board['company'],v.get('categories',{}).get('location'),v.get('descriptionPlain','')+' '+ ' '.join(BeautifulSoup(x.get('content',''),'html.parser').get_text(' ',strip=True) for x in v.get('lists',[])),v.get('hostedUrl') or v.get('applyUrl'),source_identity='lever:'+token+':'+str(v.get('id')),origin_key='lever:'+token,workplace={'remote':'remote','hybrid':'hybrid','on-site':'onsite'}.get(v.get('workplaceType'),'unknown'),employment_type=v.get('categories',{}).get('commitment','')) for v in rows if query is None or matches_title(v.get('text',''),query)]
+        if not isinstance(rows,list):raise ServiceError('Lever returned an invalid jobs list.')
+        return BoardRows([normalize_job('lever',v.get('text'),board['company'],v.get('categories',{}).get('location'),v.get('descriptionPlain','')+' '+ ' '.join(BeautifulSoup(x.get('content',''),'html.parser').get_text(' ',strip=True) for x in v.get('lists',[])),v.get('hostedUrl') or v.get('applyUrl'),source_identity='lever:'+token+':'+str(v.get('id')),origin_key='lever:'+token,deadline=v.get('validThrough') or v.get('closingDate'),deadline_timezone=v.get('deadlineTimezone'),workplace={'remote':'remote','hybrid':'hybrid','on-site':'onsite'}.get(v.get('workplaceType'),'unknown'),employment_type=v.get('categories',{}).get('commitment','')) for v in rows if query is None or matches_title(v.get('text',''),query)],complete=query is None)
     if provider=='greenhouse':
         url=f'https://boards-api.greenhouse.io/v1/boards/{token}/jobs'
         payload=await fetch_json(url,{'content':'true'})
+        complete=complete_payload(payload,payload.get('jobs'))
         result=[]
         for item in payload.get('jobs',[]):
             if query is not None and not matches_title(item.get('title',''),query): continue
-            job=normalize_job(provider,item.get('title'),board['company'],(item.get('location') or {}).get('name'),item.get('content',''),item.get('absolute_url',''),source_identity='greenhouse:'+token+':'+str(item.get('id')),origin_key='greenhouse:'+token,updated_at=item.get('updated_at'),observations=['Listed on the employer Greenhouse board at '+db.now()])
+            job=normalize_job(provider,item.get('title'),board['company'],(item.get('location') or {}).get('name'),item.get('content',''),item.get('absolute_url',''),source_identity='greenhouse:'+token+':'+str(item.get('id')),origin_key='greenhouse:'+token,deadline=item.get('validThrough') or item.get('closingDate'),updated_at=item.get('updated_at'),observations=['Listed on the employer Greenhouse board at '+db.now()])
             loc=job['location'].lower()
             job['workplace']='remote' if 'remote' in loc else 'hybrid' if 'hybrid' in loc else 'unknown'
             if parse_date(item.get('first_published')):
                 job.update(published_at=item['first_published'],publication_source='Greenhouse first_published')
             result.append(job)
-        return result
+        return BoardRows(result,complete=complete and query is None)
     payload=await fetch_json(f'https://api.ashbyhq.com/posting-api/job-board/{token}',{'includeCompensation':'true'})
+    complete=complete_payload(payload,payload.get('jobs'))
     result=[]
     for item in payload.get('jobs',[]):
         if item.get('isListed') is False or (query is not None and not matches_title(item.get('title',''),query)): continue
@@ -149,8 +160,8 @@ async def board_jobs(board, query):
         secondary=item.get('secondaryLocations') or []
         locations=[{'location':v.get('location',''),'state':((v.get('address') or {}).get('postalAddress') or {}).get('addressRegion','')} for v in secondary if isinstance(v,dict)]
         secondary_us=any(in_us({'country':((v.get('address') or {}).get('postalAddress') or {}).get('addressCountry',''),'location':v.get('location','')}) for v in secondary if isinstance(v,dict))
-        result.append(normalize_job('ashby',item.get('title'),board['company'],item.get('location'),item.get('descriptionPlain') or item.get('descriptionHtml'),item.get('jobUrl') or item.get('applyUrl'),source_identity='ashby:'+token+':'+str(item.get('id') or item.get('jobUrl')),origin_key='ashby:'+token,employment_type=item.get('employmentType',''),salary=item.get('compensation',{}),published_at=item.get('publishedAt'),publication_source='Ashby last publishedAt' if parse_date(item.get('publishedAt')) else None,country='US' if secondary_us else address.get('addressCountry',''),locations=locations,workplace={'Remote':'remote','Hybrid':'hybrid','OnSite':'onsite'}.get(item.get('workplaceType'),'remote' if item.get('isRemote') else 'unknown'),observations=['Listed on the employer Ashby board at '+db.now()]))
-    return result
+        result.append(normalize_job('ashby',item.get('title'),board['company'],item.get('location'),item.get('descriptionPlain') or item.get('descriptionHtml'),item.get('jobUrl') or item.get('applyUrl'),source_identity='ashby:'+token+':'+str(item.get('id') or item.get('jobUrl')),origin_key='ashby:'+token,deadline=item.get('validThrough') or item.get('closingDate'),employment_type=item.get('employmentType',''),salary=item.get('compensation',{}),published_at=item.get('publishedAt'),publication_source='Ashby last publishedAt' if parse_date(item.get('publishedAt')) else None,country='US' if secondary_us else address.get('addressCountry',''),locations=locations,workplace={'Remote':'remote','Hybrid':'hybrid','OnSite':'onsite'}.get(item.get('workplaceType'),'remote' if item.get('isRemote') else 'unknown'),observations=['Listed on the employer Ashby board at '+db.now()]))
+    return BoardRows(result,complete=complete and query is None)
 
 async def adzuna_jobs(query,location,*,user=None):
     from .job_search import adzuna

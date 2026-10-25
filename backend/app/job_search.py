@@ -3,13 +3,14 @@ import asyncio,hashlib,json,re
 from collections import defaultdict
 from datetime import datetime,timezone,timedelta
 from urllib.parse import urlparse
+from . import job_cache
 from . import config,db,integrations as x,task_progress,ai,job_locations
 from .network import ServiceError,public_fetch,html_job
 
 from . import role_catalog,provider_connections,public_job_feeds as feeds,job_filters as filters
 TECH=role_catalog.GROUPS['Tech & Data']
 ALIASES=role_catalog.ALIASES
-VERSION=role_catalog.VERSION+2000
+VERSION=role_catalog.VERSION+3000
 
 def words(value):return re.findall(r'[^\W_]+',value.casefold(),re.UNICODE)
 def title_match(title,query,levels=None):
@@ -26,6 +27,7 @@ def blocked_url(value):
 
 def review(job,request):
     text=job.get('description','');issues=[];uncertain=[]
+    if job.get('cache_tombstone') or job_cache.deadline(job) is not None and job_cache.deadline(job)<=__import__('time').time():return None
     if job.get('country') and not x.in_us(job):return None
     if not x.in_us(job):
         if job.get('location') and re.search(r'\b(?:United Kingdom|Canada|Australia|Germany|France|India|London|Singapore|Ireland|Israel|Tel Aviv|Poland|Warsaw|Brazil|Mexico|Japan|Tokyo|China|Shanghai|Beijing|Netherlands|Amsterdam|Spain|Madrid|Italy|Milan|Sweden|Stockholm|Switzerland|Zurich|New Zealand|Romania|Bucharest|Bengaluru|Bangalore|Toronto|Vancouver|Seoul|Korea|Philippines|Manila|Taiwan|Taipei|Hong Kong|Montreal|Montréal|Ottawa|Calgary|British Columbia|Ontario|Quebec|Viet Nam|Vietnam|Thailand|Bangkok|Malaysia|Kuala Lumpur|Turkey|Türkiye|Istanbul|Ukraine|Kyiv|Argentina|Buenos Aires|Chile|Santiago|Colombia|Bogot[aá]|Peru|Lima|Costa Rica|San Jos[eé], Costa Rica|Hungary|Budapest|Austria|Vienna|Belgium|Brussels|Norway|Oslo|Finland|Helsinki|Egypt|Cairo|Saudi Arabia|Riyadh|Qatar|Doha|Kenya|Nairobi|Ghana|Accra|Greece|Athens|Croatia|Serbia|Belgrade|Bulgaria|Sofia|Lithuania|Latvia|Estonia|Europe|EMEA|APAC|Dubai|United Arab Emirates|Portugal|Lisbon|Czech|Prague|Denmark|Copenhagen|South Africa|Nigeria|Pakistan|Bangladesh|Indonesia|Jakarta)\b',job['location'],re.I):return None
@@ -78,9 +80,10 @@ async def adzuna(user,query,location,*,trial=False):
             salary=' – '.join(str(item[k]) for k in ('salary_min','salary_max') if item.get(k) is not None)
             result.append(x.normalize_job('adzuna',item.get('title'),(item.get('company') or {}).get('display_name'),(item.get('location') or {}).get('display_name'),item.get('description'),item.get('redirect_url',''),source_identity='adzuna:'+str(item.get('id')),origin_key='adzuna',source_added_at=item.get('created'),country='US',locations=[{'location':str(v),'state':str(v) if v in job_locations.STATES.values() else ''} for v in (item.get('location') or {}).get('area',[]) if isinstance(v,str) and (v in job_locations.STATES.values() or v in job_locations.STATES)],salary_details={'minimum':item.get('salary_min',0),'maximum':item.get('salary_max',0),'currency':'USD','period':'year','estimated':item.get('salary_is_predicted') in (True,1,'1')},description_incomplete=True,employment_type=item.get('contract_time',''),salary=salary+(' (provider estimate)' if item.get('salary_is_predicted') in (True,1,'1') else '') if salary else 'Not stated'))
         if len(data.get('results',[]))<25:break
-    return result
+    stamp=__import__('time').time();job_cache.observe('adzuna',result,stamp,scope=user)
+    return [{**v,'_last_verified_epoch':stamp,'_cache_source':'adzuna','_cache_scope':'account'} for v in result]
 
-async def usajobs(query,location):
+async def _usajobs_raw(query,location):
     if not(config.USAJOBS_KEY and config.USAJOBS_EMAIL):raise ServiceError('USAJOBS needs an API key and registered API email on the server.')
     result=[]
     for page in (1,2):
@@ -97,7 +100,17 @@ async def usajobs(query,location):
         if len(items)<25:break
     return result
 
+async def usajobs(query,location):
+    key='usajobs:'+hashlib.sha256(json.dumps({'keyword':' '.join(query.casefold().split()),'location':job_locations.provider_location(location).casefold(),'pages':2,'fields':'Full'},sort_keys=True).encode()).hexdigest()[:32]
+    rows,meta=await feeds.cached(key,lambda:_usajobs_raw(query,location),refresh=feeds.FORCE.get())
+    return [{**v,'snapshot_at':meta['last_success'],'snapshot_stale':meta['stale'],'_last_verified_epoch':v.get('_last_verified_epoch',meta['last_success']),'_cache_source':key,'_cache_scope':'public','cache_status':'cached' if meta['cached'] else 'refreshed'} for v in rows]
+
 async def discover(user,request,*,execution='manual'):
+    token=feeds.FORCE.set(request.refresh)
+    try:return await _discover(user,request,execution=execution)
+    finally:feeds.FORCE.reset(token)
+
+async def _discover(user,request,*,execution='manual'):
     queries=request.interests or [request.title];chosen_levels=filters.levels(request);boards=feeds.catalog_boards(user)
     if request.employer_boards is not None:boards=[b for b in boards if feeds.board_key(b) in request.employer_boards]
     trial_meta={'roles':[],'attempted_requests':0,'cached':False}
@@ -174,7 +187,8 @@ async def discover(user,request,*,execution='manual'):
                         page=await public_fetch(v['url'],2*1024*1024)
                         if blocked_url(page['url']) or page['status'] in (404,410):continue
                         if page['status']==200 and 'html' in page['content_type']:
-                            info=html_job(page['content']);job.update({k:info[k] for k in ('description','location','country','workplace','published_at') if info.get(k)})
+                            info=html_job(page['content']);job.update({k:info[k] for k in ('description','location','country','workplace','published_at','valid_through') if info.get(k)})
+                            job.update(_last_verified_epoch=__import__('time').time(),_cache_scope='account',_cache_source='openai_web')
                             if info.get('published_at'):job['publication_source']='Employer page datePosted'
                     except ServiceError:pass
                     jobs.append(job)
@@ -209,5 +223,7 @@ async def discover(user,request,*,execution='manual'):
             for field in ('interest_state','interest_updated_at'):
                 if field in previous:job[field]=previous[field]
             write(c,user,'job',job,key)
+            job_cache.bind(c,user,{'id':key,'data':job,'created_at':old['created_at'] if old else stamp})
             records.append({'id':key,'kind':'job','created_at':old['created_at'] if old else stamp,'updated_at':stamp,'data':job})
+    records=[r for r in job_cache.decorate_records(user,records) if r['data'].get('lifecycle_status','active')=='active']
     return {'version':VERSION,'jobs':records,'sources':statuses,'ai_calls':usage,'checked_at':db.now(),'query':request.model_dump(exclude={'refresh','request_token'}),'excluded_unverified_us':excluded,'bounded_results':True,'total_matches':total,'retained_matches':len(records),'truncated':False,'limit':None,'page_size':25,'catalog_revision':feeds.REVISION,'adzuna_trial':trial_meta if trial else None}

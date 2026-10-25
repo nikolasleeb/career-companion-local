@@ -138,6 +138,8 @@ def start(user,job_id):
         c.execute('BEGIN IMMEDIATE')
         existing=next((db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind='application'",(user,)) if __import__('json').loads(r['payload']).get('job_id')==job_id or (job['data'].get('url') and __import__('app.integrations',fromlist=['posting_key']).posting_key(__import__('json').loads(r['payload']).get('url',''))==__import__('app.integrations',fromlist=['posting_key']).posting_key(job['data']['url']))),None)
         if existing:return existing
+        from . import job_cache
+        if not job_cache.is_active(user,job_id):raise HTTPException(409,'This posting is expired or closed. Existing application history remains available.')
         data={'job_id':job_id,'posting_snapshot':job['data'],'title':job['data']['title'],'company':job['data'].get('company',''),'url':job['data'].get('url',''),'resume_ids':[],'submitted_resume_id':'','status':'preparing','applied_date':'','history':[],'interviews':[],'notes':'','archived':False,'attachments':[],'workflow':{'step':'resume','resume_id':'','cover_letter_id':'','cover_skipped':False}}
         id=write(c,user,'application',data)
     return db.get(user,id,'application')

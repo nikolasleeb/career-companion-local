@@ -6,7 +6,9 @@ Community metadata: open-jobs-data; employer postings retain employer rights.
 import asyncio,copy,hashlib,json,time
 from collections import defaultdict,deque
 from pathlib import Path
-from . import db
+from . import db,job_cache
+from contextvars import ContextVar
+FORCE=ContextVar('public_source_refresh',default=False)
 from .network import ServiceError
 
 CATALOG=json.loads(Path(__file__).with_name('employer_catalog.json').read_text())
@@ -46,14 +48,28 @@ async def cached(source,load,*,refresh=False):
             data=json.loads(row['payload']);return data,metadata(row,now,cached=True)
         # Coalesce refresh clicks/concurrent accounts and failed-source retry storms.
         if row and now-row['attempted_at']<60:
+            if not row['success_at']:raise ServiceError('Public feed unavailable. A recent failed attempt is being suppressed.')
             return json.loads(row['payload']),metadata(row,now,cached=True)
         try:
             value=await load()
+            if isinstance(value,list):
+                from .integrations import posting_key
+                complete=bool(getattr(value,'complete',False))
+                job_cache.observe(source,value,now,complete=complete,authoritative=source.startswith(('greenhouse:','ashby:','lever:','usajobs:')))
+                current=[{**v,'_last_verified_epoch':now} for v in value]
+                # Incomplete query pages cannot close previously observed listings.
+                if row and not complete:
+                    previous=json.loads(row['payload']);seen={posting_key(v.get('url','')) for v in current}
+                    if isinstance(previous,list):
+                        current.extend({**v,'_last_verified_epoch':v.get('_last_verified_epoch',row['success_at'])} for v in previous if posting_key(v.get('url','')) not in seen and v.get('_last_verified_epoch',row['success_at'])>now-job_cache.days()*86400 and (job_cache.deadline(v) is None or job_cache.deadline(v)>now))
+                value=current
             raw=json.dumps(value,separators=(',',':'));revision=hashlib.sha256(raw.encode()).hexdigest()[:20]
             with db.connect() as c:c.execute('INSERT INTO cc_public_job_snapshots VALUES(?,?,?,?,?,?) ON CONFLICT(source) DO UPDATE SET payload=excluded.payload,revision=excluded.revision,success_at=excluded.success_at,attempted_at=excluded.attempted_at,error=excluded.error',(source,raw,revision,now,now,''))
             return value,{'cached':False,'last_success':now,'stale':False,'revision':revision,'error':''}
         except (ServiceError,asyncio.TimeoutError,ValueError,TypeError,KeyError):
-            if not row:raise ServiceError('Public feed unavailable. Other sources are retained.') from None
+            if not row:
+                with db.connect() as c:c.execute('INSERT OR IGNORE INTO cc_public_job_snapshots VALUES(?,?,?,?,?,?)',(source,'[]','unavailable',0,now,'Public feed unavailable.'))
+                raise ServiceError('Public feed unavailable. Other sources are retained.') from None
             with db.connect() as c:c.execute('UPDATE cc_public_job_snapshots SET attempted_at=?,error=? WHERE source=?',(now,'Refresh failed; showing the last successful snapshot.',source))
             return json.loads(row['payload']),{**metadata(row,now,cached=True),'error':'Refresh failed; showing the last successful snapshot.'}
 
@@ -63,9 +79,10 @@ def metadata(row,now,*,cached):
 async def employer(board,*,refresh=False):
     from . import integrations as x
     key=board_key(board)
-    async def load():return await x.board_jobs(board,None)
+    canonical=next((b['company'] for b in CATALOG['employers'] if board_key(b)==key),board['board'])
+    async def load():return await x.board_jobs({**board,'company':canonical},None)
     rows,meta=await cached(key,load,refresh=refresh)
-    return [{**copy.deepcopy(v),'company':board['company'],'snapshot_at':meta['last_success'],'snapshot_revision':meta['revision'],'snapshot_stale':meta['stale']} for v in rows],meta
+    return [{**copy.deepcopy(v),'company':board['company'],'snapshot_at':meta['last_success'],'snapshot_revision':meta['revision'],'snapshot_stale':meta['stale'],'_last_verified_epoch':v.get('_last_verified_epoch',meta['last_success']),'_cache_source':key,'_cache_scope':'public'} for v in rows if job_cache.deadline(v) is None or job_cache.deadline(v)>time.time()],meta
 
 async def community(*,refresh=False,queries=None,levels=None):
     from . import integrations as x
@@ -89,9 +106,11 @@ async def community(*,refresh=False,queries=None,levels=None):
         result.append(x.normalize_job('github',v['title'],v['company'],'; '.join(str(l) for l in locations),'',url,
           source_identity='github:'+str(v.get('platform',''))+':'+str(v['company'])+':'+str(v.get('jobId') or url),origin_key='github:open-jobs-data',
           employment_type=v.get('employmentType') or '',published_at=v.get('postedAt'),publication_source='Community metadata postedAt (verify employer)',
-          description_incomplete=True,metadata_only=True,community_repository=GITHUB_REPOSITORY,community_scraped_at=v.get('scrapedAt'),
+          deadline=v.get('validThrough') or v.get('closingDate'),deadline_timezone=v.get('deadlineTimezone'),description_incomplete=True,metadata_only=True,community_repository=GITHUB_REPOSITORY,community_scraped_at=v.get('scrapedAt'),
           snapshot_at=payload['generated_at'],snapshot_revision=meta['revision'],snapshot_stale=stale,
           observations=['Public community metadata, not employer-verified requirements. Remote labels may be inferred. Employer retains rights to its posting.']))
+    job_cache.observe('github:open-jobs-data',result,snapshot.timestamp())
+    result=[{**v,'_last_verified_epoch':snapshot.timestamp(),'_cache_source':'github:open-jobs-data','_cache_scope':'public'} for v in result]
     return result,{**meta,'stale':stale,'snapshot_at':payload['generated_at']}
 
 def balanced(jobs,limit=500):
