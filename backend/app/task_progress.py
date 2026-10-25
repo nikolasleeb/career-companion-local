@@ -7,6 +7,8 @@ _context=ContextVar('task_progress',default=None)
 KINDS={'posting_import','resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
 LABELS={'posting_import':'job posting import','cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
 STAGES={
+    'searching_jobs':('Searching selected job sources','local'),
+    'checking_jobs':('Checking locations, dates and preferences','local'),
     'reading_posting':('Reading job posting','provider'),
     'comparing_profile':('Comparing with your Profile','provider'),
     'saving_comparison':('Saving results','local'),

@@ -15,7 +15,7 @@ from pydantic import ValidationError
 from . import config, db, auth, ai, documents, integrations, resume_data, resume_parser, transcript_parser, credentials, ai_settings, applications, resume_builder, job_parser, optimization, resume_conversation, cover_letters, guidance, cover_context, profile_answers, question_answers, onboarding, certifications, cost_history, updates
 from .models import *
 from .network import ServiceError, public_fetch, html_job
-from . import task_progress, posting_extraction
+from . import task_progress, posting_extraction, job_alerts, job_search
 
 workers={}
 
@@ -23,7 +23,12 @@ workers={}
 async def lifespan(app):
     db.init()
     onboarding.migrate()
+    job_alerts.init()
+    scheduler=asyncio.create_task(job_alerts.scheduler()) if config.JOB_SCHEDULER_ENABLED else None
     yield
+    if scheduler:
+        scheduler.cancel()
+        await asyncio.gather(scheduler,return_exceptions=True)
     tasks=list(workers.values())
     for task in tasks: task.cancel()
     if tasks: await asyncio.gather(*tasks,return_exceptions=True)
@@ -38,6 +43,7 @@ from .local_access import LocalAccess
 app.add_middleware(LocalAccess)
 from .security import ResourceBoundary
 app.add_middleware(ResourceBoundary)
+app.include_router(job_alerts.router)
 from . import private_answers, private_profile, application_agent, assistant_ai
 app.include_router(private_answers.router)
 app.include_router(private_profile.router)
@@ -85,7 +91,7 @@ def capabilities_for(user):
     return {**config.capabilities(),'openai':bool(own or (config.OPENAI_KEY if config.ALLOW_SERVER_AI_KEY else '')),
             'web_search':bool(credentials.effective(user) and config.ENABLE_WEB_SEARCH),
             'openai_key_source':'account' if own else 'installation' if config.OPENAI_KEY and config.ALLOW_SERVER_AI_KEY else 'none',
-            'ai':ai_settings.public(db.settings(user))}
+            'ai':ai_settings.public(db.settings(user)), 'job_search':job_alerts.capabilities()}
 
 def require_ai(user):
     if not credentials.effective(user): raise HTTPException(503,'Add your OpenAI API key in Settings to enable AI. Manual records and exports remain available.')
@@ -533,7 +539,10 @@ def job_overview(entity_id:str,user=Depends(auth.current)):
 def update_job(entity_id:str,body:JobPosting,user=Depends(auth.current)):
     previous=require(user['id'],entity_id,'job')
     if body.url and not integrations.canonical_url(body.url): raise HTTPException(422,'Use a public HTTP(S) posting URL or leave the URL blank.')
-    data=body.model_dump()
+    data={**previous['data'],**body.model_dump()}
+    if body.description!=previous['data']['description']:
+        data['description_incomplete']=False
+        data.pop('structured_posting',None)
     if body.description==previous['data']['description'] and posting_extraction.cached(previous['data']):
         data['structured_posting']=previous['data']['structured_posting']
     return db.save(user['id'],'job',data,entity_id)
@@ -550,6 +559,7 @@ async def import_url(body:ImportURL,user=Depends(auth.current)):
 @app.post('/api/analyses')
 async def analyze_job(body:AnalysisRequest,user=Depends(auth.current)):
     require_ai(user['id']);job=require(user['id'],body.job_id,'job')
+    if job['data'].get('description_incomplete'):raise ServiceError('This provider supplied only a description snippet. Edit the posting with its full text or import the full posting before tailoring.')
     async def work():
         prepared=await posting_extraction.prepare_saved(user['id'],job,body.mode)
         task_progress.stage('comparing_profile')
@@ -1011,6 +1021,7 @@ def resources(user=Depends(auth.current)):
 @app.post('/api/preparation')
 async def preparation(body:PrepRequest,user=Depends(auth.current)):
     require_ai(user['id']);job=require(user['id'],body.job_id,'job')
+    if job['data'].get('description_incomplete'):raise ServiceError('This provider supplied only a description snippet. Edit the posting with its full text or import the full posting before tailoring.')
     if body.analysis_id: require(user['id'],body.analysis_id,'analysis')
     async def work(): return db.save(user['id'],'prep',{**(await ai.prepare(user['id'],job['data'],body.confirmed_gaps,body.mode)),'job_id':body.job_id,'analysis_id':body.analysis_id})
     return start_task(user['id'],'preparation',work)
@@ -1018,6 +1029,7 @@ async def preparation(body:PrepRequest,user=Depends(auth.current)):
 @app.post('/api/interviews')
 async def interview_answer(body:AnswerRequest,user=Depends(auth.current)):
     require_ai(user['id']);job=require(user['id'],body.job_id,'job')
+    if job['data'].get('description_incomplete'):raise ServiceError('This provider supplied only a description snippet. Edit the posting with its full text or import the full posting before tailoring.')
     session=require(user['id'],body.session_id,'interview') if body.session_id else None
     if session and (session['data']['job_id']!=body.job_id or session['data']['question']!=body.question):
         raise HTTPException(409,'Start a new interview session for a different role or question.')
@@ -1051,14 +1063,14 @@ def add_board(body:Board,user=Depends(auth.current)):
 @app.post('/api/jobs/search')
 async def search(body:SearchRequest,user=Depends(auth.current)):
     if not body.sources: raise HTTPException(400,'Choose at least one source.')
-    cache_key=json.dumps({'query':body.model_dump(exclude={'refresh'}),'ai_configuration':ai_settings.resolve(db.settings(user['id']),body.mode),'boards':[(b['id'],b['updated_at']) for b in db.list_entities(user['id'],'board')]},sort_keys=True)
+    cache_key=json.dumps({'search_version':job_search.VERSION,'query':body.model_dump(exclude={'refresh'}),'ai_configuration':ai_settings.resolve(db.settings(user['id']),body.mode),'provider_availability':job_alerts.capabilities(),'boards':[(b['id'],b['updated_at']) for b in db.list_entities(user['id'],'board')]},sort_keys=True)
     if not body.refresh:
         for cached in db.list_entities(user['id'],'search'):
             stamp=integrations.parse_date(cached['created_at'])
             if cached['data'].get('cache_key')==cache_key and stamp and (integrations.datetime.now(integrations.timezone.utc)-stamp).total_seconds()<86400:
                 return {'cached':True,'result':cached}
     async def work(): return db.save(user['id'],'search',{**(await integrations.discover(user['id'],body)),'cache_key':cache_key})
-    return start_task(user['id'],'discovery',work)
+    return start_task(user['id'],'discovery',work,body.model_dump())
 
 @app.post('/api/jobs/{entity_id}/check')
 async def check_job(entity_id:str,user=Depends(auth.current)):
@@ -1082,7 +1094,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application'}
+BACKUP_KINDS={'usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1127,6 +1139,8 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                     attachment=credential.get('document_id')
                     if attachment and (kinds.get(attachment)!='document' or by_id[attachment]['data'].get('purpose')!='certificate' or attachment not in payload.get('files',{})): raise ValueError()
             if record['kind']=='board': Board.model_validate(record['data'])
+            if record['kind']=='job_search_preferences':job_alerts.Preferences.model_validate(record['data'])
+            if record['kind']=='job_alert':job_alerts.Schedule.model_validate(record['data'])
             if record['kind']=='profile_answer':
                 data=record['data']
                 if data['answer_kind'] not in ('experience','motivation') or data['status'] not in ('confirmed','archived') or not isinstance(data['version'],int) or data['version']<1:raise ValueError()
@@ -1227,6 +1241,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             data={**record['data'],'task_id':''}
             if data['event_key'] not in existing_usage:
                 saved=cost_history.write(user['id'],data);existing_usage[data['event_key']]=saved['id']
+        elif record['kind'] in ('job_search_preferences','job_alert'):job_alerts.restore_record(user['id'],record['kind'],record['data'])
         elif record['kind']!='onboarding':db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
     onboarding.restore(user['id'],setup_records[0]['data'] if setup_records else None,legacy=any(r['kind'] in onboarding.LEGACY for r in records))
     # Restored pending proposals use the new record timestamp only when their reviewed

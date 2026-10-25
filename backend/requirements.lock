@@ -35,3 +35,17 @@ typing-inspection==0.4.4
 typing_extensions==4.16.0
 uvicorn==0.54.0
 cryptography==48.0.1
+
+pywebpush==2.5.0
+http-ece==1.2.1
+py-vapid==1.9.6
+requests==2.34.2
+aiohttp==3.14.5
+aiohappyeyeballs==2.7.1
+aiosignal==1.4.0
+attrs==26.1.0
+frozenlist==1.8.0
+multidict==7.2.1
+propcache==0.5.4
+urllib3==2.8.0
+yarl==1.25.1

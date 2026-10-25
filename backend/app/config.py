@@ -21,7 +21,7 @@ COOKIE_SECURE = False
 
 def capabilities():
     return {'deployment': 'local','openai': bool(OPENAI_KEY), 'onet': bool(ONET_KEY),
-            'adzuna': bool(ADZUNA_ID and ADZUNA_KEY), 'jobspy': ENABLE_JOBSPY,
+            'adzuna': bool(ADZUNA_ID and ADZUNA_KEY), 'usajobs':bool(USAJOBS_KEY and USAJOBS_EMAIL), 'jobspy': ENABLE_JOBSPY,
             'web_search': bool(OPENAI_KEY and ENABLE_WEB_SEARCH), 'model': MODEL}
 
 # This edition supports local browser access only. These hosts are not configurable.
@@ -31,3 +31,13 @@ VAULT_KEY_FILE = Path(os.getenv('VAULT_KEY_FILE', str(ROOT / 'local-secrets' / '
 GLOBAL_TASK_LIMIT = int(os.getenv('GLOBAL_TASK_LIMIT', '4'))
 if os.getenv('CAREER_ENV', 'local') != 'local':
     raise RuntimeError('This edition supports localhost only.')
+
+# Shared job providers and opt-in notification delivery; never returned to browsers.
+USAJOBS_KEY=os.getenv('USAJOBS_API_KEY','')
+USAJOBS_EMAIL=os.getenv('USAJOBS_API_EMAIL','')
+CF_EMAIL_TOKEN=os.getenv('CF_EMAIL_TOKEN','')
+CF_EMAIL_ACCOUNT=os.getenv('CF_EMAIL_ACCOUNT_ID','')
+ALERT_FROM=os.getenv('ALERT_FROM','')
+JOB_SCHEDULER_ENABLED=os.getenv('JOB_SCHEDULER_ENABLED','true').lower()=='true'
+
+ALERT_PUBLIC_ORIGIN=os.getenv('ALERT_PUBLIC_ORIGIN','http://localhost:3000').rstrip('/')

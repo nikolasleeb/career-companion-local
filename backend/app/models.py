@@ -270,18 +270,41 @@ class PrepOutput(StrictModel):
     questions: list[str]
 
 class Board(StrictModel):
-    provider: Literal['greenhouse','ashby']
-    board: str = Field(min_length=1,max_length=100,pattern=r'^[A-Za-z0-9_-]+$')
+    provider: Literal['greenhouse','ashby','lever'] = 'greenhouse'
+    board: str = Field(default='',max_length=100,pattern=r'^[A-Za-z0-9_-]*$')
     company: str = Field(min_length=1,max_length=150)
+    career_url: str = Field(default='',max_length=2000)
+    region: Literal['global','eu'] = 'global'
+
+    @model_validator(mode='before')
+    @classmethod
+    def from_career_url(cls,value):
+        if isinstance(value,dict) and value.get('career_url'):
+            from urllib.parse import urlparse
+            p=urlparse(value['career_url']);host=(p.hostname or '').lower()
+            providers={'boards.greenhouse.io':'greenhouse','job-boards.greenhouse.io':'greenhouse','jobs.ashbyhq.com':'ashby','jobs.lever.co':'lever','jobs.eu.lever.co':'lever'}
+            if p.scheme!='https' or p.username or p.password or p.port not in (None,443) or host not in providers:raise ValueError('Use a public Greenhouse, Ashby or Lever HTTPS career-page URL.')
+            token=p.path.strip('/').split('/')[0]
+            value={**value,'provider':providers[host],'board':token,'region':'eu' if host=='jobs.eu.lever.co' else 'global'}
+        if isinstance(value,dict) and not value.get('board'):raise ValueError('Enter an employer career-page URL or board name.')
+        return value
 
 class SearchRequest(StrictModel):
     title: str = Field(default='data analyst',min_length=2,max_length=120)
+    interests: list[str] = Field(default_factory=list,max_length=12)
     location: str = Field(default='United States',min_length=2,max_length=120)
     workplace: Literal['any','remote','hybrid','onsite'] = 'any'
-    days: int = Field(default=7,ge=1,le=30)
+    job_types: list[Literal['internship','early_career','any']] = Field(default_factory=lambda:['internship','early_career'],min_length=1,max_length=3)
+    days: int = Field(default=30,ge=1,le=30)
     mode: Literal['economy','deep','custom'] = 'economy'
     refresh: bool = False
-    sources: list[Literal['greenhouse','ashby','web','adzuna','jobspy']] = Field(default_factory=lambda:['greenhouse','ashby','web'])
+    sources: list[Literal['greenhouse','ashby','lever','web','adzuna','usajobs','jobspy']] = Field(default_factory=lambda:['greenhouse','ashby','lever','adzuna','usajobs'],max_length=7)
+
+    @field_validator('interests')
+    @classmethod
+    def valid_interests(cls,values):
+        if any(not isinstance(v,str) or not 2<=len(v.strip())<=80 for v in values):raise ValueError('Use interests between 2 and 80 characters.')
+        return list(dict.fromkeys(v.strip() for v in values))
 
 class WebJob(StrictModel):
     title: str

@@ -18,6 +18,7 @@ def public(value):
 def require(user,id,kind):
     value=db.get(user,id,kind)
     if not value:raise HTTPException(404,'Record not found.')
+    if kind=='job' and value['data'].get('description_incomplete'):raise ServiceError('Review the full posting text before using this provider description snippet for tailoring.')
     return value
 
 def write(c,user,kind,data,id=None):
