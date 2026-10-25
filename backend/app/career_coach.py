@@ -329,3 +329,25 @@ def validate_backup(record,kinds,by_id):
   if not isinstance(d.get('actions'),list) or len(d['actions'])>8:raise ValueError()
  for source in d.get('profile_snapshot',{}).get('sources',[]):
   if kinds.get(source.get('record_id')) not in ('experience','profile_answer'):raise ValueError()
+ # Backups are untrusted: validate displayed references as well as raw passages.
+ # Never accept a separate imported citation URL or an unsupported Profile quote.
+ if kind=='coach_message' and d.get('role')=='assistant':
+  raw=d.get('reply',{});snapshot=d.get('profile_snapshot',{})
+  try:
+   clean={k:raw[k] for k in Reply.model_fields}
+   clean['citations']=[{k:v[k] for k in Citation.model_fields} for v in raw['citations']]
+   clean['profile_evidence']=[{k:v[k] for k in ProfileReference.model_fields} for v in raw['profile_evidence']]
+   clean['recommendations']=[]
+   for action in raw['recommendations']:
+    item={k:action[k] for k in Recommendation.model_fields}
+    item['citations']=[{k:v[k] for k in Citation.model_fields} for v in action['citations']]
+    item['evidence']=[{k:v[k] for k in ProfileReference.model_fields} for v in action['evidence']]
+    clean['recommendations'].append(item)
+   validate_reply(clean,snapshot,d['sources'])
+   chunks={v['chunk_id']:v for v in d['sources']}
+   for citation in [*raw['citations'],*[v for a in raw['recommendations'] for v in a['citations']]]:
+    if citation.get('url')!=chunks[citation['chunk_id']]['url'] or not knowledge.safe_url(citation.get('url','')):raise ValueError()
+  except (ServiceError,KeyError,TypeError):raise ValueError('Invalid imported coaching evidence.')
+ if kind=='coach_plan':
+  message=by_id[d['message_id']]['data']
+  if message.get('role')!='assistant' or d['actions']!=message.get('reply',{}).get('recommendations'):raise ValueError()

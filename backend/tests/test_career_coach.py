@@ -231,3 +231,17 @@ def test_multiple_majors_and_credential_names_without_identifiers(client,account
  value=json.dumps(coach.profile(account['id']))
  assert 'Biology' in value and 'Environmental science' in value and 'Fictional data credential' in value
  assert 'PRIVATE-CREDENTIAL-IDENTIFIER' not in value and 'private-document' not in value
+
+
+def test_import_rejects_altered_displayed_citations_and_roadmaps(client,account,model):
+ chat=make(client);assert act(client,chat['id'])['status']=='completed'
+ original=client.get('/api/account/export').json()
+ for change in ('url','quote','plan'):
+  payload=copy.deepcopy(original)
+  message=next(r for r in payload['records'] if r['kind']=='coach_message' and r['data']['role']=='assistant')
+  if change=='url':message['data']['reply']['citations'][0]['url']='javascript:alert(1)'
+  elif change=='quote':message['data']['reply']['profile_evidence'][0]['quote']='Invented reviewed accomplishment'
+  else:next(r for r in payload['records'] if r['kind']=='coach_plan')['data']['actions'][0]['title']='Altered unsupported action'
+  response=client.post('/api/account/import',files={'file':('backup.json',json.dumps(payload).encode(),'application/json')})
+  assert response.status_code==400,response.text
+ assert len(client.get('/api/career-coach/chats').json()['chats'])==1
