@@ -1,18 +1,20 @@
 """Public source search and account-owned decisions. No provider keys enter records."""
 import asyncio,hashlib,json,re
+from collections import defaultdict
 from datetime import datetime,timezone,timedelta
 from urllib.parse import urlparse
 from . import config,db,integrations as x,task_progress,ai,job_locations
 from .network import ServiceError,public_fetch,html_job
 
-from . import role_catalog,provider_connections
+from . import role_catalog,provider_connections,public_job_feeds as feeds
 TECH=role_catalog.GROUPS['Tech & Data']
 ALIASES=role_catalog.ALIASES
-VERSION=role_catalog.VERSION
+VERSION=role_catalog.VERSION+1000
 
 def words(value):return re.findall(r'[^\W_]+',value.casefold(),re.UNICODE)
 def title_match(title,query):
-    if re.search(r'\b(senior|sr\.?|principal|director|head of)\b',title,re.I) or re.search(r'\bstaff\b.*\b(engineer|scientist)\b',title,re.I) or (re.search(r'\blead\b',title,re.I) and not re.search(r'\blead generation\b',title,re.I)):return False
+    if re.search(r'\b(senior|sr\.?|principal|director|head of|supervisory|supervisor|supv|chief|vice president|vp|cto|cfo|ceo)\b',title,re.I) or re.search(r'\bstaff\b.*\b(engineer|scientist)\b',title,re.I) or (re.search(r'\blead\b',title,re.I) and not re.search(r'\blead generation\b',title,re.I)):return False
+    if re.search(r'\b(?:engineering|software|design|data science|infrastructure) manager\b|\bmanager[, -]+(?:software|engineering|design|data|systems)',title,re.I):return False
     if isinstance(query,list):return any(title_match(title,q) for q in query)
     phrases=ALIASES.get(query.casefold(),[query])
     title_words=set(words(title))
@@ -26,7 +28,7 @@ def review(job,request):
     text=job.get('description','');issues=[]
     if job.get('country') and not x.in_us(job):return None
     if not x.in_us(job):
-        if job.get('location') and re.search(r'\b(?:United Kingdom|Canada|Australia|Germany|France|India|London|Singapore|Ireland)\b',job['location'],re.I):return None
+        if job.get('location') and re.search(r'\b(?:United Kingdom|Canada|Australia|Germany|France|India|London|Singapore|Ireland|Israel|Tel Aviv|Poland|Warsaw|Brazil|Mexico|Japan|Tokyo|China|Shanghai|Beijing|Netherlands|Amsterdam|Spain|Madrid|Italy|Milan|Sweden|Stockholm|Switzerland|Zurich|New Zealand|Romania|Bucharest|Bengaluru|Bangalore|Toronto|Vancouver|Seoul|Korea|Philippines|Manila|Taiwan|Taipei|Hong Kong|Montreal|Montréal|Ottawa|Calgary|British Columbia|Ontario|Quebec|Viet Nam|Vietnam|Thailand|Bangkok|Malaysia|Kuala Lumpur|Turkey|Türkiye|Istanbul|Ukraine|Kyiv|Argentina|Buenos Aires|Chile|Santiago|Colombia|Bogot[aá]|Peru|Lima|Costa Rica|San Jos[eé], Costa Rica|Hungary|Budapest|Austria|Vienna|Belgium|Brussels|Norway|Oslo|Finland|Helsinki|Egypt|Cairo|Saudi Arabia|Riyadh|Qatar|Doha|Kenya|Nairobi|Ghana|Accra|Greece|Athens|Croatia|Serbia|Belgrade|Bulgaria|Sofia|Lithuania|Latvia|Estonia|Europe|EMEA|APAC|Dubai|United Arab Emirates|Portugal|Lisbon|Czech|Prague|Denmark|Copenhagen|South Africa|Nigeria|Pakistan|Bangladesh|Indonesia|Jakarta)\b',job['location'],re.I):return None
         issues.append('US work location not established')
     location_match=job_locations.matches(job,request.location)
     if location_match is False:return None
@@ -59,11 +61,11 @@ def review(job,request):
     job.update(review_reasons=issues,review_status='needs_review' if issues else 'matches_preferences',experience_requirements=required[:4],eligibility_passages=eligibility,job_type='internship' if intern else 'full_time_or_unspecified',date_status='recent' if published else 'aggregator' if added else 'unknown',date_kind='republished' if published and (job.get('publication_source') or '').startswith('Ashby') else 'published' if published else 'aggregator_added' if added else 'unknown')
     return job
 
-async def adzuna(user,query,location):
-    secret=provider_connections.resolve(user)
+async def adzuna(user,query,location,*,trial=False):
+    secret=provider_connections.resolve(user,manual=trial)
     if not secret:raise ServiceError('Adzuna is not enabled for regular searches on this account. Configure it in Settings; trial connections are test-only.')
     result=[]
-    for page in (1,2):
+    for page in ((1,) if trial else (1,2)):
         params={'app_id':secret['app_id'],'app_key':secret['app_key'],'what':query,'results_per_page':25,'sort_by':'date'}
         if not job_locations.region(location) and job_locations.provider_location(location):params['where']=job_locations.provider_location(location)
         data=await x.fetch_json(f'https://api.adzuna.com/v1/api/jobs/us/search/{page}',params)
@@ -90,9 +92,30 @@ async def usajobs(query,location):
         if len(items)<25:break
     return result
 
-async def discover(user,request):
-    queries=request.interests or [request.title];boards=[r['data'] for r in db.list_entities(user,'board')]
-    jobs=[];statuses=[];usage=[];sem=asyncio.Semaphore(4);stopped=set()
+async def discover(user,request,*,execution='manual'):
+    queries=request.interests or [request.title];boards=feeds.catalog_boards(user)
+    if request.employer_boards is not None:boards=[b for b in boards if feeds.board_key(b) in request.employer_boards]
+    trial_meta={'roles':[],'attempted_requests':0,'cached':False}
+    info=provider_connections.public(user)
+    trial=info['configured'] and info.get('usage')=='manual_trial'
+    async def trial_search():
+        if execution!='manual' or not provider_connections.trial_owner(user):
+            statuses.append({'source':'adzuna','status':'disabled','message':'Trial excluded from daily and background searches.'});return
+        requested=request.trial_roles if request.trial_roles is not None else queries[:2]
+        roles=[q for q in queries if any(q.casefold()==r.casefold() for r in requested)][:2]
+        if not roles:
+            statuses.append({'source':'adzuna','status':'setup','message':'Select up to two trial roles from your search interests.'});return
+        token=request.request_token or db.uid()
+        for role in roles:
+            if not provider_connections.claim_attempt(user,token,role):continue
+            trial_meta['roles'].append(role);trial_meta['attempted_requests']+=1
+            try:
+                jobs.extend(await adzuna(user,ALIASES.get(role.casefold(),[role])[0],request.location,trial=True))
+            except ServiceError as error:
+                statuses.append({'source':'adzuna','status':'error','message':'Adzuna trial request failed. Check the account connection and provider allowance in Settings. Other sources are retained.'})
+                break # Never retry or consume a second call after a quota/auth/connection failure.
+        if not any(v['source']=='adzuna' and v['status']=='error' for v in statuses):statuses.append({'source':'adzuna','status':'ok','message':f"Manual trial checked {', '.join(trial_meta['roles']) or 'no additional roles (duplicate request)'}. {trial_meta['attempted_requests']} request(s) attempted; no pagination or retries."})
+    jobs=[];statuses=[];usage=[];sem=asyncio.Semaphore(6);stopped=set()
     async def collect(label,fn):
         async with sem:
             if label in stopped:return
@@ -103,17 +126,33 @@ async def discover(user,request):
                 statuses.append({'source':label,'status':'error','message':str(e) if isinstance(e,ServiceError) else 'Source timed out. Retry later; other results are retained.'})
     task_progress.stage('searching_jobs')
     calls=[]
+    async def board_search(board):
+        label=feeds.board_key(board)
+        async with sem:
+            try:
+                rows,meta=await asyncio.wait_for(feeds.employer(board,refresh=request.refresh),60)
+                jobs.extend(v for v in rows if title_match(v.get('title',''),queries))
+                statuses.append({'source':label,'status':'stale' if meta['stale'] else 'ok' if rows else 'empty','last_success':meta['last_success'],'snapshot_revision':meta['revision'],'message':f"{board['company']}: {len(rows)} public postings; {'cached' if meta['cached'] else 'refreshed'}. "+meta['error']})
+            except (ServiceError,asyncio.TimeoutError):statuses.append({'source':label,'status':'error','message':board['company']+': public feed unavailable. Other sources are retained.'})
+    async def community_search():
+        async with sem:
+            try:
+                rows,meta=await feeds.community(refresh=request.refresh,queries=queries);jobs.extend(rows)
+                statuses.append({'source':'github:open-jobs-data','status':'stale' if meta['stale'] else 'ok' if rows else 'empty','last_success':meta['last_success'],'snapshot_at':meta['snapshot_at'],'message':f"open-jobs-data: {len(rows)} community metadata records. Employer requirements require review. "+meta['error']})
+            except (ServiceError,asyncio.TimeoutError):statuses.append({'source':'github:open-jobs-data','status':'error','message':'Community snapshot unavailable; other sources are retained.'})
     for source in dict.fromkeys(request.sources):
         if source in ('greenhouse','ashby','lever'):
-            chosen=[b for b in boards if b['provider']==source][:8]
-            if not chosen:statuses.append({'source':source,'status':'setup','message':'Add an employer career-page URL to search this source.'})
-            for board in chosen:calls.append(collect(source+':'+board['board'],lambda b=board:x.board_jobs(b,queries)))
+            chosen=[b for b in boards if b['provider']==source]
+            if not chosen:statuses.append({'source':source,'status':'setup','message':'No employer boards selected for this source.'})
+            for board in chosen:calls.append(board_search(board))
+        elif source=='github':calls.append(community_search())
         elif source in ('adzuna','usajobs'):
-            ready=bool(provider_connections.public(user)['configured'] and not provider_connections.public(user)['test_only']) if source=='adzuna' else bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL)
+            if source=='adzuna' and trial:
+                calls.append(trial_search());continue
+            ready=bool(info['configured'] and info.get('usage')=='regular') if source=='adzuna' else bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL)
             if not ready:
-                statuses.append({'source':source,'status':'setup','message':('Adzuna needs an account connection enabled for regular searches. Test-only keys are excluded.' if source=='adzuna' else 'USAJOBS needs the shared connection configured.')});continue
+                statuses.append({'source':source,'status':'setup','message':('Adzuna needs an account connection enabled for searches. Test-only keys are excluded.' if source=='adzuna' else 'USAJOBS needs the shared connection configured.')});continue
             for query in queries:
-                # One bounded provider query per role interest, not one per alias.
                 term=ALIASES.get(query.casefold(),[query])[0]
                 calls.append(collect(source,lambda s=source,q=term:(adzuna(user,q,request.location) if s=='adzuna' else usajobs(q,request.location))))
         elif source=='jobspy':statuses.append({'source':'jobspy','status':'disabled','message':'Experimental scraping is retired. Indeed is excluded.'})
@@ -137,8 +176,16 @@ async def discover(user,request):
                 statuses.append({'source':'web','status':'ok','message':f'{len(rows)} cited AI results checked; usage is charged to your account key.'})
             except ServiceError as e:statuses.append({'source':'web','status':'error','message':str(e)})
     task_progress.stage('checking_jobs')
-    existing=db.list_entities(user,'job');records=[];excluded=0
+    candidates=[];excluded=0
     for job in x.deduplicate(jobs):
+        if execution!='manual' and job.get('snapshot_stale'):continue
+        if blocked_url(job['url']) or not title_match(job['title'],queries):continue
+        if not review(job,request):excluded+=1;continue
+        candidates.append(job)
+    candidates.sort(key=lambda j:(j.get('published_at') or j.get('source_added_at') or '',j['title'],j['url']),reverse=True)
+    total=len(candidates)
+    existing=db.list_entities(user,'job');records=[]
+    for job in feeds.balanced(candidates):
         if blocked_url(job['url']) or not title_match(job['title'],queries):continue
         if not review(job,request):excluded+=1;continue
         old=next((r for r in existing if (job.get('source_identity') and r['data'].get('source_identity')==job['source_identity']) or x.canonical_url(r['data'].get('url',''))==x.canonical_url(job['url'])),None)
@@ -160,6 +207,4 @@ async def discover(user,request):
                     if field in previous:job[field]=previous[field]
             write(c,user,'job',job,key)
         records.append(db.get(user,key,'job'))
-        if len(records)>=100:break
-    records.sort(key=lambda r:(r['data']['review_status']=='matches_preferences',r['data'].get('published_at') or r['data'].get('source_added_at') or ''),reverse=True)
-    return {'version':VERSION,'jobs':records,'sources':statuses,'ai_calls':usage,'checked_at':db.now(),'query':request.model_dump(exclude={'refresh'}),'excluded_unverified_us':excluded,'bounded_results':True}
+    return {'version':VERSION,'jobs':records,'sources':statuses,'ai_calls':usage,'checked_at':db.now(),'query':request.model_dump(exclude={'refresh','request_token'}),'excluded_unverified_us':excluded,'bounded_results':True,'total_matches':total,'retained_matches':len(records),'truncated':total>500,'limit':500,'page_size':25,'catalog_revision':feeds.REVISION,'adzuna_trial':trial_meta if trial else None}

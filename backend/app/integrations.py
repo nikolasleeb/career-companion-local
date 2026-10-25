@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from . import config, db, ai
 from .network import ServiceError, public_fetch, html_job
 
-async def fetch_json(url, params=None, headers=None):
+async def fetch_json(url, params=None, headers=None,*,max_bytes=12*1024*1024):
     try:
         async with httpx.AsyncClient(timeout=15,trust_env=False) as client:
             async with client.stream('GET',url,params=params,headers=headers) as response:
@@ -17,7 +17,7 @@ async def fetch_json(url, params=None, headers=None):
                 raw=bytearray()
                 async for chunk in response.aiter_bytes():
                     raw.extend(chunk)
-                    if len(raw)>12*1024*1024:
+                    if len(raw)>max_bytes:
                         raise ServiceError('The source response exceeded the size limit.')
                 try: return json.loads(raw)
                 except ValueError: raise ServiceError('The source returned unreadable data.') from None
@@ -81,15 +81,20 @@ def normalize_job(source,title,company,location,description,url,**kwargs):
             'observations':[],**kwargs}
 
 def deduplicate(jobs):
-    merged={}
+    merged={};by_url={}
     for job in jobs:
-        if not job.get('url'):continue
-        key=job.get('source_identity') or canonical_url(job['url'])
-        existing=merged.get(key) or next((v for v in merged.values() if canonical_url(v['url'])==canonical_url(job['url'])),None)
+        url=canonical_url(job.get('url',''))
+        if not url:continue
+        key=job.get('source_identity') or url
+        existing=merged.get(key) or by_url.get(url)
         if existing:
             existing['sources'] += [x for x in job['sources'] if x not in existing['sources']]
-            if len(job['description'])>len(existing['description']):existing['description']=job['description']
-        else:merged[key]=job.copy()
+            # Prefer employer details; community metadata cannot weaken freshness or requirements.
+            if len(job['description'])>len(existing['description']):
+                sources=existing['sources'];existing.update(job);existing['sources']=sources
+            if not job.get('snapshot_stale'):existing['snapshot_stale']=False
+        else:existing=job.copy();merged[key]=existing
+        by_url[url]=existing
     return list(merged.values())
 
 def matches_title(title,query):
@@ -97,9 +102,12 @@ def matches_title(title,query):
     return title_match(title,query)
 
 def in_us(job):
-    country=job.get('country','').upper().strip()
+    country=str(job.get('country') or '').upper().strip()
     if country:return country in ('US','USA','UNITED STATES','UNITED STATES OF AMERICA')
     location=job.get('location','')
+    from .job_locations import STATES
+    if re.search(r'\b(?:Tbilisi|Batumi)\b',location,re.I):return False
+    if re.search(r',\s*(?:'+'|'.join(re.escape(v) for v in STATES.values())+r')\b',location,re.I):return True
     return bool(re.search(r'United States|\bUSA\b|\bUS\b|U\.S\.|,\s*(?:AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b',location))
 
 def location_matches(job,query):
@@ -110,34 +118,30 @@ async def board_jobs(board, query):
     provider=board['provider'];token=quote(board['board'],safe='')
     if provider=='lever':
         host='api.eu.lever.co' if board.get('region')=='eu' else 'api.lever.co'
-        rows=await fetch_json(f'https://{host}/v0/postings/{token}',{'mode':'json','limit':100})
-        return [normalize_job('lever',v.get('text'),board['company'],v.get('categories',{}).get('location'),v.get('descriptionPlain','')+' '+ ' '.join(BeautifulSoup(x.get('content',''),'html.parser').get_text(' ',strip=True) for x in v.get('lists',[])),v.get('hostedUrl') or v.get('applyUrl'),source_identity='lever:'+token+':'+str(v.get('id')),origin_key='lever:'+token,workplace={'remote':'remote','hybrid':'hybrid','on-site':'onsite'}.get(v.get('workplaceType'),'unknown'),employment_type=v.get('categories',{}).get('commitment','')) for v in rows if matches_title(v.get('text',''),query)][:50]
+        rows=await fetch_json(f'https://{host}/v0/postings/{token}',{'mode':'json'})
+        return [normalize_job('lever',v.get('text'),board['company'],v.get('categories',{}).get('location'),v.get('descriptionPlain','')+' '+ ' '.join(BeautifulSoup(x.get('content',''),'html.parser').get_text(' ',strip=True) for x in v.get('lists',[])),v.get('hostedUrl') or v.get('applyUrl'),source_identity='lever:'+token+':'+str(v.get('id')),origin_key='lever:'+token,workplace={'remote':'remote','hybrid':'hybrid','on-site':'onsite'}.get(v.get('workplaceType'),'unknown'),employment_type=v.get('categories',{}).get('commitment','')) for v in rows if query is None or matches_title(v.get('text',''),query)]
     if provider=='greenhouse':
         url=f'https://boards-api.greenhouse.io/v1/boards/{token}/jobs'
         payload=await fetch_json(url,{'content':'true'})
         result=[]
         for item in payload.get('jobs',[]):
-            if not matches_title(item.get('title',''),query): continue
+            if query is not None and not matches_title(item.get('title',''),query): continue
             job=normalize_job(provider,item.get('title'),board['company'],(item.get('location') or {}).get('name'),item.get('content',''),item.get('absolute_url',''),source_identity='greenhouse:'+token+':'+str(item.get('id')),origin_key='greenhouse:'+token,updated_at=item.get('updated_at'),observations=['Listed on the employer Greenhouse board at '+db.now()])
             loc=job['location'].lower()
             job['workplace']='remote' if 'remote' in loc else 'hybrid' if 'hybrid' in loc else 'unknown'
-            # An update timestamp is never substituted for first publication.
-            if len(result)<4 and str(item.get('id','')).isdigit():
-                try:
-                    detail=await fetch_json(url+'/'+str(item['id']))
-                    if parse_date(detail.get('first_published')):
-                        job['published_at']=detail['first_published'];job['publication_source']='Greenhouse first_published'
-                except ServiceError: pass
+            if parse_date(item.get('first_published')):
+                job.update(published_at=item['first_published'],publication_source='Greenhouse first_published')
             result.append(job)
-            if len(result)>=20: break
         return result
     payload=await fetch_json(f'https://api.ashbyhq.com/posting-api/job-board/{token}',{'includeCompensation':'true'})
     result=[]
     for item in payload.get('jobs',[]):
-        if item.get('isListed') is False or not matches_title(item.get('title',''),query): continue
+        if item.get('isListed') is False or (query is not None and not matches_title(item.get('title',''),query)): continue
         address=(item.get('address') or {}).get('postalAddress') or {}
-        result.append(normalize_job('ashby',item.get('title'),board['company'],item.get('location'),item.get('descriptionPlain') or item.get('descriptionHtml'),item.get('jobUrl') or item.get('applyUrl'),source_identity='ashby:'+token+':'+str(item.get('id') or item.get('jobUrl')),origin_key='ashby:'+token,employment_type=item.get('employmentType',''),salary=item.get('compensation',{}),published_at=item.get('publishedAt'),publication_source='Ashby last publishedAt' if parse_date(item.get('publishedAt')) else None,country=address.get('addressCountry',''),workplace={'Remote':'remote','Hybrid':'hybrid','OnSite':'onsite'}.get(item.get('workplaceType'),'remote' if item.get('isRemote') else 'unknown'),observations=['Listed on the employer Ashby board at '+db.now()]))
-        if len(result)>=20: break
+        secondary=item.get('secondaryLocations') or []
+        locations=[{'location':v.get('location',''),'state':((v.get('address') or {}).get('postalAddress') or {}).get('addressRegion','')} for v in secondary if isinstance(v,dict)]
+        secondary_us=any(in_us({'country':((v.get('address') or {}).get('postalAddress') or {}).get('addressCountry',''),'location':v.get('location','')}) for v in secondary if isinstance(v,dict))
+        result.append(normalize_job('ashby',item.get('title'),board['company'],item.get('location'),item.get('descriptionPlain') or item.get('descriptionHtml'),item.get('jobUrl') or item.get('applyUrl'),source_identity='ashby:'+token+':'+str(item.get('id') or item.get('jobUrl')),origin_key='ashby:'+token,employment_type=item.get('employmentType',''),salary=item.get('compensation',{}),published_at=item.get('publishedAt'),publication_source='Ashby last publishedAt' if parse_date(item.get('publishedAt')) else None,country='US' if secondary_us else address.get('addressCountry',''),locations=locations,workplace={'Remote':'remote','Hybrid':'hybrid','OnSite':'onsite'}.get(item.get('workplaceType'),'remote' if item.get('isRemote') else 'unknown'),observations=['Listed on the employer Ashby board at '+db.now()]))
     return result
 
 async def adzuna_jobs(query,location,*,user=None):

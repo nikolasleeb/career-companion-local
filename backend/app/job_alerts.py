@@ -142,7 +142,9 @@ def push_key():
     return p
 
 def capabilities(user=None):
-    return {'adzuna':bool(user and provider_connections.public(user)['configured'] and not provider_connections.public(user)['test_only']),'adzuna_connection':provider_connections.public(user) if user else None,'usajobs_scope':'Shared connection','usajobs':bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL),'email':bool(config.CF_EMAIL_TOKEN and config.CF_EMAIL_ACCOUNT and config.ALERT_FROM),'email_sender':config.ALERT_FROM,'browser_push':True,'scheduler':config.JOB_SCHEDULER_ENABLED,'tech_preset':job_search.TECH,'preset_groups':role_catalog.GROUPS,'role_catalog':[r['label'] for r in role_catalog.CATALOG['roles']],'catalog_version':role_catalog.VERSION,'location_options':job_locations.options(),'location_regions':job_locations.region_details()}
+    from . import public_job_feeds as feeds
+    connection=provider_connections.public(user) if user else {}
+    return {'adzuna':bool(user and connection.get('configured') and (connection.get('usage')=='regular' or connection.get('usage')=='manual_trial' and connection.get('manual_trial_allowed'))),'adzuna_connection':provider_connections.public(user) if user else None,'github':True,'employers':feeds.listing(user) if user else [],'employer_catalog_revision':feeds.REVISION,'employer_catalog_attribution':feeds.CATALOG['attribution'],'usajobs_scope':'Shared connection','usajobs':bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL),'email':bool(config.CF_EMAIL_TOKEN and config.CF_EMAIL_ACCOUNT and config.ALERT_FROM),'email_sender':config.ALERT_FROM,'browser_push':True,'scheduler':config.JOB_SCHEDULER_ENABLED,'tech_preset':job_search.TECH,'preset_groups':role_catalog.GROUPS,'role_catalog':[r['label'] for r in role_catalog.CATALOG['roles']],'catalog_version':role_catalog.VERSION,'location_options':job_locations.options(),'location_regions':job_locations.region_details()}
 
 @router.get('/preferences')
 def get_preferences(timezone:str|None=None,user=Depends(owner)):
@@ -324,6 +326,7 @@ async def run_daily(user,now=None,force=False):
     try:
         if not saved:
             request=SearchRequest.model_validate(preferences(user)['data']['query']);request.sources=[v for v in request.sources if v not in ('web','jobspy')];request.refresh=True
+            if provider_connections.public(user).get('usage')!='regular':request.sources=[v for v in request.sources if v!='adzuna']
             result=await asyncio.wait_for(job_search.discover(user,request),600)
             db.save(user,'search',{**result,'jobs':[{'id':r['id'],'data':{'title':r['data']['title'],'company':r['data'].get('company','')}} for r in result['jobs']],'scheduled':True},ident(user,'scheduled-search:'+day))
             errors={v['source'] for v in result['sources'] if v['status'] not in ('ok','empty')}
@@ -334,7 +337,7 @@ async def run_daily(user,now=None,force=False):
                 new=[]
                 for row in result['jobs']:
                     data=row['data'];key=data.get('source_identity') or data['url'];url_key='url:'+job_search.x.canonical_url(data['url']);source=data.get('origin_key',data.get('sources',[{}])[0].get('provider',''))
-                    if source in baselines and key not in known and url_key not in known and data.get('interest_state')!='dismissed':new.append(row['id'])
+                    if not data.get('snapshot_stale') and source in successes and source in baselines and key not in known and url_key not in known and data.get('interest_state')!='dismissed':new.append(row['id'])
                     c.execute('INSERT OR IGNORE INTO cc_job_seen VALUES(?,?)',(user,key))
                     c.execute('INSERT OR IGNORE INTO cc_job_seen VALUES(?,?)',(user,url_key))
                 for source in successes:c.execute('INSERT OR IGNORE INTO cc_job_baselines VALUES(?,?)',(user,source))

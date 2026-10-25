@@ -115,7 +115,7 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
     progress_token=task_progress.bind(user,task_id,row['kind']) if row and row['kind'] in task_progress.KINDS else None
@@ -143,7 +143,7 @@ def start_task(user,kind,work,inputs=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -1067,13 +1067,21 @@ def add_board(body:Board,user=Depends(auth.current)):
 async def search(body:SearchRequest,user=Depends(auth.current)):
     if not body.sources: raise HTTPException(400,'Choose at least one source.')
     if 'web' in body.sources and not (credentials.get(user['id']) and config.ENABLE_WEB_SEARCH):raise HTTPException(400,'AI expansion requires your own OpenAI key and enabled web search.')
-    cache_key=json.dumps({'search_version':job_search.VERSION,'query':body.model_dump(exclude={'refresh'}),'ai_configuration':ai_settings.resolve(db.settings(user['id']),body.mode),'provider_availability':job_alerts.capabilities(user['id']),'boards':[(b['id'],b['updated_at']) for b in db.list_entities(user['id'],'board')]},sort_keys=True)
+    from . import public_job_feeds as feeds,provider_connections
+    def cache_identity():
+        connection=provider_connections.public(user['id'])
+        return json.dumps({'search_version':job_search.VERSION,'query':body.model_dump(exclude={'refresh','request_token'}),'ai_configuration':ai_settings.resolve(db.settings(user['id']),body.mode),'connection_revision':connection['revision'],'public_feeds':feeds.identity(),'boards':[(b['id'],b['updated_at']) for b in db.list_entities(user['id'],'board')]},sort_keys=True)
+    cache_key=cache_identity()
     if not body.refresh:
         for cached in db.list_entities(user['id'],'search'):
             stamp=integrations.parse_date(cached['created_at'])
-            if cached['data'].get('cache_key')==cache_key and stamp and (integrations.datetime.now(integrations.timezone.utc)-stamp).total_seconds()<86400:
+            if cached['data'].get('cache_key')==cache_key and stamp and (integrations.datetime.now(integrations.timezone.utc)-stamp).total_seconds()<21600:
+                # Returned metadata describes this invocation; stored history is immutable.
+                if cached['data'].get('adzuna_trial'):cached['data']['adzuna_trial']={**cached['data']['adzuna_trial'],'attempted_requests':0,'cached':True}
                 return {'cached':True,'result':cached}
-    async def work(): return db.save(user['id'],'search',{**(await integrations.discover(user['id'],body)),'cache_key':cache_key})
+    async def work():
+        result=await integrations.discover(user['id'],body)
+        return db.save(user['id'],'search',{**result,'cache_key':cache_identity()})
     return start_task(user['id'],'discovery',work,body.model_dump())
 
 @app.post('/api/jobs/{entity_id}/check')

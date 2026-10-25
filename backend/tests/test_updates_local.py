@@ -36,17 +36,17 @@ def test_available_update_sends_no_account_information(client, account, image, m
     calls = []
     def handler(request):
         calls.append(request)
-        assert str(request.url) == updates.API_URL
+        assert str(request.url) in (updates.API_URL,updates.SOURCE_API)
         assert not request.content and 'authorization' not in request.headers and 'cookie' not in request.headers
-        return httpx.Response(200, json=release(), headers={'etag': 'fixture'})
+        return httpx.Response(200, json=release() if str(request.url)==updates.API_URL else {'sha':'a'*40}, headers={'etag': 'fixture'})
     mock_github(monkeypatch, handler)
     result = client.post('/api/updates/check', json={}).json()
     assert result['state'] == 'update_available'
     assert result['latest']['version'] == '1.0.1'
     assert result['latest']['url'].endswith('/releases/tag/v1.0.1')
-    assert len(calls) == 1
+    assert len(calls) == 2
     client.post('/api/updates/check', json={'force': True})
-    assert len(calls) == 1
+    assert len(calls) == 2
     assert not db.list_entities(account['id'], 'usage_event')
     assert b'update-check' not in client.get('/api/account/export').content
 
@@ -71,7 +71,7 @@ def test_incomplete_and_untrusted_releases_are_rejected(client, image, monkeypat
     assert result['state'] == 'unable_to_check' and result['latest'] is None
 
 
-@pytest.mark.parametrize('code', [401,403,404,429,500])
+@pytest.mark.parametrize('code', [401,403,429,500])
 def test_errors_preserve_previous_information_and_do_not_claim_current(client, image, monkeypatch, code):
     updates._save({'latest':{'version':'1.0.0','url':updates.RELEASES_URL+'/tag/v1.0.0'},'checked_at':1})
     mock_github(monkeypatch, lambda req: httpx.Response(code))
@@ -82,6 +82,7 @@ def test_errors_preserve_previous_information_and_do_not_claim_current(client, i
 
 
 def test_daily_cache_and_conditional_refresh(client, image, monkeypatch):
+    monkeypatch.setattr(updates,'check_source',lambda *args:{'state':'not_checked'})
     now = 200000
     monkeypatch.setattr(updates.time, 'time', lambda: now)
     updates._save({'latest':{'version':'1.0.0','url':updates.RELEASES_URL},'checked_at':now-100,'etag':'original'})

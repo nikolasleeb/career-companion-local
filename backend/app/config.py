@@ -41,3 +41,6 @@ ALERT_FROM=os.getenv('ALERT_FROM','')
 JOB_SCHEDULER_ENABLED=os.getenv('JOB_SCHEDULER_ENABLED','true').lower()=='true'
 
 ALERT_PUBLIC_ORIGIN=os.getenv('ALERT_PUBLIC_ORIGIN','http://localhost:3000').rstrip('/')
+
+# Manual pilot trials are available only on the separately operated hosted edition.
+MANUAL_TRIAL_OWNER_ID=''

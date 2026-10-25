@@ -14,8 +14,14 @@ REPOSITORY = 'nikolasleeb/career-companion-local'
 RELEASES_URL = f'https://github.com/{REPOSITORY}/releases'
 API_URL = f'https://api.github.com/repos/{REPOSITORY}/releases/latest'
 VERSION = re.compile(r'v?(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?\Z')
+SOURCE_API=f'https://api.github.com/repos/{REPOSITORY}/git/ref/heads/main'
+SOURCE_URL=f'https://github.com/{REPOSITORY}/commits/main'
+SHA=re.compile(r'[a-f0-9]{40}\Z')
 DAY = 86400
 LOCK = threading.Lock()
+
+class NoPublishedRelease(Exception):
+    pass
 
 
 class Check(BaseModel):
@@ -27,7 +33,7 @@ def installed():
     fallback = {'version': 'dev', 'revision': 'unknown', 'built_at': '', 'channel': 'custom', 'edition': 'localhost'}
     try:
         data = json.loads(Path(__file__).with_name('build-info.json').read_text())
-        if not isinstance(data, dict) or not VERSION.fullmatch(str(data.get('version', ''))):
+        if not isinstance(data, dict):
             return fallback
         return {**fallback, **{k: str(data[k]) for k in ('version', 'revision', 'built_at', 'channel') if k in data}}
     except (OSError, ValueError):
@@ -77,6 +83,8 @@ def status():
     if cache.get('error') and current['channel'] == 'release':
         state = 'unable_to_check'
     return {'installed': current, 'latest': latest, 'state': state,
+            'source':cache.get('source',{'state':'not_checked','revision':None,'url':SOURCE_URL,'error':''}),
+            'release_state':'no_published_release' if cache.get('no_release') else state,
             'checked_at': cache.get('checked_at'), 'attempted_at': cache.get('attempted_at'),
             'stale': stale, 'error': cache.get('error', ''),
             'needs_check': stale and now >= cache.get('retry_at', 0),
@@ -116,7 +124,8 @@ def check(*, force=False):
                             cache['retry_at'] = now + 3600
                             raise ValueError('GitHub is limiting update checks. Try again later.')
                         if response.status_code == 404:
-                            raise ValueError('No published release is available yet.')
+                            cache['no_release']=True
+                            raise NoPublishedRelease()
                         response.raise_for_status()
                         raw = bytearray()
                         for chunk in response.iter_bytes():
@@ -124,9 +133,45 @@ def check(*, force=False):
                             if len(raw) > 262144:
                                 raise ValueError('GitHub returned an oversized update response.')
                         latest = _release(json.loads(raw))
-                        cache.update(latest=latest, checked_at=now, error='', etag=response.headers.get('etag', ''))
+                        cache.update(latest=latest, no_release=False, checked_at=now, error='', etag=response.headers.get('etag', ''))
+        except NoPublishedRelease:
+            cache.update(latest=None,checked_at=now,error='',no_release=True)
         except (httpx.HTTPError, ValueError, TypeError, KeyError, AttributeError):
             cache['error'] = 'Unable to check GitHub right now. Your installed app and saved data are unchanged.'
             cache['retry_at'] = max(cache['retry_at'], now + 900)
+        cache['source']=check_source(installed(),cache.get('source',{}),now)
         _save(cache)
         return status()
+
+
+def check_source(current,previous,now):
+    """Compare commit ancestry, independently of release image availability.
+
+    Only the build's public source revision is sent, never account identifiers.
+    Unknown/dirty revisions cannot be claimed current.
+    """
+    result={**previous,'attempted_at':now,'url':SOURCE_URL,'installed_revision':current.get('revision','unknown')}
+    headers={'Accept':'application/vnd.github+json','User-Agent':'Career-Companion-Local-Source-Check'}
+    def read(client,url):
+        with client.stream('GET',url,headers=headers) as response:
+            response.raise_for_status();raw=bytearray()
+            for chunk in response.iter_bytes():
+                raw.extend(chunk)
+                if len(raw)>262144:raise ValueError('Oversized public source response.')
+            return json.loads(raw)
+    try:
+        with httpx.Client(timeout=5,follow_redirects=False,trust_env=False) as client:
+            data=read(client,SOURCE_API)
+            latest=data.get('sha') or (data.get('object') or {}).get('sha','')
+            if not SHA.fullmatch(latest):raise ValueError('Missing public revision.')
+            result.update(revision=latest,checked_at=now,error='')
+            revision=current.get('revision','unknown')
+            if not SHA.fullmatch(revision):result['state']='unknown_build'
+            elif revision==latest:result['state']='up_to_date'
+            else:
+                data=read(client,f'https://api.github.com/repos/{REPOSITORY}/compare/{revision}...{latest}')
+                result['state']={'ahead':'source_available','behind':'ahead','diverged':'diverged','identical':'up_to_date'}.get(data.get('status'),'unknown_build')
+                result['ahead_by']=data.get('ahead_by');result['behind_by']=data.get('behind_by')
+    except (httpx.HTTPError,ValueError,TypeError,KeyError,AttributeError):
+        result.update(state='unable_to_check',error='Source revision could not be checked. Unknown or unavailable commits are not assumed current.')
+    return result

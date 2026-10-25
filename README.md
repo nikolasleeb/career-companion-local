@@ -78,3 +78,17 @@ Frontend: install the locked dependencies in `frontend` using pnpm, then run `pn
 - Add release notes and update/recovery regression checks for every future release.
 
 Country names include Unicode CLDR data; see [data/UNICODE-LICENSE.txt](data/UNICODE-LICENSE.txt). Work Styles uses the published IPIP questionnaire and keeps its private results separate from applicant evidence.
+
+### Source builds and update checks
+
+Use `python3 scripts/build_local.py` to build with a source revision stamp, then
+start the app with the normal Compose instructions. The helper only builds; it
+does not install an update or restart the running app. Uncommitted changes are
+stamped `-dirty` and cannot be claimed current. Builds made without a stamp show
+an unknown revision. Published images continue to include their release revision.
+
+Settings checks published releases and public `main` source ancestry separately.
+A newer commit can exist without a new release. Unknown or diverged builds are
+reported explicitly. Checks only read this public repository; they send no
+account data, cookies or credentials. Pushing to GitHub does not deploy the
+separately operated hosted server.

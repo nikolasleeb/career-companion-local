@@ -298,11 +298,15 @@ class SearchRequest(StrictModel):
     days: int = Field(default=30,ge=1,le=30)
     mode: Literal['economy','deep','custom'] = 'economy'
     refresh: bool = False
-    sources: list[Literal['greenhouse','ashby','lever','web','adzuna','usajobs','jobspy']] = Field(default_factory=lambda:['greenhouse','ashby','lever','adzuna','usajobs'],max_length=7)
+    sources: list[Literal['greenhouse','ashby','lever','web','adzuna','usajobs','jobspy','github']] = Field(default_factory=lambda:['greenhouse','ashby','lever','adzuna','usajobs','github'],max_length=8)
+    trial_roles: list[str] | None = Field(default=None,max_length=2)
+    employer_boards: list[str] | None = Field(default=None,max_length=300)
+    request_token: str = Field(default='',max_length=100,pattern=r'^[a-zA-Z0-9_-]*$')
 
-    @field_validator('interests')
+    @field_validator('interests','trial_roles')
     @classmethod
     def valid_interests(cls,values):
+        if values is None:return None
         if any(not isinstance(v,str) or not 2<=len(v.strip())<=80 for v in values):raise ValueError('Use interests between 2 and 80 characters.')
         return list(dict.fromkeys(v.strip() for v in values))
 
