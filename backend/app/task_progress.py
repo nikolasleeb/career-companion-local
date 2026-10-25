@@ -4,9 +4,13 @@ from contextvars import ContextVar
 from . import db
 
 _context=ContextVar('task_progress',default=None)
-KINDS={'job_ai_discovery','job_ai_match','posting_import','resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
-LABELS={'job_ai_discovery':'AI job discovery','job_ai_match':'Profile fit review','posting_import':'job posting import','cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
+KINDS={'career_coach','job_ai_discovery','job_ai_match','posting_import','resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
+LABELS={'career_coach':'Career Coach','job_ai_discovery':'AI job discovery','job_ai_match':'Profile fit review','posting_import':'job posting import','cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
 STAGES={
+    'coach_research':('Checking current career resources','provider'),
+    'coach_retrieval':('Retrieving relevant guidance and evidence','local'),
+    'coach_generation':('Preparing your sourced coaching response','provider'),
+    'coach_validation':('Checking sources and saving the response','local'),
     'searching_jobs':('Searching selected job sources','local'),
     'checking_jobs':('Checking locations, dates and preferences','local'),
     'reading_posting':('Reading job posting','provider'),

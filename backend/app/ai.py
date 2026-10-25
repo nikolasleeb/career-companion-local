@@ -103,7 +103,7 @@ def metadata(response, mode):
         cost_history.link_metadata((_context.get() or {}).get('user_id'),result['usage_event_id'],result)
     return result
 
-async def structured(schema, payload, mode='economy', instructions=INSTRUCTIONS, *, files=None):
+async def structured(schema, payload, mode='economy', instructions=INSTRUCTIONS, *, files=None,retry_allowed=True):
     schema_value=schema.model_json_schema()
     def strict(value):
         if isinstance(value,dict):
@@ -117,7 +117,7 @@ async def structured(schema, payload, mode='economy', instructions=INSTRUCTIONS,
             'text':{'format':{'type':'json_schema','name':schema.__name__,'strict':True,'schema':schema_value}}}
     if files:
         body['input'] = [{'role':'user','content':[{'type':'input_text','text':json.dumps(payload)}, *files]}]
-    response = await call_api(body)
+    response = await call_api(body) if retry_allowed else await call_api(body,retry_allowed=False)
     try:
         result = schema.model_validate_json(output_text(response)).model_dump()
     except (ValidationError, ValueError):

@@ -16,7 +16,7 @@ from . import storage
 from . import config, db, auth, ai, documents, integrations, resume_data, resume_parser, transcript_parser, credentials, ai_settings, applications, resume_builder, job_parser, optimization, resume_conversation, cover_letters, guidance, cover_context, profile_answers, question_answers, onboarding, certifications, cost_history, updates
 from .models import *
 from .network import ServiceError, public_fetch, html_job
-from . import task_progress, posting_extraction, job_alerts, job_search, job_results, job_ai, job_cache
+from . import task_progress, posting_extraction, job_alerts, job_search, job_results, job_ai, job_cache, career_coach
 
 workers={}
 
@@ -123,16 +123,16 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
     progress_token=task_progress.bind(user,task_id,row['kind']) if row and row['kind'] in task_progress.KINDS else None
     try:
         if progress_token is not None:task_progress.stage('starting')
-        result=await asyncio.wait_for(work(),timeout=3600 if row and row['kind']=='job_ai_match' else 1200 if row and row['kind']=='analysis' else 600)
+        result=await asyncio.wait_for(work(),timeout=3600 if row and row['kind']=='job_ai_match' else 1200 if row and row['kind'] in ('analysis','career_coach') else 600)
         finish_task(task_id,user,'completed',result=result,saved_inputs=saved_inputs)
     except asyncio.TimeoutError:
-        limit='sixty' if row and row['kind']=='job_ai_match' else 'twenty' if row and row['kind']=='analysis' else 'ten'
+        limit='sixty' if row and row['kind']=='job_ai_match' else 'twenty' if row and row['kind'] in ('analysis','career_coach') else 'ten'
         finish_task(task_id,user,'failed',error='This action reached the '+limit+'-minute limit. Saved inputs remain available for retry.')
     except asyncio.CancelledError:
         finish_task(task_id,user,'interrupted',error='The operation was interrupted. Saved inputs remain available for retry.')
@@ -151,7 +151,7 @@ def start_task(user,kind,work,inputs=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -293,6 +293,7 @@ def workspace(paged_jobs:bool=False,user=Depends(auth.current)):
 from . import project_routes
 project_routes.install(app,start_task,require_ai)
 job_ai.install(app,start_task,require_ai)
+career_coach.install(app,start_task,require_ai)
 
 @app.get('/api/profile-evidence')
 def confirmed_profile_evidence(user=Depends(auth.current)):
@@ -1131,7 +1132,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1178,6 +1179,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                     attachment=credential.get('document_id')
                     if attachment and (kinds.get(attachment)!='document' or by_id[attachment]['data'].get('purpose')!='certificate' or attachment not in payload.get('files',{})): raise ValueError()
             job_ai.validate_backup(record,kinds,by_id,payload.get('files',{}))
+            career_coach.validate_backup(record,kinds,by_id)
             if record['kind']=='board': Board.model_validate(record['data'])
             if record['kind']=='job_search_preferences':job_alerts.Preferences.model_validate(record['data'])
             if record['kind']=='job_alert':job_alerts.Schedule.model_validate(record['data'])
@@ -1289,6 +1291,11 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             saved=db.save(user['id'],record['kind'],restored,ids[record['id']])
             if record['kind']=='job':
                 with db.connect() as c:job_cache.bind(c,user['id'],saved)
+        elif record['kind'] in career_coach.KINDS:
+            saved=db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
+            stamp=integrations.parse_date(record.get('created_at'))
+            if stamp:
+                with db.connect() as c:c.execute('UPDATE entities SET created_at=? WHERE user_id=? AND id=?',(stamp.isoformat(),user['id'],saved['id']))
         elif record['kind']=='ai_job_match':db.save(user['id'],record['kind'],{**remap(record['data']),'state':'imported','error':'Imported review is read-only. Start a new review to use your current Profile.','profile_revision':'imported','in_flight':None},ids[record['id']])
         elif record['kind']!='onboarding':db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
     onboarding.restore(user['id'],setup_records[0]['data'] if setup_records else None,legacy=any(r['kind'] in onboarding.LEGACY for r in records))
@@ -1330,6 +1337,7 @@ def delete_account(body:DeleteAccount,response:Response,user=Depends(auth.curren
             task=workers.get(row_task['id'])
             if task: task.cancel()
         c.execute('DELETE FROM evidence_fts WHERE user_id=?',(user['id'],))
+        c.execute('DELETE FROM cc_coach_knowledge WHERE scope=?',(user['id'],))
         c.execute('DELETE FROM cc_job_observations WHERE scope=?',(user['id'],))
         c.execute('DELETE FROM users WHERE id=?',(user['id'],))
     shutil.rmtree(config.DATA_DIR/'uploads'/user['id'],ignore_errors=True)
