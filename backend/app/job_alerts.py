@@ -30,7 +30,7 @@ def preferences(user,zone=None):
     data.setdefault('job_type_mode','manual' if result.get('created_at') else 'automatic')
     data.setdefault('timezone','UTC')
     if zone:data['timezone']=zone
-    if data['job_type_mode']=='automatic':data['query']['job_types']=graduation_defaults.for_profile(user,data['timezone'])['job_types']
+    if data['job_type_mode']=='automatic':data['query']['job_types']=graduation_defaults.for_profile(user,data['timezone'],interests=data['query'].get('interests',[]))['job_types'];data['query']['career_levels']=data['query']['job_types']
     return {**result,'data':data}
 
 def schedule(user):return record(user,'job_alert',Schedule().model_dump())
@@ -49,6 +49,7 @@ class SavedSearch(SearchRequest):
         if not self.title and self.interests:self.title=self.interests[0]
         return self
 class Preferences(StrictModel):
+    page_size:Literal[25,50,100]=25
     query:SavedSearch
     job_type_mode:Literal['automatic','manual']|None=None
     timezone:str|None=Field(default=None,max_length=100)
@@ -152,7 +153,7 @@ def get_preferences(timezone:str|None=None,user=Depends(owner)):
         try:Schedule.zone(timezone)
         except ValueError:raise HTTPException(422,'Choose a valid IANA time zone.') from None
     with db.connect() as c:pushes=c.execute('SELECT count(*) FROM cc_job_push WHERE user_id=?',(user,)).fetchone()[0]
-    return {'preferences':preferences(user,timezone),'schedule':schedule(user),'capabilities':capabilities(user),'enrolled_browsers':pushes,'persisted_timezone':preferences(user)['data']['timezone'],'suggestions':role_catalog.suggestions(user),'graduation_default':graduation_defaults.for_profile(user,preferences(user,timezone)['data']['timezone'])}
+    return {'preferences':preferences(user,timezone),'schedule':schedule(user),'capabilities':capabilities(user),'enrolled_browsers':pushes,'persisted_timezone':preferences(user)['data']['timezone'],'suggestions':role_catalog.suggestions(user),'graduation_default':graduation_defaults.for_profile(user,preferences(user,timezone)['data']['timezone'],interests=preferences(user,timezone)['data']['query'].get('interests',[]))}
 
 @router.put('/preferences')
 def put_preferences(body:Preferences,user=Depends(owner)):
@@ -161,9 +162,9 @@ def put_preferences(body:Preferences,user=Depends(owner)):
     if not query['sources']:raise ServiceError('Choose at least one non-AI source for saved searches and daily alerts.')
     previous=preferences(user)['data'];mode=body.job_type_mode or previous['job_type_mode'];zone=body.timezone or previous['timezone']
     if body.job_type_mode is None and query['job_types']!=previous['query']['job_types']:mode='manual'
-    if mode=='automatic':query['job_types']=graduation_defaults.for_profile(user,zone)['job_types']
+    if mode=='automatic':query['job_types']=graduation_defaults.for_profile(user,zone,interests=query.get('interests',[]))['job_types'];query['career_levels']=query['job_types']
     changed=previous.get('query')!=query
-    result=save(user,'job_search_preferences',{'query':query,'recent_interests':body.recent_interests if body.recent_interests is not None else previous.get('recent_interests',[]),'job_type_mode':mode,'timezone':zone})
+    result=save(user,'job_search_preferences',{'page_size':body.page_size,'query':query,'recent_interests':body.recent_interests if body.recent_interests is not None else previous.get('recent_interests',[]),'job_type_mode':mode,'timezone':zone})
     if changed:
         with db.connect() as c:c.execute('DELETE FROM cc_job_baselines WHERE user_id=?',(user,))
     return result
@@ -328,7 +329,7 @@ async def run_daily(user,now=None,force=False):
             request=SearchRequest.model_validate(preferences(user)['data']['query']);request.sources=[v for v in request.sources if v not in ('web','jobspy')];request.refresh=True
             if provider_connections.public(user).get('usage')!='regular':request.sources=[v for v in request.sources if v!='adzuna']
             result=await asyncio.wait_for(job_search.discover(user,request,execution='scheduled'),600)
-            db.save(user,'search',{**result,'jobs':[{'id':r['id'],'data':{'title':r['data']['title'],'company':r['data'].get('company','')}} for r in result['jobs']],'scheduled':True},ident(user,'scheduled-search:'+day))
+            __import__(__package__+'.job_results',fromlist=['save_search']).save_search(user,{**result,'scheduled':True},ident(user,'scheduled-search:'+day))
             errors={v['source'] for v in result['sources'] if v['status'] not in ('ok','empty')}
             successes={v['source'] for v in result['sources'] if v['status'] in ('ok','empty')} - errors
             with db.connect() as c:

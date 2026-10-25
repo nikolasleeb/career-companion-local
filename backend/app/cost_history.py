@@ -10,8 +10,8 @@ from typing import Literal
 from .models import StrictModel
 from . import db,ai_settings
 
-PROCESSES={'application_agent':'Application assistant','analysis':'Job comparison','resume':'Resume building','resume_optimize':'Resume optimization','resume_fit':'Resume layout','resume_guided':'Resume questions & revisions','cover_letter':'Cover letters','preparation':'Interview preparation','interview':'Interview feedback','discovery':'Job discovery','project_analysis':'Project-source analysis','story_prompts':'Story prompts','assessment':'Career interests','other':'Other AI activity'}
-ENTITY_PROCESSES={'analysis':'analysis','resume':'resume','resume_draft':'resume_optimize','resume_revision':'resume_guided','resume_conversation':'resume_guided','cover_workspace':'cover_letter','cover_revision':'cover_letter','cover_letter':'cover_letter','prep':'preparation','interview':'interview','search':'discovery','project_analysis':'project_analysis','story_prompts':'story_prompts'}
+PROCESSES={'job_ai_discovery':'Ask AI job discovery','job_ai_match':'Profile fit review','application_agent':'Application assistant','analysis':'Job comparison','resume':'Resume building','resume_optimize':'Resume optimization','resume_fit':'Resume layout','resume_guided':'Resume questions & revisions','cover_letter':'Cover letters','preparation':'Interview preparation','interview':'Interview feedback','discovery':'Job discovery','project_analysis':'Project-source analysis','story_prompts':'Story prompts','assessment':'Career interests','other':'Other AI activity'}
+ENTITY_PROCESSES={'ai_job_match':'job_ai_match','ai_search':'job_ai_discovery','analysis':'analysis','resume':'resume','resume_draft':'resume_optimize','resume_revision':'resume_guided','resume_conversation':'resume_guided','cover_workspace':'cover_letter','cover_revision':'cover_letter','cover_letter':'cover_letter','prep':'preparation','interview':'interview','search':'discovery','project_analysis':'project_analysis','story_prompts':'story_prompts'}
 PRICE_URL='https://developers.openai.com/api/docs/pricing'
 WEB_SEARCH_PER_CALL=.01
 PRICE_CHECKED='2026-10-23'

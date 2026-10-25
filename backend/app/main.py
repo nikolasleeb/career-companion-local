@@ -12,10 +12,11 @@ from fastapi import FastAPI, Request, Response, Depends, UploadFile, File, Form,
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
+from . import storage
 from . import config, db, auth, ai, documents, integrations, resume_data, resume_parser, transcript_parser, credentials, ai_settings, applications, resume_builder, job_parser, optimization, resume_conversation, cover_letters, guidance, cover_context, profile_answers, question_answers, onboarding, certifications, cost_history, updates
 from .models import *
 from .network import ServiceError, public_fetch, html_job
-from . import task_progress, posting_extraction, job_alerts, job_search
+from . import task_progress, posting_extraction, job_alerts, job_search, job_results, job_ai
 
 workers={}
 
@@ -44,6 +45,7 @@ app.add_middleware(LocalAccess)
 from .security import ResourceBoundary
 app.add_middleware(ResourceBoundary)
 app.include_router(job_alerts.router)
+app.include_router(job_results.router)
 from . import provider_connections
 app.include_router(provider_connections.router)
 from . import private_answers, private_profile, application_agent, assistant_ai
@@ -56,7 +58,7 @@ app.include_router(application_documents.router)
 @app.middleware('http')
 async def boundaries(request, call_next):
     length=request.headers.get('content-length','0')
-    maximum=11*1024*1024 if re.fullmatch(r'/api/applications/[^/]+/documents',request.url.path) else 51*1024*1024 if request.url.path in ('/api/jobs/import-document','/api/jobs/from-document','/api/analyses/from-document') else 52*1024*1024 if request.url.path=='/api/account/import' else 33*1024*1024 if request.url.path=='/api/project-sources/upload' else 11*1024*1024 if request.url.path in ('/api/documents','/api/transcripts/parse','/api/certificates') else 1024*1024
+    maximum=11*1024*1024 if re.fullmatch(r'/api/applications/[^/]+/documents',request.url.path) else 51*1024*1024 if request.url.path in ('/api/jobs/import-document','/api/jobs/from-document','/api/analyses/from-document') else 257*1024*1024 if request.url.path=='/api/account/import' else 33*1024*1024 if request.url.path=='/api/project-sources/upload' else 11*1024*1024 if request.url.path in ('/api/job-search/ai/examples','/api/documents','/api/transcripts/parse','/api/certificates') else 1024*1024
     try:
         if int(length)<0:return JSONResponse({'detail':'Invalid request size.'},400)
         if int(length)>maximum: return JSONResponse({'detail':'This request exceeds the size limit.'},413)
@@ -115,16 +117,16 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
     progress_token=task_progress.bind(user,task_id,row['kind']) if row and row['kind'] in task_progress.KINDS else None
     try:
         if progress_token is not None:task_progress.stage('starting')
-        result=await asyncio.wait_for(work(),timeout=1200 if row and row['kind']=='analysis' else 600)
+        result=await asyncio.wait_for(work(),timeout=3600 if row and row['kind']=='job_ai_match' else 1200 if row and row['kind']=='analysis' else 600)
         finish_task(task_id,user,'completed',result=result,saved_inputs=saved_inputs)
     except asyncio.TimeoutError:
-        limit='twenty' if row and row['kind']=='analysis' else 'ten'
+        limit='sixty' if row and row['kind']=='job_ai_match' else 'twenty' if row and row['kind']=='analysis' else 'ten'
         finish_task(task_id,user,'failed',error='This action reached the '+limit+'-minute limit. Saved inputs remain available for retry.')
     except asyncio.CancelledError:
         finish_task(task_id,user,'interrupted',error='The operation was interrupted. Saved inputs remain available for retry.')
@@ -143,13 +145,17 @@ def start_task(user,kind,work,inputs=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
                 if original.get('request_token')==inputs['request_token']:
                     if original!=inputs:raise HTTPException(409,'This request belongs to different inputs. Check its original result first.')
                     return {'task_id':previous['id'],'status':previous['status']}
+        if kind=='job_ai_match' and inputs:
+            for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? AND status IN ('queued','running')",(user,kind)):
+                original=json.loads(previous['result'] or '{}').get('inputs',{})
+                if original.get('match_id')==inputs.get('match_id'):return {'task_id':previous['id'],'status':previous['status']}
         if kind=='project_analysis' and inputs:
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? AND status IN ('queued','running')",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
@@ -264,13 +270,21 @@ def export_usage(start:str='',end:str='',model:str='',process:str='',tz:str='UTC
     return Response(stream.getvalue(),media_type='text/csv',headers={'Content-Disposition':'attachment; filename="career-companion-cost-history.csv"','Cache-Control':'private, no-store'})
 
 @app.get('/api/workspace')
-def workspace(user=Depends(auth.current)):
+def workspace(paged_jobs:bool=False,user=Depends(auth.current)):
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
     unlocked=onboarding.status(user['id'])['completed']
-    return {kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] if unlocked or kind in ('experience','document','profile_answer','onboarding') else [] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
+    result={kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] if unlocked or kind in ('experience','document','profile_answer','onboarding') else [] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
+    if paged_jobs:
+        for row in result['search']:row['data'].pop('jobs',None)
+        linked={r['data'].get('job_id') for kind in ('application','analysis','resume','prep','interview') for r in result[kind]}
+        result['job']=[r for r in result['job'] if r['id'] in linked or not r['data'].get('source_identity')]
+        for r in result['document']:
+            if r['data'].get('purpose')=='job_example':r['data'].pop('text',None)
+    return result
 
 from . import project_routes
 project_routes.install(app,start_task,require_ai)
+job_ai.install(app,start_task,require_ai)
 
 @app.get('/api/profile-evidence')
 def confirmed_profile_evidence(user=Depends(auth.current)):
@@ -415,9 +429,10 @@ async def upload_certificate(file:UploadFile=File(...),user=Depends(auth.current
     digest=hashlib.sha256(raw).hexdigest()
     for existing in db.list_entities(user['id'],'document'):
         if existing['data'].get('purpose')=='certificate' and existing['data'].get('sha256')==digest and (config.DATA_DIR/'uploads'/user['id']/existing['id']).is_file(): return existing
+    storage.ensure_capacity(len(raw)+65536)
     record=db.save(user['id'],'document',{'filename':filename,'purpose':'certificate','mime':mime,'size':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'text':'','reviewed':False})
     folder=config.DATA_DIR/'uploads'/user['id'];folder.mkdir(parents=True,exist_ok=True)
-    (folder/record['id']).write_bytes(raw)
+    storage.write_bytes(folder/record['id'],raw)
     return record
 
 @app.post('/api/certificates/{entity_id}/extract')
@@ -448,9 +463,10 @@ async def import_document(file:UploadFile=File(...),purpose:Literal['source','re
     extracted=await asyncio.to_thread(documents.extract,filename,raw)
     parsed=resume_parser.parse(extracted['text']) if purpose=='resume' else None
     if parsed: parsed['profile_base']={k:db.settings(user['id']).get(k,'') for k in parsed['profile']}
+    storage.ensure_capacity(len(raw)+len(json.dumps(extracted).encode())*4+65536)
     entity=db.save(user['id'],'document',{'filename':filename,**extracted,'reviewed':False,'sha256':hashlib.sha256(raw).hexdigest(),'resume_parse':parsed})
     folder=config.DATA_DIR/'uploads'/user['id'];folder.mkdir(parents=True,exist_ok=True)
-    (folder/entity['id']).write_bytes(raw)
+    storage.write_bytes(folder/entity['id'],raw)
     return entity
 
 class DocumentReview(StrictModel):
@@ -1081,7 +1097,7 @@ async def search(body:SearchRequest,user=Depends(auth.current)):
                 return {'cached':True,'result':cached}
     async def work():
         result=await integrations.discover(user['id'],body)
-        return db.save(user['id'],'search',{**result,'cache_key':cache_identity()})
+        return job_results.save_search(user['id'],{**result,'cache_key':cache_identity()})
     return start_task(user['id'],'discovery',work,body.model_dump())
 
 @app.post('/api/jobs/{entity_id}/check')
@@ -1106,7 +1122,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1126,14 +1142,14 @@ def backup(user=Depends(auth.current)):
 @app.post('/api/account/import')
 async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
     onboarding.status(user['id'])
-    raw=await file.read(50*1024*1024+1)
-    if len(raw)>50*1024*1024: raise ServiceError('The backup exceeds 50 MB.')
+    raw=await file.read(256*1024*1024+1)
+    if len(raw)>256*1024*1024: raise ServiceError('The backup exceeds 256 MB.')
     try:
         payload=json.loads(raw)
-        if not isinstance(payload,dict) or payload.get('schema_version')!=1 or not isinstance(payload.get('records'),list) or len(payload['records'])>23000: raise ValueError()
+        if not isinstance(payload,dict) or payload.get('schema_version')!=1 or not isinstance(payload.get('records'),list) or len(payload['records'])>100000: raise ValueError()
         records=payload['records']
         usage_count=sum(r.get('kind')=='usage_event' for r in records)
-        if usage_count>20000 or len(records)-usage_count>3000:raise ValueError()
+        if usage_count>20000 or len(records)-usage_count>80000:raise ValueError()
         by_id={r['id']:r for r in records};ids={r['id']:db.uid() for r in records};kinds={r['id']:r['kind'] for r in records}
         if len(ids)!=len(records): raise ValueError()
         decoded={}
@@ -1150,6 +1166,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 for credential in record['data'].get('certification_items',[]):
                     attachment=credential.get('document_id')
                     if attachment and (kinds.get(attachment)!='document' or by_id[attachment]['data'].get('purpose')!='certificate' or attachment not in payload.get('files',{})): raise ValueError()
+            job_ai.validate_backup(record,kinds,by_id,payload.get('files',{}))
             if record['kind']=='board': Board.model_validate(record['data'])
             if record['kind']=='job_search_preferences':job_alerts.Preferences.model_validate(record['data'])
             if record['kind']=='job_alert':job_alerts.Schedule.model_validate(record['data'])
@@ -1230,7 +1247,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if old not in ids or not any(r['id']==old and r['kind']=='document' for r in records): raise ValueError()
             decoded[ids[old]]=base64.b64decode(content,validate=True)
             if len(decoded[ids[old]])>config.MAX_UPLOAD: raise ValueError()
-            if by_id[old]['data'].get('purpose')=='application':
+            if by_id[old]['data'].get('purpose') in ('application','job_example'):
                 checked=application_documents.inspect(by_id[old]['data']['filename'],decoded[ids[old]])
                 if checked['sha256']!=by_id[old]['data'].get('sha256'):raise ValueError()
             if by_id[old]['data'].get('purpose')=='certificate':
@@ -1240,10 +1257,12 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         if profile.get('contact') and 'contact_reviewed' not in profile: profile['contact_reviewed']=False
     except (ValueError,KeyError,TypeError,ValidationError): raise ServiceError('This is not a supported Career Companion account backup. Nothing was imported.') from None
     def remap(value):
+        if isinstance(value,str) and ':' in value and value.split(':',1)[0] in ids:return ids[value.split(':',1)[0]]+':'+value.split(':',1)[1]
         if isinstance(value,str): return 'library:'+ids[value[8:]] if value.startswith('library:') and value[8:] in ids else ids.get(value,value)
         if isinstance(value,list): return [remap(x) for x in value]
         if isinstance(value,dict): return {ids.get(k,k):remap(v) for k,v in value.items() if k not in ('password','token','csrf','api_key','path','user_id')}
         return value
+    storage.ensure_capacity(sum(len(value) for value in decoded.values())+len(json.dumps(payload).encode())*4+65536)
     existing_usage={r['data']['event_key']:r['id'] for r in db.list_entities(user['id'],'usage_event')}
     for record in records:
         if record['kind']=='usage_event':ids[record['id']]=existing_usage.get(record['data']['event_key'],cost_history.digest([user['id'],record['data']['event_key']])[:32])
@@ -1254,6 +1273,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if data['event_key'] not in existing_usage:
                 saved=cost_history.write(user['id'],data);existing_usage[data['event_key']]=saved['id']
         elif record['kind'] in ('job_search_preferences','job_alert'):job_alerts.restore_record(user['id'],record['kind'],record['data'])
+        elif record['kind']=='ai_job_match':db.save(user['id'],record['kind'],{**remap(record['data']),'state':'imported','error':'Imported review is read-only. Start a new review to use your current Profile.','profile_revision':'imported','in_flight':None},ids[record['id']])
         elif record['kind']!='onboarding':db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
     onboarding.restore(user['id'],setup_records[0]['data'] if setup_records else None,legacy=any(r['kind'] in onboarding.LEGACY for r in records))
     # Restored pending proposals use the new record timestamp only when their reviewed
@@ -1277,7 +1297,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 proposal['profile_expected_updated_at']=target['updated_at'];changed=True
         if changed:db.save(user['id'],'cover_workspace',workspace['data'],workspace['id'])
     folder=config.DATA_DIR/'uploads'/user['id'];folder.mkdir(parents=True,exist_ok=True)
-    for name,content in decoded.items(): (folder/name).write_bytes(content)
+    for name,content in decoded.items(): storage.write_bytes(folder/name,content)
     db.update_settings(user['id'],profile)
     return {'imported':len(records),'message':'Backup imported with new record IDs. Existing records were preserved.'}
 

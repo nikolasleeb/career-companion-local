@@ -4,7 +4,7 @@ import sqlite3
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from . import config
+from . import config, storage
 
 def now():
     return datetime.now(timezone.utc).isoformat()
@@ -14,19 +14,24 @@ def uid():
 
 @contextmanager
 def connect():
-    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(config.DB_PATH, timeout=20)
-    conn.row_factory = sqlite3.Row
-    conn.execute('PRAGMA foreign_keys=ON')
-    conn.execute('PRAGMA busy_timeout=20000')
-    try:
-        yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
+    with storage.guard():
+        config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(config.DB_PATH, timeout=20)
+        conn.row_factory = sqlite3.Row
+        conn.execute('PRAGMA foreign_keys=ON')
+        conn.execute('PRAGMA busy_timeout=20000')
+        try:
+            storage.configure(conn)
+            yield conn
+            storage.validate_commit(conn)
+            conn.commit()
+        except Exception as error:
+            conn.rollback()
+            if storage.is_full(error):
+                raise storage.StorageFull() from None
+            raise
+        finally:
+            conn.close()
 
 def init():
     with connect() as c:
@@ -48,10 +53,13 @@ def init():
         provider_connections.init(c)
         from . import public_job_feeds
         public_job_feeds.init(c)
+        from . import job_results
+        job_results.init(c)
         private_answers.init(c)
         private_profile.init(c)
         application_agent.init(c)
         c.execute("UPDATE tasks SET status='interrupted',error='The application restarted. Your saved inputs remain available; retry the action.',updated_at=? WHERE status IN ('queued','running')", (now(),))
+        c.execute("UPDATE entities SET payload=json_set(payload,'$.state','interrupted','$.error','Server restarted. Completed review batches are saved; explicitly resume remaining work.'),updated_at=? WHERE kind='ai_job_match' AND json_extract(payload,'$.state') IN ('queued','running')",(now(),))
         c.execute("DELETE FROM evidence_fts WHERE user_id='public'")
         for passage in json.loads((config.CONTENT_DIR / 'guidance.json').read_text()):
             c.execute('INSERT INTO evidence_fts VALUES(?,?,?,?)', (passage['id'], 'public', 'guidance', json.dumps(passage)))

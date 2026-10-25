@@ -67,7 +67,7 @@ async def employer(board,*,refresh=False):
     rows,meta=await cached(key,load,refresh=refresh)
     return [{**copy.deepcopy(v),'company':board['company'],'snapshot_at':meta['last_success'],'snapshot_revision':meta['revision'],'snapshot_stale':meta['stale']} for v in rows],meta
 
-async def community(*,refresh=False,queries=None):
+async def community(*,refresh=False,queries=None,levels=None):
     from . import integrations as x
     async def load():
         summary=await x.fetch_json(GITHUB_BASE+'data/summary.json')
@@ -81,7 +81,7 @@ async def community(*,refresh=False,queries=None):
     stale=meta['stale'] or time.time()-snapshot.timestamp()>STALE
     result=[]
     for v in payload['jobs']:
-        if queries is not None and not x.matches_title(v.get('title',''),queries):continue
+        if queries is not None and not x.matches_title(v.get('title',''),queries,levels):continue
         url=x.canonical_url(v.get('applyUrl',''))
         if not url or not v.get('title') or not v.get('company'):continue
         locations=v.get('locations') or []
@@ -100,7 +100,7 @@ def balanced(jobs,limit=500):
     for job in jobs:sources[(job.get('sources') or [{}])[0].get('provider','unknown')][job.get('company','')].append(job)
     queues={s:deque(deque(v) for _,v in sorted(employers.items())) for s,employers in sorted(sources.items())}
     result=[]
-    while queues and len(result)<limit:
+    while queues and (limit is None or len(result)<limit):
         for source in list(queues):
             group=queues[source];employer=group.popleft();result.append(employer.popleft())
             if employer:group.append(employer)

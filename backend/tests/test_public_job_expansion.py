@@ -120,7 +120,7 @@ def test_community_provenance_stale_filter_and_no_indeed(client,account,monkeypa
  d=result['jobs'][0]['data'];assert d['metadata_only'] and d['snapshot_stale'] and d['community_repository']==feeds.GITHUB_REPOSITORY
  assert not run(search.discover(account['id'],req,execution='scheduled'))['jobs']
 
-def test_balanced_500_and_senior_foreign_filter(client,account,monkeypatch):
+def test_all_fetched_matches_and_senior_foreign_filter(client,account,monkeypatch):
  jobs=[posting(i,'Huge') for i in range(600)]+[posting(1,'Small')]
  result=feeds.balanced(jobs);assert len(result)==500 and result[1]['company']=='Small'
  for title in ('Supervisory IT Specialist','SUPV IT SPECIALIST','CHIEF DATA SCIENTIST','Engineering Manager','Manager, Software Engineering'):
@@ -131,7 +131,7 @@ def test_balanced_500_and_senior_foreign_filter(client,account,monkeypatch):
  async def board(b,q):return jobs
  monkeypatch.setattr(x,'board_jobs',board)
  result=run(search.discover(account['id'],SearchRequest(interests=['Data analysis'],sources=['ashby'],employer_boards=['ashby:notion'])))
- assert result['truncated'] and result['total_matches']==601 and len(result['jobs'])==500 and result['page_size']==25
+ assert not result['truncated'] and result['total_matches']==601 and len(result['jobs'])==601 and result['page_size']==25
 
 def test_posting_locations_keep_us_secondary_and_full_state_names(client,monkeypatch):
  assert x.in_us({'location':'Richmond, Virginia'})

@@ -19,9 +19,10 @@ PATTERN=r'\b(?:'+'|'.join(re.escape(n) for n in sorted(STATES.values(),key=len,r
 def region(value):return next((name for name in REGIONS if name.casefold()==value.strip().casefold().replace('eastern coast','east coast')),None)
 def state(value):
  value=value.strip();return value.upper() if value.upper() in STATES else NAMES.get(value.casefold())
+ALIASES={'san francisco':'CA','sf office':'CA','nyc':'NY','new york city':'NY','boston':'MA','tucson':'AZ','phoenix':'AZ','seattle':'WA','raleigh':'NC','atlanta':'GA','washington dc':'DC','washington, d.c.':'DC'}
 def codes(text):
     text=re.sub(r'\bWashington\s*,?\s*(?:D\.?C\.?|District of Columbia)\b','District of Columbia',text,flags=re.I)
-    found=set()
+    found={code for name,code in ALIASES.items() if re.search(r'(?<!\w)'+re.escape(name)+r'(?!\w)',text,re.I)}
     for part in re.split(r';|\n|\s+[/|]\s+',text):
         suffix=re.findall(r',\s*('+'|'.join(STATES)+r')\b',part)
         if suffix:found.update(suffix);continue

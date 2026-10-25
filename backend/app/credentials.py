@@ -16,17 +16,10 @@ def get(user):
 
 
 def save(user,key):
-    target=path(user);target.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+    from . import storage
+    target=path(user)
+    storage.write_bytes(target,json.dumps({'openai_key':key}).encode())
     os.chmod(target.parent,0o700)
-    fd,temp=tempfile.mkstemp(dir=target.parent,prefix='.key-')
-    try:
-        with os.fdopen(fd,'w') as stream:
-            json.dump({'openai_key':key},stream)
-            stream.flush();os.fsync(stream.fileno())
-        os.replace(temp,target)
-        os.chmod(target,0o600)
-    finally:
-        if os.path.exists(temp):os.unlink(temp)
 
 
 def remove(user):

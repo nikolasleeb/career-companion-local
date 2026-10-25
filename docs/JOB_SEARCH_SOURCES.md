@@ -25,9 +25,10 @@ Simplify's internship and new-grad repositories are linked, not mirrored.
 Public feed snapshots use a six-hour cache and six concurrent source fetches.
 Failed refreshes preserve the last successful snapshot and timestamp. Snapshots
 older than 48 hours are marked stale and excluded from new-job alerts. Each new
-successful source establishes an account alert baseline. Results are limited to
-500 matches, balanced across sources and employers, and displayed 25 per page.
-Clearly senior/supervisory roles and known foreign locations are excluded;
+successful source establishes an account alert baseline. All fetched matching listings are retained, balanced across sources and employers.
+Server-side pages offer 25, 50 or 100 jobs; result keyword filtering is free and
+searches the retained set, including descriptions. Provider pagination is still bounded.
+Clearly senior/executive roles and known foreign locations are excluded;
 unknown requirements remain available under Needs review. This is not a complete
 index of the job market or proof of employer intent to hire.
 

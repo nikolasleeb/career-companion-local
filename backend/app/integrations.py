@@ -80,10 +80,18 @@ def normalize_job(source,title,company,location,description,url,**kwargs):
             'first_discovered_at':db.now(),'last_checked_at':db.now(),'workplace':'unknown','country':'',
             'observations':[],**kwargs}
 
+def posting_key(url):
+    value=canonical_url(url);p=urlparse(value)
+    if p.hostname in ('jobs.ashbyhq.com','jobs.lever.co','jobs.eu.lever.co'):return value.removesuffix('/application').removesuffix('/apply')
+    if p.hostname in ('boards.greenhouse.io','job-boards.greenhouse.io'):
+        m=re.search(r'/([^/]+)/jobs/(\d+)',p.path)
+        if m:return 'greenhouse:'+m[1]+':'+m[2]
+    return value
+
 def deduplicate(jobs):
     merged={};by_url={}
     for job in jobs:
-        url=canonical_url(job.get('url',''))
+        url=posting_key(job.get('url',''))
         if not url:continue
         key=job.get('source_identity') or url
         existing=merged.get(key) or by_url.get(url)
@@ -97,9 +105,9 @@ def deduplicate(jobs):
         by_url[url]=existing
     return list(merged.values())
 
-def matches_title(title,query):
+def matches_title(title,query,levels=None):
     from .job_search import title_match
-    return title_match(title,query)
+    return title_match(title,query,levels)
 
 def in_us(job):
     country=str(job.get('country') or '').upper().strip()

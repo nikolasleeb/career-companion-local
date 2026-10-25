@@ -8,6 +8,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from pydantic import Field
 from pypdf import PdfReader
+from . import storage
 from . import auth, applications, config, db, documents
 from .models import StrictModel
 from .network import ServiceError
@@ -91,7 +92,7 @@ async def upload(application_id:str,file:UploadFile=File(...),category:Category=
         folder=config.DATA_DIR/'uploads'/uid;folder.mkdir(parents=True,exist_ok=True)
         path=folder/identity
         try:
-            path.write_bytes(raw);write(c,uid,'application',app['data'],app['id'])
+            storage.write_bytes(path,raw);write(c,uid,'application',app['data'],app['id'])
         except BaseException:
             path.unlink(missing_ok=True);raise
     return {'application':owned(uid,application_id,'application'),'document':owned(uid,identity,'document'),'resume':db.get(uid,resume_id,'resume') if resume_id else None}

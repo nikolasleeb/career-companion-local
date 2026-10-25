@@ -294,7 +294,11 @@ class SearchRequest(StrictModel):
     interests: list[str] = Field(default_factory=list,max_length=12)
     location: str = Field(default='United States',min_length=2,max_length=120)
     workplace: Literal['any','remote','hybrid','onsite'] = 'any'
-    job_types: list[Literal['internship','early_career','any']] = Field(default_factory=lambda:['internship','early_career'],min_length=1,max_length=3)
+    job_types: list[Literal['internship','early_career','mid_career','any']] = Field(default_factory=lambda:['internship','early_career'],min_length=1,max_length=3)
+    career_levels: list[Literal['internship','early_career','mid_career']] | None = Field(default=None,min_length=1,max_length=3)
+    locations: list[Annotated[str,Field(min_length=2,max_length=120)]] = Field(default_factory=list,max_length=10)
+    minimum_salary: float | None = Field(default=None,ge=0,le=10000000)
+    pay_period: Literal['year','hour'] = 'year'
     days: int = Field(default=30,ge=1,le=30)
     mode: Literal['economy','deep','custom'] = 'economy'
     refresh: bool = False
