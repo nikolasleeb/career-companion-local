@@ -84,6 +84,12 @@ def test_daily_never_calls_manual_trial_and_new_sources_baseline(client,account,
  async def forbidden(*a,**k):raise AssertionError('No trial or AI during daily checks')
  async def board(*args):return [posting()]
  monkeypatch.setattr(search,'adzuna',forbidden);monkeypatch.setattr(x,'board_jobs',board)
+ # Connection changed from regular to manual trial after the scheduler's preflight.
+ original=pc.public;checks=[]
+ def changed_mode(user):
+  value=original(user);checks.append(1)
+  return {**value,'usage':'regular'} if len(checks)==1 else value
+ monkeypatch.setattr(pc,'public',changed_mode)
  run(job_alerts.run_daily(account['id'],datetime(2026,10,25,17,tzinfo=timezone.utc),force=True))
  with db.connect() as c:
   assert not c.execute('SELECT 1 FROM cc_adzuna_attempts').fetchone()

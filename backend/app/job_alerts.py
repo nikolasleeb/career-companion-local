@@ -327,7 +327,7 @@ async def run_daily(user,now=None,force=False):
         if not saved:
             request=SearchRequest.model_validate(preferences(user)['data']['query']);request.sources=[v for v in request.sources if v not in ('web','jobspy')];request.refresh=True
             if provider_connections.public(user).get('usage')!='regular':request.sources=[v for v in request.sources if v!='adzuna']
-            result=await asyncio.wait_for(job_search.discover(user,request),600)
+            result=await asyncio.wait_for(job_search.discover(user,request,execution='scheduled'),600)
             db.save(user,'search',{**result,'jobs':[{'id':r['id'],'data':{'title':r['data']['title'],'company':r['data'].get('company','')}} for r in result['jobs']],'scheduled':True},ident(user,'scheduled-search:'+day))
             errors={v['source'] for v in result['sources'] if v['status'] not in ('ok','empty')}
             successes={v['source'] for v in result['sources'] if v['status'] in ('ok','empty')} - errors

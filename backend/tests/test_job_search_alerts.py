@@ -87,7 +87,7 @@ def test_daily_baseline_dedup_restart_and_no_ai(client,account,monkeypatch):
     alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True,browser=True).model_dump())
     rows=[job()];count=[]
-    async def discover(uid,request):
+    async def discover(uid,request,*,execution='scheduled'):
         assert 'web' not in request.sources and 'jobspy' not in request.sources
         count.append(1);return {'jobs':[db.save(uid,'job',v,v['source_identity']) for v in rows],'sources':[{'source':'ashby:example','status':'ok','message':'Fixture'}]}
     async def deliver(uid,day,batch):count.append(list(batch['new_jobs']))
@@ -108,7 +108,7 @@ def test_dst_schedule_runs_once_per_local_date(client,account,monkeypatch):
     alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True,time='01:30',timezone='America/New_York').model_dump())
     calls=[]
-    async def discover(*args):calls.append(1);return {'jobs':[],'sources':[]}
+    async def discover(*args,**kwargs):calls.append(1);return {'jobs':[],'sources':[]}
     monkeypatch.setattr(search,'discover',discover)
     for hour in (5,6,7):run(alerts.run_daily(user,datetime(2026,11,1,hour,45,tzinfo=timezone.utc)))
     assert len(calls)==1
@@ -165,7 +165,7 @@ def test_email_code_belongs_to_recipient_and_account(client,account,monkeypatch)
 def test_failed_source_establishes_baseline_only_after_recovery(client,account,monkeypatch):
     alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True).model_dump());day=datetime(2026,10,25,16,tzinfo=timezone.utc);failed=[True]
-    async def discover(uid,request):return {'jobs':[] if failed[0] else [db.save(uid,'job',job(),'found')],'sources':[{'source':'ashby:example','status':'error' if failed[0] else 'ok','message':'Unavailable' if failed[0] else 'Recovered'}]}
+    async def discover(uid,request,*,execution='scheduled'):return {'jobs':[] if failed[0] else [db.save(uid,'job',job(),'found')],'sources':[{'source':'ashby:example','status':'error' if failed[0] else 'ok','message':'Unavailable' if failed[0] else 'Recovered'}]}
     monkeypatch.setattr(search,'discover',discover)
     run(alerts.run_daily(user,day));failed[0]=False;run(alerts.run_daily(user,day+timedelta(days=1)))
     with db.connect() as c:result=json.loads(c.execute('SELECT result FROM cc_job_alert_runs WHERE user_id=? AND day=?',(user,'2026-10-26')).fetchone()[0])
@@ -218,7 +218,7 @@ def test_lever_partial_data_and_timeouts(client,account,monkeypatch):
 def test_check_now_uses_existing_task_api_without_orphaning_a_run(client,account,monkeypatch):
     alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     from test_app import wait
-    async def discover(*args):return {'jobs':[],'sources':[],'query':{},'checked_at':db.now(),'ai_calls':[]}
+    async def discover(*args,**kwargs):return {'jobs':[],'sources':[],'query':{},'checked_at':db.now(),'ai_calls':[]}
     monkeypatch.setattr(search,'discover',discover)
     assert client.post('/api/job-search/check-now',json={}).status_code==400
     alerts.save(account['id'],'job_alert',alerts.Schedule(enabled=True).model_dump())
@@ -233,7 +233,7 @@ def test_daily_cross_source_url_dedup(client,account,monkeypatch):
     alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
     user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True).model_dump())
     rows=[job()];sources=[{'source':'ashby:example','status':'ok'},{'source':'adzuna','status':'ok'}]
-    async def discover(uid,request):return {'jobs':[db.save(uid,'job',v,v['source_identity']) for v in rows],'sources':sources}
+    async def discover(uid,request,*,execution='scheduled'):return {'jobs':[db.save(uid,'job',v,v['source_identity']) for v in rows],'sources':sources}
     monkeypatch.setattr(search,'discover',discover)
     now=datetime(2026,10,25,16,tzinfo=timezone.utc);run(alerts.run_daily(user,now))
     rows[0]={**rows[0],'source_identity':'adzuna:new-id','origin_key':'adzuna'}
