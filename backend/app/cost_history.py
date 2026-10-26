@@ -11,7 +11,7 @@ from typing import Literal
 from .models import StrictModel
 from . import db,ai_settings
 
-PROCESSES={'knowledge_coach':'Career Coach assistant','personalized_jobs':'Personalized five-job discovery','chat_image':'Image generation','interview_practice':'Interview practice','career_coach':'Career Coach','job_ai_discovery':'Ask AI job discovery','job_ai_match':'Profile fit review','application_agent':'Application assistant','analysis':'Job comparison','resume':'Resume building','resume_optimize':'Resume optimization','resume_fit':'Resume layout','resume_guided':'Resume questions & revisions','cover_letter':'Cover letters','preparation':'Skills preparation','interview':'Interview feedback','discovery':'Job discovery','project_analysis':'Project-source analysis','story_prompts':'Story prompts','assessment':'Career interests','other':'Other AI activity'}
+PROCESSES={'knowledge_coach':'Career Coach assistant','personalized_jobs':'Personalized five-job discovery','chat_image':'Image generation','interview_practice':'Interview practice','career_coach':'Career Plans','job_ai_discovery':'Ask AI job discovery','job_ai_match':'Profile fit review','application_agent':'Application assistant','analysis':'Job comparison','resume':'Resume building','resume_optimize':'Resume optimization','resume_fit':'Resume layout','resume_guided':'Resume questions & revisions','cover_letter':'Cover letters','preparation':'Skills preparation','interview':'Interview feedback','discovery':'Job discovery','project_analysis':'Project-source analysis','story_prompts':'Story prompts','assessment':'Career interests','other':'Other AI activity'}
 ENTITY_PROCESSES={'assistant_message':'knowledge_coach','personalized_search':'personalized_jobs','chat_image':'chat_image','interview_message':'interview_practice','interview_attempt':'interview_practice','interview_question':'interview_practice','interview_research':'interview_practice','coach_message':'career_coach','coach_research':'career_coach','ai_job_match':'job_ai_match','ai_search':'job_ai_discovery','analysis':'analysis','resume':'resume','resume_draft':'resume_optimize','resume_revision':'resume_guided','resume_conversation':'resume_guided','cover_workspace':'cover_letter','cover_revision':'cover_letter','cover_letter':'cover_letter','prep':'preparation','interview':'interview','search':'discovery','project_analysis':'project_analysis','story_prompts':'story_prompts'}
 PRICE_URL='https://developers.openai.com/api/docs/pricing'
 WEB_SEARCH_PER_CALL=.01
@@ -28,6 +28,8 @@ class UsageEvent(StrictModel):
     step:str=Field(default='',max_length=150)
     task_id:str=Field(default='',max_length=64)
     status:Literal['pending','completed','incomplete','failed','rejected','unknown','recovered']
+    max_output_tokens:int=Field(default=0,ge=0,le=1000000)
+    incomplete_reason:str=Field(default='',max_length=80,pattern=r'^[A-Za-z0-9_.-]*$')
     origin:Literal['provider','recovered']='provider'
     input_tokens:int=Field(default=0,ge=0,le=10**12)
     cached_input_tokens:int=Field(default=0,ge=0,le=10**12)
@@ -103,9 +105,10 @@ def begin(context,body):
     if not user:return None
     schema=((body.get('text') or {}).get('format') or {}).get('name','')
     step=re.sub(r'(?<=[a-z])(?=[A-Z])',' ',schema).removesuffix(' Output').strip()[:100]
+    if not schema and any(v.get('type') in ('web_search','web_search_preview') for v in body.get('tools',[]) if isinstance(v,dict)):step='Current web research'
     operation=context.get('operation','')
     if operation:step=(operation.replace('/',' · ').replace('_',' ')+' · '+step).strip(' ·')
-    return write(user,{'event_key':'request:'+db.uid(),'occurred_at':db.now(),'model':str(body.get('model','Unknown'))[:150],'process':context.get('process') if context.get('process') in PROCESSES else 'other','step':step or 'Generate response','task_id':context.get('task_id',''),'status':'pending','requested_service_tier':str(body.get('service_tier','default'))[:40],'pricing_date':PRICE_CHECKED})
+    return write(user,{'event_key':'request:'+db.uid(),'occurred_at':db.now(),'model':str(body.get('model','Unknown'))[:150],'process':context.get('process') if context.get('process') in PROCESSES else 'other','step':step or 'Generate response','task_id':context.get('task_id',''),'status':'pending','requested_service_tier':str(body.get('service_tier','default'))[:40],'pricing_date':PRICE_CHECKED,'max_output_tokens':count(body.get('max_output_tokens'))})
 
 
 def finish(user,event,body,response=None,http_status=200,status=None):
@@ -142,9 +145,11 @@ def finish(user,event,body,response=None,http_status=200,status=None):
         notes.append('Additional tool charges are unpriced.');tools=None
     state=status or ('rejected' if 400<=http_status<500 else 'failed' if http_status>=500 or response.get('error') else (response.get('status') or 'completed'))
     if state not in ('completed','incomplete','failed','rejected','unknown'):state='unknown'
+    reason=(response.get('incomplete_details') or {}).get('reason','') if isinstance(response.get('incomplete_details'),dict) else ''
+    reason=reason if isinstance(reason,str) and re.fullmatch(r'[A-Za-z0-9_.-]{0,80}',reason) else ''
     known=[v for v in (token,tools) if v is not None]
     key='response:'+str(response['id']) if isinstance(response.get('id'),str) and len(response['id'])<=180 else event['data']['event_key']
-    return write(user,{**event['data'],**counts,'model':model,'requested_service_tier':requested,'service_tier':actual,'event_key':key,'status':state,'usage_reported':reported,'web_search_calls':web,'token_cost_usd':token,'tool_cost_usd':tools,'estimated_cost_usd':round(sum(known),6) if (token is not None and tools is not None) or any(v>0 for v in known) else None,'partial':token is None or tools is None,'rates':snapshot,'notes':notes},event['id'])
+    return write(user,{**event['data'],**counts,'model':model,'requested_service_tier':requested,'service_tier':actual,'event_key':key,'status':state,'incomplete_reason':reason,'usage_reported':reported,'web_search_calls':web,'token_cost_usd':token,'tool_cost_usd':tools,'estimated_cost_usd':round(sum(known),6) if (token is not None and tools is not None) or any(v>0 for v in known) else None,'partial':token is None or tools is None,'rates':snapshot,'notes':notes},event['id'])
 
 
 @independent

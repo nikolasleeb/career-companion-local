@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+const code=ts.transpileModule(readFileSync(new URL('../src/forYouNavigation.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const {forYouIntent,takeForYouIntent}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('broad discovery does not inherit target-field text',()=>assert.deepEqual(forYouIntent({scope:'broad',roles:['Nursing']}),{scope:'broad',roles:[]}));
+test('targeted discovery requires explicit targets and preserves their wording',()=>{assert.equal(forYouIntent({scope:'targeted',roles:[]}),null);assert.deepEqual(forYouIntent({scope:'targeted',roles:[' Clinical research ','Clinical research','Public health']}),{scope:'targeted',roles:['Clinical research','Public health']});});
+test('a Work Styles action is consumed once and scoped to its account',()=>{const values=new Map([['career-start-for-you:one',JSON.stringify({scope:'targeted',roles:['Accounting']})]]);const store={getItem:k=>values.get(k)||null,removeItem:k=>values.delete(k)};assert.equal(takeForYouIntent(store,'other'),null);assert.deepEqual(takeForYouIntent(store,'one'),{scope:'targeted',roles:['Accounting']});assert.equal(takeForYouIntent(store,'one'),null);});
+test('legacy broad links work; malformed choices cannot dispatch',()=>{assert.deepEqual(forYouIntent('yes'),{scope:'broad',roles:[]});for(const v of ['no','{}',null,{scope:'targeted',roles:[42,'']}])assert.equal(forYouIntent(v),null);});

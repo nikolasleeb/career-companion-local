@@ -1,3 +1,4 @@
+import {forYouIntent} from './forYouNavigation';
 import {clearAssistantRoute,openAssistantRoute} from './assistantRoute';
 import {UpdateSettings} from './UpdateSettings';
 import {Skills} from './Skills';
@@ -136,7 +137,7 @@ function App(){
   return pollTask(initial.task_id,api,undefined,path.includes('/job-search/ai/match')?3600:600,onProgress);
  }
 
- useEffect(()=>{const open=()=>{if(user?.onboarding.completed){clearAssistantRoute(window.location,window.history);sessionStorage.setItem('career-start-for-you:'+user.id,'yes');setView('jobs');window.scrollTo({top:0});}};window.addEventListener('navigate-job-for-you',open);return()=>window.removeEventListener('navigate-job-for-you',open);},[user?.id,user?.onboarding.completed]);
+ useEffect(()=>{const open=(e:Event)=>{const intent=forYouIntent((e as CustomEvent).detail||'yes');if(user?.onboarding.completed&&intent){clearAssistantRoute(window.location,window.history);sessionStorage.setItem('career-start-for-you:'+user.id,JSON.stringify(intent));setView('jobs');window.scrollTo({top:0});}};window.addEventListener('navigate-job-for-you',open);return()=>window.removeEventListener('navigate-job-for-you',open);},[user?.id,user?.onboarding.completed]);
  if(loading)return <div className="loading-screen">Opening your local workspace…</div>;
  if(!user)return <Auth onLogin={async(value)=>{csrf=value.csrf;setProfileSetupRequest(0);setProfileHomeRequest(0);setUser(value);restoredWorkspace.current=value.id;setView(value.onboarding.completed?(new URLSearchParams(window.location.search).get('view')==='jobs'?'jobs':'applications'):'master');setJobId('');setApplicationId('');await refresh();setError('');}}/>;
  const mode:Mode=user.settings.mode==='custom'?'custom':user.settings.mode==='deep'?'deep':'economy';
@@ -458,7 +459,7 @@ function AssistantWorkspace(){
 
 function WorkAuthorization({embedded=false}:{embedded?:boolean}){
  const {user,refresh,notify}=useApp();
- return <section className={embedded?"work-authorization":"panel work-authorization"}>{!embedded&&<h2>Citizenship &amp; sponsorship</h2>}<p className="muted">Optional, private context for eligibility checks. Citizenship is separate from work authorization. These answers stay out of employer resumes, cover letters, and Supporting Details.</p><CitizenshipForm api={api} initial={user.settings} onSaved={async()=>{await refresh();notify('Citizenship & sponsorship saved. Rerun a comparison to use changed authorization answers.');}}/></section>;
+ return <section className={embedded?"work-authorization":"panel work-authorization"}>{!embedded&&<h2>Citizenship &amp; sponsorship</h2>}<p className="muted">Optional answers for application eligibility checks. Kept private and separate from your resume, cover letters, Supporting Details and AI guidance.</p><CitizenshipForm api={api} initial={user.settings} onSaved={async()=>{await refresh();notify('Citizenship & sponsorship saved. Rerun a comparison to use changed authorization answers.');}}/></section>;
 }
 
 const applicationStatuses:Record<string,string>={preparing:'Preparing',applied:'Applied',screening:'Screening',interviewing:'Interviewing',offer:'Offer',accepted:'Accepted',rejected:'Rejected',withdrawn:'Withdrawn',declined:'Declined'};

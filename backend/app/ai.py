@@ -69,7 +69,7 @@ async def call_api(body,retry_allowed=True):
             if result.get('status') not in ('completed',None):
                 reason=(result.get('incomplete_details') or {}).get('reason') if isinstance(result.get('incomplete_details'),dict) else None
                 message='The AI reached its output limit before finishing.' if reason=='max_output_tokens' else 'The AI response did not finish.'
-                raise ServiceError(message+' No partial comparison was saved. Your inputs and previous results remain available; try a lower reasoning level or less repeated Profile text.')
+                raise ServiceError(message+' No partial result was saved. Your inputs and previous results remain available; try a lower reasoning level or less repeated Profile text.')
             return result
 
 def output_text(response):

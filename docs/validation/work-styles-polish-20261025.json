@@ -1,0 +1,33 @@
+{
+  "scope": "Work Styles discovery, Profile citizenship layout, Career Plans starter guidance and research diagnostics",
+  "backend_full": {"passed": 851, "skipped": 1},
+  "frontend": {"passed": 184},
+  "localhost_backend_focused": {"passed": 97},
+  "both_frontend_builds_passed": true,
+  "browser_checks": {
+    "fictional_profiles_only": true,
+    "desktop_and_390px_layouts": true,
+    "report_to_preferences_gap_px": 32,
+    "discovery_collapsed_by_default": true,
+    "keyboard_expansion": true,
+    "broad_and_targeted_choices": true,
+    "targeted_intent_preserved": true,
+    "unsaved_citizenship_survives_tab_switch": true,
+    "review_required_before_save": true,
+    "starter_guidance_below_suggestions": true
+  },
+  "research_checks": {
+    "providers_mocked": true,
+    "reasoning_budgets_preserve_selected_effort": true,
+    "incomplete_reason_and_limit_recorded": true,
+    "legacy_usage_records_supported": true,
+    "root_error_preserved": true,
+    "automatic_paid_retries": false
+  },
+  "hosted_backup_and_preservation_verified": true,
+  "hosted_access_controls_and_quota_preserved": true,
+  "installed_localhost_service_changed": false,
+  "paid_provider_requests_made": false,
+  "live_provider_success_tested": false,
+  "release_or_tag_created": false
+}

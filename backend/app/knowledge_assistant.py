@@ -87,7 +87,7 @@ async def execute(user,id,body):
  if reply.get('needs_research') or career_coach.needs_current(body.text) or 'culture' in body.text.casefold():
   p=career_coach.profile(user);topics=career_coach.research_topics(body.text,user,p,reply.get('research_topics',[]))
   record=await career_coach.research(user,{'id':id,'data':{'goal':''}},p,body.request_token,body.mode,public_topics=topics,record_kind='assistant_research')
-  if record['data']['status']!='checked':raise ServiceError('Current sources could not be checked. Your draft and saved messages are preserved. Retry explicitly, or ask for an answer limited to saved information.')
+  if record['data']['status']!='checked':raise career_coach.research_failure(record['data'])
   sources=[s for s in sources if s['kind']!='web']+add_research(record);payload.update(source_catalog=sources,research_checked=True)
   reply,meta=await ai.structured(Reply,payload,body.mode,instructions=INSTRUCTIONS+' Current sources have now been checked. Answer supported facts and mark remaining unknowns; do not request another research loop.',retry_allowed=False);metas.append(meta);researched=True
  reply=validate_reply(reply,sources)
