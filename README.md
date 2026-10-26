@@ -7,6 +7,8 @@ Each installation starts empty. Accounts, documents, saved API keys, and encrypt
 
 Latest update: **app 1.0.8 · extension 1.0.3**. Profile imports, private saved Career Coach chats, public job feeds and stoppable AI actions. See [release notes](docs/RELEASE-NOTES.md).
 
+Interview Practice is separate from Skills. Practice behavioral answers, build STAR responses, or generate original coding problems with AI code review (code is not executed). Sessions can use a saved job/application, company and role, plus up to four private interview-preparation PDFs. Questions, guidance and feedback are manual AI actions using the account’s own key; previous practice remains saved and is included in account backups.
+
 ## Run from source
 
 Install a current Docker Desktop, or Docker Engine 28+ with Compose. Clone this repository and open a terminal in its project folder:

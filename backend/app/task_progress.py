@@ -4,8 +4,8 @@ from contextvars import ContextVar
 from . import db
 
 _context=ContextVar('task_progress',default=None)
-KINDS={'career_coach','job_ai_discovery','job_ai_match','posting_import','resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
-LABELS={'career_coach':'Career Coach','job_ai_discovery':'AI job discovery','job_ai_match':'Profile fit review','posting_import':'job posting import','cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
+KINDS={'interview_practice','career_coach','job_ai_discovery','job_ai_match','posting_import','resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
+LABELS={'interview_practice':'interview practice','career_coach':'Career Coach','job_ai_discovery':'AI job discovery','job_ai_match':'Profile fit review','posting_import':'job posting import','cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
 STAGES={
     'coach_research':('Checking current career resources','provider'),
     'coach_retrieval':('Retrieving relevant guidance and evidence','local'),
@@ -39,6 +39,7 @@ def stage(code):
     if not context:return
     label,kind=STAGES[code];user,task_id,process=context
     if code=='starting' and process!='resume_guided':label='Preparing '+LABELS.get(process,'action')
+    if process=='interview_practice':label={'drafting':'Preparing an original interview question','reviewing':'Reviewing your interview practice','coach_research':'Checking official company interview resources','saving':'Saving interview practice'}.get(code,label)
     if process=='cover_letter':
         label={'drafting':'Writing the cover-letter draft','reviewing':'Reviewing cover-letter answers and changes','rendering':'Rendering the cover-letter PDF','checking':'Checking cover-letter claims against saved evidence','saving':'Saving the cover-letter result','preparing':'Preparing saved resume and reviewed details'}.get(code,label)
     with db.connect() as c:

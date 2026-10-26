@@ -1,3 +1,4 @@
+from . import interview_practice
 from . import profile_import
 import asyncio
 import base64
@@ -143,7 +144,7 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     atomic_token=task_atomic.bind(user,task_id)
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
@@ -175,7 +176,7 @@ def start_task(user,kind,work,inputs=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -311,13 +312,14 @@ def workspace(paged_jobs:bool=False,user=Depends(auth.current)):
         linked={r['data'].get('job_id') for kind in ('application','analysis','resume','prep','interview') for r in result[kind]}
         result['job']=[r for r in result['job'] if r['id'] in linked or not r['data'].get('source_identity')]
         for r in result['document']:
-            if r['data'].get('purpose')=='job_example':r['data'].pop('text',None)
+            if r['data'].get('purpose') in ('job_example','interview_prep'):r['data'].pop('text',None)
     return result
 
 from . import project_routes
 project_routes.install(app,start_task,require_ai)
 job_ai.install(app,start_task,require_ai)
 career_coach.install(app,start_task,require_ai)
+interview_practice.install(app,start_task,require_ai)
 app.include_router(career_goals.router)
 
 @app.get('/api/profile-evidence')
@@ -442,11 +444,11 @@ def edit_experience(entity_id:str,body:ExperienceItem,user=Depends(auth.current)
 def remove_record(entity_id:str,user=Depends(auth.current)):
     record=db.get(user['id'],entity_id)
     if not record: raise HTTPException(404,'Record not found.')
-    blocker=application_documents.removal_blocker(user['id'],record)
+    blocker=interview_practice.removal_blocker(user['id'],record) or application_documents.removal_blocker(user['id'],record)
     if blocker:raise HTTPException(409,blocker)
     if record['kind']=='usage_event':raise HTTPException(409,'Cost history is preserved until account deletion.')
     if record['kind'] in ('onboarding','profile_answer','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts'):raise HTTPException(409,'Archive reviewed answers to preserve their source history.')
-    if record['kind'] in ('job','analysis','resume','resume_draft','resume_revision','resume_conversation','application','cover_workspace','cover_revision','cover_letter','prep','interview','search'):onboarding.require_complete(user['id'])
+    if record['kind'] in ('job','analysis','resume','resume_draft','resume_revision','resume_conversation','application','cover_workspace','cover_revision','cover_letter','prep','interview','interview_session','interview_question','interview_attempt','interview_research','search'):onboarding.require_complete(user['id'])
     if record['kind']=='document':
         if record['data'].get('purpose')=='certificate' and any(v.get('document_id')==entity_id for row in db.list_entities(user['id'],'experience') for v in row['data'].get('certification_items',[])):
             raise HTTPException(409,'Remove this attachment from its certification before deleting the file.')
@@ -534,13 +536,13 @@ class DocumentReview(StrictModel):
 @app.put('/api/documents/{entity_id}/review')
 def review_document(entity_id:str,body:DocumentReview,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'document')
-    if record['data'].get('purpose')=='application':raise HTTPException(400,'Review application resume text within its application.')
+    if record['data'].get('purpose') in ('application','interview_prep'):raise HTTPException(400,'Review application resume text within its application.')
     return db.save(user['id'],'document',{**record['data'],'text':body.text,'reviewed':True},entity_id)
 
 @app.post('/api/documents/{entity_id}/parse')
 def parse_resume_document(entity_id:str,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'document');data=dict(record['data'])
-    if record['data'].get('purpose') in ('certificate','application'): raise HTTPException(400,'Manage this document in its original application or certification.')
+    if record['data'].get('purpose') in ('certificate','application','interview_prep'): raise HTTPException(400,'Manage this document in its original application or certification.')
     text=data['text']
     if data.get('format')=='docx' and not data.get('reviewed'):
         path=config.DATA_DIR/'uploads'/user['id']/entity_id
@@ -559,7 +561,7 @@ def parse_resume_document(entity_id:str,user=Depends(auth.current)):
 @app.get('/api/documents/{entity_id}/import-preview')
 def preview_resume_import(entity_id:str,user=Depends(auth.current)):
     document=require(user['id'],entity_id,'document')['data']
-    if document.get('purpose')=='application':raise HTTPException(400,'Application files are not Profile imports.')
+    if document.get('purpose') in ('application','interview_prep'):raise HTTPException(400,'Application files are not Profile imports.')
     return profile_import.preview(document.get('resume_parse') or {},db.list_entities(user['id'],'experience'))
 
 @app.post('/api/documents/{entity_id}/import-resume')
@@ -574,7 +576,7 @@ def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(a
         row=c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='document'",(entity_id,user['id'])).fetchone()
         if not row: raise HTTPException(404,'Document not found.')
         document=json.loads(row['payload'])
-        if document.get('purpose')=='application':raise HTTPException(400,'Application files are not Profile imports.')
+        if document.get('purpose') in ('application','interview_prep'):raise HTTPException(400,'Application files are not Profile imports.')
         parsed=document.get('resume_parse') or {}
         if body.text_hash!=parsed.get('text_hash') or hashlib.sha256(document['text'].encode()).hexdigest()!=body.text_hash:
             raise HTTPException(409,'The source changed. Parse the updated text and review its suggestions again.')
@@ -1108,6 +1110,8 @@ def edit_application(entity_id:str,body:ApplicationInput,expected_updated_at:str
 @app.delete('/api/applications/{entity_id}')
 def delete_application(entity_id:str,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'application')
+    blocker=interview_practice.removal_blocker(user['id'],record)
+    if blocker:raise HTTPException(409,blocker)
     if any(a.get('kind')=='document' for a in record['data'].get('attachments',[])):raise HTTPException(409,'Remove uploaded files first, or archive this application to preserve its documents.')
     require(user['id'],entity_id,'application');db.delete(user['id'],entity_id)
     return {'ok':True}
@@ -1205,7 +1209,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1253,6 +1257,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                     if attachment and (kinds.get(attachment)!='document' or by_id[attachment]['data'].get('purpose')!='certificate' or attachment not in payload.get('files',{})): raise ValueError()
             job_ai.validate_backup(record,kinds,by_id,payload.get('files',{}))
             career_coach.validate_backup(record,kinds,by_id)
+            interview_practice.validate_backup(record,kinds,by_id,payload.get('files',{}))
             if record['kind']=='career_goals':
                 career_goals.Change.model_validate({'text':record['data']['text'],'expected_revision':record['data']['revision']})
             if record['kind']=='board': Board.model_validate(record['data'])
@@ -1335,7 +1340,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if old not in ids or not any(r['id']==old and r['kind']=='document' for r in records): raise ValueError()
             decoded[ids[old]]=base64.b64decode(content,validate=True)
             if len(decoded[ids[old]])>config.MAX_UPLOAD: raise ValueError()
-            if by_id[old]['data'].get('purpose') in ('application','job_example'):
+            if by_id[old]['data'].get('purpose') in ('application','job_example','interview_prep'):
                 checked=application_documents.inspect(by_id[old]['data']['filename'],decoded[ids[old]])
                 if checked['sha256']!=by_id[old]['data'].get('sha256'):raise ValueError()
             if by_id[old]['data'].get('purpose')=='certificate':
@@ -1369,7 +1374,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         elif record['kind']=='career_goals':
             current_goals=career_goals.read(user['id'])
             if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data']['text'],expected_revision=current_goals['revision']))
-        elif record['kind'] in career_coach.KINDS:
+        elif record['kind'] in career_coach.KINDS or record['kind'] in interview_practice.KINDS:
             saved=db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
             stamp=integrations.parse_date(record.get('created_at'))
             if stamp:

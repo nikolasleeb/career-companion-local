@@ -210,7 +210,7 @@ async def analyze(user, job, mode):
 
 async def prepare(user, job, gaps, mode):
     library = json.loads((config.CONTENT_DIR/'resources.json').read_text())
-    output, meta = await structured(PrepOutput, {'task':'Suggest up to 3 priorities, select at most 5 resource IDs from the provided catalog, and write 3 role-specific interview questions. Only describe confirmed gaps as gaps; other requirements are questions to investigate. Do not invent URLs or imply course completion demonstrates competence.', 'posting':job,'confirmed_gaps':gaps,'experience':__import__(__package__+'.profile_answers',fromlist=['records']).records(user),'resource_catalog':library},mode)
+    output, meta = await structured(PrepOutput, {'task':'Suggest up to 3 priorities, select at most 5 resource IDs from the provided catalog, and return an empty questions list (interview questions now belong to Interview Practice). Only describe confirmed gaps as gaps; other requirements are questions to investigate. Do not invent URLs or imply course completion demonstrates competence.', 'posting':job,'confirmed_gaps':gaps,'experience':__import__(__package__+'.profile_answers',fromlist=['records']).records(user),'resource_catalog':library},mode)
     allowed = {r['id'] for r in library}
     if any(i not in allowed for i in output['resource_ids']):
         raise ServiceError('The AI selected an unknown learning resource. Retry the action.')

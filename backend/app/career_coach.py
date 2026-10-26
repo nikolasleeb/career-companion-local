@@ -189,10 +189,10 @@ def chunks_for_page(page,topics):
  content_hash=hashlib.sha256(text.encode()).hexdigest();source_id='web:'+knowledge.digest([page['url'],content_hash])[:24]
  return [{'chunk_id':'chunk:'+knowledge.digest([source_id,i,part])[:28],'source_id':source_id,'title':title,'url':page['url'],'text':part,'kind':'fetched','topics':topics,'checked_at':db.now(),'published_at':stamp,'content_hash':content_hash,'catalog_version':knowledge.version()} for i,part in sorted(chosen)]
 
-async def research(user,chat,p,token,mode,public_topics=None):
+async def research(user,chat,p,token,mode,public_topics=None,record_kind='coach_research'):
  topics=public_topics or knowledge.topics(chat['data']['goal'],p)
  record_id=ident(user,chat['id']+':research:'+token)
- old=db.get(user,record_id,'coach_research')
+ old=db.get(user,record_id,record_kind)
  if old:return old
  chunks=[];metas=[];warnings=[];status='unavailable'
  if not config.ENABLE_WEB_SEARCH:warnings.append('Current web research is unavailable. The coach can use the original saved guidance library; current provider terms and trends remain unverified.')
@@ -216,7 +216,7 @@ async def research(user,chat,p,token,mode,public_topics=None):
    if not chunks:warnings.append('No readable official source passages were verified. Saved guidance remains available; no fresh trend or price claims are established.')
   except ServiceError as error:
    warnings.append('Research did not finish: '+str(error));status='partial' if chunks else 'unavailable'
- return db.save(user,'coach_research',{'chat_id':chat['id'],'topics':topics,'chunks':chunks[:36],'checked_at':db.now(),'status':status,'warnings':list(dict.fromkeys(warnings)),'ai':metas},record_id)
+ return db.save(user,record_kind,{'chat_id':chat['id'],'topics':topics,'chunks':chunks[:36],'checked_at':db.now(),'status':status,'warnings':list(dict.fromkeys(warnings)),'ai':metas},record_id)
 
 def validate_reply(value,p,chunks):
  result=Reply.model_validate(value).model_dump();catalog={s['chunk_id']:s for s in chunks};sources={s['id']:s for s in p['sources']}
