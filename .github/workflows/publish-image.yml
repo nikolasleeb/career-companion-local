@@ -97,7 +97,9 @@ jobs:
         if: matrix.arch == 'amd64'
         run: |
           docker buildx build --load --target frontend --tag career-companion-frontend-tests .
-          docker run --rm --network none --entrypoint sh career-companion-frontend-tests \
+          docker run --rm --network none \
+            -v "$PWD/backend/app/role_catalog.json:/backend/app/role_catalog.json:ro" \
+            --entrypoint sh career-companion-frontend-tests \
             -c 'node --test tests/*.test.mjs'
       - name: Smoke-test the clean image
         env:
