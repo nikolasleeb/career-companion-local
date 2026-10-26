@@ -232,6 +232,7 @@ class SettingsUpdate(StrictModel):
     county: str | None = Field(default=None,max_length=150)
     website: str | None = Field(default=None,max_length=2000)
     linkedin: str | None = Field(default=None,max_length=2000)
+    github: str | None = Field(default=None,max_length=2000)
 
     @model_validator(mode='after')
     def model_effort_compatible(self):
@@ -240,7 +241,7 @@ class SettingsUpdate(StrictModel):
             validate_custom(self.model_dump(exclude_none=True))
         return self
 
-    @field_validator('website','linkedin')
+    @field_validator('website','linkedin','github')
     @classmethod
     def valid_profile_link(cls,value):
         return validate_link(value) if value is not None else None

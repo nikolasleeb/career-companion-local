@@ -7,7 +7,7 @@ import hashlib
 import re
 from .models import ExperienceItem, SettingsUpdate
 
-VERSION='local-v1'
+VERSION='local-v2-github'
 SECTIONS={
  'education':{'education','academic background','academic qualifications','education and training'},
  'employment':{'experience','work experience','professional experience','employment','employment history','work history','professional background'},
@@ -116,7 +116,7 @@ def parse(text):
                     if url.startswith('www.'): url='https://'+url
                     from urllib.parse import urlparse
                     host=(urlparse(url).hostname or '').lower()
-                    key='linkedin' if host in ('linkedin.com','www.linkedin.com') else 'website'
+                    key='linkedin' if host in ('linkedin.com','www.linkedin.com') else 'github' if host in ('github.com','www.github.com') else 'website'
                     profile(key,url,line)
             for i,line in enumerate(body):
                 if i==0 and result['profile'].get('name')==plain(line): continue

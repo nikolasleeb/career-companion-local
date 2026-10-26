@@ -208,7 +208,7 @@ def test_docx_hyperlinks_and_bullet_boundaries(monkeypatch):
     assert '• Used SQL' in extracted
     parsed=resume_parser.parse(extracted)
     assert parsed['profile']['linkedin']=='https://www.linkedin.com/in/fictional-example'
-    assert parsed['profile']['website']=='https://github.com/fictional-example'
+    assert parsed['profile']['github']=='https://github.com/fictional-example'
     old='Alex Example\nLinkedIn | GitHub'
     enriched=documents.enrich_docx_links(old,raw.getvalue())
     assert 'https://github.com/fictional-example' in enriched

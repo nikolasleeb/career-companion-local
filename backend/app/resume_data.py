@@ -12,7 +12,7 @@ from .education import subjects
 def contact_lines(profile):
     location=', '.join(filter(None,(clean(profile.get(k)) for k in ('city','county','state','country'))))
     primary=' | '.join(filter(None,[clean(profile.get('email')),clean(profile.get('phone')),location]))
-    links=' | '.join(filter(None,[clean(profile.get('website')),clean(profile.get('linkedin'))]))
+    links=' | '.join(dict.fromkeys(v for v in (clean(profile.get(k)) for k in ('website','github','linkedin')) if v))
     lines=[value for value in (primary,links) if value]
     legacy=clean(profile.get('contact'))
     if legacy and not profile.get('contact_reviewed') and legacy not in lines:

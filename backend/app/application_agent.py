@@ -183,7 +183,7 @@ def local_value(user,field,application):
     if PRIVATE.search(' '.join((field.label,field.description,field.context))):return private_answers.match(user,field.label,field.options,application,field.description,field.context)
     mapping={'name':'name','full name':'name','email':'email','email address':'email','confirm email':'email','confirm email address':'email','phone':'phone','phone number':'phone','city':'city','state':'state','country':'country','linkedin':'linkedin','linkedin profile':'linkedin','website':'website','portfolio website':'website'}
     auto={'name':'name','email':'email','tel':'phone','address-level2':'city','address-level1':'state','country-name':'country','url':'website'}
-    key=auto.get(field.autocomplete) or mapping.get(label)
+    key=('github' if label in ('github','github profile','github url','github profile url','github link','github profile link') else None) if re.search(r'\bgithub\b',label) else auto.get(field.autocomplete) or mapping.get(label)
     value=settings.get(key,'') if key else ''
     if field.section:
         rows=[r['data'] for r in reversed(db.list_entities(user,'experience')) if r['data'].get('confirmed') and r['data'].get('category')==field.section]
