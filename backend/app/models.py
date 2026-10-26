@@ -261,7 +261,7 @@ class InterviewOutput(StrictModel):
     follow_up: str
 
 class PrepRequest(StrictModel):
-    job_id: str
+    job_id: str | None = None
     analysis_id: str | None = None
     confirmed_gaps: list[str] = Field(default_factory=list,max_length=30)
     mode: Literal['economy','deep','custom'] = 'economy'

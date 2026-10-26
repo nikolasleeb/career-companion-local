@@ -108,7 +108,7 @@ def test_web_search_custom_model_and_redacted_provider_error(client,account,monk
     credentials.save(account['id'],FAKE_KEY)
     db.update_settings(account['id'],{'custom_model':'gpt-5.6-luna','custom_reasoning':'none'})
     calls=[]
-    async def fake(body):calls.append(body);return {'model':body['model'],'output':[],'usage':{}}
+    async def fake(body,**kwargs):calls.append(body);return {'model':body['model'],'output':[],'usage':{}}
     monkeypatch.setattr(ai,'call_api',fake)
     async def search():
         token=ai.set_user_context(account['id'])

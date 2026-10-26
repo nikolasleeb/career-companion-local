@@ -118,7 +118,7 @@ async def find(user,body):
  req=SearchRequest(title=brief['roles'][0],interests=brief['roles'],location=brief['locations'][0],locations=brief['locations'] if len(brief['locations'])>1 else [],career_levels=brief['career_levels'],job_types=brief['career_levels'],workplace=brief['workplace'],days=brief['days'],minimum_salary=brief['minimum_salary'],pay_period=brief['pay_period'],mode=body.mode,sources=list(dict.fromkeys([*prefs.get('sources',[]),'web'])),request_token=body.request_token,trial_roles=None,employer_boards=prefs.get('employer_boards'))
  task_progress.stage('searching_jobs')
  result=await job_search.discover(user,req)
- result.update(ai_brief=brief,ai_prompt=body.prompt,example_ids=body.example_ids,use_profile=body.use_profile,ai_calls=[meta,*result['ai_calls']])
+ result.update(discovery_kind='ai',ai_brief=brief,ai_prompt=body.prompt,example_ids=body.example_ids,use_profile=body.use_profile,ai_calls=[meta,*result['ai_calls']])
  saved=job_results.save_search(user,result);saved['data'].pop('jobs',None);return saved
 
 def estimate(user,body):

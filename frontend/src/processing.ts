@@ -14,6 +14,9 @@ export function actionLabel(path:string){
  if(/\/analyze$/.test(path))return 'Analyzing project materials';
  if(/\/build$/.test(path))return 'Building the resume draft';
  if(/\/messages$/.test(path))return 'Reviewing resume changes';
+ if(path.startsWith('/knowledge-coach/'))return 'Preparing Career Coach response';
+ if(path==='/job-search/for-you/discover')return 'Finding personalized job matches';
+ if(path==='/chat-visuals/generate')return 'Generating an illustration';
  if(path==='/preparation')return 'Preparing your skills plan';
  if(path.startsWith('/interview-practice/')&&path.endsWith('/actions'))return 'Preparing interview practice';
  if(path==='/interview-practice/documents')return 'Reading interview preparation PDF locally';

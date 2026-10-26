@@ -1,0 +1,38 @@
+{
+  "suite": "Broader career support",
+  "date": "2026-10-25",
+  "fictional_accounts_and_mocked_providers": true,
+  "hosted_full_passed": 844,
+  "localhost_full_passed": 869,
+  "optional_fixture_skipped_per_edition": 1,
+  "frontend_passed": 175,
+  "final_affected_backend_passed": 36,
+  "desktop_and_390px_browser_checks": true,
+  "search_fixture": {
+    "normal_active": 12,
+    "confirmed": 5,
+    "needs_review": 7,
+    "personalized": 5,
+    "independent_results": true
+  },
+  "tests_cover": [
+    "account isolation",
+    "raw assessment and private-answer exclusion",
+    "work-preference opt-in and revocation",
+    "structured-goal migration and revisions",
+    "read-only account retrieval",
+    "literal citation validation",
+    "bounded five-job search and fewer-than-five results",
+    "expired postings",
+    "backup restoration",
+    "image authentication and unknown costs",
+    "provider connection closure on Stop",
+    "atomic publication and prior-state preservation",
+    "no paid POST replay after ambiguous starts"
+  ],
+  "extension_package_version": "1.0.4",
+  "extension_permissions_unchanged": true,
+  "real_provider_entitlement_tested": false,
+  "paid_requests_made": false,
+  "new_release_or_tag": false
+}

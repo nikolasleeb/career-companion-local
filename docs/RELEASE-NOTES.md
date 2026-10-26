@@ -1,3 +1,7 @@
+## Source update after 1.0.8 (no new release or tag)
+
+Adds a global read-only Career Coach, Career Plans, reviewed Work Styles preferences, structured goals, five-job discovery, broader Skills, saved interview conversations and optional visual responses. Extension packages are 1.0.4. See [implementation notes](BROADER-CAREER-SUPPORT.md).
+
 # Career Companion Local 1.0.8
 
 This release brings the current Career Companion features to the localhost edition. It starts empty and includes no hosted accounts, documents, chats, cached jobs, API keys, notification credentials or private vault keys.

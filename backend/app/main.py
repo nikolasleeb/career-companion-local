@@ -1,3 +1,4 @@
+from . import work_preferences,knowledge_assistant,personalized_jobs,chat_visuals,skills
 from . import interview_practice
 from . import profile_import
 import asyncio
@@ -144,7 +145,7 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     atomic_token=task_atomic.bind(user,task_id)
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
@@ -176,7 +177,7 @@ def start_task(user,kind,work,inputs=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -321,6 +322,19 @@ job_ai.install(app,start_task,require_ai)
 career_coach.install(app,start_task,require_ai)
 interview_practice.install(app,start_task,require_ai)
 app.include_router(career_goals.router)
+app.include_router(work_preferences.router)
+app.include_router(skills.router)
+knowledge_assistant.install(app,start_task,require_ai)
+personalized_jobs.install(app,start_task,require_ai)
+chat_visuals.install(app,start_task,require_ai)
+@app.get('/api/ai-actions/{token}')
+def foreground_status(token:str,user=Depends(auth.current)):
+    onboarding.require_complete(user['id'])
+    with db.connect() as c:
+        for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image') ORDER BY created_at DESC",(user['id'],)):
+            payload=json.loads(r['result'] or '{}');inputs=payload.get('_task_inputs',payload.get('inputs',{}))
+            if inputs.get('request_token')==token:return {'task_id':r['id'],'status':r['status']}
+    raise HTTPException(404,'No saved action was found. This lookup makes no AI request.')
 
 @app.get('/api/profile-evidence')
 def confirmed_profile_evidence(user=Depends(auth.current)):
@@ -446,6 +460,7 @@ def remove_record(entity_id:str,user=Depends(auth.current)):
     if not record: raise HTTPException(404,'Record not found.')
     blocker=interview_practice.removal_blocker(user['id'],record) or application_documents.removal_blocker(user['id'],record)
     if blocker:raise HTTPException(409,blocker)
+    if record['kind'] in knowledge_assistant.KINDS or record['kind']=='chat_image':raise HTTPException(409,'Delete the complete conversation from its chat history to preserve references.')
     if record['kind']=='usage_event':raise HTTPException(409,'Cost history is preserved until account deletion.')
     if record['kind'] in ('onboarding','profile_answer','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts'):raise HTTPException(409,'Archive reviewed answers to preserve their source history.')
     if record['kind'] in ('job','analysis','resume','resume_draft','resume_revision','resume_conversation','application','cover_workspace','cover_revision','cover_letter','prep','interview','interview_session','interview_question','interview_attempt','interview_research','search'):onboarding.require_complete(user['id'])
@@ -1126,7 +1141,7 @@ def resources(user=Depends(auth.current)):
 
 @app.post('/api/preparation')
 async def preparation(body:PrepRequest,user=Depends(auth.current)):
-    require_ai(user['id']);job=require(user['id'],body.job_id,'job')
+    require_ai(user['id']);job=require(user['id'],body.job_id,'job') if body.job_id else {'data':{'title':'Profile-based learning','description':''}}
     if job['data'].get('description_incomplete'):raise ServiceError('This provider supplied only a description snippet. Edit the posting with its full text or import the full posting before tailoring.')
     if body.analysis_id: require(user['id'],body.analysis_id,'analysis')
     async def work(): return db.save(user['id'],'prep',{**(await ai.prepare(user['id'],job['data'],body.confirmed_gaps,body.mode)),'job_id':body.job_id,'analysis_id':body.analysis_id})
@@ -1209,7 +1224,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1258,8 +1273,12 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             job_ai.validate_backup(record,kinds,by_id,payload.get('files',{}))
             career_coach.validate_backup(record,kinds,by_id)
             interview_practice.validate_backup(record,kinds,by_id,payload.get('files',{}))
+            knowledge_assistant.validate_backup(record,kinds)
+            personalized_jobs.validate_backup(record,kinds)
+            chat_visuals.validate_backup(record,kinds)
+            if record['kind']=='work_preferences':work_preferences.Change.model_validate({k:v for k,v in {**record['data'],'expected_revision':record['data']['revision']}.items() if k in work_preferences.Change.model_fields})
             if record['kind']=='career_goals':
-                career_goals.Change.model_validate({'text':record['data']['text'],'expected_revision':record['data']['revision']})
+                career_goals.Change.model_validate({'text':record['data'].get('note',record['data']['text']),'items':record['data'].get('items'),'expected_revision':record['data']['revision']})
             if record['kind']=='board': Board.model_validate(record['data'])
             if record['kind']=='job_search_preferences':job_alerts.Preferences.model_validate(record['data'])
             if record['kind']=='job_alert':job_alerts.Schedule.model_validate(record['data'])
@@ -1373,8 +1392,11 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 with db.connect() as c:job_cache.bind(c,user['id'],saved)
         elif record['kind']=='career_goals':
             current_goals=career_goals.read(user['id'])
-            if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data']['text'],expected_revision=current_goals['revision']))
-        elif record['kind'] in career_coach.KINDS or record['kind'] in interview_practice.KINDS:
+            if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data'].get('note',record['data']['text']),items=record['data'].get('items'),expected_revision=current_goals['revision']))
+        elif record['kind']=='work_preferences':
+            if not work_preferences.read(user['id'])['preferences']:
+                db.save(user['id'],'work_preferences',{**remap(record['data']),'use_for_ai':False,'reviewed':False,'revision':work_preferences.read(user['id'])['revision']+1},work_preferences.identity(user['id']))
+        elif record['kind'] in career_coach.KINDS or record['kind'] in interview_practice.KINDS or record['kind'] in knowledge_assistant.KINDS or record['kind'] in ('personalized_search','chat_image'):
             saved=db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
             stamp=integrations.parse_date(record.get('created_at'))
             if stamp:

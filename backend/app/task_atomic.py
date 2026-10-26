@@ -83,9 +83,16 @@ def publish(c,user,task):
  if not row or row['status']!='running':raise Stopped()
  changes=c.execute('SELECT * FROM cc_task_stage WHERE task_id=? AND user_id=? ORDER BY CASE table_name WHEN \'users\' THEN 0 WHEN \'entities\' THEN 1 ELSE 2 END',(task,user)).fetchall()
  for change in changes:
+  after=json.loads(change['after_row']) if change['after_row'] else None
+  if change['table_name']=='entities' and after and after.get('kind')=='chat_image':
+   image=json.loads(after['payload'])
+   if not c.execute('SELECT 1 FROM entities WHERE id=? AND user_id=? AND kind=?',(image['conversation_id'],user,image['conversation_kind'])).fetchone():raise HTTPException(409,'The conversation was removed. The illustration was not saved.')
   table=change['table_name'];keys=TABLES[table];ids=json.loads(change['row_key']);where=' AND '.join('"'+v+'"=?' for v in keys)
   old=c.execute('SELECT * FROM "'+table+'" WHERE '+where,ids).fetchone();before=json.loads(change['before_row'])
-  if (dict(old) if old else None)!=before:raise HTTPException(409,'The saved record changed during this action. Nothing from the AI run was applied; your newer edits are preserved.')
+  # Compare using the same SQLite JSON encoding used by staging triggers;
+  # epoch REAL values otherwise differ after JSON's decimal round trip.
+  actual=json.loads(c.execute('SELECT '+obj(list(old.keys()))+' FROM "'+table+'" WHERE '+where,ids).fetchone()[0]) if old else None
+  if actual!=before:raise HTTPException(409,'The saved record changed during this action. Nothing from the AI run was applied; your newer edits are preserved.')
   if table=='entities' and before and before['updated_at']>row['created_at']:raise HTTPException(409,'This record changed after the action started. No AI changes were applied.')
  for change in changes:
   table=change['table_name'];keys=TABLES[table];ids=json.loads(change['row_key']);after=json.loads(change['after_row']) if change['after_row'] else None

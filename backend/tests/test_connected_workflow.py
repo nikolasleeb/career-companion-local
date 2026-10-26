@@ -213,7 +213,7 @@ def test_reviewed_stories_reach_comparison_resume_and_interview_inputs(guided,mo
     monkeypatch.setattr(ai,'structured',model)
     analysis=asyncio.run(ai.analyze(user,guided[1]['data'],'economy'));assert analysis['score']['groups']['required']['supported']==1
     asyncio.run(ai.prepare(user,guided[1]['data'],[],'economy'))
-    assert text in json.dumps(seen[0][1]['retrieved']) and text in json.dumps(seen[1][1]['experience'])
+    assert text in json.dumps(seen[0][1]['retrieved']) and text in json.dumps(seen[1][1]['reviewed_professional_profile'])
     from app.main import build_resume
     snapshot=build_resume(user,ResumeRequest(job_id=guided[1]['id'],experience_ids=[entry['id']]))
     assert text in json.dumps(snapshot['sections'])

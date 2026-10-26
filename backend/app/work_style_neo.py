@@ -104,7 +104,7 @@ def description(mean,guide):
     direction=low if mean<2.5 else high if mean>3.5 else f'a mix between {low} and {high}'
     return {'pattern':'Your responses suggest '+direction+'.','suggestion':tip,'lower_end':low,'upper_end':high}
 
-def score(answers,comparisons):
+def score(answers,comparisons,catalog_data=None):
     validate(answers,comparisons)
     if len(answers)!=120:raise HTTPException(400,'Answer all 120 statements to calculate results. Your saved progress remains available.')
     facets=[]
@@ -118,5 +118,31 @@ def score(answers,comparisons):
         lower,upper=context
         potential,friction,environment=(lower if total/24<2.5 else upper) if not 2.5<=total/24<=3.5 else DOMAIN_MIDDLE[code]
         domains.append({'potential':potential,'friction':friction,'environment':environment,'dimension_id':code,'name':name,'total':total,'minimum':24,'maximum':120,'mean':total/24,**description(total/24,DOMAIN_GUIDANCE[code])})
-    preferences=[dict(p,choice=comparisons[p['id']],selected=p[comparisons[p['id']]]) for p in catalog()['comparisons'] if p['id'] in comparisons]
+    preferences=[dict(p,choice=comparisons[p['id']],selected=p[comparisons[p['id']]]) for p in (catalog_data or catalog())['comparisons'] if p['id'] in comparisons]
     return {'version':REPORT_VERSION,'domains':domains,'facets':facets,'preferences':preferences,'explanation':'Means run from 1 to 5 after reverse scoring. The descriptive middle spans 2.5–3.5; these are response-scale descriptions, not population norms. No score is a percentile, diagnosis, technical-ability measure or hiring prediction. The app’s technical-work guidance is interpretive and has not been validated as a job-performance assessment.'}
+
+# Version only the app-authored interpretation and comparison scenarios. The
+# published 120 item texts, item IDs and scoring key stay unchanged.
+LEGACY_VERSION=VERSION
+LEGACY_CATALOG=catalog()
+_base_score=score
+VERSION='ipip-neo-120-2026-10-25-v2'
+def neutral(text):
+ replacements={'Technical-work':'Work','technical team':'team','technical discussion':'discussion','technical solution':'solution','technical tradeoff':'professional tradeoff','technical performance':'job performance','technical creativity':'professional creativity','technical-ability':'professional-ability','focused implementation':'focused work','shared implementation':'shared work','initial implementation':'initial practical step','implementation task':'work task','data pipeline':'project','code, data and infrastructure changes':'projects and process changes','deployment safeguards':'review safeguards','deployment checklist':'review checklist','a sandbox':'a bounded trial','pipeline or implementation task':'project','technical-work':'work','technical work':'work','technical task':'work task','technical proposal':'proposal','technical ability':'professional ability','a bug fix':'a proposed change','architecture decision':'important decision','cloud workflow':'work process','software':'work','debugging':'problem-solving','code review':'peer review','engineering team':'team'}
+ for a,b in replacements.items():text=text.replace(a,b)
+ return text
+NEW_CATALOG=copy.deepcopy(LEGACY_CATALOG)
+NEW_CATALOG.update(version=VERSION,title='IPIP-NEO-120',guidance_version='cross-discipline-work-v2')
+NEW_CATALOG['attribution']=neutral(NEW_CATALOG['attribution'])
+NEW_CATALOG['comparisons']=[{k:neutral(v) if isinstance(v,str) else v for k,v in p.items()} for p in NEW_CATALOG['comparisons']]
+def catalog():return copy.deepcopy(NEW_CATALOG)
+def catalog_for(version):return copy.deepcopy(LEGACY_CATALOG if version==LEGACY_VERSION else NEW_CATALOG)
+def score(answers,comparisons,catalog_data=None):
+ selected=catalog_data or catalog();value=_base_score(answers,comparisons,selected)
+ if selected['version']==LEGACY_VERSION:return value
+ def transform(v):
+  if isinstance(v,str):return neutral(v)
+  if isinstance(v,list):return [transform(x) for x in v]
+  if isinstance(v,dict):return {k:transform(x) for k,x in v.items()}
+  return v
+ value=transform(value);value['version']='cross-discipline-work-report-v2';return value

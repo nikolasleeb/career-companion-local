@@ -47,8 +47,8 @@ def mutate(user,id,version,answers,page,complete=False,comparisons=None):
         c.execute('BEGIN IMMEDIATE')
         row=db.decode(c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='work_style'",(id,user)).fetchone())
         if not row:raise HTTPException(404,'Reflection attempt not found.')
-        data=row['data'];current=data['catalog_version']==neo.VERSION
-        if data['catalog_version'] not in (VERSION,neo.VERSION):raise HTTPException(409,'This questionnaire version is unavailable. Its history is preserved.')
+        data=row['data'];current=data['catalog_version'] in (neo.VERSION,neo.LEGACY_VERSION)
+        if data['catalog_version'] not in (VERSION,neo.VERSION,neo.LEGACY_VERSION):raise HTTPException(409,'This questionnaire version is unavailable. Its history is preserved.')
         if data['version']!=version:raise HTTPException(409,'This assessment changed in another window. Your typed responses are retained; reload its version before retrying.')
         if data['status']!='draft':raise HTTPException(409,'Completed results are immutable. Start a new assessment for a retake.')
         comparisons=data.get('comparison_answers',{}) if comparisons is None else comparisons
@@ -61,7 +61,7 @@ def mutate(user,id,version,answers,page,complete=False,comparisons=None):
         if current:data['comparison_answers']=comparisons
         if complete:
             if current:
-                report=neo.score(answers,comparisons)
+                report=neo.score(answers,comparisons,neo.catalog_for(data['catalog_version']))
                 data.update(report=report,scores=report['domains'],scoring_key={'version':neo.VERSION,'source_url':neo.SOURCE['source_url']})
             else:
                 data.update(scores=score(answers),scoring_key={'positive':sorted(POSITIVE),'version':VERSION})
@@ -99,12 +99,12 @@ def validate_backup(data):
         validate(data['answers'])
         if data.get('catalog')!=legacy_catalog():raise ValueError()
         if data['status']=='completed' and data['scores']!=score(data['answers']):raise ValueError()
-    elif version==neo.VERSION:
+    elif version in (neo.VERSION,neo.LEGACY_VERSION):
         neo.validate(data['answers'],data.get('comparison_answers',{}))
-        if data.get('catalog')!=neo.catalog():raise ValueError()
+        if data.get('catalog')!=neo.catalog_for(version):raise ValueError()
         if data['status']=='completed':
-            report=neo.score(data['answers'],data.get('comparison_answers',{}))
+            report=neo.score(data['answers'],data.get('comparison_answers',{}),neo.catalog_for(version))
             if data.get('report')!=report or data['scores']!=report['domains']:raise ValueError()
     else:raise ValueError()
     if type(data.get('version'))!=int or data['version']<1:raise ValueError()
-    if type(data.get('page'))!=int or not 0<=data['page']<=(16 if version==neo.VERSION else 4):raise ValueError()
+    if type(data.get('page'))!=int or not 0<=data['page']<=(16 if version in (neo.VERSION,neo.LEGACY_VERSION) else 4):raise ValueError()
