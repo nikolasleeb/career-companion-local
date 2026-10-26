@@ -2,12 +2,12 @@
 
 Career Coach is an account-owned resource for exploring goals and building a practical learning roadmap. It supports multiple saved chats, editable titles/goals, optional time and budget preferences, follow-up questions, roadmap versions and a separate progress checklist. Completed activities never become Profile evidence automatically.
 
-The first screen and all history/progress controls make no AI calls. Plan generation and research refresh are explicit paid actions using the account's existing key and AI settings. A regular follow-up uses local retrieval and the chat's saved research, without another web-search request. Goal and chat changes are free. New research never changes earlier source snapshots or roadmap versions.
+The first screen and all history/progress controls make no AI calls. Editable starters prepare a question without sending it; blank or unfilled starter text cannot initiate AI. Plan generation and research refresh are explicit paid actions using the account's existing key and AI settings. A follow-up uses local retrieval and saved evidence for general advice. Questions requiring current or external facts trigger bounded web research before the final response. Goal and chat changes are free. New research never changes earlier source snapshots or roadmap versions.
 
 ## What the RAG pipeline actually does
 
 1. Read reviewed professional Profile passages and the chat's goal. Private disclosures, Work Styles responses, contact details and unreviewed records are excluded.
-2. On a new plan or explicit refresh, derive public search topics from a curated role/skill vocabulary. Raw Profile text, employer names, contact details and the user's raw goal are not sent to web search.
+2. On a new plan, explicit refresh, or a current/external question, derive public topics from curated role aliases and validated public subjects supplied in the question. Raw Profile text and identifying information are excluded from public queries; user-supplied public event names and official websites are permitted.
 3. Make at most one Responses API research request, with up to four built-in search-tool calls. Fetch at most six cited official public pages with the existing DNS-pinning, redirect, size and private-network protections. Unreadable pages do not establish facts.
 4. Index public editorial guidance and account/chat-owned research passages in SQLite FTS5. Use role aliases, BM25 ranking and a bounded mix of fetched and original guidance passages to select at most twelve chunks before generation. No vector service or embeddings are required for this first version.
 5. Generate a structured response using those chunks, reviewed evidence and bounded relevant conversation context. Validate exact Profile quotes and source passages, attach server-owned source metadata and save the frozen response. Unsupported prices are left unverified. Research older than thirty days is flagged for refresh.
@@ -24,3 +24,5 @@ The application follows a fixed pipeline. It does not run an autonomous tool-sel
 Paid request tokens are scoped to the account and chat and deduplicate repeated starts. Unknown network outcomes are not automatically dispatched again; recovery is read-only. The browser stores action references without the prompt and keeps typed message drafts in account/chat-scoped session storage. Chats retain their complete history while the model sees only bounded relevant context.
 
 Chat, message, plan and research entity records participate in account backup/import/deletion. Imported source material is never added to the shared public index. Original message dates and source/Profile snapshots survive restore; account IDs and record references are remapped. Profile changes flag earlier roadmaps without rewriting them. The hosted education gate, storage quota and existing access controls remain in force.
+
+See [Career Goals and Stop](CAREER_GOALS_AND_STOP.md) for aspiration boundaries, conditional conference research and atomic cancellation behavior.

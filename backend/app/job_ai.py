@@ -162,14 +162,15 @@ def checkpoint(user,id,data):
   write(c,user,'ai_job_match',data,id)
  return not data['cancel_requested']
 @router.post('/matches/{id}/cancel')
-def cancel(id:str,user=Depends(owner)):
- with db.connect() as c:
-  c.execute('BEGIN IMMEDIATE');r=c.execute("SELECT payload FROM entities WHERE id=? AND user_id=? AND kind='ai_job_match'",(id,user)).fetchone()
-  if not r:raise HTTPException(404,'Review not found.')
-  d=json.loads(r[0]);d['cancel_requested']=True
-  from .resume_conversation import write
-  write(c,user,'ai_job_match',d,id)
- return {'message':'Stopping before the next request. Any request already sent may still incur usage.'}
+async def cancel(id:str,user=Depends(owner)):
+ job_results.owned(user,id,'ai_job_match')
+ with db.connect() as c:rows=c.execute("SELECT id,result FROM tasks WHERE user_id=? AND kind='job_ai_match' AND status IN ('queued','running','cancelling')",(user,)).fetchall()
+ for r in rows:
+  inputs=json.loads(r['result'] or '{}').get('inputs',{})
+  if inputs.get('match_id')==id:
+   from .main import cancel_task
+   return await cancel_task(r['id'],{'id':user})
+ return {'message':'This review has already finished. No completed result was removed.'}
 
 async def full_posting(job):
  d=copy.deepcopy(job['data'])
@@ -254,7 +255,7 @@ def install(app,start_task,require_ai):
   previous=db.get(user,id,'ai_job_match')
   if previous and previous['data']['inputs']!=body.model_dump():raise HTTPException(409,'This request token belongs to another review.')
   if not previous:db.save(user,'ai_job_match',{'inputs':body.model_dump(),'search_id':body.search_id,'depth':body.depth,'mode':body.mode,'use_profile':True,'profile_revision':p['revision'],'profile_snapshot':p,'criteria_snapshot':search['data'].get('ai_brief') or search['data'].get('query',{}),'criteria_revision':digest(search['data'].get('query',{})),'assessments':{},'posting_versions':{},'ai_calls':[],'state':'queued','cancel_requested':False,'in_flight':None,'screened_count':0,'detailed_count':0},id)
-  return start_task(user,'job_ai_match',lambda:assess(user,id),{**body.model_dump(),'match_id':id})
+  return start_task(user,'job_ai_match',lambda:assess(user,id),{**body.model_dump(),'match_id':id,**({'_cancel_remove':{'id':id,'updated_at':db.get(user,id,'ai_job_match')['updated_at']}} if not previous else {})})
  @router.post('/matches/{id}/resume')
  async def resume(id:str,request_token:str=Query(default='',min_length=8,max_length=100),user=Depends(owner)):
   require_ai(user)

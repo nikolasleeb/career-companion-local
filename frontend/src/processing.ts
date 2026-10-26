@@ -1,6 +1,6 @@
 import type {TaskStatus} from './taskProgress';
 export type ProcessingEntry=TaskStatus&{id:string;request?:boolean;settled?:boolean;serial:number;label?:string};
-const active=(s:string)=>['queued','running','unknown'].includes(s);
+const active=(s:string)=>['queued','running','cancelling','unknown'].includes(s);
 export function actionLabel(path:string){
  if(/^\/cover-workspaces\/[^/]+\/(?:message|answers\/review)$/.test(path))return 'Reviewing cover-letter answers or changes';
  if(/^\/cover-workspaces\/[^/]+\/questions$/.test(path))return 'Preparing cover-letter questions';
@@ -44,7 +44,7 @@ export class ProcessingStore{
  disconnected(){for(const [id,value] of this.records)if(!value.request||value.settled)this.records.set(id,{...value,connection_lost:true,status:'unknown',checked_at:value.checked_at||new Date().toISOString()});this.emit();}
  async request(path:string,method:string,call:()=>Promise<any>){
   const epoch=this.epoch,write=method!=='GET'&&method!=='HEAD',id='request:'+String(++this.serial),stamp=new Date().toISOString();
-  if(write){this.records.set(id,{id,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
+  if(write&&!path.endsWith('/cancel')){this.records.set(id,{id,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
   try{
    const value=await call();if(epoch!==this.epoch)return value;
    if(write)this.records.delete(id);

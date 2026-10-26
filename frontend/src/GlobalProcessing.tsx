@@ -1,9 +1,12 @@
 import React,{useEffect,useState} from 'react';
+import {createPortal} from 'react-dom';
 import {processing,processingGroups} from './processing';
 import {TaskProgressBanner} from './TaskProgressBanner';
 import {StatusBanner} from './StatusBanner';
 
-export function GlobalProcessing({account,api,busy,error,message,onReconnect,onDismiss}:{account:string;api:(path:string)=>Promise<any>;busy:string;error:string;message:string;onReconnect:()=>Promise<void>;onDismiss:()=>void}){
+export function GlobalProcessing({account,api,busy,error,message,onReconnect,onDismiss}:{account:string;api:(path:string,method?:string,body?:any)=>Promise<any>;busy:string;error:string;message:string;onReconnect:()=>Promise<void>;onDismiss:()=>void}){
+ const [host,setHost]=useState<HTMLElement|null>(null);
+ useEffect(()=>{const update=()=>{const hosts=Array.from(document.querySelectorAll<HTMLElement>('dialog[open] [data-progress-host]'));setHost(hosts.at(-1)||null);};const observer=new MutationObserver(update);observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open']});update();return()=>observer.disconnect();},[]);
  const [entries,setEntries]=useState(processing.snapshot()),[failure,setFailure]=useState(processing.failure),[retry,setRetry]=useState(0),[signIn,setSignIn]=useState(false),[checkingStatus,setCheckingStatus]=useState(false),[recoveryError,setRecoveryError]=useState('');
  useEffect(()=>{
   processing.setOwner(account);let live=true,checking=false,authBlocked=false,timer:ReturnType<typeof setTimeout>|undefined,failures=0;
@@ -19,10 +22,11 @@ export function GlobalProcessing({account,api,busy,error,message,onReconnect,onD
  },[account,retry]);
  const {confirmed,uncertain}=processingGroups(entries),recover=!!uncertain.length||signIn;
  async function reconnect(){setCheckingStatus(true);setRecoveryError('');try{await onReconnect();setSignIn(false);setRetry(v=>v+1);}catch(e){setSignIn([401,403].includes((e as any)?.status));setRecoveryError((e as Error).message);}finally{setCheckingStatus(false);}}
- return <div className={entries.length||busy||signIn?'global-processing active':'global-processing'}>
+ const panel=<div className={entries.length||busy||signIn?'global-processing active':'global-processing'}>
   {confirmed.length>1&&<p className="small processing-count">{confirmed.length} actions in progress</p>}
-  {confirmed.map(value=><TaskProgressBanner key={value.id} task={value}/>)}
+  {confirmed.map(value=><TaskProgressBanner key={value.id} task={value} onStop={async()=>{const result=await api('/tasks/'+encodeURIComponent(value.id)+'/cancel','POST',{});processing.update(result);if(result.already_finished)await onReconnect();}}/>)}
   {recover&&<div className="processing-recovery" role="status"><strong>{signIn?'Sign in to reconnect':'Status connection lost'}</strong><p>{signIn?'Your sign-in needs renewing. Open sign-in in a separate tab, then return here.':'Recent requests could not be confirmed. They may have finished or may still be running.'} Keep this tab open to preserve unsent changes. Check saved status before sending another request.</p><div className="card-actions"><a href="/" target="_blank" rel="noopener noreferrer">Sign in in a new tab ↗</a><button type="button" className="button secondary" disabled={checkingStatus} onClick={reconnect}>{checkingStatus?'Checking saved status…':'Check saved status · no new AI request'}</button></div>{recoveryError&&<p>{recoveryError}</p>}</div>}
   <StatusBanner busy={entries.length||signIn?'':busy} error={error||failure} message={message} onDismiss={()=>{processing.clearFailure();onDismiss();}}/>
  </div>;
+ return host?createPortal(panel,host):panel;
 }

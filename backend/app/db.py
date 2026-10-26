@@ -16,12 +16,14 @@ def uid():
 def connect():
     with storage.guard():
         config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(config.DB_PATH, timeout=20)
+        from . import task_atomic
+        conn = sqlite3.connect(config.DB_PATH, timeout=20,factory=task_atomic.Connection)
         conn.row_factory = sqlite3.Row
         conn.execute('PRAGMA foreign_keys=ON')
         conn.execute('PRAGMA busy_timeout=20000')
         try:
             storage.configure(conn)
+            task_atomic.attach(conn)
             yield conn
             storage.validate_commit(conn)
             conn.commit()
@@ -62,7 +64,10 @@ def init():
         private_answers.init(c)
         private_profile.init(c)
         application_agent.init(c)
-        c.execute("UPDATE tasks SET status='interrupted',error='The application restarted. Your saved inputs remain available; retry the action.',updated_at=? WHERE status IN ('queued','running')", (now(),))
+        from . import task_atomic
+        task_atomic.init(c)
+        c.execute("UPDATE tasks SET status='interrupted',error='The application restarted. Your saved inputs remain available; retry the action.',updated_at=? WHERE status IN ('queued','running','cancelling')", (now(),))
+        c.execute('DELETE FROM cc_task_stage')
         c.execute("UPDATE entities SET payload=json_set(payload,'$.state','interrupted','$.error','Server restarted. Completed review batches are saved; explicitly resume remaining work.'),updated_at=? WHERE kind='ai_job_match' AND json_extract(payload,'$.state') IN ('queued','running')",(now(),))
         c.execute("DELETE FROM evidence_fts WHERE user_id='public'")
         for passage in json.loads((config.CONTENT_DIR / 'guidance.json').read_text()):

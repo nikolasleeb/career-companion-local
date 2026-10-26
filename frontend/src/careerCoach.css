@@ -5,3 +5,5 @@
 .coach-goal .coach-version{white-space:nowrap;flex-shrink:0}.coach-roadmap>.section-header{display:block}.coach-roadmap>.section-header>label{margin-top:14px}.coach-roadmap>.section-header select{max-width:100%}
 
 .coach-messages{max-height:72vh;overflow-y:auto;overscroll-behavior:contain;padding-right:5px}.coach-plan-context{font-size:.85rem;margin:16px 0;color:var(--muted)}.coach-plan-context summary{cursor:pointer;font-weight:600}.coach-plan-context p{line-height:1.6}@media(max-width:800px){.coach-messages{max-height:65vh}}
+
+.coach-starters{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}.career-goals-profile{margin:24px 0}

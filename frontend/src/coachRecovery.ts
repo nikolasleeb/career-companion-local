@@ -11,13 +11,13 @@ export async function coachAction(account:string,chat:string,body:any,call:any,o
  try{
   if(!saved.id){const initial=await call(path,'POST',{...body,request_token:saved.token});if(!initial.task_id)throw new ApiError('The coaching request could not be confirmed. Check its saved status.',502);saved.id=initial.task_id;storage.setItem(key(account,chat),JSON.stringify(saved));}
   const result=await pollTask(saved.id,call,undefined,1200,onUpdate);clearCoach(account,chat,storage);return result;
- }catch(e){if(e instanceof ApiError&&[400,404,409,422].includes(e.status))clearCoach(account,chat,storage);throw e;}
+ }catch(e){if(e instanceof ApiError&&[400,404,409,422,499].includes(e.status))clearCoach(account,chat,storage);throw e;}
 }
 export async function recoverCoach(account:string,chat:string,call:any,onUpdate?:any,storage:Storage=localStorage){
  const saved=pendingCoach(account,chat,storage);if(!saved)throw Error('No unconfirmed coaching request is saved.');
  if(!saved.id){const value=await call('/career-coach/actions/'+saved.token);saved.id=value.task_id;storage.setItem(key(account,chat),JSON.stringify(saved));}
  try{const result=await pollTask(saved.id,call,undefined,1200,onUpdate);clearCoach(account,chat,storage);return result;}
- catch(e){if(e instanceof ApiError&&[400,422].includes(e.status))clearCoach(account,chat,storage);throw e;}
+ catch(e){if(e instanceof ApiError&&[400,422,499].includes(e.status))clearCoach(account,chat,storage);throw e;}
 }
 export function initialCoachDraft(account:string,id:string,fallback:string,storage:Storage=sessionStorage){try{return storage.getItem('career-coach-draft:'+account+':'+id)??fallback;}catch{return fallback;}}
 

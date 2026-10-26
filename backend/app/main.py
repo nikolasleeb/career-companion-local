@@ -16,7 +16,7 @@ from . import storage
 from . import config, db, auth, ai, documents, integrations, resume_data, resume_parser, transcript_parser, credentials, ai_settings, applications, resume_builder, job_parser, optimization, resume_conversation, cover_letters, guidance, cover_context, profile_answers, question_answers, onboarding, certifications, cost_history, updates
 from .models import *
 from .network import ServiceError, public_fetch, html_job
-from . import task_progress, posting_extraction, job_alerts, job_search, job_results, job_ai, job_cache, career_coach
+from . import task_progress, posting_extraction, job_alerts, job_search, job_results, job_ai, job_cache, career_coach, task_atomic, career_goals
 
 workers={}
 
@@ -106,12 +106,31 @@ def capabilities_for(user):
 def require_ai(user):
     if not credentials.effective(user): raise HTTPException(503,'Add your OpenAI API key in Settings to enable AI. Manual records and exports remain available.')
 
+@task_atomic.independent
 def finish_task(task_id,user,status,*,result=None,saved_inputs=None,error=None):
     stamp=db.now()
     with db.connect() as c:
-        row=c.execute('SELECT result FROM tasks WHERE id=? AND user_id=?',(task_id,user)).fetchone()
+        row=c.execute('SELECT result,status FROM tasks WHERE id=? AND user_id=?',(task_id,user)).fetchone()
         if not row:return
+        if row['status'] in ('completed','cancelled'):return
+        if row['status']=='cancelling':status='cancelled';result=None;error='Stopped. Previous saved results are unchanged; incurred usage remains recorded.'
+        if status=='completed':task_atomic.publish(c,user,task_id)
+        else:
+            if status=='failed':
+                for staged in c.execute("SELECT after_row FROM cc_task_stage WHERE task_id=? AND table_name='entities'",(task_id,)).fetchall():
+                    item=json.loads(staged[0]) if staged[0] else {}
+                    if item.get('kind')=='ai_job_match':
+                        data=json.loads(item['payload']);base=c.execute("SELECT payload FROM entities WHERE id=? AND user_id=?",(item['id'],user)).fetchone()
+                        if base:
+                            original=json.loads(base[0]);original.update(state='failed',in_flight=data.get('in_flight'),error=error or 'Review failed; previous results are unchanged.')
+                            c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?',(json.dumps(original),stamp,item['id']))
+            task_atomic.discard(c,task_id)
         payload=json.loads(row['result'] or '{}')
+        if status=='cancelled':
+            inputs=payload.get('_task_inputs',payload.get('inputs',{})) or {}
+            cleanup=inputs.get('_cancel_remove')
+            if cleanup:
+                c.execute('DELETE FROM entities WHERE id=? AND user_id=? AND updated_at=?',(cleanup['id'],user,cleanup['updated_at']))
         progress=task_progress.finish_payload(payload,status,stamp)
         if status=='completed':
             payload={'_task_inputs':saved_inputs,'_task_result':result} if saved_inputs else result
@@ -125,6 +144,7 @@ async def run_task(task_id,user,work):
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
         saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
+    atomic_token=task_atomic.bind(user,task_id)
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
     progress_token=task_progress.bind(user,task_id,row['kind']) if row and row['kind'] in task_progress.KINDS else None
     try:
@@ -134,6 +154,8 @@ async def run_task(task_id,user,work):
     except asyncio.TimeoutError:
         limit='sixty' if row and row['kind']=='job_ai_match' else 'twenty' if row and row['kind'] in ('analysis','career_coach') else 'ten'
         finish_task(task_id,user,'failed',error='This action reached the '+limit+'-minute limit. Saved inputs remain available for retry.')
+    except task_atomic.Stopped:
+        finish_task(task_id,user,'cancelled',error='Stopped. Previous saved results are unchanged.')
     except asyncio.CancelledError:
         finish_task(task_id,user,'interrupted',error='The operation was interrupted. Saved inputs remain available for retry.')
         raise
@@ -143,6 +165,7 @@ async def run_task(task_id,user,work):
     finally:
         if progress_token is not None:task_progress.reset(progress_token)
         ai.reset_user_context(context_token)
+        task_atomic.reset(atomic_token)
         workers.pop(task_id,None)
 
 def start_task(user,kind,work,inputs=None):
@@ -156,20 +179,20 @@ def start_task(user,kind,work,inputs=None):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
                 if original.get('request_token')==inputs['request_token']:
-                    if original!=inputs:raise HTTPException(409,'This request belongs to different inputs. Check its original result first.')
+                    if {k:v for k,v in original.items() if not k.startswith('_')}!={k:v for k,v in inputs.items() if not k.startswith('_')}:raise HTTPException(409,'This request belongs to different inputs. Check its original result first.')
                     return {'task_id':previous['id'],'status':previous['status']}
         if kind=='job_ai_match' and inputs:
-            for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? AND status IN ('queued','running')",(user,kind)):
+            for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? AND status IN ('queued','running','cancelling')",(user,kind)):
                 original=json.loads(previous['result'] or '{}').get('inputs',{})
                 if original.get('match_id')==inputs.get('match_id'):return {'task_id':previous['id'],'status':previous['status']}
         if kind=='project_analysis' and inputs:
-            for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? AND status IN ('queued','running')",(user,kind)):
+            for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? AND status IN ('queued','running','cancelling')",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 if saved.get('inputs',{}).get('snapshot_id')==inputs.get('snapshot_id'):
                     return {'task_id':previous['id'],'status':previous['status']}
-        running=c.execute("SELECT COUNT(*) FROM tasks WHERE user_id=? AND status IN ('queued','running')",(user,)).fetchone()[0]
-        discovery=c.execute("SELECT 1 FROM tasks WHERE user_id=? AND kind='discovery' AND status IN ('queued','running')",(user,)).fetchone()
-        total=c.execute("SELECT COUNT(*) FROM tasks WHERE status IN ('queued','running')").fetchone()[0]
+        running=c.execute("SELECT COUNT(*) FROM tasks WHERE user_id=? AND status IN ('queued','running','cancelling')",(user,)).fetchone()[0]
+        discovery=c.execute("SELECT 1 FROM tasks WHERE user_id=? AND kind='discovery' AND status IN ('queued','running','cancelling')",(user,)).fetchone()
+        total=c.execute("SELECT COUNT(*) FROM tasks WHERE status IN ('queued','running','cancelling')").fetchone()[0]
         if total>=config.GLOBAL_TASK_LIMIT:raise HTTPException(503,'The server is busy. Wait for a running task to finish.')
         if running>=2 or (kind=='discovery' and discovery): raise HTTPException(409,'An operation is already running. Wait for it to finish before starting another.')
         c.execute('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?)',(task_id,user,kind,'queued',json.dumps({'inputs':inputs}) if inputs else None,None,stamp,stamp))
@@ -294,6 +317,7 @@ from . import project_routes
 project_routes.install(app,start_task,require_ai)
 job_ai.install(app,start_task,require_ai)
 career_coach.install(app,start_task,require_ai)
+app.include_router(career_goals.router)
 
 @app.get('/api/profile-evidence')
 def confirmed_profile_evidence(user=Depends(auth.current)):
@@ -354,8 +378,30 @@ def application_workflow(entity_id:str,body:ApplicationWorkflowUpdate,user=Depen
 def active_tasks(user=Depends(auth.current)):
     # Metadata only: no input text, provider bodies, artifacts or result records.
     with db.connect() as c:
-        rows=c.execute("SELECT id,kind,status,result,created_at,updated_at FROM tasks WHERE user_id=? AND status IN ('queued','running') ORDER BY created_at",(user['id'],)).fetchall()
-    return [{**{k:row[k] for k in ('id','kind','status','created_at','updated_at')},'progress':json.loads(row['result'] or '{}').get('_task_progress')} for row in rows]
+        rows=c.execute("SELECT id,kind,status,result,created_at,updated_at FROM tasks WHERE user_id=? AND status IN ('queued','running','cancelling') ORDER BY created_at",(user['id'],)).fetchall()
+    values=[{**{k:row[k] for k in ('id','kind','status','created_at','updated_at')},'progress':json.loads(row['result'] or '{}').get('_task_progress'),'can_cancel':True} for row in rows]
+    with db.connect() as c:assist=c.execute("SELECT id,state FROM cc_ai_requests WHERE user_id=? AND state IN ('dispatching','cancelling')",(user['id'],)).fetchall()
+    return values+[{'id':'assistant:'+r['id'],'kind':'application_agent','status':'cancelling' if r['state']=='cancelling' else 'running','label':'Application answer assistance','can_cancel':True} for r in assist]
+
+@app.post('/api/tasks/{task_id}/cancel')
+async def cancel_task(task_id:str,user=Depends(auth.current)):
+    if task_id.startswith('assistant:'):
+        from . import assistant_ai
+        return await assistant_ai.cancel(user['id'],task_id.removeprefix('assistant:'))
+    with db.connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        row=c.execute('SELECT status FROM tasks WHERE id=? AND user_id=?',(task_id,user['id'])).fetchone()
+        if not row:raise HTTPException(404,'Task not found.')
+        if row['status'] not in ('queued','running','cancelling'):return {'id':task_id,'status':row['status'],'already_finished':True}
+        c.execute("UPDATE tasks SET status='cancelling',updated_at=? WHERE id=?",(db.now(),task_id))
+    worker=workers.get(task_id)
+    if worker:
+        worker.cancel();await asyncio.sleep(0)
+        if worker.done():
+            finish_task(task_id,user['id'],'cancelled',error='Stopped. Previous saved results are unchanged.');workers.pop(task_id,None)
+    else:finish_task(task_id,user['id'],'cancelled',error='Stopped. Previous saved results are unchanged.')
+    with db.connect() as c:state=c.execute('SELECT status FROM tasks WHERE id=?',(task_id,)).fetchone()[0]
+    return {'id':task_id,'status':state,'can_cancel':state=='cancelling'}
 
 @app.get('/api/tasks/{task_id}')
 def get_task(task_id:str,user=Depends(auth.current)):
@@ -366,6 +412,7 @@ def get_task(task_id:str,user=Depends(auth.current)):
     inputs=payload.get('_task_inputs',payload.get('inputs',{}))
     if inputs.get('operation') in ('document_upload','posting_upload') and db.get(user['id'],inputs.get('job_id',''),'job'):
         result['job_id']=inputs['job_id']
+    result['can_cancel']=result['status'] in ('queued','running','cancelling')
     result['progress']=result['result'].pop('_task_progress',None) if isinstance(result['result'],dict) else None
     if isinstance(result['result'],dict) and '_task_result' in result['result']:result['result']=result['result']['_task_result']
     if isinstance(result.get('result'),dict) and result['result'].get('kind')=='search':result['result']=job_results.public_search(user['id'],result['result'])
@@ -824,9 +871,10 @@ async def resume_conversation_approve(entity_id:str,body:FactApproval,user=Depen
     record=resume_conversation.require(user['id'],entity_id,'resume_conversation')
     update=body.action=='approve' and body.update_draft and bool(record['data'].get('current_revision_id'))
     if update:require_ai(user['id'])
-    state=resume_conversation.approve(user['id'],entity_id,body)
-    if not update:return {'cached':True,'result':state}
-    async def work():return await resume_conversation.build(user['id'],entity_id,state['data']['version'],body.mode)
+    if not update:return {'cached':True,'result':resume_conversation.approve(user['id'],entity_id,body)}
+    async def work():
+        state=resume_conversation.approve(user['id'],entity_id,body)
+        return await resume_conversation.build(user['id'],entity_id,state['data']['version'],body.mode)
     return start_task(user['id'],'resume_guided',work,{'conversation_id':entity_id,**body.model_dump()})
 
 @app.post('/api/resume-conversations/{entity_id}/adopt')
@@ -1132,7 +1180,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1180,6 +1228,8 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                     if attachment and (kinds.get(attachment)!='document' or by_id[attachment]['data'].get('purpose')!='certificate' or attachment not in payload.get('files',{})): raise ValueError()
             job_ai.validate_backup(record,kinds,by_id,payload.get('files',{}))
             career_coach.validate_backup(record,kinds,by_id)
+            if record['kind']=='career_goals':
+                career_goals.Change.model_validate({'text':record['data']['text'],'expected_revision':record['data']['revision']})
             if record['kind']=='board': Board.model_validate(record['data'])
             if record['kind']=='job_search_preferences':job_alerts.Preferences.model_validate(record['data'])
             if record['kind']=='job_alert':job_alerts.Schedule.model_validate(record['data'])
@@ -1291,6 +1341,9 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             saved=db.save(user['id'],record['kind'],restored,ids[record['id']])
             if record['kind']=='job':
                 with db.connect() as c:job_cache.bind(c,user['id'],saved)
+        elif record['kind']=='career_goals':
+            current_goals=career_goals.read(user['id'])
+            if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data']['text'],expected_revision=current_goals['revision']))
         elif record['kind'] in career_coach.KINDS:
             saved=db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
             stamp=integrations.parse_date(record.get('created_at'))

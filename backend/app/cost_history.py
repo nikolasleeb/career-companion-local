@@ -1,3 +1,4 @@
+from .task_atomic import independent
 """Account-private provider usage ledger. No prompts, outputs, keys or billing API access."""
 import hashlib
 import json
@@ -81,6 +82,7 @@ def metadata_key(meta):
     return digest([meta.get('model'),meta.get('generated_at'),normalized(meta.get('usage')),meta.get('estimated_token_cost_usd'),meta.get('pricing_date')])
 
 
+@independent
 def write(user,data,identity=None):
     clean=UsageEvent.model_validate(data).model_dump()
     identity=identity or digest([user,clean['event_key']])[:32]
@@ -145,6 +147,7 @@ def finish(user,event,body,response=None,http_status=200,status=None):
     return write(user,{**event['data'],**counts,'model':model,'requested_service_tier':requested,'service_tier':actual,'event_key':key,'status':state,'usage_reported':reported,'web_search_calls':web,'token_cost_usd':token,'tool_cost_usd':tools,'estimated_cost_usd':round(sum(known),6) if (token is not None and tools is not None) or any(v>0 for v in known) else None,'partial':token is None or tools is None,'rates':snapshot,'notes':notes},event['id'])
 
 
+@independent
 def link_metadata(user,event,meta):
     if not event:return
     with db.connect() as c:

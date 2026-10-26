@@ -58,3 +58,8 @@ test('uncertain writes are separated from active work and cleared by read-only r
  store.update(task('real'));assert.equal(processingGroups(store.snapshot()).confirmed.length,1);
  store.reconcile([],store.serial);assert.equal(store.snapshot().length,0);assert.equal(posts,2);
 });
+test('a Stop POST does not create a second progress entry',async()=>{
+ const store=new ProcessingStore();store.update({...task('one'),can_cancel:true});const stop=deferred();const pending=store.request('/tasks/one/cancel','POST',()=>stop.promise);
+ assert.equal(store.snapshot().length,1);stop.resolve({id:'one',status:'cancelling'});await pending;
+ store.update({id:'one',status:'cancelling'});assert.equal(store.snapshot().length,1);store.update({id:'one',status:'cancelled'});assert.equal(store.snapshot().length,0);assert.equal(store.failure,'');
+});

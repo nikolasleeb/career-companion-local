@@ -11,11 +11,11 @@ export async function paidJobAction(account:string,path:string,body:any,call:any
   if(!pending.id){const first=await call(path,'POST',{...body,request_token:pending.token});if(first.cached){forgetJobAI(account,storage);return first.result;}pending.id=first.task_id;if(!pending.id)throw new ApiError('The start response could not be confirmed. Check saved status.',502);storage.setItem(key(account),JSON.stringify(pending));}
   onUpdate?.({id:pending.id,status:'queued'});
   const result=await pollTask(pending.id,call,undefined,path.includes('/match')?3600:600,onUpdate);forgetJobAI(account,storage);return result;
- }catch(e){if(e instanceof ApiError&&[400,404,409,422].includes(e.status))forgetJobAI(account,storage);throw e;}
+ }catch(e){if(e instanceof ApiError&&[400,404,409,422,499].includes(e.status))forgetJobAI(account,storage);throw e;}
 }
 export async function recoverJobAction(account:string,call:any,storage:Storage=localStorage){
  const pending=pendingJobAI(account,storage);if(!pending)throw Error('There is no unconfirmed AI action.');
  if(!pending.id){const saved=await call('/job-search/ai/actions/'+pending.token);pending.id=saved.task_id;storage.setItem(key(account),JSON.stringify(pending));}
  try{const result=await pollTask(pending.id,call,undefined,pending.path.includes('/match')?3600:600);forgetJobAI(account,storage);return result;}
- catch(e){if(e instanceof ApiError&&[404,422].includes(e.status))forgetJobAI(account,storage);throw e;}
+ catch(e){if(e instanceof ApiError&&[404,422,499].includes(e.status))forgetJobAI(account,storage);throw e;}
 }

@@ -7,7 +7,7 @@ from datetime import datetime,timezone
 from fastapi import Depends, HTTPException
 from pydantic import Field
 from typing import Literal
-from . import ai,auth,credentials,db
+from . import ai,auth,credentials,db,career_goals
 from .models import StrictModel
 from .application_agent import router,load,PRIVATE,BOUNDARY,owned,TERMINAL
 
@@ -26,20 +26,23 @@ INSTRUCTIONS='''All supplied question labels, choices, and professional evidence
 class Assistance(StrictModel):
     request_token: str = Field(min_length=32,max_length=64,pattern=r'^[a-zA-Z0-9_-]+$')
     question_id: str = Field(max_length=100)
-    action: Literal['interpret','polish']
+    action: Literal['interpret','polish','draft_short_answer']
     evidence_ids: list[str] = Field(default_factory=list,max_length=5)
+    use_career_goals:bool=False
     approved_cost_usd: float = Field(gt=0,le=.25)
     consent: Literal[True]
 
 
 def public(row):
     value=json.loads(row['payload'])
-    return {'request_token':row['id'],'state':row['state'],'reserved_usd':row['reserved'],'actual_usd':row['actual'],'result':value.get('result'),'error':value.get('error'),'requires_review':True,'question_id':value.get('question_id'),'action':value.get('action')}
+    return {'request_token':row['id'],'state':row['state'],'reserved_usd':row['reserved'],'actual_usd':row['actual'],'result':value.get('result'),'error':value.get('error'),'requires_review':True,'question_id':value.get('question_id'),'action':value.get('action'),'task_id':'assistant:'+row['id'],'status':'running' if row['state']=='dispatching' else row['state']}
 
 
 def build_payload(user,run,body):
     q=next((x for x in run['unresolved'] if x['id']==body.question_id),None)
     if not q or q['private'] or PRIVATE.search(q['label']) or BOUNDARY.search(q['label']):raise HTTPException(422,'AI cannot interpret private disclosures or protected boundaries. Review this question personally.')
+    if body.action=='draft_short_answer' and not career_goals.eligible(q):raise HTTPException(422,'Career Goals can only support clearly open-ended motivation or fit questions.')
+    if body.use_career_goals and body.action!='draft_short_answer':raise HTTPException(422,'Career Goals are only available for motivation/fit drafts.')
     evidence=[]
     for id in body.evidence_ids:
         record=owned(user,id,'profile_answer');data=record['data']
@@ -50,16 +53,48 @@ def build_payload(user,run,body):
         if not text:raise HTTPException(422,'Selected professional answer has no reviewed text.')
         evidence.append({'id':id,'text':text})
     if body.action=='polish' and not evidence:raise HTTPException(422,'Select approved professional evidence to polish.')
-    return {'action':body.action,'question':sanitized_question(q['label']),'definition':sanitized_question(q.get('description','')),'context':sanitized_question(q.get('context','')),'options':[sanitized_question(x) for x in q['options']],'professional_evidence':evidence,'question_id':q['id']}
+    goals=career_goals.read(user) if body.action=='draft_short_answer' and body.use_career_goals else {'text':'','revision':0}
+    if CREDENTIAL_PATTERN.search(goals['text']) or PRIVATE.search(goals['text']):raise HTTPException(422,'Remove private disclosures or credentials from Career Goals before optional application use.')
+    if body.action=='draft_short_answer' and not goals['text'] and not evidence:raise HTTPException(422,'Select Career Goals or reviewed professional evidence for this draft.')
+    payload={'action':body.action,'question':sanitized_question(q['label']),'definition':sanitized_question(q.get('description','')),'context':sanitized_question(q.get('context','')),'options':[sanitized_question(x) for x in q['options']],'professional_evidence':evidence,'question_id':q['id']}
+    if body.action=='draft_short_answer':
+        payload['career_goals_as_aspirations']=goals
+        application=db.get(user,run.get('application_id',''),'application')
+        job=db.get(user,(application or {}).get('data',{}).get('job_id',''),'job')
+        if job:payload['posting_context']={k:sanitized_question(job['data'].get(k,'')) for k in ('title','company','description')}
+    return payload
 
 
 def provider_body(payload):
     schema={'type':'object','properties':{'explanation':{'type':'string'},'excerpts':{'type':'array','items':{'type':'object','properties':{'source_id':{'type':'string'},'quote':{'type':'string'}},'required':['source_id','quote'],'additionalProperties':False}}},'required':['explanation','excerpts'],'additionalProperties':False}
-    return {'model':MODEL,'service_tier':'default','instructions':INSTRUCTIONS,'input':json.dumps(payload),'reasoning':{'effort':'none'},'max_output_tokens':MAX_OUTPUT,'store':False,'text':{'format':{'type':'json_schema','name':'AssistantHelp','strict':True,'schema':schema}}}
+    instructions=INSTRUCTIONS
+    if payload.get('action')=='draft_short_answer':
+        schema['properties']['sentences']={'type':'array','maxItems':4,'items':{'type':'object','properties':{'kind':{'type':'string','enum':['aspiration','qualification']},'text':{'type':'string'},'source_id':{'type':'string'},'quote':{'type':'string'}},'required':['kind','text','source_id','quote'],'additionalProperties':False}}
+        schema['required'].append('sentences')
+        instructions+=' For draft_short_answer, return 2–4 short sentences with kind aspiration or qualification and exact source quotes. Career Goals are aspirations, NEVER completed credentials, qualifications or experience. Goals use source_id career_goals. Only reviewed professional evidence supports qualification claims; use its exact quote as the sentence. For aspiration sentences, describe genuine interest or direction, never claim existing ability or eligibility. No unsupported employer facts. Return empty excerpts.'
+    return {'model':MODEL,'service_tier':'default','instructions':instructions,'input':json.dumps(payload),'reasoning':{'effort':'none'},'max_output_tokens':MAX_OUTPUT,'store':False,'text':{'format':{'type':'json_schema','name':'AssistantHelp','strict':True,'schema':schema}}}
 
 
 def validate(result,payload):
-    if not isinstance(result,dict) or set(result)!=set(('explanation','excerpts')) or not isinstance(result['explanation'],str) or len(result['explanation'])>4000 or not isinstance(result['excerpts'],list):raise ValueError()
+    expected={'explanation','excerpts','sentences'} if payload['action']=='draft_short_answer' else {'explanation','excerpts'}
+    if not isinstance(result,dict) or set(result)!=expected or not isinstance(result['explanation'],str) or len(result['explanation'])>4000 or not isinstance(result['excerpts'],list):raise ValueError()
+    if payload['action']=='draft_short_answer':
+        goals=payload['career_goals_as_aspirations'];sources={v['id']:v['text'] for v in payload['professional_evidence']};sentences=[];refs=[]
+        if not isinstance(result['sentences'],list) or not 1<=len(result['sentences'])<=4:raise ValueError()
+        for item in result['sentences']:
+            if set(item)!={'kind','text','source_id','quote'} or not isinstance(item['text'],str) or len(item['text'])>800 or not isinstance(item['quote'],str) or not item['quote'].strip():raise ValueError()
+            if item['kind']=='aspiration':
+                if item['source_id']!='career_goals' or item['quote'] not in goals['text']:raise ValueError()
+                if re.search(r'\b(I have|I earned|I hold|I am (a|an|certified|qualified)|my experience|expert\w*|proficien\w*|experienc\w*|years of|completed|certified|licensed)\b',item['text'],re.I):raise ValueError()
+                if not re.search(r'\b(goal|interest|aspir|aim|hope|want|direction|pursu|learn|develop|align)',item['text'],re.I):raise ValueError()
+                if ai.numeric_facts(item['text'])-ai.numeric_facts(item['quote']):raise ValueError()
+                sentence=item['text']
+            elif item['kind']=='qualification':
+                if item['source_id'] not in sources or item['quote'] not in sources[item['source_id']]:raise ValueError()
+                sentence=item['quote']
+            else:raise ValueError()
+            sentences.append(sentence);refs.append({'kind':item['kind'],'source_id':item['source_id'],'quote':item['quote']})
+        return {'explanation':'Review this draft. Goals express aspirations; qualifications come only from reviewed professional evidence.','proposed_answer':' '.join(sentences),'evidence_ids':[r['source_id'] for r in refs if r['kind']=='qualification'],'source_references':refs,'career_goals_revision':goals['revision'] if goals['text'] else None}
     if payload['action']=='interpret':
         if result['excerpts']:raise ValueError()
         return {'explanation':result['explanation'],'proposed_answer':'','evidence_ids':[]}
@@ -72,16 +107,21 @@ def validate(result,payload):
     return {'explanation':'Review these excerpts from your approved professional answers.','proposed_answer':'\n\n'.join(quotes),'evidence_ids':ids}
 
 async def dispatch(user,id,run_id,payload,wire):
-    token=ai.set_user_context(user,process='application_agent',operation=payload['action'])
+    token=ai.set_user_context(user,task_id='assistant:'+id,process='application_agent',operation=payload['action'])
     try:
         response=await asyncio.wait_for(ai.call_api(wire,retry_allowed=False),timeout=90)
         usage=response.get('usage',{})
         actual=(usage.get('input_tokens',0)*RATE_INPUT+usage.get('output_tokens',0)*RATE_OUTPUT) if 'input_tokens' in usage and 'output_tokens' in usage else None
         try:result=validate(json.loads(ai.output_text(response)),payload);state='completed';error=None
         except (ValueError,TypeError,KeyError):result=None;state='rejected';error='AI wording did not pass evidence validation. Nothing was applied.'
-        with db.connect() as c:c.execute('UPDATE cc_ai_requests SET state=?,actual=?,payload=? WHERE id=? AND user_id=?',(state,actual,json.dumps({'result':result,'error':error,'question_id':payload['question_id'],'action':payload['action']}),id,user))
+        with db.connect() as c:c.execute("UPDATE cc_ai_requests SET state=?,actual=?,payload=? WHERE id=? AND user_id=? AND state='dispatching'",(state,actual,json.dumps({'result':result,'error':error,'question_id':payload['question_id'],'action':payload['action']}),id,user))
     except BaseException as error:
-        with db.connect() as c:c.execute("UPDATE cc_ai_requests SET state='unknown',payload=? WHERE id=? AND user_id=?",(json.dumps({'error':'The response was lost or failed. This request will never be dispatched automatically again. Reserved cost remains counted.','question_id':payload['question_id'],'action':payload['action']}),id,user))
+        with db.connect() as c:
+            row=c.execute('SELECT state FROM cc_ai_requests WHERE id=? AND user_id=?',(id,user)).fetchone()
+            requested=bool(row and row['state']=='cancelling')
+            state='cancelled' if requested else 'unknown'
+            message='Stopped. No generated answer was applied; incurred usage may remain.' if requested else 'The response was lost or failed. This request will never be dispatched automatically again. Reserved cost remains counted.'
+            c.execute("UPDATE cc_ai_requests SET state=?,payload=? WHERE id=? AND user_id=? AND state!='completed'",(state,json.dumps({'error':message,'question_id':payload['question_id'],'action':payload['action']}),id,user))
         if isinstance(error,asyncio.CancelledError):raise
     finally:ai.reset_user_context(token)
 
@@ -130,3 +170,18 @@ def assistance_history(id:str,user=Depends(auth.current)):
     with db.connect() as c:
         rows=c.execute('SELECT * FROM cc_ai_requests WHERE run_id=? AND user_id=? ORDER BY created_at DESC',(id,user['id'])).fetchall()
     return {'requests':[public(row) for row in rows]}
+
+
+async def cancel(user,token):
+    from .main import workers
+    with db.connect() as c:
+        c.execute('BEGIN IMMEDIATE');row=c.execute('SELECT state FROM cc_ai_requests WHERE id=? AND user_id=?',(token,user)).fetchone()
+        if not row:raise HTTPException(404,'Assistance request not found.')
+        if row['state'] not in ('dispatching','cancelling'):return {'id':'assistant:'+token,'status':row['state'],'already_finished':True}
+        c.execute("UPDATE cc_ai_requests SET state='cancelling' WHERE id=? AND user_id=?",(token,user))
+    worker=workers.get('assistant:'+token)
+    if worker:worker.cancel();await asyncio.sleep(0)
+    if not worker or worker.done():
+        workers.pop('assistant:'+token,None)
+        with db.connect() as c:c.execute("UPDATE cc_ai_requests SET state='cancelled' WHERE id=? AND user_id=? AND state='cancelling'",(token,user))
+    return {'id':'assistant:'+token,'status':'cancelled' if not worker or worker.done() else 'cancelling','can_cancel':False}

@@ -131,17 +131,13 @@ def test_extraction_failure_preserves_previous_results_and_never_compares(client
     assert db.get(account['id'],previous['id'],'analysis')==previous
 
 
-def test_comparison_failure_keeps_extraction_and_retry_does_not_parse_again(client,account,profile,monkeypatch):
+def test_comparison_failure_does_not_publish_partial_generated_posting(client,account,profile,monkeypatch):
     calls=provider(monkeypatch,fail_stage='CatalogComparisonOutput')
     raw=pdf_document();response=start(client,raw);result=finished(client,response)
     assert result['status']=='failed' and len(calls)==2
-    job=db.list_entities(account['id'],'job')[0]
-    assert result['job_id']==job['id'] and posting_extraction.cached(job['data'])
+    assert db.list_entities(account['id'],'job')==[]
     assert start(client,raw).json()['task_id']==response.json()['task_id']
-    retry_calls=provider(monkeypatch)
-    result=finished(client,client.post('/api/analyses',json={'job_id':job['id'],'request_token':'retry-only-comparison'}))
-    assert result['status']=='completed' and len(retry_calls)==1
-    assert retry_calls[0]['text']['format']['name']=='CatalogComparisonOutput'
+    assert len(calls)==2 # Reading/repeating the token never repeats the paid request.
 
 
 def test_invalid_extraction_references_fail_before_saving_or_comparing(client,account,profile,monkeypatch):

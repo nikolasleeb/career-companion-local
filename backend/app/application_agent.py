@@ -30,7 +30,7 @@ def init(c):
         if value['state'] in ('scanning','filling','advancing'):
             value.update(state='paused',reason='Server restarted. Reactivate the extension to continue.',version=value['version']+1)
             c.execute('UPDATE cc_runs SET payload=? WHERE id=?',(json.dumps(value),row['id']))
-    c.execute("UPDATE cc_ai_requests SET state='unknown' WHERE state='dispatching'")
+    c.execute("UPDATE cc_ai_requests SET state='unknown' WHERE state IN ('dispatching','cancelling')")
     c.execute('DELETE FROM cc_run_answers')
 
 def origin(value):

@@ -44,8 +44,9 @@ export async function pollTask(id:string,call:Call,wait=sleep,limit=600,onUpdate
    if(status.result==null)throw new ApiError('This task finished without a readable result. Check its status before starting another request.',502);
    return status.result;
   }
+  if(status?.status==='cancelled')throw new ApiError('Stopped. Previous saved results are unchanged. Your input is kept as a draft; incurred usage remains recorded.',499);
   if(['failed','interrupted'].includes(status?.status))throw new ApiError(status.error||'This operation was interrupted. Your saved inputs remain available for retry.',422);
-  if(!['queued','running'].includes(status?.status))throw new ApiError('The task status could not be read. Check its status before starting another request.',502);
+  if(!['queued','running','cancelling'].includes(status?.status))throw new ApiError('The task status could not be read. Check its status before starting another request.',502);
  }
  onUpdate?.({...lastStatus,status:'unknown',connection_lost:true});
  throw new ApiError('This task is taking longer than expected. It may still be running. Check its status before starting another request.');
@@ -65,7 +66,7 @@ export async function comparisonTask(account:string,body:any,call:Call,storage:S
   catch(error){if(error instanceof ApiError&&error.status>=400&&error.status<500&&error.status!==429)storage.removeItem(key);throw error;}
  }
  try{const result=await pollTask(pending.id,call,wait,1200);storage.removeItem(key);return result;}
- catch(error){if(error instanceof ApiError&&[401,403,404,422].includes(error.status))storage.removeItem(key);throw error;}
+ catch(error){if(error instanceof ApiError&&[401,403,404,422,499].includes(error.status))storage.removeItem(key);throw error;}
 }
 
 const projectKey=(account:string,snapshot:string)=>'next-step-project-task:'+account+':'+snapshot;
@@ -82,7 +83,7 @@ export async function projectTask(account:string,snapshot:string,body:any,call:C
   }catch(error){if(error instanceof ApiError&&error.status>=400&&error.status<500&&error.status!==429)storage.removeItem(key);throw error;}
  }
  try{const result=await pollTask(pending.id,call,wait);storage.removeItem(key);return result;}
- catch(error){if(error instanceof ApiError&&[401,403,404,422].includes(error.status))storage.removeItem(key);throw error;}
+ catch(error){if(error instanceof ApiError&&[401,403,404,422,499].includes(error.status))storage.removeItem(key);throw error;}
 }
 
 export function clearProjectTask(account:string,snapshot:string,storage:Storage=localStorage){storage.removeItem(projectKey(account,snapshot));}
@@ -116,7 +117,7 @@ export async function documentComparisonTask(account:string,file:File|undefined,
   }catch(error){if(error instanceof ApiError&&error.status>=400&&error.status<500&&error.status!==429)storage.removeItem(key);throw error;}
  }
  try{const result=await pollTask(pending.id,call,wait,1200,onUpdate);storage.removeItem(key);return result;}
- catch(error){if(error instanceof ApiError&&[401,403,404,422].includes(error.status))storage.removeItem(key);throw error;}
+ catch(error){if(error instanceof ApiError&&[401,403,404,422,499].includes(error.status))storage.removeItem(key);throw error;}
 }
 
 export function pendingPostingImport(account:string,storage:Storage=localStorage){return pendingComparison(account,'__posting__',storage);}

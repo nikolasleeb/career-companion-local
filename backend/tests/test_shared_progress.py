@@ -14,7 +14,7 @@ def test_active_task_metadata_owned_and_result_free(client,account):
     two=task('foreign','analysis')
     values=client.get('/api/tasks/active');assert values.status_code==200
     assert [v['id'] for v in values.json()]==[one]
-    assert set(values.json()[0])=={'id','kind','status','created_at','updated_at','progress'}
+    assert set(values.json()[0])=={'id','kind','status','created_at','updated_at','progress','can_cancel'}
     assert 'private' not in values.text.lower() and 'inputs' not in values.text
     async def work():task_progress.stage('reviewing');return {'id':'workspace','private_result':'not in active listing'}
     asyncio.run(run_task(one,user,work))

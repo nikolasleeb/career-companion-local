@@ -160,27 +160,25 @@ def test_ai_discovery_criteria_private_no_key_fallback_and_trial_bound(client,ac
  assert calls[0].request_token=='fictional-discover' and calls[0].trial_roles is None
 
 
-def test_cancel_keeps_batch_then_explicit_resume_skips_completed(client,account,monkeypatch):
- import time
- search=saved(account['id'],26);body=prepare_match(client,account,search,depth='full',token='cancel-then-resume');calls=[]
- async def fake(schema,payload,mode='economy',**kw):
-  calls.append(payload['jobs'][0]['id'])
-  if len(calls)==1:
-   r=db.list_entities(account['id'],'ai_job_match')[0];job_ai.cancel(r['id'],account['id'])
-  return output(payload),{'fictional':True}
- monkeypatch.setattr(ai,'structured',fake)
- response=client.post('/api/job-search/ai/match',json=body.model_dump());assert response.status_code==200
- for _ in range(100):
-  r=client.get('/api/job-search/ai/matches').json()[0]
-  if r['data']['state'] not in ('queued','running'):break
-  time.sleep(.01)
- assert r['data']['state']=='cancelled' and r['data']['assessment_count']==1 and len(calls)==1
- response=client.post('/api/job-search/ai/matches/'+r['id']+'/resume?request_token=explicit-resume');assert response.status_code==200,response.text
+def test_stop_discards_partial_matching_batches(client,account,monkeypatch):
+ import time,asyncio
+ search=saved(account['id'],26);body=prepare_match(client,account,search,depth='full',token='stop-all-batches');calls=[]
+ async def model(schema,payload,*args,**kwargs):
+  calls.append(payload)
+  if len(calls)>1:await asyncio.sleep(60)
+  return output(payload),{'model':'fictional','mode':'economy'}
+ monkeypatch.setattr(ai,'structured',model)
+ started=client.post('/api/job-search/ai/match',json=body.model_dump()).json()
  for _ in range(200):
-  r=client.get('/api/job-search/ai/matches/'+r['id']).json()
-  if r['data']['state']=='completed':break
+  if len(calls)>1:break
   time.sleep(.01)
- assert r['data']['state']=='completed' and len(set(calls))==26 and len(calls)==26
+ assert len(calls)>1
+ result=client.post('/api/tasks/'+started['task_id']+'/cancel',json={});assert result.status_code==200
+ for _ in range(100):
+  if client.get('/api/tasks/'+started['task_id']).json()['status']=='cancelled':break
+  time.sleep(.01)
+ assert client.get('/api/tasks/'+started['task_id']).json()['status']=='cancelled'
+ assert not db.list_entities(account['id'],'ai_job_match')
 
 
 def test_failed_paid_batch_remains_unknown_and_read_only_until_explicit_resume(client,account,monkeypatch):

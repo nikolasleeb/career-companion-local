@@ -134,7 +134,7 @@ def test_outages_and_invalid_sources_leave_previous_plan(client,account,model,mo
  async def broken(*a,**k):raise ServiceError('Fictional provider failure; outcome may be unknown.')
  monkeypatch.setattr(ai,'structured',broken)
  r=act(client,c['id'],'message','A saved question before the outage','outage-request');assert r['status']=='failed'
- after=client.get('/api/career-coach/chats/'+c['id']).json();assert after['plans']==before['plans'];assert after['messages'][-1]['data']['content']=='A saved question before the outage'
+ after=client.get('/api/career-coach/chats/'+c['id']).json();assert after['plans']==before['plans'];assert after['messages']==before['messages']
  assert 'outage-request' in json.dumps(r)
 
 
@@ -184,10 +184,9 @@ def test_research_outage_no_retries_and_stale_source_flags(client,account,model,
  monkeypatch.setattr(config,'ENABLE_WEB_SEARCH',True);calls=[]
  async def unavailable(*a,**kwargs):calls.append(kwargs);raise ServiceError('Fictional network outage')
  monkeypatch.setattr(ai,'call_api',unavailable)
- chat=make(client);assert act(client,chat['id'])['status']=='completed'
+ chat=make(client);assert act(client,chat['id'])['status']=='failed'
  assert calls==[{'retry_allowed':False}]
- value=client.get('/api/career-coach/chats/'+chat['id']).json();assert value['research']['data']['status']=='unavailable'
- assert value['research']['data']['warnings']
+ value=client.get('/api/career-coach/chats/'+chat['id']).json();assert value['research'] is None and not value['messages']
  p=coach.profile(account['id']);source=knowledge.retrieve(account['id'],chat['id'],'Python')[0]
  stale={**source,'kind':'fetched','checked_at':(datetime.now(timezone.utc)-timedelta(days=31)).isoformat(),'stale':True}
  result=coach.validate_reply(reply({'profile':p,'retrieved_chunks':[stale]}),p,[stale])

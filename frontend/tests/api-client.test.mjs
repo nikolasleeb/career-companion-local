@@ -174,3 +174,7 @@ test('posting-only upload uses its own recoverable task and never starts compari
  },undefined,store,immediate);
  assert.equal(result.id,'saved-job');assert.equal(posts,1);assert.equal(pendingPostingImport('a',store),null);assert.equal(pendingDocumentComparison('a',store),null);
 });
+test('cancelling remains active and cancelled is terminal without another provider start',async()=>{
+ let calls=0;await assert.rejects(()=>pollTask('stoppable',async path=>{assert.equal(path,'/tasks/stoppable');return ++calls===1?{status:'cancelling'}:{status:'cancelled'};},immediate),e=>e.status===499&&e.message.includes('Previous saved results are unchanged'));
+ assert.equal(calls,2);
+});
