@@ -3,12 +3,12 @@ export class ApiError extends Error{
  get transient(){return this.status===0||this.status===429||this.status>=500;}
 }
 
-export async function requestJSON(path:string,method='GET',body?:unknown,csrf=''){
+export async function requestJSON(path:string,method='GET',body?:unknown,csrf='',signal?:AbortSignal){
  const headers:Record<string,string>={'X-Requested-With':'XMLHttpRequest'};
  if(method!=='GET')headers['X-CSRF-Token']=csrf;
  if(body!==undefined&&!(body instanceof FormData))headers['Content-Type']='application/json';
  let response:Response;
- try{response=await fetch('/api'+path,{method,headers,credentials:'same-origin',body:body===undefined?undefined:body instanceof FormData?body:JSON.stringify(body)});}
+ try{response=await fetch('/api'+path,{method,headers,credentials:'same-origin',signal,body:body===undefined?undefined:body instanceof FormData?body:JSON.stringify(body)});}
  catch{throw new ApiError('The connection to the app was interrupted. Your saved inputs remain available. Check the connection and try again.');}
  const accessExpired=()=>new ApiError('Your secure access verification expired. Reload the sign-in page to verify your email, then sign in again.',response.status===403?403:401,'access');
  // Access may return its HTML login page instead of the app's JSON response.
