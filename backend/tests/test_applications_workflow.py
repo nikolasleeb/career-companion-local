@@ -16,11 +16,14 @@ from test_app import fixture_analysis
 
 def wait_task(client,response):
     assert response.status_code==200,response.text
-    for _ in range(1000):
-        task=client.get('/api/tasks/'+response.json()['task_id']).json()
+    # Real PDF fitting can take longer on a shared ARM runner. Bound elapsed
+    # time instead of assuming a fixed number of fast HTTP polls is sufficient.
+    task_id=response.json()['task_id'];deadline=time.monotonic()+120;task=None
+    while time.monotonic()<deadline:
+        task=client.get('/api/tasks/'+task_id).json()
         if task['status'] not in ('queued','running'): return task
-        time.sleep(.02)
-    raise AssertionError('Task did not finish')
+        time.sleep(.1)
+    raise AssertionError(f'Task did not finish within 120 seconds: {task}')
 
 
 def req(status='supported',importance='required',kind='qualification'):
