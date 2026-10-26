@@ -1,0 +1,14 @@
+{
+  "fix": "Consume Assistant deep links once and prioritize explicit navigation",
+  "frontend_tests_passed": 180,
+  "regressions": [
+    "workspace refresh cannot replay a consumed link",
+    "Profile navigation wins over a pending lookup",
+    "newer link or unmounted effect wins over stale responses",
+    "initial application loading preserves a valid link",
+    "unavailable runs clear only their own link"
+  ],
+  "both_frontend_editions_built": true,
+  "backend_or_data_migration": false,
+  "paid_requests": false
+}
