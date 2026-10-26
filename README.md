@@ -5,7 +5,7 @@ A personal career workspace that runs at **http://localhost:3000** on the comput
 Applications can also use your own uploaded resume or be saved without a resume. Attach interview prep, email copies, and other documents to an entry. Application details now use Overview, Documents, and Activity tabs; see [Application details](docs/APPLICATION-DETAILS.md) and [Application documents](docs/APPLICATION-DOCUMENTS.md).
 Each installation starts empty. Accounts, documents, saved API keys, and encrypted private disclosures belong to that installation. Each account supplies its own OpenAI API key in Settings. Manual features work without one.
 
-Latest update: **app 1.0.7 · extension 1.0.3**. The Application Assistant now has live popup progress and one Start / Review / Resume button. See [release notes](docs/RELEASE-NOTES.md).
+Latest update: **app 1.0.8 · extension 1.0.3**. Profile imports, private saved Career Coach chats, public job feeds and stoppable AI actions. See [release notes](docs/RELEASE-NOTES.md).
 
 ## Run from source
 
@@ -32,9 +32,13 @@ Open [Releases](https://github.com/nikolasleeb/career-companion-local/releases/l
 
 Verify the archive against `SHA256SUMS`, then follow [LOCALHOST-QUICKSTART.md](LOCALHOST-QUICKSTART.md). Public release downloads require no GitHub token. The source build above also works without registry access.
 
+## Job search without API keys
+
+Public Greenhouse, Ashby and Lever employer feeds and GitHub community listings work without API keys. Complete reviewed education in Profile, choose roles and a location, then search. OpenAI is needed only for optional AI features. USAJOBS, O*NET and notification delivery require your own optional installation configuration; Adzuna connections belong to individual accounts in Settings → Job Search. No hosted credentials, accounts or cached results are included.
+
 ## Check for updates
 
-Settings → **App version & updates** shows the installed version, latest complete stable release, and last successful check. Opening Settings checks once per day; **Check now** refreshes manually, subject to a short cooldown. A check sends no account data or API keys and never installs an update.
+Settings → **App & storage** shows the installed version, latest complete stable release, and last successful check. Opening Settings checks once per day; **Check now** refreshes manually, subject to a short cooldown. A check sends no account data or API keys and never installs an update.
 
 Published images contain their release version and revision. Locally built source images show **Custom build** unless built by the release workflow. Missing connectivity, incomplete releases, and stale results are shown explicitly.
 

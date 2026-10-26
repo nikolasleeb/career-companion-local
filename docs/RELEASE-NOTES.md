@@ -1,17 +1,17 @@
-# Career Companion Local 1.0.7
+# Career Companion Local 1.0.8
 
-Simpler Application Assistant, with extension 1.0.3:
+This release brings the current Career Companion features to the localhost edition. It starts empty and includes no hosted accounts, documents, chats, cached jobs, API keys, notification credentials or private vault keys.
 
-- Applications load automatically and account-scoped document selections survive popup reopen. Sharing requires approval of the exact saved versions.
-- One primary button handles Start filling, Review questions, Resume filling and Finished. Stay on the employer tab; the popup can be closed. After reviewing questions in Career Companion, click Resume filling once in the extension.
-- Live status refreshes every second, with readback-verified fill totals, pending questions and last successful contact. Requests time out after 15 seconds with actionable login, validation or connection errors.
-- Saved inactive runs require explicit recovery. Reconnection can recover a paused run only on its original tab and origin, with unchanged approved documents. Routine filling makes no model calls and never submits an application.
-- Individual uploads, custom controls and protected confirmations stay manual while unrelated supported fields can fill. Hard login, CAPTCHA, payment and frame boundaries remain stops; legacy scans retain conservative behavior.
+- Profile now has Upload / import, Personal details, Resume content, Career Goals and Private application answers tabs. Unsaved values survive tab switches.
+- Import resumes and LinkedIn profile PDFs locally without an API key. Review exact duplicates, possible overlaps and field-by-field updates before committing. Originals, previous evidence and saved resumes remain available.
+- Personal details has separate website, GitHub and LinkedIn fields. An optional headline checkbox enables posting-specific, evidence-supported headlines within existing AI resume generation.
+- Career Coach opens on a landing page. Keep multiple private chats, research current questions when needed, save sourced roadmaps and delete chats deliberately. Career Goals remain separate from qualification evidence.
+- Stop AI actions from one shared progress banner. Previous saved work and editable drafts are preserved; incurred or unknown provider usage remains recorded.
+- Public employer feeds and community job listings support ordinary job search without API keys. Search result filtering, page sizes up to 100, optional AI matching and job examples are available.
+- Public feeds can reuse validated source coverage across local accounts. Disposable jobs default to 30-day retention, with configurable localhost retention and reliable earlier closing dates; saved/application evidence is preserved.
+- Settings groups AI setup, usage/costs, job sources, account/backups and App & storage. Update checks distinguish a published release from newer source code and never install or restart anything.
+- The workspace connection badge checks the authenticated app session. A saved AI key is not a provider verification.
 
-Resume fixes since 1.0.6:
+The localhost edition retains local-only access, local registration and account-owned AI keys. Its optional integrations require the installer's own settings. The hosted pilot's special Adzuna trial access, invitations, domain and delivery configuration are excluded. The extension remains 1.0.3; Safari downloads are source packages, not signed Safari installations.
 
-- Include confirmed education header dates in source verification.
-- Shorten actual wrapped wording to fit one page while preserving readable typography and selected certifications. Verify the resulting PDF before claiming one-page success.
-- Improve the Progress & history layout and first-use instructions.
-
-Update/reload the extension once after replacing its unpacked folder. Reconnect if the browser cleared its session. Back up both Docker volumes before updating the app. Chrome package behavior was tested on fictional forms; the Safari source package shares the core but is not a signed Safari installation.
+Back up both Docker volumes, finish active work, verify the archive checksum and follow LOCALHOST-QUICKSTART.md before updating. Both x64 and ARM64 images and downloadable archives are tested by the release workflow before publication. Existing installations are never updated automatically.

@@ -224,6 +224,7 @@ class SettingsUpdate(StrictModel):
     contact: str | None = Field(default=None,max_length=500)
     contact_reviewed: bool | None = None
     headline: str | None = Field(default=None,max_length=250)
+    use_professional_headline: bool | None = None
     email: str | None = Field(default=None,max_length=254,pattern=r'^(?:[^@\s]+@[^@\s]+\.[^@\s]+)?$')
     phone: str | None = Field(default=None,max_length=80)
     city: str | None = Field(default=None,max_length=150)
@@ -340,10 +341,16 @@ class ResumeImportEntry(StrictModel):
     id: str = Field(min_length=1,max_length=64)
     data: ExperienceItem
 
+class ResumeImportUpdate(ResumeImportEntry):
+    record_id: str = Field(min_length=1,max_length=64)
+    expected_updated_at: str = Field(min_length=1,max_length=80)
+    fields: list[str] = Field(min_length=1,max_length=60)
+
 class ResumeImportApproval(StrictModel):
     text_hash: str = Field(min_length=64,max_length=64)
     profile_updates: SettingsUpdate = Field(default_factory=SettingsUpdate)
     entries: list[ResumeImportEntry] = Field(default_factory=list,max_length=100)
+    updates: list[ResumeImportUpdate] = Field(default_factory=list,max_length=100)
     reviewed: Literal[True]
 
 # New comparisons are explicit about qualifications, eligibility, and logistics.

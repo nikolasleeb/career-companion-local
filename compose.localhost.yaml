@@ -1,7 +1,7 @@
 name: career-companion-local
 services:
   app:
-    image: ${CAREER_IMAGE:-ghcr.io/nikolasleeb/career-companion-local:1.0.7}
+    image: ${CAREER_IMAGE:-ghcr.io/nikolasleeb/career-companion-local:1.0.8}
     init: true
     ports:
       - "127.0.0.1:${PORT:-3000}:3000"
@@ -11,10 +11,14 @@ services:
       VAULT_KEY_FILE: /secrets/vault.key
       CAREER_ENV: local
       ONET_API_KEY: ${ONET_API_KEY:-}
-      ADZUNA_APP_ID: ${ADZUNA_APP_ID:-}
-      ADZUNA_APP_KEY: ${ADZUNA_APP_KEY:-}
       ENABLE_WEB_SEARCH: ${ENABLE_WEB_SEARCH:-true}
       ENABLE_JOBSPY: "false"
+      USAJOBS_API_KEY: ${USAJOBS_API_KEY:-}
+      USAJOBS_API_EMAIL: ${USAJOBS_API_EMAIL:-}
+      CF_EMAIL_TOKEN: ${CF_EMAIL_TOKEN:-}
+      CF_EMAIL_ACCOUNT_ID: ${CF_EMAIL_ACCOUNT_ID:-}
+      ALERT_FROM: ${ALERT_FROM:-}
+      ALERT_PUBLIC_ORIGIN: ${ALERT_PUBLIC_ORIGIN:-http://localhost:3000}
     volumes:
       - account_data:/data
       - private_vault_key:/secrets

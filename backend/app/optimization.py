@@ -36,7 +36,7 @@ def apply(snapshot,draft,overrides=None):
                 text=proposed.get('text',item['text']) if item['text']==base else item['text']
                 item.update({'text':overrides.get(item['item_id'],text),'priority':proposed.get('priority',0),'reason':proposed.get('reason',entry['selection_reason'])})
                 entry['bullets'][index]=item['text']
-    result['headline']=draft['headline'];return result
+    result['headline']=draft['headline'] if result.get('use_professional_headline',True) else '';return result
 
 def initial_selection(snapshot,draft):
     choices={r['record_id']:{i['item_id'] for i in r['items']} for r in draft['entries']}
@@ -101,10 +101,12 @@ async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=
     # Authorization and eligibility are intentionally excluded from employer-draft context.
     payload['qualifications']=[r for r in payload['qualifications'] if r.get('kind')=='qualification']
     if len(json.dumps(payload))>240000:raise ServiceError('This Profile is too large to optimize in one complete request. Shorten repeated notes; no partial-source draft was created.')
+    payload['headline_policy']='Write a job-specific professional-focus headline supported by reviewed Profile evidence.' if snapshot.get('use_professional_headline',True) else 'Headlines are disabled: return an empty headline and no headline_evidence.'
     task_progress.stage('drafting')
     output,meta=await ai.structured(OptimizationOutput,payload,mode)
     if 'prepared_headline' in (feedback or {}):output['headline']=feedback['prepared_headline']
     if current:output=constrain(output,snapshot,current,feedback or {})
+    if not snapshot.get('use_professional_headline',True):output['headline']='';output['headline_evidence']=[]
     output['baseline']={i['item_id']:i['text'] for section in snapshot['sections'] for entry in section['entries'] for i in entry['content_items']}
     validate(output,snapshot,records)
     for choice in output['entries']:

@@ -11,8 +11,6 @@ services:
       VAULT_KEY_FILE: /secrets/vault.key
       CAREER_ENV: local
       ONET_API_KEY: ${ONET_API_KEY:-}
-      ADZUNA_APP_ID: ${ADZUNA_APP_ID:-}
-      ADZUNA_APP_KEY: ${ADZUNA_APP_KEY:-}
       USAJOBS_API_KEY: ${USAJOBS_API_KEY:-}
       USAJOBS_API_EMAIL: ${USAJOBS_API_EMAIL:-}
       CF_EMAIL_TOKEN: ${CF_EMAIL_TOKEN:-}

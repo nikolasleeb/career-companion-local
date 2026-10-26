@@ -1,3 +1,4 @@
+from . import profile_import
 import asyncio
 import base64
 import hashlib
@@ -514,14 +515,15 @@ def certificate_download(entity_id:str,user=Depends(auth.current)):
     return FileResponse(path,media_type='application/octet-stream',filename=record['data']['filename'],headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'})
 
 @app.post('/api/documents')
-async def import_document(file:UploadFile=File(...),purpose:Literal['source','resume']='source',user=Depends(auth.current)):
+async def import_document(file:UploadFile=File(...),purpose:Literal['source','resume']='source',source_kind:Literal['resume','linkedin_pdf']='resume',user=Depends(auth.current)):
     raw=await file.read(config.MAX_UPLOAD+1)
     filename=Path(file.filename or 'document.txt').name[:200]
+    if source_kind=='linkedin_pdf' and (purpose!='resume' or not filename.lower().endswith('.pdf')):raise HTTPException(422,'Choose a LinkedIn profile PDF.')
     extracted=await asyncio.to_thread(documents.extract,filename,raw)
-    parsed=resume_parser.parse(extracted['text']) if purpose=='resume' else None
+    parsed=profile_import.parse(extracted['text'],source_kind) if purpose=='resume' else None
     if parsed: parsed['profile_base']={k:db.settings(user['id']).get(k,'') for k in parsed['profile']}
     storage.ensure_capacity(len(raw)+len(json.dumps(extracted).encode())*4+65536)
-    entity=db.save(user['id'],'document',{'filename':filename,**extracted,'reviewed':False,'sha256':hashlib.sha256(raw).hexdigest(),'resume_parse':parsed})
+    entity=db.save(user['id'],'document',{'filename':filename,**extracted,'reviewed':False,'sha256':hashlib.sha256(raw).hexdigest(),'resume_parse':parsed,'import_source_kind':source_kind,'purpose':purpose})
     folder=config.DATA_DIR/'uploads'/user['id'];folder.mkdir(parents=True,exist_ok=True)
     storage.write_bytes(folder/entity['id'],raw)
     return entity
@@ -546,20 +548,27 @@ def parse_resume_document(entity_id:str,user=Depends(auth.current)):
     signature=hashlib.sha256(text.encode()).hexdigest()
     cached=data.get('resume_parse') or {}
     base={k:db.settings(user['id']).get(k,'') for k in cached.get('profile',{})}
-    if cached.get('text_hash')==signature and cached.get('parser_version')==resume_parser.VERSION:
+    if cached.get('text_hash')==signature and cached.get('parser_version')==profile_import.version(data.get('import_source_kind','resume')):
         if cached.get('profile_base')==base: return record
         cached['profile_base']=base
         return db.save(user['id'],'document',{**data,'resume_parse':cached},entity_id)
-    parsed=resume_parser.parse(text)
+    parsed=profile_import.parse(text,data.get('import_source_kind','resume'))
     parsed['profile_base']={k:db.settings(user['id']).get(k,'') for k in parsed['profile']}
     return db.save(user['id'],'document',{**data,'text':text,'resume_parse':parsed},entity_id)
+
+@app.get('/api/documents/{entity_id}/import-preview')
+def preview_resume_import(entity_id:str,user=Depends(auth.current)):
+    document=require(user['id'],entity_id,'document')['data']
+    if document.get('purpose')=='application':raise HTTPException(400,'Application files are not Profile imports.')
+    return profile_import.preview(document.get('resume_parse') or {},db.list_entities(user['id'],'experience'))
 
 @app.post('/api/documents/{entity_id}/import-resume')
 def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(auth.current)):
     # Approval is one atomic operation. Other master records and versions are
     # never overwritten; repeated submissions skip already imported entries.
-    for proposal in body.entries: certifications.validate_documents(user['id'],proposal.data.model_dump())
+    for proposal in [*body.entries,*body.updates]: certifications.validate_documents(user['id'],proposal.data.model_dump())
     updates=body.profile_updates.model_dump(exclude_none=True)
+    if set(updates)-{'name','headline','email','phone','city','state','country','county','website','github','linkedin'}:raise HTTPException(400,'Only personal details can be imported.')
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE')
         row=c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='document'",(entity_id,user['id'])).fetchone()
@@ -570,7 +579,7 @@ def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(a
         if body.text_hash!=parsed.get('text_hash') or hashlib.sha256(document['text'].encode()).hexdigest()!=body.text_hash:
             raise HTTPException(409,'The source changed. Parse the updated text and review its suggestions again.')
         allowed={entry['id'] for entry in parsed.get('entries',[])}
-        if len({e.id for e in body.entries})!=len(body.entries) or any(e.id not in allowed for e in body.entries): raise HTTPException(400,'An entry does not belong to this document review.')
+        if len({e.id for e in [*body.entries,*body.updates]})!=len(body.entries)+len(body.updates) or len({e.record_id for e in body.updates})!=len(body.updates) or any(e.id not in allowed for e in [*body.entries,*body.updates]): raise HTTPException(400,'An entry does not belong to this document review.')
         if any(key not in parsed.get('profile',{}) for key in updates): raise HTTPException(400,'Only proposed contact fields can be imported here. Use Personal Details for other changes.')
         profile=json.loads(c.execute('SELECT settings FROM users WHERE id=?',(user['id'],)).fetchone()[0])
         for key in updates:
@@ -580,7 +589,21 @@ def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(a
         existing=[(r['id'],json.loads(r['payload'])) for r in rows]
         source_ids={data.get('source_entry_id'):identity for identity,data in existing if data.get('source_entry_id')}
         fingerprints={resume_parser.fingerprint(data):identity for identity,data in existing}
-        created=[];skipped=[];stamp=db.now()
+        created=[];skipped=[];updated=[];stamp=db.now()
+        safe=set(ExperienceItem.model_fields)-{'category','confirmed','source_document_id','source_entry_id'}
+        for proposal in body.updates:
+            oldrow=c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='experience'",(proposal.record_id,user['id'])).fetchone()
+            if not oldrow:raise HTTPException(404,'The selected Profile record is unavailable.')
+            if oldrow['updated_at']!=proposal.expected_updated_at:raise HTTPException(409,'A Profile record changed during review. Reload the import preview; nothing was imported.')
+            old=json.loads(oldrow['payload']);new=proposal.data.model_dump()
+            if old.get('category')!=new['category'] or set(proposal.fields)-safe:raise HTTPException(400,'Choose fields from the same Profile section.')
+            patch={key:new[key] for key in proposal.fields}
+            if any(value in ('',None,[],{}) for value in patch.values()):raise HTTPException(400,'Imports cannot erase existing fields. Edit Profile directly to clear them.')
+            merged=ExperienceItem.model_validate({**old,**patch}).model_dump();certifications.validate_documents(user['id'],merged)
+            updated.append({'record_id':proposal.record_id,'entry_id':proposal.id,'fields':proposal.fields,'before':{k:old.get(k) for k in patch},'after':patch})
+            c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?',(json.dumps(merged),stamp,proposal.record_id))
+            c.execute('DELETE FROM evidence_fts WHERE id=? AND user_id=?',(proposal.record_id,user['id']))
+            if merged.get('confirmed'):c.execute('INSERT INTO evidence_fts VALUES(?,?,?,?)',(proposal.record_id,user['id'],'experience',json.dumps(merged)))
         for proposal in body.entries:
             data={**proposal.data.model_dump(),'confirmed':True,'source_document_id':entity_id,'source_entry_id':proposal.id}
             digest=resume_parser.fingerprint(data)
@@ -593,9 +616,10 @@ def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(a
             created.append({'entry_id':proposal.id,'record_id':identity});source_ids[proposal.id]=identity;fingerprints[digest]=identity
         profile.update(updates)
         c.execute('UPDATE users SET settings=? WHERE id=?',(json.dumps(profile),user['id']))
-        document.update(reviewed=True,last_resume_import={'created':created,'skipped':skipped,'profile_fields':list(updates),'imported_at':stamp})
+        receipt={'created':created,'skipped':skipped,'updated':updated,'profile_fields':list(updates),'imported_at':stamp}
+        document.update(reviewed=True,last_resume_import=receipt,import_history=[*document.get('import_history',[]),receipt])
         c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?',(json.dumps(document),stamp,entity_id))
-    return {'created':len(created),'skipped':len(skipped),'profile_fields':list(updates),'message':f"Imported {len(created)} confirmed records. Skipped {len(skipped)} duplicates. Existing records and saved resumes were preserved."}
+    return {'created':len(created),'skipped':len(skipped),'updated':len(updated),'profile_fields':list(updates),'message':f"Import complete: added {len(created)} records, updated {len(updated)}, skipped {len(skipped)} duplicates. Saved resumes and original documents were preserved."}
 
 @app.post('/api/jobs')
 def add_job(body:JobPosting,user=Depends(auth.current)):
@@ -751,7 +775,7 @@ def build_resume(user,body):
     if not contact_lines:warnings.append('Contact information not provided.')
     job_id=body.job_id or (analysis['data'].get('job_id') if analysis else None)
     job=require(user,job_id,'job') if job_id else None
-    snapshot={'schema_version':3,'compact_skills':body.compact_skills,'job_id':job_id,'posting_snapshot':dict(job['data']) if job else {},'content':body.content,'title':resume_data.resume_title(job['data'] if job else {},body.title,profile.get('name') or ''),'template':body.template,'name':documents.clean(profile.get('name')),'headline':documents.clean(profile.get('headline')),'contact':'\n'.join(contact_lines),'contact_lines':contact_lines,'profile':{k:profile.get(k) for k in ('name','contact','contact_reviewed','headline','email','phone','city','state','country','county','website','linkedin','github')},'sections':[{'title':SECTION_NAMES[k],'entries':[e for e in entries if e['category']==k]} for k in order],'warnings':warnings,'experience_ids':ids,'analysis_id':body.analysis_id,'decisions':[d.model_dump() for d in body.decisions],'ai':analysis['data'].get('ai') if analysis else None}
+    snapshot={'schema_version':3,'use_professional_headline':profile.get('use_professional_headline',True),'compact_skills':body.compact_skills,'job_id':job_id,'posting_snapshot':dict(job['data']) if job else {},'content':body.content,'title':resume_data.resume_title(job['data'] if job else {},body.title,profile.get('name') or ''),'template':body.template,'name':documents.clean(profile.get('name')),'headline':'','contact':'\n'.join(contact_lines),'contact_lines':contact_lines,'profile':{k:profile.get(k) for k in ('name','contact','contact_reviewed','headline','email','phone','city','state','country','county','website','linkedin','github')},'sections':[{'title':SECTION_NAMES[k],'entries':[e for e in entries if e['category']==k]} for k in order],'warnings':warnings,'experience_ids':ids,'analysis_id':body.analysis_id,'decisions':[d.model_dump() for d in body.decisions],'ai':analysis['data'].get('ai') if analysis else None}
     if body.draft_id:
         draft=require(user,body.draft_id,'resume_draft')['data']
         if draft.get('posting_hash') and draft['posting_hash']!=job_parser.posting_hash(snapshot['posting_snapshot']):raise HTTPException(409,'The posting changed after this draft. Create a new draft; the previous one remains available.')
@@ -763,6 +787,7 @@ def build_resume(user,body):
         # Manual content editing uses the same stable source IDs and limits.
         snapshot=optimization.apply(snapshot,{'entries':[],'headline':snapshot['headline']},body.overrides)
     if body.headline is not None:snapshot['headline']=documents.clean(body.headline)
+    if not snapshot.get('use_professional_headline',True):snapshot['headline']=''
     snapshot['profile']['headline']=snapshot['headline']
     if body.content is not None:
         for entity_id,chosen in body.content.items():

@@ -119,10 +119,26 @@ def create(body:ChatInput,user=Depends(owner)):
  return chat_public(user,db.save(user,'coach_chat',{**body.model_dump(),'title':title,'progress':{},'plan_id':'','research_id':'','profile_goals_snapshot':career_goals.read(user)}),True)
 
 def running(c,user,chat):
- for r in c.execute("SELECT id,result FROM tasks WHERE user_id=? AND kind='career_coach' AND status IN ('queued','running')",(user,)):
+ for r in c.execute("SELECT id,result FROM tasks WHERE user_id=? AND kind='career_coach' AND status IN ('queued','running','cancelling')",(user,)):
   value=json.loads(r['result'] or '{}');inputs=value.get('_task_inputs',value.get('inputs',{}))
   if inputs.get('chat_id')==chat:return r['id']
  return None
+
+@router.delete('/chats/{id}')
+def delete_chat(id:str,user=Depends(owner)):
+ owned(user,id,'coach_chat')
+ with db.connect() as c:
+  c.execute('BEGIN IMMEDIATE')
+  active=running(c,user,id)
+  if active:raise HTTPException(409,'Stop the running coaching action before deleting this chat.')
+  ids=[r['id'] for r in c.execute("SELECT id,kind,payload FROM entities WHERE user_id=?",(user,)) if r['kind'] in KINDS and (r['id']==id or json.loads(r['payload']).get('chat_id')==id)]
+  for identity in ids:c.execute('DELETE FROM entities WHERE id=? AND user_id=?',(identity,user))
+  c.execute('DELETE FROM cc_coach_knowledge WHERE scope=? AND chat_id=?',(user,id))
+  for row in c.execute("SELECT id,result FROM tasks WHERE user_id=? AND kind='career_coach'",(user,)).fetchall():
+   saved=json.loads(row['result'] or '{}');inputs=saved.get('_task_inputs',saved.get('inputs',{}));reply=saved.get('data',{})
+   if inputs.get('chat_id')==id or reply.get('chat_id')==id or saved.get('id') in ids:
+    c.execute('UPDATE tasks SET result=?,error=? WHERE id=?',(json.dumps({'deleted_chat_id':id}),'',row['id']))
+ return {'deleted':len(ids),'chat_id':id}
 
 @router.patch('/chats/{id}')
 def edit(id:str,body:ChatEdit,user=Depends(owner)):
