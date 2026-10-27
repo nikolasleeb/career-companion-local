@@ -60,6 +60,7 @@ def save_preferences(user,data,location=None,history=()):
     return db.get(user,id,'job_search_preferences')
 
 class LocationEntry(StrictModel):
+    account_id:str|None=Field(default=None,max_length=64)
     history:list[str]=Field(default_factory=list)
     @field_validator('history')
     @classmethod
@@ -76,6 +77,7 @@ class LocationEntry(StrictModel):
 
 @router.post('/locations')
 def remember_location(body:LocationEntry,user=Depends(owner)):
+    if body.account_id and body.account_id!=user:raise HTTPException(409,'Your account changed. Reload before saving a location.')
     save_preferences(user,None,body.value,body.history)
     return {'locations':remembered_locations(user)}
 

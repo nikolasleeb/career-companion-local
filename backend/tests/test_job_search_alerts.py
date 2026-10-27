@@ -309,6 +309,7 @@ def test_location_history_account_scope_merge_and_restore(client,account):
     p=client.get('/api/job-search/preferences').json()['preferences']['data']
     assert p['location_history']==['boston, ma','East Coast','Richmond, VA']
     assert p['query']['location']=='East Coast'
+    assert client.post('/api/job-search/locations',json={'value':'Other City','account_id':'another-account'}).status_code==409
     assert client.post('/api/job-search/locations',json={'value':' '}).status_code==422
     assert client.post('/api/job-search/locations',json={'value':'x'*121}).status_code==422
     backup=client.get('/api/account/export').json()
