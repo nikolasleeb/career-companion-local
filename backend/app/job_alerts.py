@@ -33,6 +33,52 @@ def preferences(user,zone=None):
     if data['job_type_mode']=='automatic':data['query']['job_types']=graduation_defaults.for_profile(user,data['timezone'],interests=data['query'].get('interests',[]))['job_types'];data['query']['career_levels']=data['query']['job_types']
     return {**result,'data':data}
 
+def location_values(values):
+    seen=set();result=[]
+    for value in values:
+        value=' '.join(str(value).split());key=value.casefold()
+        if 2<=len(value)<=120 and key not in seen:result.append(value);seen.add(key)
+    return result
+
+def remembered_locations(user):
+    data=preferences(user)['data']
+    # Recover available earlier searches, even if they predate location history.
+    old=[(r['data'].get('query') or {}).get('location','') for r in db.list_entities(user,'search')]
+    return location_values([*data.get('location_history',[]),data['query'].get('location',''),*old])
+
+def save_preferences(user,data,location=None,history=()):
+    from .resume_conversation import write
+    with db.connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        row=c.execute("SELECT id,payload FROM entities WHERE user_id=? AND kind='job_search_preferences' ORDER BY created_at DESC LIMIT 1",(user,)).fetchone()
+        previous=json.loads(row['payload']) if row else {}
+        value=dict(data) if data is not None else previous
+        value.setdefault('query',{**SearchRequest().model_dump(),'title':'','interests':[]})
+        if not row:value.setdefault('job_type_mode','automatic');value.setdefault('timezone','UTC')
+        value['location_history']=location_values(([location] if location else [])+list(history)+value.get('location_history',[])+previous.get('location_history',[]))
+        id=write(c,user,'job_search_preferences',value,row['id'] if row else ident(user,'job_search_preferences'))
+    return db.get(user,id,'job_search_preferences')
+
+class LocationEntry(StrictModel):
+    history:list[str]=Field(default_factory=list)
+    @field_validator('history')
+    @classmethod
+    def valid_history(cls,values):
+        if any(not 2<=len(' '.join(v.split()))<=120 for v in values):raise ValueError('Remembered locations must use 2 to 120 characters.')
+        return location_values(values)
+    value:str=Field(min_length=2,max_length=120)
+    @field_validator('value')
+    @classmethod
+    def normalized(cls,value):
+        value=' '.join(value.split())
+        if len(value)<2:raise ValueError('Use at least two characters for a location.')
+        return value
+
+@router.post('/locations')
+def remember_location(body:LocationEntry,user=Depends(owner)):
+    save_preferences(user,None,body.value,body.history)
+    return {'locations':remembered_locations(user)}
+
 def schedule(user):return record(user,'job_alert',Schedule().model_dump())
 def save(user,kind,data):return db.save(user,kind,data,record(user,kind,{})['id'])
 
@@ -60,6 +106,13 @@ class Preferences(StrictModel):
             try:ZoneInfo(value)
             except (ValueError,ZoneInfoNotFoundError):raise ValueError('Choose a valid IANA time zone.')
         return value
+    location_history:list[str]|None=None
+    @field_validator('location_history')
+    @classmethod
+    def locations(cls,values):
+        if values is None:return None
+        if any(not 2<=len(' '.join(v.split()))<=120 for v in values):raise ValueError('Remembered locations must use 2 to 120 characters.')
+        return location_values(values)
     recent_interests:list[str]|None=Field(default=None,max_length=50)
     account_id:str|None=Field(default=None,max_length=64)
     @field_validator('recent_interests')
@@ -153,7 +206,7 @@ def get_preferences(timezone:str|None=None,user=Depends(owner)):
         try:Schedule.zone(timezone)
         except ValueError:raise HTTPException(422,'Choose a valid IANA time zone.') from None
     with db.connect() as c:pushes=c.execute('SELECT count(*) FROM cc_job_push WHERE user_id=?',(user,)).fetchone()[0]
-    return {'preferences':preferences(user,timezone),'schedule':schedule(user),'capabilities':capabilities(user),'enrolled_browsers':pushes,'persisted_timezone':preferences(user)['data']['timezone'],'suggestions':role_catalog.suggestions(user),'graduation_default':graduation_defaults.for_profile(user,preferences(user,timezone)['data']['timezone'],interests=preferences(user,timezone)['data']['query'].get('interests',[]))}
+    return {'preferences':{**preferences(user,timezone),'data':{**preferences(user,timezone)['data'],'location_history':remembered_locations(user)}},'schedule':schedule(user),'capabilities':capabilities(user),'enrolled_browsers':pushes,'persisted_timezone':preferences(user)['data']['timezone'],'suggestions':role_catalog.suggestions(user),'graduation_default':graduation_defaults.for_profile(user,preferences(user,timezone)['data']['timezone'],interests=preferences(user,timezone)['data']['query'].get('interests',[]))}
 
 @router.put('/preferences')
 def put_preferences(body:Preferences,user=Depends(owner)):
@@ -164,7 +217,7 @@ def put_preferences(body:Preferences,user=Depends(owner)):
     if body.job_type_mode is None and query['job_types']!=previous['query']['job_types']:mode='manual'
     if mode=='automatic':query['job_types']=graduation_defaults.for_profile(user,zone,interests=query.get('interests',[]))['job_types'];query['career_levels']=query['job_types']
     changed=previous.get('query')!=query
-    result=save(user,'job_search_preferences',{'page_size':body.page_size,'query':query,'recent_interests':body.recent_interests if body.recent_interests is not None else previous.get('recent_interests',[]),'job_type_mode':mode,'timezone':zone})
+    result=save_preferences(user,{'location_history':body.location_history or [],'page_size':body.page_size,'query':query,'recent_interests':body.recent_interests if body.recent_interests is not None else previous.get('recent_interests',[]),'job_type_mode':mode,'timezone':zone})
     if changed:
         with db.connect() as c:c.execute('DELETE FROM cc_job_baselines WHERE user_id=?',(user,))
     return result
@@ -372,7 +425,7 @@ async def check_now(user=Depends(owner)):
 
 
 def restore_record(user,kind,data):
-    if kind=='job_search_preferences':return save(user,kind,Preferences.model_validate(data).model_dump(exclude={'account_id'},exclude_none=True))
+    if kind=='job_search_preferences':return save_preferences(user,Preferences.model_validate(data).model_dump(exclude={'account_id'},exclude_none=True))
     if kind=='job_alert':
         with db.connect() as c:c.execute('DELETE FROM cc_job_email_verifications WHERE user_id=?',(user,))
         return save(user,kind,Schedule.model_validate({**data,'enabled':False,'email_enabled':False,'browser':False}).model_dump())

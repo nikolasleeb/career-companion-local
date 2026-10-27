@@ -293,3 +293,37 @@ def test_region_is_expanded_for_usajobs_without_extra_calls(client,account,monke
     monkeypatch.setattr(x,'fetch_json',fetch);monkeypatch.setattr(config,'USAJOBS_KEY','fictional');monkeypatch.setattr(config,'USAJOBS_EMAIL','api@example.com')
     assert run(search.usajobs('analyst','East Coast'))==[]
     assert len(calls)==1 and 'Virginia' in calls[0]['LocationName'].split(';') and 'California' not in calls[0]['LocationName']
+
+
+def test_location_history_account_scope_merge_and_restore(client,account):
+    body={'query':SearchRequest(interests=['Nursing'],sources=['ashby'],location='East Coast').model_dump()}
+    assert client.put('/api/job-search/preferences',json=body).status_code==200
+    db.save(account['id'],'search',{'query':{'location':'Richmond, VA'},'jobs':[]})
+    history=client.get('/api/job-search/preferences').json()['preferences']['data']['location_history']
+    assert history==['East Coast','Richmond, VA']
+    r=client.post('/api/job-search/locations',json={'value':'  Boston,   MA ','history':history});assert r.status_code==200
+    assert r.json()['locations']==['Boston, MA','East Coast','Richmond, VA']
+    # An older ordinary autosave must not remove committed history or alter the saved query.
+    assert client.put('/api/job-search/preferences',json=body).status_code==200
+    assert client.post('/api/job-search/locations',json={'value':'boston, ma','history':[]}).status_code==200
+    p=client.get('/api/job-search/preferences').json()['preferences']['data']
+    assert p['location_history']==['boston, ma','East Coast','Richmond, VA']
+    assert p['query']['location']=='East Coast'
+    assert client.post('/api/job-search/locations',json={'value':' '}).status_code==422
+    assert client.post('/api/job-search/locations',json={'value':'x'*121}).status_code==422
+    backup=client.get('/api/account/export').json()
+    other=client.post('/api/auth/register',json={'username':'location_other','password':'fictional-location-password'}).json();onboard_test_account(other);client.headers['X-CSRF-Token']=other['csrf']
+    assert client.get('/api/job-search/preferences').json()['preferences']['data']['location_history']==['United States']
+    assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup))}).status_code==200
+    assert client.get('/api/job-search/preferences').json()['preferences']['data']['location_history']==p['location_history']
+
+
+def test_location_history_keeps_all_entries_and_empty_roles(client,account):
+    values=['Fictional City '+str(i) for i in range(80)]
+    assert client.post('/api/job-search/locations',json={'value':values[0],'history':values}).status_code==200
+    body={'query':{'title':'','interests':[],'sources':['ashby']},'location_history':['Another City']}
+    assert client.put('/api/job-search/preferences',json=body).status_code==200
+    p=client.get('/api/job-search/preferences').json()['preferences']['data']
+    assert len(p['location_history'])==82 # all 81 explicit entries plus current United States
+    assert p['query']['title']=='' and p['query']['interests']==[]
+    assert set(values)<=set(p['location_history'])
