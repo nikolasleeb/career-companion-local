@@ -1,7 +1,7 @@
 """Rebuilt, versioned account-only SQLite FTS retrieval. No stale private index."""
 import json,re,sqlite3,hashlib
 from . import db,career_coach,career_goals,work_preferences,job_ai
-VERSION='account-context-v1'
+VERSION='account-context-v2'
 PRIVATE=re.compile(r'citizenship|visa|sponsor|work authori|vaccin|disabil|veteran|religio|politic|sexual|marital|date of birth|social security|api.?key|password',re.I)
 def clean(value):
  text=job_ai.clean(str(value))
@@ -30,7 +30,11 @@ def sources(user):
  for r in records:
   d=r['data'];kind=r['kind'];label=str(d.get('title') or d.get('company') or d.get('direction') or kind.replace('_',' '))[:150];text=''
   if kind in ('resume','resume_revision'):text=resume_text(d);label='Saved generated resume · '+label
-  elif kind=='application':text='\n'.join(str(d.get(k) or '') for k in ('title','company','status'));label='Application · '+label
+  elif kind=='application':
+   text='\n'.join(str(d.get(k) or '') for k in ('title','company','status'))
+   historical=bool(d.get('archived'))
+   label=('Archived application · historical record · ' if historical else 'Application · ')+label
+   if historical:text='Archived application · historical record. Not a current application.\n'+text
   elif kind=='job':
    if d.get('cache_tombstone'):continue
    text='\n'.join(str(d.get(k) or '') for k in ('title','company','location','description'));label='Employer posting · '+label

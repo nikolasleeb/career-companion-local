@@ -40,7 +40,7 @@ class Brief(StrictModel):
  locations:list[str]=Field(min_length=1,max_length=10)
  workplace:Literal['any','remote','hybrid','onsite']
  career_levels:list[Literal['internship','early_career','mid_career']]=Field(min_length=1,max_length=3)
- days:Literal[7,14,30]
+ days:Literal[7,14,30,60,90]
  minimum_salary:float|None=Field(ge=0,le=10000000)
  pay_period:Literal['year','hour']
  summary:str=Field(max_length=1200)

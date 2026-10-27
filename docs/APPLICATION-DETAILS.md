@@ -21,3 +21,7 @@ Uploads, renames, and file removal are separate explicit actions and save immedi
 Status, submitted-version, and note edits survive file uploads and promotion. If another window changes the application, a stale save is rejected instead of overwriting it. Reload saved changes only when ready to discard the local pending application edits.
 
 Original downloads, account ownership checks, reviewed source history, deletion guards, and exact-version extension approvals remain in place. Routine filling uses no AI and never submits the employer form automatically.
+
+## Application list and archives
+
+Each application has a details row and a separate action bar. Dates and individual document counts stay together; narrow screens use stacked cards. Archived applications are always excluded from progress charts, including the All entries list view. They remain available to Career Coach as explicitly labeled historical records and can be restored from Archived entries. Restoring returns an application to charts when its date matches the selected chart range.

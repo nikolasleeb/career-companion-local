@@ -8,14 +8,14 @@ def entry(id,status='applied',applied='',added='2026-10-22T02:00:00+00:00',**mor
  return {'id':id,'created_at':added,'data':{'title':id,'status':status,'applied_date':applied,'history':[],'interviews':[],**more}}
 
 
-def test_every_status_and_archived_entry_counts_once_in_range():
+def test_every_status_counts_once_and_archived_entries_never_enter_chart():
  rows=[entry(str(i),status,'2026-10-20',history=[{'status':'screening'},{'status':'interviewing'}],interviews=[{},{}]) for i,status in enumerate(applications.STAGES)]
  rows.append(entry('archived','rejected','2026-10-20',archived=True));before=copy.deepcopy(rows)
  result=applications.dashboard(rows,'2026-01-01','2026-12-31','month',include_archived=True)
- assert result['cohort_count']==10 and sum(b['count'] for b in result['submissions'])==10
- assert set(result['paths'])=={r['id'] for r in rows} and result['paths']['0']==['preparing']
- assert sum(n['count'] for n in result['nodes'] if n['id'] in ('applied','preparing'))==10
- assert result['counts']['preparing']==1 and result['counts']['submitted']==9
+ assert result['cohort_count']==9 and sum(b['count'] for b in result['submissions'])==9
+ assert set(result['paths'])=={r['id'] for r in rows if not r['data'].get('archived')} and result['paths']['0']==['preparing']
+ assert sum(n['count'] for n in result['nodes'] if n['id'] in ('applied','preparing'))==9
+ assert result['counts']['preparing']==1 and result['counts']['submitted']==8
  assert rows==before
  assert applications.dashboard(rows,'2026-01-01','2026-12-31','month')['cohort_count']==9
 

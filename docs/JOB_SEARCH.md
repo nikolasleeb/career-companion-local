@@ -63,3 +63,7 @@ Find jobs first uses the account's own OpenAI key and current model/reasoning/sp
 Each paid batch is checkpointed before submission and after validated completion. Cancellation stops before the next request; already-sent requests may incur usage. Restarted/failed reviews retain completed batches and require explicit resume. Unknown in-flight responses are never silently replayed. The browser retains an account-scoped token and input fingerprint for uncertain start responses; checking saved status makes no new AI call. Profile changes mark saved reviews stale and never trigger paid reruns. Imported assessments are read-only; new comparisons use the receiving account's current reviewed Profile. Daily checks use no AI and exclude manual-trial Adzuna.
 
 Search snapshots, example originals and assessments are included in private account backups, with credentials excluded. The paginated result and lazy-detail APIs avoid repeating large posting descriptions in workspace responses. Backup imports accept up to 256 MB to accommodate examples and larger result sets.
+
+## Posting-date window
+
+Choose Past 7, 14, 30, 60 or 90 days; the default is 30. Saved preferences, daily alerts and personalized discovery use the selected window. This is posting age, not cache retention: hosted disposable cache still expires 30 days after source verification, and earlier closing dates still take priority. Sources and request limits can restrict historical coverage.

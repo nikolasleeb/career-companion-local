@@ -301,7 +301,7 @@ class SearchRequest(StrictModel):
     locations: list[Annotated[str,Field(min_length=2,max_length=120)]] = Field(default_factory=list,max_length=10)
     minimum_salary: float | None = Field(default=None,ge=0,le=10000000)
     pay_period: Literal['year','hour'] = 'year'
-    days: int = Field(default=30,ge=1,le=30)
+    days: int = Field(default=30,ge=1,le=90)
     mode: Literal['economy','deep','custom'] = 'economy'
     refresh: bool = False
     sources: list[Literal['greenhouse','ashby','lever','web','adzuna','usajobs','jobspy','github']] = Field(default_factory=lambda:['greenhouse','ashby','lever','adzuna','usajobs','github'],max_length=8)

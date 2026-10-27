@@ -16,11 +16,11 @@ test('current statuses count each cohort record once rather than each journey st
  const records=[{id:'a',data:{status:'applied',archived:false}},{id:'b',data:{status:'preparing',archived:true}},{id:'outside',data:{status:'offer'}}];
  const dashboard={chart_dates:{a:{date:'2026-10-22'},b:{date:'2026-10-21'}},paths:{a:['applied','waiting_applied'],b:['preparing']}};
  const summary=applicationChartSummary([...records,records[0]],dashboard);
- assert.deepEqual(summary,{total:2,archived:1,statuses:{applied:1,preparing:1}});
+ assert.deepEqual(summary,{total:1,archived:0,statuses:{applied:1}});
  assert.equal(Object.values(summary.statuses).reduce((a,b)=>a+b,0),summary.total);
  assert.ok(applicationInChartStage(records[0],'current:applied',dashboard));
  assert.ok(!applicationInChartStage(records[0],'current:preparing',dashboard));
- assert.ok(applicationInChartStage(records[1],'all',dashboard));
+ assert.ok(!applicationInChartStage(records[1],'all',dashboard));
  assert.ok(!applicationInChartStage(records[2],'all',dashboard));
 });
 test('current status filters differ from historical stages and exclude dates outside the cohort',()=>{
@@ -31,11 +31,11 @@ test('current status filters differ from historical stages and exclude dates out
  assert.ok(!applicationInChartStage(records[0],'current:applied',dashboard));
  assert.ok(!applicationInChartStage(records[1],'current:interviewing',dashboard));
 });
-test('archive inclusion follows the server cohort without merging similar titles or mutating records',()=>{
+test('archives are excluded even from stale server cohorts without merging similar titles or mutating records',()=>{
  const records=[{id:'a',data:{company:'Same',title:'Same',status:'applied',archived:false}},{id:'b',data:{company:'Same',title:'Same',status:'preparing',archived:true}}];
  const before=JSON.stringify(records);
  assert.deepEqual(applicationChartSummary(records,{chart_dates:{a:{}}}),{total:1,archived:0,statuses:{applied:1}});
- assert.equal(applicationChartSummary(records,{chart_dates:{a:{},b:{}}}).total,2);
+ assert.equal(applicationChartSummary(records,{chart_dates:{a:{},b:{}}}).total,1);
  assert.equal(JSON.stringify(records),before);
  assert.deepEqual(applicationChartSummary(records,null),{total:0,archived:0,statuses:{}});
 });

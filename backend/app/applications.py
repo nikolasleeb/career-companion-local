@@ -93,7 +93,8 @@ def chart_date(record,zone):
 
 
 def dashboard(records, start='', end='', period='week', timezone_name='UTC', include_archived=False):
-    visible=[r for r in records if include_archived or not r['data'].get('archived')]
+    # Retain the legacy argument for clients, but archives never enter chart cohorts.
+    visible=[r for r in records if not r['data'].get('archived')]
     counts=Counter()
     for r in visible:
         s=r['data']['status']; counts['preparing' if s=='preparing' else 'submitted']+=1
