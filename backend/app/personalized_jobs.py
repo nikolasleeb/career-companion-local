@@ -57,7 +57,7 @@ async def verify(row,request):
 async def execute(user,body):
  p=career_coach.profile(user)
  if not p['sources']:raise ServiceError('Add reviewed professional Profile information before personalized discovery.')
- goals=career_goals.read(user);preferences=work_preferences.context(user);prefs=copy.deepcopy(job_alerts.preferences(user)['data']['query']);metas=[]
+ goals=career_goals.context(user);preferences=work_preferences.context(user);prefs=copy.deepcopy(job_alerts.preferences(user)['data']['query']);metas=[]
  context={'professional_profile':p['sources'],'career_goals_as_aspirations':job_ai.clean(goals['text']),'work_preferences_not_qualifications':preferences}
  criteria,meta=await ai.structured(Criteria,{'task':'Select up to four plausible professional role directions using the supplied evidence. Return public role titles only, with no personal names, institutions, contact details or private answers. Targeted mode must stay within the explicitly selected roles. Broad mode should explore relevant professional directions rather than unrelated low-bar jobs.','scope':body.scope,'selected_roles':body.roles,**context},body.mode,instructions=INSTRUCTIONS,retry_allowed=False);metas.append(meta)
  roles=body.roles if body.scope=='targeted' else criteria['roles']

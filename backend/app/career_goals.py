@@ -18,11 +18,19 @@ class Change(StrictModel):
  text:str=Field(default='',max_length=36000)
  expected_revision:int=Field(ge=0)
  items:list[Goal]|None=Field(default=None,max_length=30)
+ use_for_ai:bool|None=None
 def identity(user):return hashlib.sha256((user+':career-goals').encode()).hexdigest()[:32]
 def read(user):
  row=db.get(user,identity(user),'career_goals')
  d=row['data'] if row else {'text':'','revision':0}
- return {**d,'note':d.get('note',d.get('text','')),'items':d.get('items',[]),'updated_at':row['updated_at'] if row else None,'explanation':EXPLANATION}
+ return {**d,'use_for_ai':bool(d.get('use_for_ai',False)),'note':d.get('note',d.get('text','')),'items':d.get('items',[]),'updated_at':row['updated_at'] if row else None,'explanation':EXPLANATION}
+def context(user,snapshot=None):
+ """Opt-in automatic context; historical snapshots remain unchanged in storage."""
+ current=read(user)
+ if not current['use_for_ai']:return {'text':'','note':'','items':[],'revision':current['revision'],'use_for_ai':False}
+ value=snapshot if snapshot is not None else current
+ return {**value,'use_for_ai':True}
+
 def save(user,body):
  from .resume_conversation import write
  with db.connect() as c:
@@ -33,7 +41,7 @@ def save(user,body):
   if len({v['id'] for v in items})!=len(items):raise HTTPException(422,'Each goal needs a unique identifier.')
   note=body.text.strip()
   rendered='\n'.join([note,*[v['category'].replace('_',' ')+': '+v['text']+(' — target '+v['target'] if v['target'] else '')+' ('+v['progress'].replace('_',' ')+')' for v in items]]).strip()
-  write(c,user,'career_goals',{'text':rendered,'note':note,'items':items,'revision':old['revision']+1},identity(user))
+  write(c,user,'career_goals',{'text':rendered,'note':note,'items':items,'use_for_ai':body.use_for_ai if body.use_for_ai is not None else bool(old.get('use_for_ai',False)),'revision':old['revision']+1},identity(user))
  return read(user)
 @router.get('')
 def get(user=Depends(auth.current)):return read(user['id'])

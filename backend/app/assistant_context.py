@@ -14,7 +14,7 @@ def sources(user):
   for at in range(0,min(len(text),24000),1800):
    chunk=text[at:at+1800];rows.append({'source_id':id+':'+str(at),'record_id':record,'kind':kind,'label':label[:180],'text':chunk,'revision':revision,'index_version':VERSION})
  for s in career_coach.profile(user)['sources']:add('profile:'+s['id'],s['record_id'],'reviewed_profile','Reviewed Profile · '+s['field'],s['text'],hashlib.sha256(s['text'].encode()).hexdigest())
- g=career_goals.read(user);add('goals',career_goals.identity(user),'aspiration','Career Goals · aspirations, not qualifications',g['text'],str(g['revision']))
+ g=career_goals.context(user);add('goals',career_goals.identity(user),'aspiration','Career Goals · aspirations, not qualifications',g['text'],str(g['revision']))
  w=work_preferences.context(user)
  if w['preferences']:add('preferences',work_preferences.identity(user),'preference','Approved work preferences · not qualifications','\n'.join(w['preferences']),str(w['revision']))
  def resume_text(d):

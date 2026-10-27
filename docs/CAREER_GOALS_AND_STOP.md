@@ -24,3 +24,14 @@ The usage ledger, task status and minimal failure/recovery metadata use a separa
 - `POST /api/tasks/{id}/cancel`: owner-scoped and idempotent; assistant request IDs use the `assistant:` prefix.
 - Task status adds cancellation capability and `cancelling`/`cancelled` states. Existing task recovery remains read-only.
 - Application assistance adds `draft_short_answer` and an explicit `use_career_goals` boolean.
+
+
+## Profile summaries and optional AI context
+
+Profile → Work Styles displays a private assessment summary immediately and a saved or suggested working-preference summary. Edit preferences opens a separate editor. Only an explicitly reviewed, saved and enabled work-preference summary enters automatic AI context; raw answers and assessment descriptions do not.
+
+Career Goals opens as a saved summary. Edit Career Goals reveals the direction note and goal cards. Save Career Goals saves the current revision and collapses the editor only after success. Hidden editors remain mounted so tab switches and collapsing preserve drafts.
+
+Use Career Goals for AI guidance is off by default, including for older records without an explicit choice. Saving text alone does not enable it. Enabled goals can support Career Plans, Career Coach retrieval, personalized discovery and skills plans as aspirations. Turning it off and saving removes automatic Profile-goal context from subsequent requests, including old planning chats, without rewriting historical messages or plans. Goals typed into a conversation remain part of that conversation. The optional application motivation-answer helper retains its separate, initially-off choice. Account backups retain goals and the explicit preference; older backups default off.
+
+Citizenship & sponsorship and Private application answers start collapsed. Their existing encryption, review and explicit save rules remain unchanged. The global Career Coach launcher has a hover/focus explanation; opening it alone makes no AI request.

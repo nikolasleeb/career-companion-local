@@ -1278,7 +1278,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             chat_visuals.validate_backup(record,kinds)
             if record['kind']=='work_preferences':work_preferences.Change.model_validate({k:v for k,v in {**record['data'],'expected_revision':record['data']['revision']}.items() if k in work_preferences.Change.model_fields})
             if record['kind']=='career_goals':
-                career_goals.Change.model_validate({'text':record['data'].get('note',record['data']['text']),'items':record['data'].get('items'),'expected_revision':record['data']['revision']})
+                career_goals.Change.model_validate({'text':record['data'].get('note',record['data']['text']),'items':record['data'].get('items'),'use_for_ai':record['data'].get('use_for_ai',False),'expected_revision':record['data']['revision']})
             if record['kind']=='board': Board.model_validate(record['data'])
             if record['kind']=='job_search_preferences':job_alerts.Preferences.model_validate(record['data'])
             if record['kind']=='job_alert':job_alerts.Schedule.model_validate(record['data'])
@@ -1392,7 +1392,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 with db.connect() as c:job_cache.bind(c,user['id'],saved)
         elif record['kind']=='career_goals':
             current_goals=career_goals.read(user['id'])
-            if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data'].get('note',record['data']['text']),items=record['data'].get('items'),expected_revision=current_goals['revision']))
+            if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data'].get('note',record['data']['text']),items=record['data'].get('items'),use_for_ai=record['data'].get('use_for_ai',False),expected_revision=current_goals['revision']))
         elif record['kind']=='work_preferences':
             if not work_preferences.read(user['id'])['preferences']:
                 db.save(user['id'],'work_preferences',{**remap(record['data']),'use_for_ai':False,'reviewed':False,'revision':work_preferences.read(user['id'])['revision']+1},work_preferences.identity(user['id']))

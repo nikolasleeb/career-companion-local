@@ -1,0 +1,34 @@
+{
+  "scope": "Visible Work Styles summaries, saved Career Goals, explicit AI consent, private disclosures and global coach tooltip",
+  "backend_container": {"passed": 856, "skipped": 1},
+  "frontend": {"passed": 184},
+  "localhost_backend_focused": {"passed": 29},
+  "both_frontend_builds_passed": true,
+  "providers_mocked_and_network_disabled_in_backend_suite": true,
+  "browser_checks": {
+    "fictional_data_only": true,
+    "assessment_summary_visible_without_editing": true,
+    "raw_assessment_material_excluded_from_ai": true,
+    "saved_goals_visible_without_editing": true,
+    "explicit_save_collapses_goal_and_preference_editors": true,
+    "goal_drafts_and_consent_survive_tab_switch": true,
+    "goal_consent_can_be_revoked_without_deletion": true,
+    "private_panels_collapsed_by_default": true,
+    "citizenship_draft_survives_collapse": true,
+    "keyboard_expansion_and_tooltip": true,
+    "desktop_and_390px_layouts_checked": true
+  },
+  "consent_tests": {
+    "legacy_records_remain_unchanged_and_default_off": true,
+    "revision_conflicts_preserve_current_record": true,
+    "revocation_excludes_goal_context_from_existing_planning_chats": true,
+    "historical_snapshots_retained": true,
+    "backup_restores_goals_cards_and_preference": true,
+    "separate_application_answer_opt_in_preserved": true
+  },
+  "hosted_backup_rollback_and_record_preservation_verified": true,
+  "access_controls_credentials_and_quota_preserved": true,
+  "installed_localhost_service_changed": false,
+  "paid_provider_requests_made": false,
+  "release_or_tag_created": false
+}

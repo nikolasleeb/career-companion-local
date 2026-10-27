@@ -119,7 +119,7 @@ def create(body:ChatInput,user=Depends(owner)):
  proposed=body.goal.strip().split('\n')[0]
  if len(proposed)>64:proposed=proposed[:64].rsplit(' ',1)[0]+'…'
  title=body.title.strip() or proposed or 'Career conversation'
- return chat_public(user,db.save(user,'coach_chat',{**body.model_dump(),'title':title,'progress':{},'plan_id':'','research_id':'','profile_goals_snapshot':career_goals.read(user)}),True)
+ return chat_public(user,db.save(user,'coach_chat',{**body.model_dump(),'title':title,'progress':{},'plan_id':'','research_id':'','profile_goals_snapshot':career_goals.context(user)}),True)
 
 def running(c,user,chat):
  for r in c.execute("SELECT id,result FROM tasks WHERE user_id=? AND kind='career_coach' AND status IN ('queued','running','cancelling')",(user,)):
@@ -152,7 +152,7 @@ def edit(id:str,body:ChatEdit,user=Depends(owner)):
   if running(c,user,id):raise HTTPException(409,'Wait for the current coaching action before changing this goal.')
   if body.expected_updated_at and body.expected_updated_at!=r['updated_at']:raise HTTPException(409,'This chat changed in another tab. Reload its latest goals before saving.')
   value={**r['data'],**body.model_dump(exclude={'expected_updated_at','use_current_profile_goals'}),'title':body.title.strip() or 'Career conversation'}
-  if body.use_current_profile_goals:value['profile_goals_snapshot']=career_goals.read(user)
+  if body.use_current_profile_goals:value['profile_goals_snapshot']=career_goals.context(user)
   write(c,user,'coach_chat',value,id)
  return chat_public(user,owned(user,id,'coach_chat'),True)
 
@@ -332,7 +332,7 @@ async def execute(user,chat_id,body):
  chosen=sorted({r['id']:r for r in [*older,*history[-12:]]}.values(),key=lambda r:r['created_at'])
  context=[{'role':r['data']['role'],'text':r['data'].get('content','')[:1800]} for r in chosen]
  task_progress.stage('coach_generation')
- payload={'task':body.operation,'question':text,'goal':chat['data']['goal'],'time_preference':chat['data']['time_preference'] or 'Unspecified','budget_preference':chat['data']['budget_preference'] or 'Unspecified; prioritize free practice','profile':p,'approved_work_preferences_not_qualifications':work_preferences.context(user),'career_goals_as_aspirations':{**chat['data'].get('profile_goals_snapshot',{'text':''}),'text':job_ai.clean(chat['data'].get('profile_goals_snapshot',{}).get('text',''))},'retrieved_chunks':chunks,'research_status':research_data.get('status','not_requested'),'research_warnings':research_data.get('warnings',[]),'conversation':context,'conversation_context_limited':len(chosen)<len(history),'current_roadmap':(current_plan or {}).get('data',{}),'today':db.now()[:10]}
+ payload={'task':body.operation,'question':text,'goal':chat['data']['goal'],'time_preference':chat['data']['time_preference'] or 'Unspecified','budget_preference':chat['data']['budget_preference'] or 'Unspecified; prioritize free practice','profile':p,'approved_work_preferences_not_qualifications':work_preferences.context(user),'career_goals_as_aspirations':career_goals.context(user,chat['data'].get('profile_goals_snapshot',{'text':''})),'retrieved_chunks':chunks,'research_status':research_data.get('status','not_requested'),'research_warnings':research_data.get('warnings',[]),'conversation':context,'conversation_context_limited':len(chosen)<len(history),'current_roadmap':(current_plan or {}).get('data',{}),'today':db.now()[:10]}
  output,meta=await ai.structured(Reply,payload,body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
  metas=[meta]
  if (output.get('needs_fresh_research') or needs_current(text) and not career_goals.explicit_save(text)) and not initial_research:

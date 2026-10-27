@@ -35,7 +35,7 @@ def test_aspiration_only_application_context_and_validation(client,account):
 
 def test_new_chat_is_published_only_on_success_and_goals_snapshot(client,account,monkeypatch):
  credentials.save(account['id'],'sk-fictional-goals');monkeypatch.setattr(config,'ENABLE_WEB_SEARCH',False)
- career_goals.save(account['id'],career_goals.Change(text='Explore data science',expected_revision=0))
+ career_goals.save(account['id'],career_goals.Change(text='Explore data science',expected_revision=0,use_for_ai=True))
  async def model(schema,payload,*a,**k):return reply(payload,recommendations=[]),{'model':'fictional'}
  monkeypatch.setattr(ai,'structured',model)
  task=client.post('/api/career-coach/chats/new/actions',json={'operation':'message','text':'Help me brainstorm','request_token':'new-question-only'}).json();result=wait(client,task);assert result['status']=='completed',result
@@ -64,7 +64,7 @@ def test_conference_research_decision_and_bounded_requests(client,account,monkey
 
 def test_explicit_save_only_and_no_silent_goal_replacement(client,account,monkeypatch):
  credentials.save(account['id'],'sk-fictional-goals');monkeypatch.setattr(config,'ENABLE_WEB_SEARCH',False)
- career_goals.save(account['id'],career_goals.Change(text='Explore data science',expected_revision=0))
+ career_goals.save(account['id'],career_goals.Change(text='Explore data science',expected_revision=0,use_for_ai=True))
  chat=client.post('/api/career-coach/chats',json={}).json()
  async def model(schema,payload,*a,**k):
   return reply(payload,recommendations=[],profile_goal_update='Explore nursing',profile_goal_save_quote=payload['question']),{'model':'fictional'}

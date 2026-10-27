@@ -22,9 +22,10 @@ def assessment(user):
  rows=db.list_entities(user,'work_style');complete=next((v for v in rows if v['data'].get('status')=='completed'),None)
  # Only explicit paired work choices are eligible, never personality scores/facets.
  choices=[p['selected'] for p in (complete or {}).get('data',{}).get('report',{}).get('preferences',[])]
+ summary=[{'name':d['name'],'pattern':d['pattern']} for d in (complete or {}).get('data',{}).get('report',{}).get('domains',[]) if isinstance(d,dict) and isinstance(d.get('name'),str) and isinstance(d.get('pattern'),str)]
  suggestions=role_catalog.suggestions(user)
  groups=[name for name,roles in role_catalog.GROUPS.items() if any(v in roles for v in suggestions)]
- return {'completed':bool(complete),'assessment_id':complete['id'] if complete else '', 'completed_at':(complete or {}).get('data',{}).get('completed_at'),'suggested_preferences':choices[:12],'roles':suggestions[:4],'fields':groups[:3]}
+ return {'completed':bool(complete),'assessment_id':complete['id'] if complete else '', 'completed_at':(complete or {}).get('data',{}).get('completed_at'),'summary':summary[:5],'suggested_preferences':choices[:12],'roles':suggestions[:4],'fields':groups[:3]}
 @router.get('')
 def get(user=Depends(auth.current)):return {**read(user['id']),'assessment':assessment(user['id'])}
 @router.put('')
