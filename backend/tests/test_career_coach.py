@@ -100,7 +100,11 @@ def test_private_and_draft_profile_exclusion_and_research_topics(client,account)
  u=account['id']
  db.save(u,'experience',{'category':'employment','title':'Unreviewed secret employer','description':'UNREVIEWEDSECRET','confirmed':False})
  db.save(u,'experience',{'category':'education','title':'MSc Data Science','degree':'MS','major':'Data science','description':'Alice Example alice@example.com citizenship PRIVATESECRET\nPython and SQL coursework','confirmed':True})
- db.update_settings(u,{'name':'Alice Example','contact':'alice@example.com','authorized_us':'PRIVATESETTINGS'})
+ db.update_settings(u,{'name':'Alice Example','contact':'alice@example.com','authorized_us':'yes'})
+ from app import private_profile
+ # A deliberately marked encrypted fixture must never enter professional evidence.
+ cipher=private_profile.seal(u,'authorization',{'authorized_us':'PRIVATESETTINGS'})
+ with db.connect() as c:private_profile.store(c,u,'authorization',cipher)
  db.save(u,'work_style',{'private':'PRIVATEPERSONALITY'})
  p=coach.profile(u);raw=json.dumps(p)
  assert all(v not in raw for v in ('UNREVIEWEDSECRET','PRIVATESECRET','PRIVATESETTINGS','PRIVATEPERSONALITY','alice@example.com'))

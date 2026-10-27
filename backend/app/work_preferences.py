@@ -1,8 +1,8 @@
 """Reviewed work conditions, separate from assessment answers and qualifications."""
 import hashlib,json
 from fastapi import APIRouter,Depends,HTTPException
-from pydantic import Field
-from . import auth,db,role_catalog
+from pydantic import Field,model_validator
+from . import auth,db,role_catalog,credentials,onboarding
 from .models import StrictModel
 router=APIRouter(prefix='/api/profile/work-preferences')
 class Change(StrictModel):
@@ -11,13 +11,22 @@ class Change(StrictModel):
  use_for_ai:bool=False
  reviewed:bool=False
  assessment_id:str=Field(default='',max_length=64)
+ summary:str|None=Field(default=None,max_length=6000)
+ generation_task_id:str=Field(default='',max_length=64)
+ @model_validator(mode='after')
+ def valid_summary(self):
+  if self.summary is not None and len(self.summary.split())>250:raise ValueError('Keep the Work Styles summary within 250 words.')
+  return self
 def identity(user):return hashlib.sha256((user+':work-preferences').encode()).hexdigest()[:32]
 def read(user):
  row=db.get(user,identity(user),'work_preferences')
- return (row or {}).get('data',{'revision':0,'preferences':[],'use_for_ai':False,'reviewed':False,'assessment_id':''})
+ d=(row or {}).get('data',{'revision':0,'preferences':[],'use_for_ai':False,'reviewed':False,'assessment_id':''})
+ return {**d,'summary':d.get('summary','')}
 def context(user):
- d=read(user)
- return {'revision':d['revision'],'preferences':d['preferences'],'kind':'self-reported working preferences; not qualifications'} if d.get('use_for_ai') and d.get('reviewed') else {'revision':d['revision'],'preferences':[],'kind':'not enabled'}
+ from .work_style_summary import safe
+ d=read(user);values=[d['summary']] if d.get('summary') else d['preferences']
+ values=[v for v in values if safe(v)]
+ return {'revision':d['revision'],'preferences':values,'kind':'approved self-described Work Styles summary; not qualifications'} if d.get('use_for_ai') and d.get('reviewed') else {'revision':d['revision'],'preferences':[],'kind':'not enabled'}
 def assessment(user):
  rows=db.list_entities(user,'work_style');complete=next((v for v in rows if v['data'].get('status')=='completed'),None)
  # Only explicit paired work choices are eligible, never personality scores/facets.
@@ -27,16 +36,28 @@ def assessment(user):
  groups=[name for name,roles in role_catalog.GROUPS.items() if any(v in roles for v in suggestions)]
  return {'completed':bool(complete),'assessment_id':complete['id'] if complete else '', 'completed_at':(complete or {}).get('data',{}).get('completed_at'),'summary':summary[:5],'suggested_preferences':choices[:12],'roles':suggestions[:4],'fields':groups[:3]}
 @router.get('')
-def get(user=Depends(auth.current)):return {**read(user['id']),'assessment':assessment(user['id'])}
+def get(user=Depends(auth.current)):return {**read(user['id']),'assessment':assessment(user['id']),'account_id':user['id'],'ai_available':bool(credentials.get(user['id'])) and onboarding.status(user['id'])['completed'],'setup_required':not onboarding.status(user['id'])['completed'],'mode':db.settings(user['id']).get('mode','economy')}
 @router.put('')
 def put(body:Change,user=Depends(auth.current)):
  from .resume_conversation import write
+ from .work_style_summary import paragraph,safe
+ summary=paragraph(body.summary) if body.summary and body.summary.strip() else '' if body.summary is not None else None
  values=list(dict.fromkeys(v.strip() for v in body.preferences if v.strip()))
  if any(len(v)>240 for v in values):raise HTTPException(422,'Keep each preference within 240 characters.')
- if body.use_for_ai and (not body.reviewed or not values):raise HTTPException(422,'Review at least one work preference before enabling AI guidance.')
+ if body.use_for_ai and (not body.reviewed or not (summary if summary is not None else values)):raise HTTPException(422,'Review a Work Styles summary before enabling AI guidance.')
+ if body.use_for_ai and any(not safe(v) for v in ([summary] if summary is not None else values)):raise HTTPException(422,'Keep AI guidance focused on working style; remove excluded private material.')
  if body.assessment_id and not db.get(user['id'],body.assessment_id,'work_style'):raise HTTPException(404,'Assessment not found.')
  with db.connect() as c:
   c.execute('BEGIN IMMEDIATE');row=c.execute("SELECT payload FROM entities WHERE id=? AND user_id=?",(identity(user['id']),user['id'])).fetchone();old=json.loads(row[0]) if row else {'revision':0}
   if old['revision']!=body.expected_revision:raise HTTPException(409,'Work preferences changed in another window. Your draft is preserved; reload the saved revision.')
-  write(c,user['id'],'work_preferences',{**body.model_dump(exclude={'expected_revision'}),'preferences':values,'revision':old['revision']+1},identity(user['id']))
+  generation=None
+  if body.generation_task_id:
+   task=c.execute("SELECT result FROM tasks WHERE id=? AND user_id=? AND kind='work_style_summary' AND status='completed'",(body.generation_task_id,user['id'])).fetchone()
+   if not task:raise HTTPException(404,'The generated summary is unavailable. Save a manual summary or recover its completed request.')
+   result=json.loads(task['result']);result=result.get('_task_result',result)
+   if result.get('expected_revision')!=body.expected_revision:raise HTTPException(409,'This AI proposal belongs to an older summary revision. Your draft is preserved.')
+   generation={'task_id':body.generation_task_id,'ai':result['ai'],'references':result['references'],'source_snapshot':result['source_snapshot'],'edited_after_generation':summary!=result['summary']}
+  data={**old,**body.model_dump(exclude={'expected_revision','summary','generation_task_id'}),'preferences':values if summary is None else old.get('preferences',[]),'revision':old['revision']+1}
+  if summary is not None:data.update(summary=summary,generation=generation)
+  write(c,user['id'],'work_preferences',data,identity(user['id']))
  return get(user)

@@ -6,6 +6,7 @@ from pydantic import Field, model_validator
 from . import auth, config, db, private_answers
 from .models import StrictModel
 
+AUTH_FIELDS=('us_citizen','authorized_us','sponsorship_now','sponsorship_future')
 SECTIONS=('citizenship','veteran','sex_gender','race_ethnicity','disability')
 CHOICES={
  'veteran':['Veteran','Not a veteran','Unsure','Prefer not to answer'],
@@ -73,6 +74,40 @@ def load(user,section):
 def store(c,user,section,cipher):
     c.execute('INSERT INTO cc_private_profile VALUES(?,?,?,?) ON CONFLICT(user_id,section) DO UPDATE SET ciphertext=excluded.ciphertext,updated_at=excluded.updated_at',(user,section,cipher,db.now()))
 
+def authorization(user):
+    return load(user,'authorization') or {}
+
+def update_settings(c,user,changes):
+    """Keep the legacy settings accessor while storing private statuses only in the vault."""
+    row=c.execute('SELECT settings FROM users WHERE id=?',(user,)).fetchone()
+    if not row:raise HTTPException(404,'Account not found.')
+    original=json.loads(row['settings'])
+    legacy={k:original[k] for k in AUTH_FIELDS if k in original}
+    private={k:v for k,v in changes.items() if k in AUTH_FIELDS}
+    if private or legacy:
+        row=c.execute("SELECT ciphertext FROM cc_private_profile WHERE user_id=? AND section='authorization'",(user,)).fetchone()
+        old=private_answers.unseal(user,'private-profile:authorization',row['ciphertext']) if row else {}
+        values={**legacy,**old,**private}
+        if any(v not in ('','yes','no','unsure') for v in values.values()):raise HTTPException(422,'Unsupported authorization answer.')
+        cipher=seal(user,'authorization',values)
+        if private_answers.unseal(user,'private-profile:authorization',cipher)!=values:raise HTTPException(503,'Private answers could not be verified.')
+        store(c,user,'authorization',cipher)
+    public={k:v for k,v in {**original,**changes}.items() if k not in AUTH_FIELDS}
+    c.execute('UPDATE users SET settings=? WHERE id=?',(json.dumps(public),user))
+
+def migrate_statuses():
+    # Resolve/create the key before holding the write lock. Missing keys never regenerate.
+    with db.connect() as c:
+        needed=any(any(k in json.loads(r['settings']) for k in AUTH_FIELDS) for r in c.execute('SELECT settings FROM users'))
+    if not needed:return
+    private_answers.key()
+    with db.connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        c.execute('PRAGMA secure_delete=ON')
+        for row in c.execute('SELECT id,settings FROM users').fetchall():
+            if any(k in json.loads(row['settings']) for k in AUTH_FIELDS):update_settings(c,row['id'],{})
+    with db.connect() as c:c.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+
 def warnings(codes,settings):
     if codes and ((settings.get('us_citizen')=='yes' and 'US' not in codes) or (settings.get('us_citizen')=='no' and 'US' in codes)):
         return ['Your citizenship countries and U.S.-citizen answer differ. Review them; neither answer was changed automatically.']
@@ -86,15 +121,13 @@ def get_profile(user=Depends(auth.current)):
 
 @router.put('/citizenship')
 def save_citizenship(body:Citizenship,user=Depends(auth.current)):
-    # Seal before the write transaction; key creation has its own DB read.
     cipher=seal(user['id'],'citizenship',{'countries':body.countries})
     changes=body.model_dump(exclude={'countries','reviewed'})
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE')
-        row=c.execute('SELECT settings FROM users WHERE id=?',(user['id'],)).fetchone()
-        settings={**json.loads(row['settings']),**changes}
-        c.execute('UPDATE users SET settings=? WHERE id=?',(json.dumps(settings),user['id']))
+        update_settings(c,user['id'],changes)
         store(c,user['id'],'citizenship',cipher)
+    settings=db.settings(user['id'])
     return {'saved':True,'warnings':warnings(body.countries,settings)}
 
 @router.put('/{section}')

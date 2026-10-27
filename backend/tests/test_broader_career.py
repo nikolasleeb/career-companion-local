@@ -19,12 +19,12 @@ def test_goals_cards_legacy_revision_and_backup(client,account):
  assert client.put('/api/profile/career-goals',json={'text':'Explore laboratory research','expected_revision':0}).status_code==200
  goal={'id':'cert-target','category':'certification','text':'Explore a laboratory certification','target':'End of 2027','priority':'high','progress':'planned'}
  r=client.put('/api/profile/career-goals',json={'text':'Long-term science work','items':[goal],'expected_revision':1});assert r.status_code==200,r.text
- assert r.json()['items']==[goal] and 'aspirations' not in r.json()['note'] and 'certification' in r.json()['text']
+ assert r.json()['items'][1:]==[goal] and r.json()['items'][0]['category']=='general_statement' and 'aspirations' not in r.json()['note'] and 'certification' in r.json()['text']
  assert client.put('/api/profile/career-goals',json={'text':'Stale edit','items':[],'expected_revision':1}).status_code==409
- backup=client.get('/api/account/export').json();assert next(x for x in backup['records'] if x['kind']=='career_goals')['data']['items']==[goal]
+ backup=client.get('/api/account/export').json();assert next(x for x in backup['records'] if x['kind']=='career_goals')['data']['items'][1:]==[goal]
  # Existing goals are not overwritten by an additive restore.
  assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup).encode(),'application/json')}).status_code==200
- assert client.get('/api/profile/career-goals').json()['items']==[goal]
+ assert client.get('/api/profile/career-goals').json()['items'][1:]==[goal]
 
 def test_work_preference_consent_revocation_and_private_answers(client,account):
  u=account['id'];assert work_preferences.context(u)['preferences']==[]

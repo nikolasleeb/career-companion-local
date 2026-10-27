@@ -4,9 +4,10 @@ from contextvars import ContextVar
 from . import db
 
 _context=ContextVar('task_progress',default=None)
-KINDS={'knowledge_coach','personalized_jobs','chat_image','interview_practice','career_coach','job_ai_discovery','job_ai_match','posting_import','resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
-LABELS={'knowledge_coach':'Career Coach reply','personalized_jobs':'personalized job discovery','chat_image':'illustration generation','interview_practice':'interview practice','career_coach':'Career Coach','job_ai_discovery':'AI job discovery','job_ai_match':'Profile fit review','posting_import':'job posting import','cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
+KINDS={'work_style_summary','knowledge_coach','personalized_jobs','chat_image','interview_practice','career_coach','job_ai_discovery','job_ai_match','posting_import','resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
+LABELS={'work_style_summary':'Work Styles summary','knowledge_coach':'Career Coach reply','personalized_jobs':'personalized job discovery','chat_image':'illustration generation','interview_practice':'interview practice','career_coach':'Career Coach','job_ai_discovery':'AI job discovery','job_ai_match':'Profile fit review','posting_import':'job posting import','cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
 STAGES={
+    'work_summary_draft':('Drafting your Work Styles summary','provider'),
     'coach_research':('Checking current career resources','provider'),
     'coach_retrieval':('Retrieving relevant guidance and evidence','local'),
     'coach_generation':('Preparing your sourced coaching response','provider'),

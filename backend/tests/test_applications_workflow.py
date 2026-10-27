@@ -49,7 +49,8 @@ def test_private_authorization_backup_and_resume_exclusion(client,sample,account
     assert 'artifacts' not in version['data']
     assert 'artifacts' not in json.dumps(client.get('/api/workspace').json())
     backup=client.get('/api/account/export').json()
-    assert all(backup['profile'][k]==v for k,v in private.items())
+    assert all(k not in backup['profile'] for k in private)
+    assert all(db.settings(account['id'])[k]==v for k,v in private.items())
     assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup).encode(),'application/json')}).status_code==200
     for format in ('txt','docx','pdf'):
         raw=client.get('/api/resumes/'+version['id']+'/export/'+format).content

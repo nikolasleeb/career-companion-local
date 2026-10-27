@@ -98,9 +98,12 @@ def test_private_citizenship_backup_isolated_and_absent_from_employer_sources(ro
     client.put('/api/settings',json={'us_citizen':'yes'})
     snapshot=build_resume(user,ResumeRequest(job_id=job['id'],experience_ids=[record['id']]))
     assert 'us_citizen' not in json.dumps(snapshot) and 'citizenship' not in json.dumps(profile_answers.records(user)).lower()
-    backup=client.get('/api/account/export').json();assert backup['profile']['us_citizen']=='yes'
+    backup=client.get('/api/account/export').json();assert 'us_citizen' not in backup['profile']
     client.put('/api/settings',json={'us_citizen':''})
     assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup).encode(),'application/json')}).status_code==200
+    assert db.settings(user)['us_citizen']=='' # Ordinary exports no longer contain private status answers.
+    backup['profile']['us_citizen']='yes' # Legacy imports remain compatible and encrypted.
+    assert client.post('/api/account/import',files={'file':('legacy.json',json.dumps(backup).encode(),'application/json')}).status_code==200
     assert db.settings(user)['us_citizen']=='yes'
     other=client.post('/api/auth/register',json={'username':'role-other','password':'fictional-password'}).json()
     assert other['settings'].get('us_citizen','')==''

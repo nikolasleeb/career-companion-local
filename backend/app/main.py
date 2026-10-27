@@ -1,4 +1,4 @@
-from . import work_preferences,knowledge_assistant,personalized_jobs,chat_visuals,skills
+from . import work_style_summary,work_preferences,knowledge_assistant,personalized_jobs,chat_visuals,skills
 from . import interview_practice
 from . import profile_import
 import asyncio
@@ -145,7 +145,7 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     atomic_token=task_atomic.bind(user,task_id)
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
@@ -177,7 +177,7 @@ def start_task(user,kind,work,inputs=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -323,6 +323,7 @@ career_coach.install(app,start_task,require_ai)
 interview_practice.install(app,start_task,require_ai)
 app.include_router(career_goals.router)
 app.include_router(work_preferences.router)
+work_style_summary.install(app,start_task,require_ai)
 app.include_router(skills.router)
 knowledge_assistant.install(app,start_task,require_ai)
 personalized_jobs.install(app,start_task,require_ai)
@@ -331,7 +332,7 @@ chat_visuals.install(app,start_task,require_ai)
 def foreground_status(token:str,user=Depends(auth.current)):
     onboarding.require_complete(user['id'])
     with db.connect() as c:
-        for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image') ORDER BY created_at DESC",(user['id'],)):
+        for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image','work_style_summary') ORDER BY created_at DESC",(user['id'],)):
             payload=json.loads(r['result'] or '{}');inputs=payload.get('_task_inputs',payload.get('inputs',{}))
             if inputs.get('request_token')==token:return {'task_id':r['id'],'status':r['status']}
     raise HTTPException(404,'No saved action was found. This lookup makes no AI request.')
@@ -1240,7 +1241,7 @@ def backup(user=Depends(auth.current)):
             path=config.DATA_DIR/'uploads'/user['id']/record['id']
             if path.exists(): files[record['id']]=base64.b64encode(path.read_bytes()).decode()
     profile=db.settings(user['id'])
-    payload={'schema_version':1,'exported_at':db.now(),'profile':{k:profile[k] for k in SettingsUpdate.model_fields if k in profile},'records':[{k:r[k] for k in ('id','kind','data','created_at')} for r in records],'files':files}
+    payload={'schema_version':1,'exported_at':db.now(),'profile':{k:profile[k] for k in SettingsUpdate.model_fields if k in profile and k not in private_profile.AUTH_FIELDS},'records':[{k:r[k] for k in ('id','kind','data','created_at')} for r in records],'files':files}
     return Response(json.dumps(payload,ensure_ascii=False,indent=2),media_type='application/json',headers={'Content-Disposition':'attachment; filename="career-companion-account-backup.json"'})
 
 @app.post('/api/account/import')

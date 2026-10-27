@@ -44,7 +44,7 @@ def test_goal_backup_restores_consent_and_structured_items(client,account):
  backup=client.get('/api/account/export').json()
  other=client.post('/api/auth/register',json={'username':'summary-restore','password':'fictional-password'}).json();client.headers['X-CSRF-Token']=other['csrf']
  result=client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup).encode(),'application/json')});assert result.status_code==200,result.text
- goals=career_goals.read(other['id']);assert goals['use_for_ai'] and goals['items'][0]['text']=='Learn research methods'
+ goals=career_goals.read(other['id']);assert goals['use_for_ai'] and goals['items'][1]['text']=='Learn research methods'
  assert career_goals.read(u)['use_for_ai']
 
 def test_assessment_summary_is_local_and_raw_answers_excluded(client,account):

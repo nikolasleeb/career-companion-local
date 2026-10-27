@@ -73,6 +73,8 @@ def init():
         for passage in json.loads((config.CONTENT_DIR / 'guidance.json').read_text()):
             c.execute('INSERT INTO evidence_fts VALUES(?,?,?,?)', (passage['id'], 'public', 'guidance', json.dumps(passage)))
 
+    private_profile.migrate_statuses()
+
 def decode(row):
     if not row:
         return None
@@ -129,11 +131,16 @@ def retrieve(user, query, limit=16):
 
 def settings(user):
     with connect() as c:
-        row = c.execute('SELECT settings FROM users WHERE id=?', (user,)).fetchone()
-        return json.loads(row['settings']) if row else {}
+        row=c.execute('SELECT settings FROM users WHERE id=?',(user,)).fetchone()
+        public=json.loads(row['settings']) if row else {}
+    if not row:return public
+    from . import private_profile
+    return {**public,**private_profile.authorization(user)}
 
 def update_settings(user, changes):
-    updated = {**settings(user), **changes}
+    from . import private_profile,private_answers
+    if any(k in changes for k in private_profile.AUTH_FIELDS):private_answers.key()
     with connect() as c:
-        c.execute('UPDATE users SET settings=? WHERE id=?', (json.dumps(updated), user))
-    return updated
+        c.execute('BEGIN IMMEDIATE')
+        private_profile.update_settings(c,user,changes)
+    return settings(user)

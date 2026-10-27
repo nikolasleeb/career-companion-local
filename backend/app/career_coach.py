@@ -394,7 +394,7 @@ def validate_backup(record,kinds,by_id):
  kind=record['kind'];d=record['data']
  if kind not in KINDS:return
  if kind=='coach_chat':
-  if d.get('profile_goals_snapshot'):career_goals.Change.model_validate({'text':d['profile_goals_snapshot'].get('text',''),'expected_revision':d['profile_goals_snapshot'].get('revision',0)})
+  if d.get('profile_goals_snapshot'):career_goals.Change.model_validate({'items':career_goals.canonical_items(d['profile_goals_snapshot']),'expected_revision':d['profile_goals_snapshot'].get('revision',0)})
   ChatInput.model_validate({k:d.get(k,'') for k in ChatInput.model_fields})
   if not isinstance(d.get('progress',{}),dict) or len(d.get('progress',{}))>1000:raise ValueError()
   for v in d.get('progress',{}).values():Progress.model_validate({'state':v['state']})
