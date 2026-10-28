@@ -50,7 +50,7 @@ def workflow_access(request:Request):
 app=FastAPI(dependencies=[Depends(workflow_access)],title='Career Companion',version=updates.installed()['version'],lifespan=lifespan)
 from .local_access import LocalAccess
 app.add_middleware(LocalAccess)
-from .security import ResourceBoundary
+from .security import ResourceBoundary,request_limit
 app.add_middleware(ResourceBoundary)
 app.include_router(job_alerts.router)
 app.include_router(job_results.router)
@@ -67,7 +67,7 @@ app.include_router(application_documents.router)
 @app.middleware('http')
 async def boundaries(request, call_next):
     length=request.headers.get('content-length','0')
-    maximum=11*1024*1024 if re.fullmatch(r'/api/applications/[^/]+/documents',request.url.path) else 51*1024*1024 if request.url.path in ('/api/jobs/import-document','/api/jobs/from-document','/api/analyses/from-document') else 257*1024*1024 if request.url.path=='/api/account/import' else 33*1024*1024 if request.url.path=='/api/project-sources/upload' else 11*1024*1024 if request.url.path in ('/api/job-search/ai/examples','/api/documents','/api/transcripts/parse','/api/certificates') else 1024*1024
+    maximum=request_limit(request.url.path)
     try:
         if int(length)<0:return JSONResponse({'detail':'Invalid request size.'},400)
         if int(length)>maximum: return JSONResponse({'detail':'This request exceeds the size limit.'},413)
@@ -80,7 +80,7 @@ async def boundaries(request, call_next):
     response.headers['X-Content-Type-Options']='nosniff'
     response.headers['Referrer-Policy']='no-referrer'
     response.headers['X-Frame-Options']='SAMEORIGIN' if request.url.path.endswith('/preview') else 'DENY'
-    response.headers['Content-Security-Policy']="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    response.headers['Content-Security-Policy']="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     if request.url.path.endswith('/preview'):
         response.headers['Content-Security-Policy']=response.headers['Content-Security-Policy'].replace("frame-ancestors 'none'","frame-ancestors 'self'")
     if request.url.path.startswith('/api/'):
@@ -145,7 +145,7 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     atomic_token=task_atomic.bind(user,task_id)
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
@@ -171,13 +171,13 @@ async def run_task(task_id,user,work):
         task_atomic.reset(atomic_token)
         workers.pop(task_id,None)
 
-def start_task(user,kind,work,inputs=None):
+def start_task(user,kind,work,inputs=None,cleanup=None):
     task_id=db.uid();stamp=db.now()
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -200,6 +200,7 @@ def start_task(user,kind,work,inputs=None):
         if running>=2 or (kind=='discovery' and discovery): raise HTTPException(409,'An operation is already running. Wait for it to finish before starting another.')
         c.execute('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?)',(task_id,user,kind,'queued',json.dumps({'inputs':inputs}) if inputs else None,None,stamp,stamp))
     workers[task_id]=asyncio.create_task(run_task(task_id,user,work))
+    if cleanup:workers[task_id].add_done_callback(lambda _:cleanup())
     return {'task_id':task_id,'status':'queued'}
 
 @app.get('/api/health')
@@ -288,7 +289,7 @@ def remove_openai_key(user=Depends(auth.current)):
     return {'configured':bool(config.OPENAI_KEY and config.ALLOW_SERVER_AI_KEY),'message':'Saved account key removed.'}
 
 @app.get('/api/usage')
-def usage_history(start:str='',end:str='',model:str='',process:str='',tz:str='UTC',bucket:Literal['day','month']='day',offset:int=Query(default=0,ge=0),limit:int=Query(default=30,ge=1,le=100),user=Depends(auth.current)):
+def usage_history(start:str='',end:str='',model:str='',process:str='',tz:str='UTC',bucket:Literal['day','week','month']='day',offset:int=Query(default=0,ge=0),limit:int=Query(default=30,ge=1,le=100),user=Depends(auth.current)):
     try:return cost_history.report(user['id'],start,end,model,process,tz,bucket,offset,limit)
     except ValueError as error:raise HTTPException(422,str(error)) from None
 
@@ -326,6 +327,8 @@ project_routes.install(app,start_task,require_ai)
 job_ai.install(app,start_task,require_ai)
 career_coach.install(app,start_task,require_ai)
 interview_practice.install(app,start_task,require_ai)
+from . import interview_audio
+interview_audio.install(app,start_task,require_ai)
 app.include_router(career_goals.router)
 app.include_router(work_preferences.router)
 work_style_summary.install(app,start_task,require_ai)
@@ -337,7 +340,7 @@ chat_visuals.install(app,start_task,require_ai)
 def foreground_status(token:str,user=Depends(auth.current)):
     onboarding.require_complete(user['id'])
     with db.connect() as c:
-        for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image','work_style_summary') ORDER BY created_at DESC",(user['id'],)):
+        for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio') ORDER BY created_at DESC",(user['id'],)):
             payload=json.loads(r['result'] or '{}');inputs=payload.get('_task_inputs',payload.get('inputs',{}))
             if inputs.get('request_token')==token:return {'task_id':r['id'],'status':r['status']}
     raise HTTPException(404,'No saved action was found. This lookup makes no AI request.')
@@ -1230,7 +1233,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1261,6 +1264,8 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         usage_count=sum(r.get('kind')=='usage_event' for r in records)
         if usage_count>20000 or len(records)-usage_count>80000:raise ValueError()
         by_id={r['id']:r for r in records};ids={r['id']:db.uid() for r in records};kinds={r['id']:r['kind'] for r in records}
+        for record in records:
+            if record['kind']=='work_preferences':ids[record['id']]=work_preferences.identity(user['id'])
         if len(ids)!=len(records): raise ValueError()
         decoded={}
         setup_records=[r for r in records if r.get('kind')=='onboarding']
@@ -1294,6 +1299,14 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 if data.get('experience_id') and kinds.get(data['experience_id'])!='experience':raise ValueError()
                 if data.get('scope',{}).get('job_id') and kinds.get(data['scope']['job_id'])!='job':raise ValueError()
                 for source in data['sources']:
+                    if source.get('builder')=='interview':
+                        if source.get('detached') is True and not source.get('conversation_id') and not source.get('attempt_id'):
+                            if not isinstance(source.get('user_quote'),str) or not 5<=len(source['user_quote'])<=2000:raise ValueError()
+                            continue
+                        if kinds.get(source.get('conversation_id'))!='interview_session' or kinds.get(source.get('attempt_id'))!='interview_attempt':raise ValueError()
+                        attempt=by_id[source['attempt_id']]['data']
+                        if attempt['session_id']!=source['conversation_id'] or source.get('user_quote','') not in attempt.get('answer',''):raise ValueError()
+                        continue
                     if source.get('builder')=='application_agent':
                         if kinds.get(source.get('application_id'))!='application' or (source.get('job_id') and kinds.get(source['job_id'])!='job'):raise ValueError()
                         if any(not isinstance(q.get('text'),str) or len(q['text'])>500 for q in source.get('questions',[])):raise ValueError()
@@ -1400,10 +1413,13 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             current_goals=career_goals.read(user['id'])
             if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data'].get('note',record['data']['text']),items=record['data'].get('items'),use_for_ai=record['data'].get('use_for_ai',False),expected_revision=current_goals['revision']))
         elif record['kind']=='work_preferences':
-            if not work_preferences.read(user['id'])['preferences']:
-                db.save(user['id'],'work_preferences',{**remap(record['data']),'use_for_ai':False,'coach_report_access':False,'reviewed':False,'revision':work_preferences.read(user['id'])['revision']+1},work_preferences.identity(user['id']))
+            current_work=work_preferences.read(user['id'])
+            restored_work=current_work if current_work.get('summary') or current_work['preferences'] else remap(record['data'])
+            db.save(user['id'],'work_preferences',{**restored_work,'use_for_ai':False,'coach_report_access':False,'reviewed':False,'revision':current_work['revision']+1},work_preferences.identity(user['id']))
         elif record['kind'] in career_coach.KINDS or record['kind'] in interview_practice.KINDS or record['kind'] in knowledge_assistant.KINDS or record['kind'] in ('personalized_search','chat_image'):
-            saved=db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
+            restored=remap(record['data'])
+            if record['kind']=='interview_session':restored['use_work_styles']=False
+            saved=db.save(user['id'],record['kind'],restored,ids[record['id']])
             stamp=integrations.parse_date(record.get('created_at'))
             if stamp:
                 with db.connect() as c:c.execute('UPDATE entities SET created_at=? WHERE user_id=? AND id=?',(stamp.isoformat(),user['id'],saved['id']))

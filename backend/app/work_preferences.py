@@ -77,7 +77,7 @@ def put(body:Change,user=Depends(auth.current)):
    if not task:raise HTTPException(404,'The generated summary is unavailable. Save a manual summary or recover its completed request.')
    result=json.loads(task['result']);result=result.get('_task_result',result)
    if result.get('expected_revision')!=body.expected_revision:raise HTTPException(409,'This AI proposal belongs to an older summary revision. Your draft is preserved.')
-   generation={'task_id':body.generation_task_id,'ai':result['ai'],'references':result['references'],'source_snapshot':result['source_snapshot'],'edited_after_generation':summary!=result['summary']}
+   generation={'task_id':body.generation_task_id,'ai':result['ai'],'references':result['references'],'source_snapshot':result['source_snapshot'],'include_profile':result.get('include_profile',False),'profile_revision':result.get('profile_revision',''),'edited_after_generation':summary!=result['summary']}
   elif summary and isinstance(old.get('generation'),dict):
    generation={**old['generation'],'edited_after_generation':old['generation'].get('edited_after_generation',False) or summary!=old.get('summary','')}
   data={**old,**body.model_dump(exclude={'expected_revision','summary','generation_task_id'}),'preferences':values if summary is None else old.get('preferences',[]),'revision':old['revision']+1}

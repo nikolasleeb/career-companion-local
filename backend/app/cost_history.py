@@ -11,7 +11,7 @@ from typing import Literal
 from .models import StrictModel
 from . import db,ai_settings
 
-PROCESSES={'work_style_summary':'Work Styles summary','knowledge_coach':'Career Coach assistant','personalized_jobs':'Personalized five-job discovery','chat_image':'Image generation','interview_practice':'Interview practice','career_coach':'Career Plans','job_ai_discovery':'Ask AI job discovery','job_ai_match':'Profile fit review','application_agent':'Application assistant','analysis':'Job comparison','resume':'Resume building','resume_optimize':'Resume optimization','resume_fit':'Resume layout','resume_guided':'Resume questions & revisions','cover_letter':'Cover letters','preparation':'Skills preparation','interview':'Interview feedback','discovery':'Job discovery','project_analysis':'Project-source analysis','story_prompts':'Story prompts','assessment':'Career interests','other':'Other AI activity'}
+PROCESSES={'interview_transcription':'Interview transcription','interview_delivery':'Interview delivery feedback','interview_narration':'Interview question narration','work_style_summary':'Work Styles summary','knowledge_coach':'Career Coach assistant','personalized_jobs':'Personalized five-job discovery','chat_image':'Image generation','interview_practice':'Interview practice','career_coach':'Career Plans','job_ai_discovery':'Ask AI job discovery','job_ai_match':'Profile fit review','application_agent':'Application assistant','analysis':'Job comparison','resume':'Resume building','resume_optimize':'Resume optimization','resume_fit':'Resume layout','resume_guided':'Resume questions & revisions','cover_letter':'Cover letters','preparation':'Skills preparation','interview':'Interview feedback','discovery':'Job discovery','project_analysis':'Project-source analysis','story_prompts':'Story prompts','assessment':'Career interests','other':'Other AI activity'}
 ENTITY_PROCESSES={'assistant_message':'knowledge_coach','personalized_search':'personalized_jobs','chat_image':'chat_image','interview_message':'interview_practice','interview_attempt':'interview_practice','interview_question':'interview_practice','interview_research':'interview_practice','coach_message':'career_coach','coach_research':'career_coach','ai_job_match':'job_ai_match','ai_search':'job_ai_discovery','analysis':'analysis','resume':'resume','resume_draft':'resume_optimize','resume_revision':'resume_guided','resume_conversation':'resume_guided','cover_workspace':'cover_letter','cover_revision':'cover_letter','cover_letter':'cover_letter','prep':'preparation','interview':'interview','search':'discovery','project_analysis':'project_analysis','story_prompts':'story_prompts'}
 PRICE_URL='https://developers.openai.com/api/docs/pricing'
 WEB_SEARCH_PER_CALL=.01
@@ -259,6 +259,12 @@ def report(user,start='',end='',model='',process='',tz='UTC',bucket='day',offset
         groups={}
         for row in rows:groups.setdefault(key(row),[]).append(row)
         return [{'key':key,**totals(values)} for key,values in sorted(groups.items())]
+    def bucket_key(row):
+        stamp=datetime.fromisoformat(row['occurred_at']).astimezone(zone)
+        if bucket=='week':
+            from datetime import timedelta
+            return (stamp.date()-timedelta(days=stamp.weekday())).isoformat()
+        return stamp.strftime('%Y-%m' if bucket=='month' else '%Y-%m-%d')
     by_model=grouped(lambda r:r['model']);by_process=grouped(lambda r:r['process'])
     for row in by_process:row['label']=PROCESSES.get(row['key'],'Other AI activity')
-    return {'totals':totals(rows),'series':grouped(lambda r:datetime.fromisoformat(r['occurred_at']).astimezone(zone).strftime('%Y-%m' if bucket=='month' else '%Y-%m-%d')),'by_model':by_model,'by_process':by_process,'events':rows[offset:offset+limit],'offset':offset,'limit':limit,'models':sorted({r['model'] for r in all_rows}),'processes':[{'id':key,'label':PROCESSES.get(key,'Other AI activity')} for key in sorted({r['process'] for r in all_rows})],'earliest':min((r['occurred_at'] for r in all_rows),default=None),'pricing_url':PRICE_URL,'timezone':tz}
+    return {'totals':totals(rows),'series':grouped(bucket_key),'by_model':by_model,'by_process':by_process,'events':rows[offset:offset+limit],'offset':offset,'limit':limit,'models':sorted({r['model'] for r in all_rows}),'processes':[{'id':key,'label':PROCESSES.get(key,'Other AI activity')} for key in sorted({r['process'] for r in all_rows})],'earliest':min((r['occurred_at'] for r in all_rows),default=None),'pricing_url':PRICE_URL,'timezone':tz}
