@@ -60,7 +60,7 @@ def date_fields(text):
 
 def fingerprint(data):
     import json
-    return hashlib.sha256(json.dumps({k:v for k,v in ExperienceItem.model_validate(data).model_dump().items() if k not in ('confirmed','source_document_id','source_entry_id')},sort_keys=True).encode()).hexdigest()
+    return hashlib.sha256(json.dumps({k:v for k,v in ExperienceItem.model_validate(data).model_dump().items() if k not in ('confirmed','source_document_id','source_entry_id','source_references','unavailable_source_ids')},sort_keys=True).encode()).hexdigest()
 
 def parse(text):
     lines=[line.strip() for line in text.replace('\r','').split('\n') if line.strip()]

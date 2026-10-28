@@ -49,7 +49,16 @@ class CertificationItem(StrictModel):
             raise ValueError('Expiration cannot be before the earned or valid-from date.')
         return self
 
+class ImportSourceReference(StrictModel):
+    document_id: str = Field(max_length=64)
+    entry_id: str = Field(max_length=64)
+    text_hash: str = Field(min_length=64,max_length=64)
+    fields: list[str] = Field(default_factory=list,max_length=70)
+    edited_fields: list[str] = Field(default_factory=list,max_length=70)
+
 class ExperienceItem(StrictModel):
+    unavailable_source_ids: list[str] = Field(default_factory=list,max_length=1000)
+    source_references: list[ImportSourceReference] = Field(default_factory=list,max_length=400)
     certification_items: list[CertificationItem] = Field(default_factory=list,max_length=100)
     skill_items: list[SkillItem] = Field(default_factory=list,max_length=100)
     category: Literal['education','coursework','project','employment','volunteering','skills'] = 'project'
@@ -304,8 +313,17 @@ class SearchRequest(StrictModel):
     days: int = Field(default=30,ge=1,le=90)
     mode: Literal['economy','deep','custom'] = 'economy'
     refresh: bool = False
-    sources: list[Literal['greenhouse','ashby','lever','web','adzuna','usajobs','jobspy','github']] = Field(default_factory=lambda:['greenhouse','ashby','lever','adzuna','usajobs','github'],max_length=8)
+    sources: list[Literal['greenhouse','ashby','lever','web','adzuna','usajobs','jobspy','github','official']] = Field(default_factory=lambda:['greenhouse','ashby','lever','official','adzuna','usajobs','github'],max_length=9)
     trial_roles: list[str] | None = Field(default=None,max_length=2)
+    employer_source_version: Literal[1] = 1
+
+    @model_validator(mode='before')
+    @classmethod
+    def upgrade_public_sources(cls,value):
+        if isinstance(value,dict) and 'employer_source_version' not in value and {'greenhouse','ashby','lever'}<=set(value.get('sources',[])):
+            value={**value,'sources':list(dict.fromkeys([*value['sources'],'official']))}
+        return value
+
     employer_boards: list[str] | None = Field(default=None,max_length=1000)
     employer_selection_mode: Literal['all','industries','custom'] | None = None
     employer_industries: list[str] = Field(default_factory=list,max_length=9)

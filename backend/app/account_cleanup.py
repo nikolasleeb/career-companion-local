@@ -191,6 +191,7 @@ def apply(body:Apply,user=Depends(auth.current)):
      current=c.execute('SELECT payload FROM entities WHERE id=? AND user_id=?',(r['id'],u)).fetchone()
      if current:
       d=json.loads(current[0]);d['unavailable_source_ids']=sorted(set(d.get('unavailable_source_ids',[]))|{identity for identity in ids if refs(d,{identity})});write(c,u,r,d)
+   c.execute('DELETE FROM cc_profile_imports WHERE user_id=?',(u,))
    c.execute('DELETE FROM cc_run_answers WHERE user_id=?',(u,))
    c.execute('DELETE FROM cc_task_stage WHERE user_id=?',(u,))
    c.execute("UPDATE cc_ai_requests SET payload=? WHERE user_id=?",(json.dumps({'error':'Saved context was cleared. This historical result is unavailable.'}),u))

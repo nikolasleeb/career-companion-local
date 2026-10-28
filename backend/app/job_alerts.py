@@ -25,7 +25,7 @@ def record(user,kind,default):
     return rows[0] if rows else {'id':ident(user,kind),'data':default}
 def preferences(user,zone=None):
     result=record(user,'job_search_preferences',{'query':{**SearchRequest().model_dump(),'title':'','interests':[]}})
-    data=dict(result['data']);data['query']=dict(data['query'])
+    data=dict(result['data']);data['query']=SearchRequest.upgrade_public_sources(dict(data['query']));data['query'].setdefault('employer_source_version',1)
     # Existing stored choices are manual until the user explicitly restores auto.
     data.setdefault('job_type_mode','manual' if result.get('created_at') else 'automatic')
     data.setdefault('timezone','UTC')

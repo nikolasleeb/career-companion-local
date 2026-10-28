@@ -5,7 +5,7 @@ from . import auth,db
 from .models import StrictModel
 from pydantic import Field
 from typing import Literal
-INDUSTRIES={'science':'Science & research','healthcare':'Healthcare & life sciences','education':'Education','finance':'Finance & professional services','manufacturing':'Manufacturing & engineering','climate':'Climate & energy','nonprofit':'Nonprofits & public interest','consumer':'Consumer services & logistics','technology':'Technology'}
+INDUSTRIES={'science':'Science & research','healthcare':'Healthcare & life sciences','education':'Education','finance':'Finance & professional services','manufacturing':'Manufacturing & engineering','climate':'Climate & energy','nonprofit':'Nonprofits & public interest','consumer':'Consumer services & logistics','technology':'Technology companies'}
 class Selection(StrictModel):
     employer_selection_mode:Literal['all','industries','custom']='all'
     employer_industries:list[str]=Field(default_factory=list,max_length=9)
@@ -31,7 +31,7 @@ router=APIRouter(prefix='/api/settings/employer-sources')
 @router.get('')
 def get_sources(user=Depends(auth.current)):
     from . import public_job_feeds as feeds,job_alerts
-    return {'industries':[{'id':k,'label':v} for k,v in INDUSTRIES.items()],'employers':feeds.listing(user['id']),'selection':selection(job_alerts.preferences(user['id'])['data']['query']),'catalog_revision':feeds.REVISION,'added_boards':db.list_entities(user['id'],'board')}
+    return {'industries':[{'id':k,'label':v} for k,v in INDUSTRIES.items()],'employers':feeds.listing(user['id']),'selection':selection(job_alerts.preferences(user['id'])['data']['query']),'catalog_revision':feeds.REVISION,'added_boards':db.list_entities(user['id'],'board'),'external_employers':feeds.CATALOG.get('external_employers',[])}
 @router.put('')
 def save_sources(body:Selection,user=Depends(auth.current)):
     from . import job_alerts

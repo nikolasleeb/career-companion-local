@@ -1,6 +1,6 @@
 # Job Search sources
 
-The bundled catalog contains 298 distinct curated employers across 299 feeds across industries, not a
+The bundled catalog contains 302 distinct curated searchable employers across 303 feeds across industries, not a
 ranking of the largest employers. Each record includes the career-page URL,
 working public Greenhouse, Ashby or Lever feed, identity label, verification date
 and number of postings observed. Availability changes over time. Account-added
@@ -65,3 +65,7 @@ Industry presets select employer feeds, while role and location filters select j
 **Listing availability window — 30 days:** Current listings expire 30 days after their last source confirmation, or sooner if closed. A new source confirmation extends this window. Applications and their documents remain saved.
 
 **Reuse public feed results — 6 hours:** Searches and scheduled checks may reuse a downloaded public employer/community feed for six hours before fetching it again. Explicit Refresh can request an earlier update. These settings describe cache reuse and confirmed availability, separately from the selected posting-date window.
+
+## Major employer sources and sector labels
+
+See [current coverage](MAJOR_EMPLOYER_COVERAGE.md) and [testing instructions](TEST_MAJOR_EMPLOYERS_AND_IMPORT.md). Employer business sectors describe companies; Technology companies does not include every company hiring technical staff. Role filters remain independent. Major employer careers sources participate in manual, scheduled, For You and Ask AI searches. Existing all-public-ATS preferences gain the new source once; explicit new disabling is preserved by the source-selection schema version. Official-site-only links are outside automated counts.

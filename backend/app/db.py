@@ -55,6 +55,8 @@ def init():
         provider_connections.init(c)
         from . import account_cleanup,openai_connection_test
         account_cleanup.init(c);openai_connection_test.init(c)
+        from . import combined_import
+        combined_import.init(c)
         from . import public_job_feeds
         public_job_feeds.init(c)
         from . import job_results

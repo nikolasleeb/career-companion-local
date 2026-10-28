@@ -64,6 +64,8 @@ app.include_router(provider_connections.api_router)
 from . import employer_industries,account_cleanup,openai_connection_test
 app.include_router(employer_industries.router)
 app.include_router(account_cleanup.router)
+from . import combined_import
+app.include_router(combined_import.router)
 from . import private_answers, private_profile, application_agent, assistant_ai
 app.include_router(private_answers.router)
 app.include_router(private_profile.router)
@@ -482,13 +484,13 @@ def get_role_alignment(entity_id:str,user=Depends(auth.current)):
 @app.post('/api/experience')
 def add_experience(body:ExperienceItem,user=Depends(auth.current)):
     certifications.validate_documents(user['id'],body.model_dump())
-    return db.save(user['id'],'experience',body.model_dump())
+    return db.save(user['id'],'experience',{**body.model_dump(),'source_references':[],'unavailable_source_ids':[]})
 
 @app.put('/api/experience/{entity_id}')
 def edit_experience(entity_id:str,body:ExperienceItem,user=Depends(auth.current)):
-    require(user['id'],entity_id,'experience')
+    old=require(user['id'],entity_id,'experience')['data']
     certifications.validate_documents(user['id'],body.model_dump())
-    return db.save(user['id'],'experience',body.model_dump(),entity_id)
+    return db.save(user['id'],'experience',{**body.model_dump(),'source_references':combined_import.edited_references(old,body.model_dump()),'unavailable_source_ids':old.get('unavailable_source_ids',[])},entity_id)
 
 @app.delete('/api/records/{entity_id}')
 def remove_record(entity_id:str,user=Depends(auth.current)):
@@ -505,6 +507,7 @@ def remove_record(entity_id:str,user=Depends(auth.current)):
             raise HTTPException(409,'Remove this attachment from its certification before deleting the file.')
         file=config.DATA_DIR/'uploads'/user['id']/entity_id
         file.unlink(missing_ok=True)
+        combined_import.removed_source(user['id'],entity_id)
     db.delete(user['id'],entity_id);return {'ok':True}
 
 @app.post('/api/jobs/import-document')
@@ -643,7 +646,7 @@ def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(a
         source_ids={data.get('source_entry_id'):identity for identity,data in existing if data.get('source_entry_id')}
         fingerprints={resume_parser.fingerprint(data):identity for identity,data in existing}
         created=[];skipped=[];updated=[];stamp=db.now()
-        safe=set(ExperienceItem.model_fields)-{'category','confirmed','source_document_id','source_entry_id'}
+        safe=set(ExperienceItem.model_fields)-{'category','confirmed','source_document_id','source_entry_id','source_references','unavailable_source_ids'}
         for proposal in body.updates:
             oldrow=c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='experience'",(proposal.record_id,user['id'])).fetchone()
             if not oldrow:raise HTTPException(404,'The selected Profile record is unavailable.')
@@ -652,13 +655,13 @@ def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(a
             if old.get('category')!=new['category'] or set(proposal.fields)-safe:raise HTTPException(400,'Choose fields from the same Profile section.')
             patch={key:new[key] for key in proposal.fields}
             if any(value in ('',None,[],{}) for value in patch.values()):raise HTTPException(400,'Imports cannot erase existing fields. Edit Profile directly to clear them.')
-            merged=ExperienceItem.model_validate({**old,**patch}).model_dump();certifications.validate_documents(user['id'],merged)
+            merged=ExperienceItem.model_validate({**old,**patch,'source_references':combined_import.edited_references(old,{**old,**patch})}).model_dump();certifications.validate_documents(user['id'],merged)
             updated.append({'record_id':proposal.record_id,'entry_id':proposal.id,'fields':proposal.fields,'before':{k:old.get(k) for k in patch},'after':patch})
             c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?',(json.dumps(merged),stamp,proposal.record_id))
             c.execute('DELETE FROM evidence_fts WHERE id=? AND user_id=?',(proposal.record_id,user['id']))
             if merged.get('confirmed'):c.execute('INSERT INTO evidence_fts VALUES(?,?,?,?)',(proposal.record_id,user['id'],'experience',json.dumps(merged)))
         for proposal in body.entries:
-            data={**proposal.data.model_dump(),'confirmed':True,'source_document_id':entity_id,'source_entry_id':proposal.id}
+            data={**proposal.data.model_dump(),'confirmed':True,'source_document_id':entity_id,'source_entry_id':proposal.id,'source_references':[],'unavailable_source_ids':[]}
             digest=resume_parser.fingerprint(data)
             duplicate=source_ids.get(proposal.id) or fingerprints.get(digest)
             if duplicate: skipped.append({'entry_id':proposal.id,'record_id':duplicate});continue
@@ -1311,6 +1314,8 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             application_documents.validate_backup(record,kinds,by_id,payload.get('files',{}))
             if record['kind']=='experience':
                 ExperienceItem.model_validate(record['data'])
+                for reference in record['data'].get('source_references',[]):
+                    if kinds.get(reference['document_id'])!='document' and reference['document_id'] not in record['data'].get('unavailable_source_ids',[]):raise ValueError()
                 for credential in record['data'].get('certification_items',[]):
                     attachment=credential.get('document_id')
                     if attachment and (kinds.get(attachment)!='document' or by_id[attachment]['data'].get('purpose')!='certificate' or attachment not in payload.get('files',{})): raise ValueError()

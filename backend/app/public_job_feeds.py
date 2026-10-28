@@ -37,7 +37,7 @@ def identity():
     return {'catalog':REVISION,'snapshots':hashlib.sha256(json.dumps([tuple(r) for r in rows]).encode()).hexdigest()[:20]}
 
 def listing(user):
-    return [{'key':board_key(b),'employer_id':b.get('employer_id') or board_key(b),'company':b['company'],'provider':b['provider'],'career_url':b.get('career_url',''),'industries':b.get('industries',[]),'verified_at':b.get('verified_at',''),'verified_job_count':b.get('verified_job_count'),'curated':any(board_key(b)==board_key(v) for v in CATALOG['employers'])} for b in catalog_boards(user)]
+    return [{'key':board_key(b),'employer_id':b.get('employer_id') or board_key(b),'company':b['company'],'provider':b['provider'],'career_url':b.get('career_url',''),'industries':b.get('industries',[]),'aliases':b.get('aliases',[]),'coverage_status':b.get('coverage_status','integrated'),'integration_type':b.get('integration_type',b['provider']),'verified_at':b.get('verified_at',''),'verified_job_count':b.get('verified_job_count'),'curated':any(board_key(b)==board_key(v) for v in CATALOG['employers'])} for b in catalog_boards(user)]
 
 async def cached(source,load,*,refresh=False):
     # Locks are loop-scoped: test clients and reloads can create different loops.
@@ -56,7 +56,7 @@ async def cached(source,load,*,refresh=False):
             if isinstance(value,list):
                 from .integrations import posting_key
                 complete=bool(getattr(value,'complete',False))
-                job_cache.observe(source,value,now,complete=complete,authoritative=source.startswith(('greenhouse:','ashby:','lever:','usajobs:')))
+                job_cache.observe(source,value,now,complete=complete,authoritative=source.startswith(('greenhouse:','ashby:','lever:','usajobs:','official:amazon:','official:apple:','official:capitalone:','official:intuit:')))
                 current=[{**v,'_last_verified_epoch':now} for v in value]
                 # Incomplete query pages cannot close previously observed listings.
                 if row and not complete:
@@ -77,12 +77,18 @@ async def cached(source,load,*,refresh=False):
 def metadata(row,now,*,cached):
     return {'cached':cached,'last_success':row['success_at'],'stale':now-row['success_at']>STALE,'revision':row['revision'],'error':row['error']}
 
-async def employer(board,*,refresh=False):
+async def employer(board,*,refresh=False,request=None):
     from . import integrations as x
     key=board_key(board)
+    if board['provider']=='official':
+        from . import employer_sources
+        key=employer_sources.query_key(board,request)
     canonical=next((b['company'] for b in CATALOG['employers'] if board_key(b)==key),board['board'])
-    async def load():return await x.board_jobs({**board,'company':canonical},None)
+    async def load():
+        from . import employer_sources
+        return await employer_sources.jobs({**board,'company':canonical},request)
     rows,meta=await cached(key,load,refresh=refresh)
+    if board['provider']=='official':meta={**meta,'partial':True}
     return [{**copy.deepcopy(v),'company':board['company'],'snapshot_at':meta['last_success'],'snapshot_revision':meta['revision'],'snapshot_stale':meta['stale'],'_last_verified_epoch':v.get('_last_verified_epoch',meta['last_success']),'_cache_source':key,'_cache_scope':'public'} for v in rows if job_cache.deadline(v) is None or job_cache.deadline(v)>time.time()],meta
 
 async def community(*,refresh=False,queries=None,levels=None):

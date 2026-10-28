@@ -1,3 +1,5 @@
+> The latest major-employer expansion is documented in [Major employer coverage](MAJOR_EMPLOYER_COVERAGE.md). The snapshot below records the preceding expansion.
+
 # Employer coverage verification — 2026-10-28
 
 All 143 existing feed identifiers remain. 156 working feeds were added after checking 495 candidate feeds and their public employer identities. The catalog has 298 distinct employers across 299 feeds. ACLU National and internships share an employer ID and count once per industry. Maven is the education platform, not Maven Clinic.

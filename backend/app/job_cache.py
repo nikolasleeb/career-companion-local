@@ -57,7 +57,7 @@ def iso(value):return datetime.fromtimestamp(value,timezone.utc).isoformat() if 
 def observe(source,rows,verified_at,*,scope='public',complete=False,authoritative=False):
  """Only source adapters call this, on successful verification, never on a cache hit."""
  from .integrations import posting_key
- if scope=='public' and not source.startswith(('greenhouse:','ashby:','lever:','usajobs:','github:')):raise ValueError('Only validated public source adapters may publish observations.')
+ if scope=='public' and not source.startswith(('greenhouse:','ashby:','lever:','usajobs:','github:','official:amazon:','official:apple:','official:capitalone:','official:intuit:')):raise ValueError('Only validated public source adapters may publish observations.')
  verified=min(float(verified_at),time.time());seen=set()
  with db.connect() as c:
   c.execute('BEGIN IMMEDIATE')

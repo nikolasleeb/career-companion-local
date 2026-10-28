@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-28-forty-per-industry",
+  "revision": "2026-10-28-major-employers",
   "verified_at": "2026-10-28T23:09:44.143467+00:00",
   "description": "Public employer feeds across industries; industries choose employers, while job roles filter postings.",
   "attribution": {
@@ -199,6 +199,31 @@
       "employer_id": "altoslabs"
     },
     {
+      "company": "Amazon / AWS",
+      "employer_id": "amazon",
+      "provider": "official",
+      "board": "amazon",
+      "industries": [
+        "technology",
+        "consumer"
+      ],
+      "career_url": "https://www.amazon.jobs/en/",
+      "feed_url": "https://www.amazon.jobs/en/search.json",
+      "identity_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
+      "identity_label": "Amazon Web Services — Amazon.jobs",
+      "verified_at": "2026-10-28T23:39:03.400070+00:00",
+      "verified_job_count": 200,
+      "coverage_status": "integrated",
+      "integration_type": "amazon_public_search",
+      "aliases": [
+        "Amazon",
+        "AWS",
+        "Amazon Web Services"
+      ],
+      "coverage_note": "Bounded official search; source counts are query-specific, not a complete inventory.",
+      "observed_scope": "Bounded US data-engineering query; not total employer openings"
+    },
+    {
       "provider": "greenhouse",
       "board": "americaninstitutesforresearch",
       "company": "American Institutes for Research",
@@ -282,6 +307,30 @@
       "verified_job_count": 39,
       "observed_us_job_count": 3,
       "employer_id": "antoraenergy"
+    },
+    {
+      "company": "Apple",
+      "career_url": "https://jobs.apple.com/en-us/search",
+      "industries": [
+        "technology",
+        "manufacturing"
+      ],
+      "employer_id": "apple",
+      "provider": "official",
+      "board": "apple",
+      "coverage_status": "integrated",
+      "integration_type": "apple_public_search",
+      "aliases": [],
+      "verified_job_count": 40,
+      "checked_at": "2026-10-28T23:32:11.840447+00:00",
+      "coverage_note": "Bounded public search summaries; review the full official posting for requirements.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.apple.com/careers/us/",
+      "identity_label": "Apple Roles and Opportunities - Careers at Apple",
+      "feed_url": "https://jobs.apple.com/en-us/search",
+      "identity_url": "https://www.apple.com/careers/us/",
+      "verified_at": "2026-10-28T23:39:06.030336+00:00",
+      "observed_scope": "Bounded US data-engineering query; not total employer openings"
     },
     {
       "provider": "greenhouse",
@@ -747,6 +796,30 @@
       "identity_url": "https://boards-api.greenhouse.io/v1/boards/calm",
       "observed_us_job_count": 1,
       "employer_id": "calmcom"
+    },
+    {
+      "company": "Capital One",
+      "career_url": "https://www.capitalonecareers.com/",
+      "industries": [
+        "finance"
+      ],
+      "employer_id": "capitalone",
+      "provider": "official",
+      "board": "capitalone",
+      "coverage_status": "integrated",
+      "integration_type": "official_sitemap_jobposting",
+      "aliases": [],
+      "verified_job_count": 8,
+      "checked_at": "2026-10-28T23:32:11.840154+00:00",
+      "coverage_note": "Only permitted sitemap and job-detail URLs are read. Search-page crawling is excluded; results are bounded and may be incomplete.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.capitalonecareers.com/",
+      "identity_label": "Search Jobs and Careers at Capital One",
+      "feed_url": "https://www.capitalonecareers.com/jobs_sitemap.xml",
+      "identity_url": "https://www.capitalonecareers.com/",
+      "verified_at": "2026-10-28T23:44:00.721145+00:00",
+      "policy_url": "https://www.capitalonecareers.com/robots.txt",
+      "observed_scope": "Bounded sitemap/JobPosting sample; not total employer openings"
     },
     {
       "company": "Carta",
@@ -2328,6 +2401,31 @@
       "verified_job_count": 22,
       "observed_us_job_count": 16,
       "employer_id": "intrinsicrobotics"
+    },
+    {
+      "company": "Intuit",
+      "career_url": "https://jobs.intuit.com/",
+      "industries": [
+        "technology",
+        "finance"
+      ],
+      "employer_id": "intuit",
+      "provider": "official",
+      "board": "intuit",
+      "coverage_status": "integrated",
+      "integration_type": "official_sitemap_jobposting",
+      "aliases": [],
+      "verified_job_count": 8,
+      "checked_at": "2026-10-28T23:32:11.840690+00:00",
+      "coverage_note": "Only permitted sitemap and job-detail URLs are read. Search-page crawling is excluded; results are bounded and may be incomplete.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.intuit.com/careers/",
+      "identity_label": "Explore Career and Job Opportunities | Intuit Careers",
+      "feed_url": "https://jobs.intuit.com/sitemap.xml",
+      "identity_url": "https://jobs.intuit.com/",
+      "verified_at": "2026-10-28T23:44:05.533763+00:00",
+      "policy_url": "https://jobs.intuit.com/robots.txt",
+      "observed_scope": "Bounded sitemap/JobPosting sample; not total employer openings"
     },
     {
       "provider": "greenhouse",
@@ -5126,11 +5224,318 @@
     "science": 40,
     "healthcare": 43,
     "education": 40,
-    "finance": 40,
-    "manufacturing": 40,
+    "finance": 42,
+    "manufacturing": 41,
     "climate": 40,
     "nonprofit": 40,
-    "consumer": 40,
-    "technology": 40
-  }
+    "consumer": 41,
+    "technology": 43
+  },
+  "external_employers": [
+    {
+      "company": "Microsoft",
+      "career_url": "https://careers.microsoft.com/",
+      "industries": [
+        "technology"
+      ],
+      "employer_id": "microsoft",
+      "provider": "external",
+      "board": "microsoft",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:11.840588+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://careers.microsoft.com/v2/global/en/home.html",
+      "identity_label": "Home | Microsoft Careers"
+    },
+    {
+      "company": "Google",
+      "career_url": "https://www.google.com/about/careers/applications/",
+      "industries": [
+        "technology"
+      ],
+      "employer_id": "google",
+      "provider": "external",
+      "board": "google",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:12.050702+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.google.com/about/careers/applications/",
+      "identity_label": "Search for your career at Google."
+    },
+    {
+      "company": "Meta",
+      "career_url": "https://www.metacareers.com/",
+      "industries": [
+        "technology"
+      ],
+      "employer_id": "meta",
+      "provider": "external",
+      "board": "meta",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:12.202859+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.metacareers.com/",
+      "identity_label": "Meta Jobs &amp; Careers | Do the Most Meaningful Work of Your Career"
+    },
+    {
+      "company": "NVIDIA",
+      "career_url": "https://www.nvidia.com/en-us/about-nvidia/careers/",
+      "industries": [
+        "technology",
+        "manufacturing"
+      ],
+      "employer_id": "nvidia",
+      "provider": "external",
+      "board": "nvidia",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:12.205491+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.nvidia.com/en-us/about-nvidia/careers/",
+      "identity_label": "Jobs at NVIDIA | NVIDIA Careers"
+    },
+    {
+      "company": "Adobe",
+      "career_url": "https://careers.adobe.com/",
+      "industries": [
+        "technology"
+      ],
+      "employer_id": "adobe",
+      "provider": "external",
+      "board": "adobe",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:12.247854+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://careers.adobe.com/us/en",
+      "identity_label": "Careers at Adobe | Adobe job opportunities."
+    },
+    {
+      "company": "IBM",
+      "career_url": "https://www.ibm.com/careers",
+      "industries": [
+        "technology"
+      ],
+      "employer_id": "ibm",
+      "provider": "external",
+      "board": "ibm",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:12.452045+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.ibm.com/careers",
+      "identity_label": "Define your career with IBM"
+    },
+    {
+      "company": "Boeing",
+      "career_url": "https://jobs.boeing.com/",
+      "industries": [
+        "manufacturing"
+      ],
+      "employer_id": "boeing",
+      "provider": "external",
+      "board": "boeing",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:12.545442+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://jobs.boeing.com/",
+      "identity_label": "Explore new horizons with Boeing"
+    },
+    {
+      "company": "Lockheed Martin",
+      "career_url": "https://www.lockheedmartinjobs.com/",
+      "industries": [
+        "manufacturing"
+      ],
+      "employer_id": "lockheedmartin",
+      "provider": "external",
+      "board": "lockheedmartin",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:12.777285+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.lockheedmartinjobs.com/cgi-bin/ext_redir.pl",
+      "identity_label": ""
+    },
+    {
+      "company": "Northrop Grumman",
+      "career_url": "https://www.northropgrumman.com/careers/",
+      "industries": [
+        "manufacturing"
+      ],
+      "employer_id": "northropgrumman",
+      "provider": "external",
+      "board": "northropgrumman",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:12.863029+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 308,
+      "identity_label": "Northrop Grumman",
+      "verification_note": "Official destination verified by source references; automated request unavailable."
+    },
+    {
+      "company": "RTX",
+      "career_url": "https://careers.rtx.com/",
+      "industries": [
+        "manufacturing"
+      ],
+      "employer_id": "rtx",
+      "provider": "external",
+      "board": "rtx",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:12.883354+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://careers.rtx.com/global/en",
+      "identity_label": "RTX Careers"
+    },
+    {
+      "company": "Siemens",
+      "career_url": "https://www.siemens.com/global/en/company/jobs.html",
+      "industries": [
+        "manufacturing"
+      ],
+      "employer_id": "siemens",
+      "provider": "external",
+      "board": "siemens",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:13.073914+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.siemens.com/en-us/company/jobs/",
+      "identity_label": "Jobs &amp; careers | Siemens"
+    },
+    {
+      "company": "JPMorgan Chase",
+      "career_url": "https://careers.jpmorgan.com/",
+      "industries": [
+        "finance"
+      ],
+      "employer_id": "jpmorganchase",
+      "provider": "external",
+      "board": "jpmorganchase",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:13.855067+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.jpmorganchase.com/careers?redirect=careers_jpm",
+      "identity_label": "Careers | JPMorganChase"
+    },
+    {
+      "company": "Bank of America",
+      "career_url": "https://careers.bankofamerica.com/",
+      "industries": [
+        "finance"
+      ],
+      "employer_id": "bankofamerica",
+      "provider": "external",
+      "board": "bankofamerica",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:14.304482+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://careers.bankofamerica.com/en-us",
+      "identity_label": "Bank of America Careers Site - Apply at Bank of America"
+    },
+    {
+      "company": "Wells Fargo",
+      "career_url": "https://www.wellsfargojobs.com/",
+      "industries": [
+        "finance"
+      ],
+      "employer_id": "wellsfargo",
+      "provider": "external",
+      "board": "wellsfargo",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:14.943651+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 403,
+      "identity_label": "Wells Fargo",
+      "verification_note": "Official destination verified by source references; automated request unavailable."
+    },
+    {
+      "company": "Citi",
+      "career_url": "https://jobs.citi.com/",
+      "industries": [
+        "finance"
+      ],
+      "employer_id": "citi",
+      "provider": "external",
+      "board": "citi",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:15.078495+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://jobs.citi.com/",
+      "identity_label": "Citi Careers | Find Your Next Opportunity"
+    },
+    {
+      "company": "Goldman Sachs",
+      "career_url": "https://www.goldmansachs.com/careers/",
+      "industries": [
+        "finance"
+      ],
+      "employer_id": "goldmansachs",
+      "provider": "external",
+      "board": "goldmansachs",
+      "coverage_status": "external",
+      "integration_type": "official_site_link",
+      "aliases": [],
+      "verified_job_count": null,
+      "checked_at": "2026-10-28T23:32:15.098304+00:00",
+      "coverage_note": "Official careers site only. No verified supported automated feed; listings are not included in automated searches.",
+      "official_site_http_status": 200,
+      "official_site_final_url": "https://www.goldmansachs.com/careers/",
+      "identity_label": "Goldman Sachs Careers | Goldman Sachs"
+    }
+  ]
 }

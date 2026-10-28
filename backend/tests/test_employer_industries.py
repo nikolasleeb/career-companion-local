@@ -122,7 +122,7 @@ def test_large_cold_and_cached_catalog_keeps_six_fetch_limit(client,account,monk
  query=SearchRequest(sources=['greenhouse','ashby','lever'])
  first=asyncio.run(job_search.discover(account['id'],query));assert calls==len(feeds.CATALOG['employers']) and peak==6 and active==0
  second=asyncio.run(job_search.discover(account['id'],query));assert calls==len(feeds.CATALOG['employers'])
- assert len(first['sources'])==len(second['sources'])==len(feeds.CATALOG['employers']) and all(s['status']=='empty' for s in second['sources'])
+ assert len(first['sources'])==len(second['sources'])==len(feeds.CATALOG['employers']) and all(s['status']==('incomplete' if s['source'].startswith('official:') else 'empty') for s in second['sources']),[(s['source'],s['status']) for s in second['sources'] if s['status']!=('incomplete' if s['source'].startswith('official:') else 'empty')]
 
 def test_cancelling_scan_awaits_inflight_work(monkeypatch):
  from app import job_search

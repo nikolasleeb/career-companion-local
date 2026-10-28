@@ -166,9 +166,9 @@ async def _discover(user,request,*,execution='manual'):
         label=feeds.board_key(board)
         async with sem:
             try:
-                rows,meta=await asyncio.wait_for(feeds.employer(board,refresh=request.refresh),60)
+                rows,meta=await asyncio.wait_for(feeds.employer(board,refresh=request.refresh,request=request),60)
                 jobs.extend(v for v in rows if title_match(v.get('title',''),queries,chosen_levels))
-                statuses.append({'source':label,'status':'stale' if meta['stale'] else 'ok' if rows else 'empty','last_success':meta['last_success'],'snapshot_revision':meta['revision'],'message':f"{board['company']}: {len(rows)} public postings; {'cached' if meta['cached'] else 'refreshed'}. "+meta['error']})
+                statuses.append({'source':label,'status':'stale' if meta['stale'] else 'incomplete' if meta.get('partial') else 'ok' if rows else 'empty','last_success':meta['last_success'],'snapshot_revision':meta['revision'],'message':f"{board['company']}: {len(rows)} public postings{' (bounded query; incomplete inventory)' if meta.get('partial') else ''}; {'cached' if meta['cached'] else 'refreshed'}. "+meta['error']})
             except (ServiceError,asyncio.TimeoutError):statuses.append({'source':label,'status':'error','message':board['company']+': public feed unavailable. Other sources are retained.'})
     async def community_search():
         async with sem:
@@ -177,7 +177,7 @@ async def _discover(user,request,*,execution='manual'):
                 statuses.append({'source':'github:open-jobs-data','status':'stale' if meta['stale'] else 'ok' if rows else 'empty','last_success':meta['last_success'],'snapshot_at':meta['snapshot_at'],'message':f"open-jobs-data: {len(rows)} community metadata records. Employer requirements require review. "+meta['error']})
             except (ServiceError,asyncio.TimeoutError):statuses.append({'source':'github:open-jobs-data','status':'error','message':'Community snapshot unavailable; other sources are retained.'})
     for source in dict.fromkeys(request.sources):
-        if source in ('greenhouse','ashby','lever'):
+        if source in ('greenhouse','ashby','lever','official'):
             chosen=[b for b in boards if b['provider']==source]
             if not chosen:statuses.append({'source':source,'status':'setup','message':'No employer boards selected for this source.'})
             for board in chosen:employer_calls.append((feeds.board_key(board),board_search(board)))

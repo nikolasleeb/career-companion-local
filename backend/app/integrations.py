@@ -82,6 +82,12 @@ def normalize_job(source,title,company,location,description,url,**kwargs):
 
 def posting_key(url):
     value=canonical_url(url);p=urlparse(value)
+    if p.hostname in ('amazon.jobs','www.amazon.jobs'):
+        match=re.search(r'/jobs/(\d+)',p.path)
+        if match:return 'amazon:'+match[1]
+    if p.hostname=='jobs.apple.com':
+        match=re.search(r'/details/([A-Za-z0-9-]+)',p.path)
+        if match:return 'apple:'+match[1]
     if p.hostname in ('jobs.ashbyhq.com','jobs.lever.co','jobs.eu.lever.co'):return value.removesuffix('/application').removesuffix('/apply')
     if p.hostname in ('boards.greenhouse.io','job-boards.greenhouse.io'):
         m=re.search(r'/([^/]+)/jobs/(\d+)',p.path)
@@ -132,6 +138,13 @@ def complete_payload(payload,rows):
 
 async def board_jobs(board, query):
     provider=board['provider'];token=quote(board['board'],safe='')
+    if provider=='official' and board['board'] in ('capitalone','intuit'):
+        from .employer_sources import sitemap_jobs
+        return await sitemap_jobs(board['board'],query)
+    if provider=='official' and board['board'] in ('amazon','apple'):
+        from . import employer_sources
+        return await getattr(employer_sources,board['board'])(query)
+    if provider not in ('greenhouse','ashby','lever'):raise ServiceError('Unsupported public board provider.')
     if provider=='lever':
         host='api.eu.lever.co' if board.get('region')=='eu' else 'api.lever.co'
         rows=await fetch_json(f'https://{host}/v0/postings/{token}',{'mode':'json'})
