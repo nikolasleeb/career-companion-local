@@ -1401,7 +1401,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data'].get('note',record['data']['text']),items=record['data'].get('items'),use_for_ai=record['data'].get('use_for_ai',False),expected_revision=current_goals['revision']))
         elif record['kind']=='work_preferences':
             if not work_preferences.read(user['id'])['preferences']:
-                db.save(user['id'],'work_preferences',{**remap(record['data']),'use_for_ai':False,'reviewed':False,'revision':work_preferences.read(user['id'])['revision']+1},work_preferences.identity(user['id']))
+                db.save(user['id'],'work_preferences',{**remap(record['data']),'use_for_ai':False,'coach_report_access':False,'reviewed':False,'revision':work_preferences.read(user['id'])['revision']+1},work_preferences.identity(user['id']))
         elif record['kind'] in career_coach.KINDS or record['kind'] in interview_practice.KINDS or record['kind'] in knowledge_assistant.KINDS or record['kind'] in ('personalized_search','chat_image'):
             saved=db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
             stamp=integrations.parse_date(record.get('created_at'))

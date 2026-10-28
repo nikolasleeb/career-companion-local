@@ -579,3 +579,16 @@ def test_legacy_failed_chat_shows_unapplied_reply_without_rewriting_history(env)
     raw=db.get(user,first['id'],'resume_conversation')['data']
     assert 'revision_status' not in raw['messages'][-1] and 'last_message_input' not in raw
     assert value['current']['id']==first['current']['id']
+
+
+def test_resume_ai_gets_only_the_approved_work_style_summary(env):
+    from app import work_preferences
+    user,job,rows,session,calls=env
+    record=db.save(user,'work_style',{'status':'completed','report':{'domains':[{'name':'SECRET_REPORT_NAME','mean':4.75}],'facets':[],'preferences':[]},'answers':{'private':'SECRET_RAW_ANSWER'}})
+    work_preferences.put(work_preferences.Change(expected_revision=0,summary='I prefer focused preparation with planned check-ins.',use_for_ai=True,reviewed=True,coach_report_access=True,assessment_id=record['id']),{'id':user})
+    result=build(env)
+    payload=next(value for schema,value in calls if schema=='OptimizationOutput')
+    assert payload['work_style_guidance']['summary']=='I prefer focused preparation with planned check-ins.'
+    assert 'SECRET_REPORT_NAME' not in json.dumps(calls) and 'SECRET_RAW_ANSWER' not in json.dumps(calls)
+    assert 'professional evidence' in payload['work_style_guidance']['purpose']
+    assert result['current']

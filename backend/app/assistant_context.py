@@ -1,22 +1,24 @@
 """Rebuilt, versioned account-only SQLite FTS retrieval. No stale private index."""
 import json,re,sqlite3,hashlib
 from . import db,career_coach,career_goals,work_preferences,job_ai
-VERSION='account-context-v2'
+VERSION='account-context-v3'
 PRIVATE=re.compile(r'citizenship|visa|sponsor|work authori|vaccin|disabil|veteran|religio|politic|sexual|marital|date of birth|social security|api.?key|password',re.I)
 def clean(value):
  text=job_ai.clean(str(value))
  return '\n'.join(line for line in text.splitlines() if not PRIVATE.search(line))
 def sources(user):
  rows=[]
- def add(id,record,kind,label,text,revision):
-  text=clean(text)
+ def add(id,record,kind,label,text,revision,report=False):
+  text=job_ai.clean(text) if report else clean(text)
   if not text.strip():return
-  for at in range(0,min(len(text),24000),1800):
+  for at in range(0,min(len(text),96000 if report else 24000),1800):
    chunk=text[at:at+1800];rows.append({'source_id':id+':'+str(at),'record_id':record,'kind':kind,'label':label[:180],'text':chunk,'revision':revision,'index_version':VERSION})
  for s in career_coach.profile(user)['sources']:add('profile:'+s['id'],s['record_id'],'reviewed_profile','Reviewed Profile · '+s['field'],s['text'],hashlib.sha256(s['text'].encode()).hexdigest())
  g=career_goals.context(user);add('goals',career_goals.identity(user),'aspiration','Career Goals · aspirations, not qualifications',g['text'],str(g['revision']))
  w=work_preferences.context(user)
  if w['preferences']:add('preferences',work_preferences.identity(user),'preference','Approved Work Styles summary · not qualifications','\n'.join(w['preferences']),str(w['revision']))
+ report=work_preferences.coach_context(user)
+ if report:add('work-style-report',report['record_id'],'work_style_report','Work Styles report and scores · self-reflection, not qualifications',json.dumps(report['report'],ensure_ascii=False,indent=2),report['revision'],report=True)
  def resume_text(d):
   if not isinstance(d,dict):return ''
   if isinstance(d.get('snapshot'),dict):d=d['snapshot']
@@ -25,6 +27,7 @@ def sources(user):
  allowed={'resume','resume_revision','application','job','analysis','prep','coach_plan'}
  # Fetch only supported account-owned records. Raw documents, vaults, settings,
  # questionnaire answers and private reusable answers never enter this catalog.
+ # Derived Work Styles reports have their own explicit, revisioned consent above.
  with db.connect() as c:
   records=[db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind IN ('resume','resume_revision','application','job','analysis','prep','coach_plan') ORDER BY updated_at DESC LIMIT 1200",(user,))]
  for r in records:
