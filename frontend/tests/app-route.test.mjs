@@ -1,0 +1,27 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+let source=readFileSync(new URL('../src/appRoute.ts',import.meta.url),'utf8').replace(/^import .*from 'react';\n/,'');
+const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const route=await import('data:text/javascript;base64,'+Buffer.from(compiled).toString('base64'));
+const location={pathname:'/',search:'',hash:''},states=[];
+globalThis.location=location;globalThis.history={state:null,replaceState(state,_,url){this.state=state;location.hash=url.includes('#')?'#'+url.split('#')[1]:'';states.push(['replace',url]);},pushState(state,_,url){this.state=state;location.hash='#'+url.split('#')[1];states.push(['push',url]);}};
+test('routes only serialize navigation identities, never typed/private values',()=>{
+ const hash=route.routeHash({view:'coach',tab:'plans',item:'abc123',question:'q1',prompt:'secret text',api_key:'secret-key'});
+ assert.equal(hash,'#/career-plans?tab=plans&item=abc123&question=q1');assert(!hash.includes('secret'));
+ assert.deepEqual(route.parseRoute('#/settings?tab=connections&api_key=secret'),{view:'settings',tab:'connections'});
+ assert.equal(route.parseRoute('#assistant-run=abc'),null);assert.equal(route.parseRoute('#/unknown'),null);
+});
+test('unfinished root ignores remembered Resources but explicit resource links work',()=>{
+ route.resetRoutes();location.hash='';route.initializeRoutes('one',false,{view:'coach',jobId:'old'});assert.equal(route.routeNow().view,'master');assert.equal(route.routeNow().tab,'upload');
+ route.resetRoutes();location.hash='#/interview-practice?item=abc';route.initializeRoutes('two',false);assert.deepEqual(route.routeNow(),{view:'interviews',item:'abc'});
+ route.resetRoutes();location.hash='#/applications?item=abc';route.initializeRoutes('three',false);assert.equal(route.routeNow().view,'master');
+});
+test('deliberate navigation pushes once; canonical updates replace and guards prevent loss',()=>{
+ route.resetRoutes();location.hash='';route.initializeRoutes('four',true);states.length=0;
+ route.setRoute({view:'settings',tab:'connections'});route.setRoute({view:'settings',tab:'connections'});assert.equal(states.length,1);assert.equal(states[0][0],'push');
+ route.setRoute({view:'settings',tab:'usage'},true);assert.equal(states.at(-1)[0],'replace');
+ const remove=route.routeGuard(()=>false);route.setRoute({view:'master'});assert.equal(route.routeNow().view,'settings');remove();
+ route.setRoute({view:'master'});assert.equal(route.routeNow().view,'master');
+});

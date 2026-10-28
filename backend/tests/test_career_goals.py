@@ -14,7 +14,7 @@ def test_goals_optional_revision_isolation_and_export(client,account):
  other=client.post('/api/auth/register',json={'username':'other-goals','password':'fictional-password'}).json();client.headers['X-CSRF-Token']=other['csrf']
  assert client.get('/api/profile/career-goals').json()['text']==''
  assert client.put('/api/profile/career-goals',json={'text':'Explore nursing','expected_revision':0}).status_code==200 # Accessible during education setup.
- assert client.get('/api/career-coach/chats').status_code==403
+ assert client.get('/api/career-coach/chats').status_code==200
 
 def test_aspiration_only_application_context_and_validation(client,account):
  career_goals.save(account['id'],career_goals.Change(text='Learn cloud engineering',expected_revision=0))

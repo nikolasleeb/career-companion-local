@@ -53,8 +53,10 @@ def test_gate_optional_drafts_education_removal_and_workspace_preservation(clien
  # Old completion metadata, including imported grandfathering, cannot unlock.
  db.save(u,'onboarding',{'schema_version':1,'version':1,'empty_sections':[],'completed_at':db.now(),'grandfathered':True},onboarding.identity(u))
  assert not client.get('/api/me').json()['onboarding']['completed']
- for route in ('/api/jobs/search','/api/application-agent/runs','/api/work-style','/api/resources','/api/job-search/preferences'):
+ for route in ('/api/jobs/search','/api/application-agent/runs','/api/job-search/preferences'):
   assert client.get(route).status_code in (403,405) if route=='/api/jobs/search' else client.get(route).status_code==403
+ for route in ('/api/work-style','/api/resources'):
+  assert client.get(route).status_code==200
  assert client.post('/api/jobs/search',json={}).status_code==403
  assert client.get('/api/workspace').json()['job']==[]
  assert db.get(u,job['id'])

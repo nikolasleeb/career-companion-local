@@ -25,7 +25,7 @@ def test_first_time_checklist_and_resources_without_key(client,fresh,monkeypatch
     assert not section(s,'education')['can_mark_empty']
     for url in ('/api/workspace','/api/profile-answers','/api/project-sources','/api/settings/job-connections','/api/account/export','/api/tasks/active'):
         assert client.get(url).status_code==200,url
-    assert client.post('/api/work-style').status_code==403
+    assert client.post('/api/work-style').status_code==200
     assert client.post('/api/project-sources/paste',json={'title':'Notes','text':'A course project.'}).status_code==200
     assert client.post('/api/answer-drafts',json={'title':'Example','expected_version':0,'text':'','question':work_style.DIMENSIONS[0]['prompt']}).status_code==200
     assert client.post('/api/onboarding/complete',json=request(s)).status_code==409
@@ -34,7 +34,7 @@ def test_first_time_checklist_and_resources_without_key(client,fresh,monkeypatch
 
 @pytest.mark.parametrize('method,path',[
  ('post','/api/jobs'),('post','/api/jobs/parse'),('post','/api/jobs/import-document'),('post','/api/jobs/import-url'),('post','/api/jobs/search'),('get','/api/jobs/foreign/overview'),('post','/api/jobs/foreign/check'),
- ('post','/api/boards'),('post','/api/analyses'),('get','/api/analyses/foreign/role-alignment'),('post','/api/resumes'),('post','/api/resumes/save'),('post','/api/resume-content'),('post','/api/resumes/fit'),('post','/api/resumes/optimize'),('post','/api/resumes/optimize-estimate'),('post','/api/resumes/keywords'),('get','/api/resumes/foreign/export/pdf'),('post','/api/resume-conversations'),('post','/api/resume-conversations/foreign/build'),('get','/api/resume-drafts'),('post','/api/cover-letters/workspace'),('post','/api/cover-workspaces/foreign/questions'),('post','/api/cover-workspaces/foreign/context/review'),('get','/api/cover-letters/foreign/export/pdf'),('get','/api/applications'),('get','/api/applications/dashboard'),('post','/api/applications/start'),('post','/api/applications'),('put','/api/applications/foreign'),('delete','/api/applications/foreign'),('post','/api/preparation'),('post','/api/interviews'),('post','/api/demo/analyst')])
+ ('post','/api/boards'),('post','/api/analyses'),('get','/api/analyses/foreign/role-alignment'),('post','/api/resumes'),('post','/api/resumes/save'),('post','/api/resume-content'),('post','/api/resumes/fit'),('post','/api/resumes/optimize'),('post','/api/resumes/optimize-estimate'),('post','/api/resumes/keywords'),('get','/api/resumes/foreign/export/pdf'),('post','/api/resume-conversations'),('post','/api/resume-conversations/foreign/build'),('get','/api/resume-drafts'),('post','/api/cover-letters/workspace'),('post','/api/cover-workspaces/foreign/questions'),('post','/api/cover-workspaces/foreign/context/review'),('get','/api/cover-letters/foreign/export/pdf'),('get','/api/applications'),('get','/api/applications/dashboard'),('post','/api/applications/start'),('post','/api/applications'),('put','/api/applications/foreign'),('delete','/api/applications/foreign'),('post','/api/interviews'),('post','/api/demo/analyst')])
 def test_all_application_entrypoints_are_guarded_before_work(client,fresh,monkeypatch,method,path):
     async def forbidden(*a,**k):raise AssertionError('Provider/network must not run')
     monkeypatch.setattr(ai,'structured',forbidden)
@@ -108,7 +108,7 @@ def test_project_analysis_needs_approval_before_it_counts(client,fresh):
     assert section(state(client),'project')['status']=='complete'
     assert client.post('/api/project-snapshots/'+snap['id']+'/attach',json={'builder':'resume','conversation_id':'missing','expected_version':1}).status_code==403
     assert client.post('/api/work-style/prompts',json={'themes':['1'],'job_id':'missing'}).status_code==403
-    assert client.post('/api/work-style/prompts',json={'themes':['1'],'job_id':''}).status_code==403
+    assert client.post('/api/work-style/prompts',json={'themes':['1'],'job_id':''}).status_code==503
 
 
 def test_migration_only_grandfathers_existing_application_users(client,fresh):

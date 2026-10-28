@@ -1,3 +1,4 @@
+import {useAppRoute} from './appRoute';
 import React,{useEffect,useRef,useState} from 'react';
 import {pollTask} from './apiClient';
 import {recordingWav,audioActionKey} from './interviewAudioData';
@@ -7,6 +8,8 @@ export function InterviewVoice({account,session,question,call,available,blocked,
  const key=audioActionKey(account,session,question);
  const [format,setFormat]=useState('typed'),[voice,setVoice]=useState('marin'),[recording,setRecording]=useState(false),[seconds,setSeconds]=useState(0),[level,setLevel]=useState(0),[blob,setBlob]=useState<Blob|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[row,setRow]=useState<any>(null),[text,setText]=useState(''),[reviewed,setReviewed]=useState(false),[revision,setRevision]=useState(''),[playback,setPlayback]=useState(''),[pending,setPending]=useState<any>(()=>{try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}});
  const capture=useRef<any>(null),alive=useRef(true),playRef=useRef('');const locked=blocked||busy||!!pending;
+ const navRoute=useAppRoute();
+ useEffect(()=>{if(navRoute.view!=='interviews'){if(capture.current){stop(true);setError('Recording stopped and discarded when you left Interview Practice.');}setBlob(null);if(playRef.current){URL.revokeObjectURL(playRef.current);playRef.current='';}}},[navRoute.view]);
  function release(){const c=capture.current;if(!c)return;capture.current=null;c.stream.getTracks().forEach((t:MediaStreamTrack)=>t.stop());cancelAnimationFrame(c.frame);clearInterval(c.timer);if(c.context.state!=='closed')void c.context.close();}
  function stop(discard=false){const c=capture.current;if(!c)return;c.discard=discard;if(c.recorder.state!=='inactive')c.recorder.stop();release();setRecording(false);setLevel(0);if(discard)setBlob(null);}
  function loadRow(r:any){setRow(r);let draft:any=null;try{draft=JSON.parse(sessionStorage.getItem('interview-transcript:'+account+':'+r.id)||'null');}catch{}setText(draft?.text??r?.data.reviewed_transcript??r?.data.transcript??'');setRevision(draft?.revision||r.updated_at);setReviewed(!draft&&!!r?.data.reviewed_at);}

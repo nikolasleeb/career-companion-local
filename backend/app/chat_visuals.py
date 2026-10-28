@@ -47,7 +47,7 @@ class Generate(StrictModel):
  alt:str=Field(default='AI-generated career illustration',max_length=500)
  request_token:str=Field(min_length=8,max_length=100,pattern=r'^[A-Za-z0-9_-]+$')
 def owner(user=Depends(auth.current)):
- onboarding.require_complete(user['id']);return user['id']
+ return user['id']
 def parent(user,kind,id):
  if not db.get(user,id,kind):raise HTTPException(404,'Conversation not found.')
 def active(user,kind,id):

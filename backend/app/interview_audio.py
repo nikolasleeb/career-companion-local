@@ -18,7 +18,7 @@ TRANSCRIBE='gpt-transcribe';DELIVERY='gpt-audio-1.5';NARRATE='gpt-realtime-2.1-m
 _playback={}
 
 def owner(user=Depends(auth.current)):
- onboarding.require_complete(user['id']);return user['id']
+ return user['id']
 def owned(user,id,kind):
  r=db.get(user,id,kind)
  if not r:raise HTTPException(404,'Interview record not found.')

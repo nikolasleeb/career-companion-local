@@ -68,7 +68,6 @@ def install(app,start_task,require_ai):
   return {**ai_settings.estimate(o['model'],o['reasoning_effort'],input_tokens=1500+len(json.dumps(p))//3,answer_tokens=700,service_tier=o['service_tier']),'model':o['model'],'reasoning':o['reasoning_effort']}
  @router.post('/actions')
  async def action(body:Request,user=Depends(auth.current)):
-  onboarding.require_complete(user['id'])
   require_ai(user['id'])
   if not credentials.get(user['id']):raise ServiceError('Add your own OpenAI key in Settings.')
   payload(user['id'],body)

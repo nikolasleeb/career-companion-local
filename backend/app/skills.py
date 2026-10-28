@@ -32,4 +32,4 @@ def options(job_id:str='',user=Depends(auth.current)):
   for r in (analysis or {}).get('data',{}).get('requirements',[]):
    topic=r.get('keyword','')
    if learnable(topic) and len(topic)<100 and any(role_catalog.phrase(t,topic) for row in rows for t in row.get('topics',[])) and topic not in suggested:suggested.append(topic)
- return {'resources':rows,'fields':list(FIELDS),'suggestions':suggested[:10],'basis':'Reviewed Profile, Career Goals and an optional posting; these are learning topics, not confirmed deficiencies.'}
+ return {'resources':rows,'fields':list(FIELDS),'suggestions':suggested[:10],'basis':('Reviewed Profile, Career Goals and an optional posting; these are learning topics, not confirmed deficiencies.' if job or any(r['data'].get('confirmed') for r in db.list_entities(user['id'],'experience')) else 'General learning resources. Add reviewed Profile records for personalized examples; missing information is not a skill gap.')}

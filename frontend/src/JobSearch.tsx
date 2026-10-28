@@ -1,3 +1,4 @@
+import {useRouteTab} from './appRoute';
 import {ForYouJobs} from './ForYouJobs';
 import {JobResults,AlertJobs} from './JobResults';
 import {AskJobsAI} from './AskJobsAI';
@@ -13,7 +14,7 @@ const defaults={title:'',interests:[] as string[],location:'United States',workp
 const emptySchedule={enabled:false,time:'08:00',timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Phoenix',browser:false,email_enabled:false,email:''};
 const names:Record<string,string>={greenhouse:'Greenhouse employers',ashby:'Ashby employers',lever:'Lever employers',adzuna:'Adzuna',usajobs:'USAJOBS',github:'GitHub community listings'};
 export function JobSearch({accountId,workspace,call,task,refresh,startApplication,mode,aiAvailable,webAvailable,busy}:Props){
- const [query,setQuery]=useState<any>(defaults),[interests,setInterests]=useState<string[]>([]),[recent,setRecent]=useState<string[]>([]),[saveState,setSaveState]=useState('saved'),[schedule,setSchedule]=useState<any>(emptySchedule),[caps,setCaps]=useState<any>({}),[tab,setTab]=useState(new URLSearchParams(location.search).has('alerts')?'alerts':!!sessionStorage.getItem('career-start-for-you:'+accountId)?'for-you':'results');
+ const [query,setQuery]=useState<any>(defaults),[interests,setInterests]=useState<string[]>([]),[recent,setRecent]=useState<string[]>([]),[saveState,setSaveState]=useState('saved'),[schedule,setSchedule]=useState<any>(emptySchedule),[caps,setCaps]=useState<any>({}),[tab,setTab]=useRouteTab('jobs',new URLSearchParams(location.search).has('alerts')?'alerts':!!sessionStorage.getItem('career-start-for-you:'+accountId)?'for-you':'results');
  const [resultIds,setResultIds]=useState<Record<string,string>>({}),[compareId,setCompareId]=useState(''),[history,setHistory]=useState<any>({runs:[],deliveries:[]}),[error,setError]=useState(''),[message,setMessage]=useState(''),[pending,setPending]=useState(''),[loaded,setLoaded]=useState(false),[board,setBoard]=useState({career_url:'',company:''}),[emailCode,setEmailCode]=useState(''),[emailStage,setEmailStage]=useState('');
 
  const [locations,setLocations]=useState<string[]>([]),[locationError,setLocationError]=useState('');

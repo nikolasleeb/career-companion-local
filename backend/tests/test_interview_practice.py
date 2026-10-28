@@ -101,10 +101,10 @@ def test_company_and_job_context_materials_and_isolation(client,account,model):
  assert client.post('/api/interview-practice/sessions',json={'document_ids':[doc['id']]}).status_code==404
  assert client.get('/api/interview-practice/sessions').json()=={'sessions':[],'legacy':[]}
 
-def test_education_gate_before_provider_work(client,monkeypatch):
+def test_manual_interview_available_before_education_without_provider_work(client,monkeypatch):
  r=client.post('/api/auth/register',json={'username':'not-ready','password':'fictional-password-only'}).json();client.headers['X-CSRF-Token']=r['csrf']
- assert client.post('/api/interview-practice/sessions',json={}).status_code==403
- assert client.get('/api/interview-practice/documents').status_code==403
+ assert client.post('/api/interview-practice/sessions',json={}).status_code==200
+ assert client.get('/api/interview-practice/documents').status_code==200
 
 def test_stop_discards_ai_changes_and_preserves_manual_question(client,account,model,monkeypatch):
  s=create(client);d=question(client,s);entered=[]

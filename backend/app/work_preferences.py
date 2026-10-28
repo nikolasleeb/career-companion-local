@@ -54,7 +54,7 @@ def assessment(user):
  groups=[name for name,roles in role_catalog.GROUPS.items() if any(v in roles for v in suggestions)]
  return {'completed':bool(complete),'assessment_id':complete['id'] if complete else '', 'completed_at':(complete or {}).get('data',{}).get('completed_at'),'summary':summary[:5],'suggested_preferences':choices[:12],'roles':suggestions[:4],'fields':groups[:3]}
 @router.get('')
-def get(user=Depends(auth.current)):return {**read(user['id']),'assessment':assessment(user['id']),'account_id':user['id'],'ai_available':bool(credentials.get(user['id'])) and onboarding.status(user['id'])['completed'],'setup_required':not onboarding.status(user['id'])['completed'],'mode':db.settings(user['id']).get('mode','economy')}
+def get(user=Depends(auth.current)):return {**read(user['id']),'assessment':assessment(user['id']),'account_id':user['id'],'ai_available':bool(credentials.get(user['id'])),'setup_required':False,'mode':db.settings(user['id']).get('mode','economy')}
 @router.put('')
 def put(body:Change,user=Depends(auth.current)):
  from .resume_conversation import write

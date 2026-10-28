@@ -1,3 +1,4 @@
+import {useAppRoute,patchRoute,routeNow,routeGuard} from './appRoute';
 import {OfferDetails} from './OfferDetails';
 import React,{useEffect,useId,useRef,useState} from 'react';
 import {ApplicationDocuments} from './ApplicationDocuments';
@@ -10,6 +11,7 @@ type Call=(path:string,method?:string,body?:any)=>Promise<any>;
 const tabs:[Tab,string][]=[['overview','Overview'],['documents','Documents'],['activity','Activity']];
 const empty=()=>({job_id:'',title:'',company:'',url:'',posting_snapshot:{description:''},resume_ids:[],submitted_resume_id:'',status:'preparing',applied_date:'',history:[],interviews:[],notes:'',archived:false,attachments:[]});
 export function ApplicationDetails({record,close,initialSubmitted=false,initialTab='overview',workspace,call,refresh,statuses}: {record?:Entity;close:()=>void;initialSubmitted?:boolean;initialTab?:Tab;workspace:Record<string,Entity[]>;call:Call;refresh:()=>Promise<void>;statuses:Record<string,string>}){
+ const approvedClose=useRef(false),navigationView=useRef(routeNow().view);
  const keepEditing=useRef<HTMLButtonElement>(null);const [confirmClose,setConfirmClose]=useState(false);
  const dialog=useRef<HTMLDialogElement>(null),titleInput=useRef<HTMLInputElement>(null),tabButtons=useRef<HTMLButtonElement[]>([]),body=useRef<HTMLDivElement>(null);const uid=useId();
  const [saved,setSaved]=useState<Entity|undefined>(record),[baseline,setBaseline]=useState<any>(()=>structuredClone(record?.data||empty()));
@@ -26,13 +28,16 @@ export function ApplicationDetails({record,close,initialSubmitted=false,initialT
  function requestClose(){if(locked)return;if(dirty||fileEditing||offerEditing){setConfirmClose(true);return;}close();}
  function edit(changes:any){setDraft((old:any)=>({...old,...changes}));setSuccess('');if(!conflict)setError('');}
  async function filesChanged(remote:Entity){const state=latest.current;if(applicationConflicts(state.baseline,state.draft,remote.data).length){setConflict(true);setError('Another window changed fields you were editing. Your pending edits are kept. Reload saved changes before saving.');}setDraft(mergeApplicationDraft(state.baseline,state.draft,remote.data));setBaseline(structuredClone(remote.data));setSaved(remote);await refresh();}
- function chooseTab(value:Tab){setTab(value);body.current?.scrollTo({top:0});}
+ const navRoute=useAppRoute();
+ useEffect(()=>{if(navRoute.view===navigationView.current)setTab(['overview','documents','activity'].includes(navRoute.tab||'')?navRoute.tab as Tab:initialTab);},[navRoute.tab]);
+ useEffect(()=>routeGuard(next=>{const id=saved?.id||'new';if(approvedClose.current||routeNow().view!==navigationView.current||(next.view===navigationView.current&&next.item===id))return true;if(saving||fileBusy||offerBusy){setError('Finish the current save or file action before leaving.');return false;}return !(dirty||fileEditing||offerEditing)||window.confirm('Discard unsaved application and offer edits and navigate away?');}),[dirty,fileEditing,offerEditing,saving,fileBusy,offerBusy,saved?.id]);
+ function chooseTab(value:Tab){patchRoute(navigationView.current,{tab:value});setTab(value);body.current?.scrollTo({top:0});}
  function tabKey(event:React.KeyboardEvent,index:number){const key=event.key;if(!['ArrowLeft','ArrowRight','Home','End'].includes(key))return;event.preventDefault();const next=key==='Home'?0:key==='End'?tabs.length-1:(index+(key==='ArrowLeft'?-1:1)+tabs.length)%tabs.length;chooseTab(tabs[next][0]);tabButtons.current[next]?.focus();}
  async function save(event:React.FormEvent){event.preventDefault();if(locked||fileEditing||conflict)return;
   if(!draft.title.trim()){setTab('overview');setEditJob(true);setError('Enter the job title before saving.');setTimeout(()=>titleInput.current?.focus(),0);return;}
   if(draft.interviews.some((r:any)=>!r.date&&!r.type.trim()&&!r.outcome.trim())){setTab('activity');setError('Add a date, type, or note to the new interview, or remove the empty round.');return;}
   setSaving(true);setError('');setSuccess('');setConflict(false);
-  try{const payload=applicationSavePayload(baseline,draft,eventDate);const value=await call('/applications'+(saved?'/'+saved.id+'?expected_updated_at='+encodeURIComponent(saved.updated_at):''),saved?'PUT':'POST',payload);setSaved(value);setBaseline(structuredClone(value.data));setDraft(structuredClone(value.data));setEventDate('');setDateTouched(false);setSuccess('Changes saved.');await refresh();}
+  try{const payload=applicationSavePayload(baseline,draft,eventDate);const value=await call('/applications'+(saved?'/'+saved.id+'?expected_updated_at='+encodeURIComponent(saved.updated_at):''),saved?'PUT':'POST',payload);if(!saved)patchRoute('applications',{item:value.id},true);setSaved(value);setBaseline(structuredClone(value.data));setDraft(structuredClone(value.data));setEventDate('');setDateTouched(false);setSuccess('Changes saved.');await refresh();}
   catch(e){setError((e as Error).message);setConflict((e as any).status===409);}finally{setSaving(false);}
  }
  async function reloadSaved(){if(!saved||locked)return;if(!window.confirm('Reload saved application changes? Unsaved application edits will be discarded; uploaded files remain saved.'))return;setSaving(true);try{const value=await call('/applications/'+saved.id);setSaved(value);setBaseline(structuredClone(value.data));setDraft(structuredClone(value.data));setEventDate('');setDateTouched(false);setConflict(false);setError('');await refresh();}catch(e){setError((e as Error).message);}finally{setSaving(false);}}
@@ -68,7 +73,7 @@ export function ApplicationDetails({record,close,initialSubmitted=false,initialT
  </section>
  </section>
  </div>
- <footer className="application-details-footer">{confirmClose?<div className="details-close-confirm" role="alert"><p><strong>Discard unsaved edits?</strong><br/>Files already uploaded or renamed will stay saved.</p><div><button ref={keepEditing} type="button" className="button secondary" onClick={()=>setConfirmClose(false)}>Keep editing</button><button type="button" className="button primary" onClick={close}>Discard unsaved edits</button></div></div>:<><span className="details-footer-status" aria-live="polite">{offerBusy?'Saving offer…':offerEditing?'Unsaved offer details · use Save offer details above':fileBusy?'Saving file…':fileEditing?'Finish or cancel the filename edit':dirty?'Unsaved application changes':!saved?'Add job details to create this application':'All application changes saved'}</span><div><button type="button" className="button secondary" disabled={locked} onClick={requestClose}>Close</button>{dirty&&<button type="submit" className="button primary" disabled={locked||fileEditing||conflict}>{saving?'Saving…':'Save changes'}</button>}</div></>}</footer>
+ <footer className="application-details-footer">{confirmClose?<div className="details-close-confirm" role="alert"><p><strong>Discard unsaved edits?</strong><br/>Files already uploaded or renamed will stay saved.</p><div><button ref={keepEditing} type="button" className="button secondary" onClick={()=>setConfirmClose(false)}>Keep editing</button><button type="button" className="button primary" onClick={()=>{approvedClose.current=true;close();}}>Discard unsaved edits</button></div></div>:<><span className="details-footer-status" aria-live="polite">{offerBusy?'Saving offer…':offerEditing?'Unsaved offer details · use Save offer details above':fileBusy?'Saving file…':fileEditing?'Finish or cancel the filename edit':dirty?'Unsaved application changes':!saved?'Add job details to create this application':'All application changes saved'}</span><div><button type="button" className="button secondary" disabled={locked} onClick={requestClose}>Close</button>{dirty&&<button type="submit" className="button primary" disabled={locked||fileEditing||conflict}>{saving?'Saving…':'Save changes'}</button>}</div></>}</footer>
  </form>
  </dialog>;
 }

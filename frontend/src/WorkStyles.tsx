@@ -1,3 +1,4 @@
+import {useAppRoute,patchRoute,routeNow} from './appRoute';
 import {WorkCareerDiscovery} from './WorkCareerDiscovery';
 import './workStylesPolish.css';
 import {WorkPreferences} from './WorkPreferences';
@@ -7,6 +8,8 @@ import {assessmentLayout,missingRatings,restoreResponses} from './workStyleFlow'
 
 export function WorkStyle({services:s}:{services:Services}){
  const [catalog,setCatalog]=useState<any>(null),[rows,setRows]=useState<any[]>([]),[attempt,setAttempt]=useState<any>(null),[answers,setAnswers]=useState<Record<string,number>>({}),[pairs,setPairs]=useState<Record<string,string>>({}),[page,setPage]=useState(0),[status,setStatus]=useState('Saved'),[error,setError]=useState(''),[missing,setMissing]=useState(false);
+ const navRoute=useAppRoute();
+ useEffect(()=>{if(navRoute.view==='interests'&&navRoute.item&&navRoute.item!==attempt?.id){const row=rows.find((r:any)=>r.id===navRoute.item);if(row)open(row);else if(catalog)setError('This assessment is unavailable. Choose one of your saved attempts or start a new assessment.');}},[navRoute.view,navRoute.item,rows]);
  const focus=useRef<HTMLHeadingElement>(null),current=useRef<any>(null),dirty=useRef(false),inflight=useRef(false),serial=useRef(0);
  const prefix='next-step-work-styles:'+s.user.id,buffer=(id:string)=>prefix+':'+id;
  current.current={attempt,answers,pairs,page};
@@ -45,8 +48,8 @@ export function WorkStyle({services:s}:{services:Services}){
   <div className="notice"><strong>Your private report · no AI or API key needed</strong><p>Raw questionnaire answers stay private. After you review and enable AI guidance in Profile, Career Coach can retrieve your report and scores; other guidance receives only your approved summary. It never becomes applicant evidence, resume content or eligibility information. This is self-reflection, with no employer pass score or hiring prediction.</p></div>
   {error&&<div role="alert" className="notice"><p>{error}</p>{attempt&&<div className="card-actions"><button className="button secondary" onClick={()=>{setError('');save();}}>Retry saving</button><button className="button secondary" onClick={()=>s.run('Reloading assessment version',async()=>{const list=await s.api('/work-style');const latest=list.find((r:any)=>r.id===attempt.id);if(latest){setAttempt(latest);current.current={...current.current,attempt:latest};setRows(list);dirty.current=true;localStorage.setItem(buffer(latest.id),JSON.stringify({answers,pairs,page,version:latest.data.version}));setError('');setStatus('Saving…');}})}>Keep my responses & reload version</button></div>}</div>}
   <section className="panel top-space"><h2>Your assessment</h2><p>The published IPIP-NEO-120 has 120 ratings across five dimensions and 30 facets, including personal, emotional and political statements. A separate optional section has 12 optional work comparisons. You can pause and resume.</p>
-   <div className="card-actions"><button className="button primary" disabled={!!s.busy||status!=='Saved'||!catalog} onClick={()=>s.run('Opening Work Styles',async()=>{const row=await s.api('/work-style','POST');open(row);setRows(await s.api('/work-style'));})}>{rows.some(r=>r.data.status==='draft'&&r.data.catalog_version===catalog?.version)?'Resume assessment':'Start assessment / retake'}</button>
-   {!!rows.length&&<label>Saved attempts<select value={attempt?.id||''} disabled={status!=='Saved'||!!s.busy} onChange={e=>{const row=rows.find(r=>r.id===e.target.value);if(row)open(row);}}><option value="">Choose an attempt</option>{rows.map(r=><option key={r.id} value={r.id}>{new Date(r.created_at).toLocaleString()} · {r.data.catalog?.title||'Historical reflection'} · {r.data.status}</option>)}</select></label>}</div>
+   <div className="card-actions"><button className="button primary" disabled={!!s.busy||status!=='Saved'||!catalog} onClick={()=>s.run('Opening Work Styles',async()=>{const row=await s.api('/work-style','POST');patchRoute('interests',{item:row.id},true);open(row);setRows(await s.api('/work-style'));})}>{rows.some(r=>r.data.status==='draft'&&r.data.catalog_version===catalog?.version)?'Resume assessment':'Start assessment / retake'}</button>
+   {!!rows.length&&<label>Saved attempts<select value={attempt?.id||''} disabled={status!=='Saved'||!!s.busy} onChange={e=>{const row=rows.find(r=>r.id===e.target.value);if(row){patchRoute('interests',{item:row.id});open(row);}}}><option value="">Choose an attempt</option>{rows.map(r=><option key={r.id} value={r.id}>{new Date(r.created_at).toLocaleString()} · {r.data.catalog?.title||'Historical reflection'} · {r.data.status}</option>)}</select></label>}</div>
   </section>
   {attempt&&!completed&&cat&&<section className="panel top-space questionnaire">
    <h2 tabIndex={-1} ref={focus}>{page<ratingPages?'Part 1 · Rate each statement':'Part 2 · Compare work preferences'}</h2>

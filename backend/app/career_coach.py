@@ -26,7 +26,7 @@ def owned(user,id,kind):
  return r
 
 def owner(user=Depends(auth.current)):
- onboarding.require_complete(user['id']);return user['id']
+ return user['id']
 
 def ident(user,value):return hashlib.sha256((user+':coach:'+value).encode()).hexdigest()[:32]
 def profile(user):

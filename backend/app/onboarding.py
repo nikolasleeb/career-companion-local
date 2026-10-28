@@ -25,7 +25,7 @@ class Finish(StrictModel):
 def identity(user):return hashlib.sha256((user+':onboarding-v1').encode()).hexdigest()[:32]
 def restricted(path):
     if not path.startswith('/api/'):return False
-    allowed=r'^/api/(?:career-explorer|profile/career-goals|health|version|updates|auth|me|workspace|onboarding|experience|documents|transcripts|certificates|profile-evidence|profile-answers|project-sources|project-analysis|project-analyses|project-snapshots|project-builders|answer-drafts|private-application-profile|private-application-answers|settings|account|tasks|records|usage)(?:/|$)'
+    allowed=r'^/api/(?:career-explorer|career-coach|knowledge-coach|interview-practice|chat-visuals|ai-actions|work-style|assessment|skills|guidance|resources|preparation|profile/work-preferences|profile/career-goals|health|version|updates|auth|me|workspace|onboarding|experience|documents|transcripts|certificates|profile-evidence|profile-answers|project-sources|project-analysis|project-analyses|project-snapshots|project-builders|answer-drafts|private-application-profile|private-application-answers|settings|account|tasks|records|usage)(?:/|$)'
     return not bool(re.match(allowed,path))
 def _write(c,user,data):
     stamp=db.now();key=identity(user)
@@ -89,7 +89,7 @@ def _state(c,user,data):
         ready=bool(groups[s]) and (s!='education' or education)
         status='complete' if s=='education' and ready else 'needs_review' if pending[s] else 'complete' if ready else 'empty' if s in empty else 'required' if s=='education' else 'not_started'
         sections.append({'id':s,'title':TITLES[s],'status':status,'confirmed_count':len(groups[s]),'draft_count':pending[s],'can_mark_empty':s!='education' and not groups[s] and not pending[s]})
-    return {**data,'id':identity(user),'profile_signature':signature,'sections':sections,'completed':education,'ready':education,'policy':'reviewed-education-v2'}
+    return {**data,'id':identity(user),'profile_signature':signature,'sections':sections,'completed':education,'ready':education,'policy':'reviewed-education-v2','welcome_dismissed_at':data.get('welcome_dismissed_at',''),'welcome_pending':not education and not bool(data.get('welcome_dismissed_at'))}
 
 def status(user):
     with db.connect() as c:
@@ -100,6 +100,13 @@ def migrate():
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE')
         for r in c.execute('SELECT id FROM users').fetchall():_ensure(c,r[0])
+
+def dismiss_welcome(user):
+    with db.connect() as c:
+        c.execute('BEGIN IMMEDIATE');data=_ensure(c,user)
+        if not data.get('welcome_dismissed_at'):
+            data.update(welcome_dismissed_at=db.now(),version=data['version']+1);_write(c,user,data)
+        return _state(c,user,data)
 
 def require_complete(user):
     if not status(user)['completed']:raise HTTPException(403,LOCK_MESSAGE,headers={'X-Next-Step-Setup':'required'})
@@ -124,6 +131,9 @@ def validate_backup(data):
     empty=data.get('empty_sections')
     if not isinstance(empty,list) or len(empty)!=len(set(empty)) or set(empty)-set(SECTIONS[1:]):raise ValueError()
     if not isinstance(data.get('completed_at'),str) or type(data.get('grandfathered'))!=bool:raise ValueError()
+    if data.get('welcome_dismissed_at'):
+        from datetime import datetime
+        datetime.fromisoformat(data['welcome_dismissed_at'])
     if data['completed_at']:
         from datetime import datetime
         datetime.fromisoformat(data['completed_at'])
@@ -133,6 +143,7 @@ def restore(user,incoming,legacy=False):
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE');data=_ensure(c,user)
         if incoming:
+            if incoming.get('welcome_dismissed_at') and not data.get('welcome_dismissed_at'):data['welcome_dismissed_at']=incoming['welcome_dismissed_at']
             data['empty_sections']=list(dict.fromkeys(data['empty_sections']+incoming['empty_sections']))
             if incoming['completed_at'] and not data['completed_at']:data.update(completed_at=incoming['completed_at'],grandfathered=incoming['grandfathered'])
         elif legacy and not data['completed_at']:data.update(completed_at=db.now(),grandfathered=True)

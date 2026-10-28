@@ -57,6 +57,7 @@ app.include_router(job_results.router)
 app.include_router(job_cache.router)
 from . import provider_connections
 app.include_router(provider_connections.router)
+app.include_router(provider_connections.api_router)
 from . import private_answers, private_profile, application_agent, assistant_ai
 app.include_router(private_answers.router)
 app.include_router(private_profile.router)
@@ -244,6 +245,9 @@ def login(body:Credentials,request:Request,response:Response):
     csrf=auth.issue(response,row['id'])
     return {'id':row['id'],'username':row['username'],'csrf':csrf,'settings':db.settings(row['id']),'capabilities':capabilities_for(row['id']),'onboarding':onboarding.status(row['id'])}
 
+@app.post('/api/onboarding/welcome/dismiss')
+def dismiss_welcome(user=Depends(auth.current)):return onboarding.dismiss_welcome(user['id'])
+
 @app.get('/api/me')
 def me(user=Depends(auth.current)): return {**user,'settings':db.settings(user['id']),'capabilities':capabilities_for(user['id']),'onboarding':onboarding.status(user['id'])}
 
@@ -311,7 +315,7 @@ def export_usage(start:str='',end:str='',model:str='',process:str='',tz:str='UTC
 def workspace(paged_jobs:bool=False,user=Depends(auth.current)):
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
     unlocked=onboarding.status(user['id'])['completed']
-    result={kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] if unlocked or kind in ('experience','document','profile_answer','onboarding') else [] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
+    result={kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] if unlocked or kind in ('experience','document','profile_answer','onboarding','prep','interview','assessment','assessment_progress') else [] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
     result['search']=[job_results.public_search(user['id'],r) for r in result['search']]
     result['job']=job_cache.decorate_records(user['id'],result['job'])
     if paged_jobs:
@@ -343,7 +347,6 @@ personalized_jobs.install(app,start_task,require_ai)
 chat_visuals.install(app,start_task,require_ai)
 @app.get('/api/ai-actions/{token}')
 def foreground_status(token:str,user=Depends(auth.current)):
-    onboarding.require_complete(user['id'])
     with db.connect() as c:
         for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio') ORDER BY created_at DESC",(user['id'],)):
             payload=json.loads(r['result'] or '{}');inputs=payload.get('_task_inputs',payload.get('inputs',{}))
@@ -477,7 +480,7 @@ def remove_record(entity_id:str,user=Depends(auth.current)):
     if record['kind'] in knowledge_assistant.KINDS or record['kind']=='chat_image':raise HTTPException(409,'Delete the complete conversation from its chat history to preserve references.')
     if record['kind']=='usage_event':raise HTTPException(409,'Cost history is preserved until account deletion.')
     if record['kind'] in ('onboarding','profile_answer','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts'):raise HTTPException(409,'Archive reviewed answers to preserve their source history.')
-    if record['kind'] in ('job','analysis','resume','resume_draft','resume_revision','resume_conversation','application','cover_workspace','cover_revision','cover_letter','prep','interview','interview_session','interview_question','interview_attempt','interview_research','search'):onboarding.require_complete(user['id'])
+    if record['kind'] in ('job','analysis','resume','resume_draft','resume_revision','resume_conversation','application','cover_workspace','cover_revision','cover_letter','search'):onboarding.require_complete(user['id'])
     if record['kind']=='document':
         if record['data'].get('purpose')=='certificate' and any(v.get('document_id')==entity_id for row in db.list_entities(user['id'],'experience') for v in row['data'].get('certification_items',[])):
             raise HTTPException(409,'Remove this attachment from its certification before deleting the file.')

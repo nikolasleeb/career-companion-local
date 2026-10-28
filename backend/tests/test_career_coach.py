@@ -52,12 +52,12 @@ def test_navigation_and_goal_saving_are_free_and_scoped(client,account,model):
  assert client.post('/api/career-coach/chats/'+a['id']+'/roadmap',json={'message_id':'none'}).status_code==404
 
 
-def test_education_and_account_key_required(client,account,monkeypatch):
+def test_account_key_required_but_education_optional(client,account,monkeypatch):
  credentials.remove(account['id']);c=make(client)
  response=client.post('/api/career-coach/chats/'+c['id']+'/actions',json={'request_token':'no-key-request'})
  assert response.status_code in (422,503)
  fresh=client.post('/api/auth/register',json={'username':'no-education-coach','password':'fictional-password'}).json()
- assert client.get('/api/career-coach/chats').status_code==403
+ assert client.get('/api/career-coach/chats').status_code==200
 
 
 def test_rag_retrieval_across_disciplines_and_private_chat_index(client,account):

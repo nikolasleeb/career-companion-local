@@ -123,3 +123,15 @@ async def test(user=Depends(auth.current)):
         # Upstream exceptions may contain a credential-bearing URL. Never echo it.
         raise ServiceError('Adzuna test failed. Check this account’s ID, key, plan and remaining allowance. One test request was attempted.') from None
     return {'message':'Adzuna accepted one test request. Test-only connections remain excluded from normal and daily searches.'}
+
+api_router=APIRouter(prefix='/api/settings/api-connections',tags=['Connection overview'])
+@api_router.get('')
+def overview(user=Depends(auth.current)):
+    from . import credentials
+    own=bool(credentials.get(user['id']));shared=bool(config.OPENAI_KEY and config.ALLOW_SERVER_AI_KEY)
+    rows=[{'id':'openai','name':'OpenAI','manager':'account','configured':own,'status':'saved_not_tested' if own else 'not_configured','purpose':'AI writing, career guidance and interview practice'},
+          {'id':'adzuna','name':'Adzuna','manager':'account','configured':public(user['id'])['configured'],'status':'saved_not_tested' if public(user['id'])['configured'] else 'not_configured','purpose':'Optional additional job listings'},
+          {'id':'onet','name':'O*NET','manager':'server','configured':bool(config.ONET_KEY),'status':'configured' if config.ONET_KEY else 'not_configured','purpose':'Optional live occupational services; Career Explorer browsing uses bundled data'},
+          {'id':'usajobs','name':'USAJOBS','manager':'server','configured':bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL),'status':'configured' if config.USAJOBS_KEY and config.USAJOBS_EMAIL else 'not_configured','purpose':'Federal job listings'}]
+    if config.ALLOW_SERVER_AI_KEY:rows.append({'id':'installation-openai','name':'OpenAI installation fallback','manager':'server','configured':shared,'status':'configured' if shared else 'not_configured','purpose':'Optional installation-level AI fallback; existing account-key requirements still apply'})
+    return {'providers':rows,'deployment':'hosted' if getattr(config,'PRODUCTION',False) else 'local','provider_checks_performed':False}

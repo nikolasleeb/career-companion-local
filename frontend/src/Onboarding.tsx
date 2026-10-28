@@ -1,6 +1,6 @@
 import React,{useEffect,useId,useState} from 'react';
 export type SetupSection={id:string;title:string;status:string;confirmed_count:number;draft_count:number;can_mark_empty:boolean};
-export type SetupState={version:number;profile_signature:string;completed:boolean;ready:boolean;sections:SetupSection[];completed_at:string};
+export type SetupState={welcome_pending?:boolean;welcome_dismissed_at?:string;version:number;profile_signature:string;completed:boolean;ready:boolean;sections:SetupSection[];completed_at:string};
 export function ProfilePane({id,title,summary,status,open,onToggle,children}:{id:string;title:string;summary:string;status:string;open:boolean;onToggle:()=>void;children:React.ReactNode}){
  return <section className="panel profile-pane" id={'profile-'+id} aria-labelledby={'profile-'+id+'-title'}><h2 className="profile-pane-heading"><button id={'profile-'+id+'-title'} type="button" aria-expanded={open} aria-controls={'profile-'+id+'-content'} onClick={onToggle}><span><span className="profile-pane-name">{title}</span><span className="profile-pane-summary">{summary}</span></span><span className="profile-pane-status">{status}<span aria-hidden="true">{open?'−':'+'}</span></span></button></h2><div id={'profile-'+id+'-content'} className="profile-pane-content" hidden={!open}>{children}</div></section>;
 }

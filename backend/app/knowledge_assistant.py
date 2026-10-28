@@ -28,7 +28,7 @@ class Action(StrictModel):
  excluded_ids:list[str]=Field(default_factory=list,max_length=200)
  request_token:str=Field(min_length=8,max_length=100,pattern=r'^[A-Za-z0-9_-]+$')
 def owner(user=Depends(auth.current)):
- onboarding.require_complete(user['id']);return user['id']
+ return user['id']
 def owned(user,id):
  r=db.get(user,id,'assistant_chat')
  if not r:raise HTTPException(404,'Coach conversation not found.')

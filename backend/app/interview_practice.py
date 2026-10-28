@@ -16,7 +16,7 @@ INSTRUCTIONS=ai.INSTRUCTIONS+''' This is interview practice, not application fil
 INSTRUCTIONS += chat_visuals.VISUAL_INSTRUCTIONS
 
 def owner(user=Depends(auth.current)):
- onboarding.require_complete(user['id']);return user['id']
+ return user['id']
 def owned(user,id,kind):
  r=db.get(user,id,kind)
  if not r:raise HTTPException(404,'Interview practice record not found.')

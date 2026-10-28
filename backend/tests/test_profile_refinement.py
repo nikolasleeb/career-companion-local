@@ -139,10 +139,10 @@ def test_long_general_statement_and_chat_snapshots_round_trip(client,account):
  assert r.status_code==200,r.text
  assert career_goals.read(u)['items'][0]['text']==general
 
-def test_summary_action_preserves_education_gate(client,account,monkeypatch):
+def test_summary_action_requires_work_style_sources_not_education(client,account,monkeypatch):
  other=client.post('/api/auth/register',json={'username':'summary-needs-education','password':'fictional-password'}).json();client.headers['X-CSRF-Token']=other['csrf'];credentials.save(other['id'],'sk-fictional-only')
- assert client.get('/api/profile/work-preferences').status_code==403
- assert client.post('/api/profile/work-preferences/summary/actions',json=body()).status_code==403
+ assert client.get('/api/profile/work-preferences').status_code==200
+ assert client.post('/api/profile/work-preferences/summary/actions',json=body(notes='')).status_code==422
  assert not db.list_entities(other['id'],'usage_event')
 
 
