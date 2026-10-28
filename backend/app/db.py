@@ -53,6 +53,8 @@ def init():
         from . import private_answers, private_profile, application_agent
         from . import provider_connections
         provider_connections.init(c)
+        from . import account_cleanup,openai_connection_test
+        account_cleanup.init(c);openai_connection_test.init(c)
         from . import public_job_feeds
         public_job_feeds.init(c)
         from . import job_results

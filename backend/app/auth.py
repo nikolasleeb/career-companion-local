@@ -43,11 +43,14 @@ def issue(response, user):
 def current(request: Request):
     token = request.cookies.get('next_step_session', '')
     with db.connect() as c:
-        row = c.execute('SELECT u.id,u.username,s.csrf FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?', (digest(token), time.time())).fetchone()
+        row = c.execute('SELECT u.id,u.username,s.csrf,coalesce(d.revision,0) AS cleanup_revision FROM sessions s JOIN users u ON u.id=s.user_id LEFT JOIN cc_cleanup_state d ON d.user_id=u.id WHERE s.token_hash=? AND s.expires_at>?', (digest(token), time.time())).fetchone()
     if not row:
         raise HTTPException(401, 'Sign in to your local account.')
     if request.method not in ('GET','HEAD','OPTIONS'):
         provided = request.headers.get('X-CSRF-Token', '')
         if not provided or not secrets.compare_digest(provided, row['csrf']):
             raise HTTPException(403, 'Your session needs to be refreshed. Reload and try again.')
+    request.state.cleanup_revision=row['cleanup_revision'];request.state.account_id=row['id']
+    if request.method not in ('GET','HEAD','OPTIONS') and row['cleanup_revision'] and not request.url.path.startswith('/api/auth/') and request.url.path not in ('/api/account/cleanup/apply','/api/account'):
+        if request.headers.get('X-Account-Data-Revision')!=str(row['cleanup_revision']):raise HTTPException(409,'Saved information was cleared in another window. Reload the latest account state before making changes.')
     return dict(row)

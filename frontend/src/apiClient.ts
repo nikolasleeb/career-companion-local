@@ -1,10 +1,11 @@
+let accountRevision=0,revisionAccount='';
 export class ApiError extends Error{
  constructor(message:string,public status=0,public recovery:''|'access'=''){super(message);this.name='ApiError';}
  get transient(){return this.status===0||this.status===429||this.status>=500;}
 }
 
 export async function requestJSON(path:string,method='GET',body?:unknown,csrf='',signal?:AbortSignal){
- const headers:Record<string,string>={'X-Requested-With':'XMLHttpRequest'};
+ const requestAccount=revisionAccount;const headers:Record<string,string>={'X-Requested-With':'XMLHttpRequest','X-Account-Data-Revision':String(accountRevision)};
  if(method!=='GET')headers['X-CSRF-Token']=csrf;
  if(body instanceof Blob)headers['Content-Type']=body.type||'application/octet-stream';
  if(body!==undefined&&!(body instanceof FormData)&&!(body instanceof Blob))headers['Content-Type']='application/json';
@@ -19,6 +20,15 @@ export async function requestJSON(path:string,method='GET',body?:unknown,csrf=''
  if(response.status===204)return null;
  let data:any;
  try{data=await response.json();}catch{if(response.status===401||response.status===403)throw accessExpired();throw new ApiError('The app returned an unreadable response. Your saved inputs remain available. Try checking the status again.',response.ok?502:response.status);}
+ const owner=response.headers?.get?.('X-Account-Id')||data?.id&&(/^\/auth\/(login|register)$/.test(path)||path==='/me')&&data.id;
+ const rawRevision=response.headers?.get?.('X-Account-Data-Revision');const nextRevision=rawRevision!=null?Number(rawRevision):data?.cleanup_revision??data?.capabilities?.cleanup_revision??0;
+ if(owner&&Number.isSafeInteger(nextRevision)&&nextRevision>=0){
+  if(!revisionAccount||/^\/auth\/(login|register)$/.test(path)){revisionAccount=owner;accountRevision=nextRevision;}
+  else if(owner!==revisionAccount||requestAccount&&requestAccount!==revisionAccount)throw new ApiError('The account changed. Reload before continuing.',401);
+  else if(nextRevision<accountRevision)throw new ApiError('Saved information was cleared while this response was loading. Reload the current account state.',409);
+  else if(nextRevision>accountRevision){accountRevision=nextRevision;if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('account-cleaned',{detail:{account:owner,revision:nextRevision}}));}
+ }
+ if(path==='/auth/logout'&&response.ok){revisionAccount='';accountRevision=0;}
  if(response.status===401&&path==='/auth/login'&&typeof data?.detail!=='string')throw accessExpired();
  if(!response.ok){
   const fallback=response.status===401?'Your session expired. Sign in again to continue with your saved work.':response.status===403?'This action was not authorized. Sign in again before retrying.':response.status===409?'This information changed while you were working. Check the latest saved version before retrying.':response.status>=500?'The app could not complete the request. Your saved inputs remain available; try again shortly.':'The request could not finish. Check your inputs and try again.';

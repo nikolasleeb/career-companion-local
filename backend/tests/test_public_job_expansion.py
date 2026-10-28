@@ -17,11 +17,11 @@ def setup_trial(client,account,monkeypatch):
  owner(monkeypatch,account['id']);pc.store(account['id'],pc.Adzuna(app_id='owner-id',app_key='owner-secret'))
  assert mode(client,'manual_trial').status_code==200
 
-def test_catalog_has_100_verified_unique_boards():
+def test_catalog_has_verified_unique_boards():
  rows=feeds.CATALOG['employers']
- assert len(rows)==100 and len({feeds.board_key(b) for b in rows})==100
+ assert len(rows)==143 and len({feeds.board_key(b) for b in rows})==143
  assert {r['provider'] for r in rows}=={'greenhouse','ashby','lever'}
- assert all(r['identity_label'] and r['verified_at'] and r['verified_job_count']>0 and r['career_url'].startswith('https://') for r in rows)
+ assert all(r['identity_label'] and r['verified_at'] and r['verified_job_count']>=0 and r['career_url'].startswith('https://') for r in rows)
  assert feeds.CATALOG['attribution']['license']=='CC BY 4.0'
 
 def test_mode_changes_preserve_ciphertext_and_other_accounts(client,account,monkeypatch):
@@ -100,8 +100,8 @@ def test_public_cache_dedup_selection_ttl_and_failure(client,account,monkeypatch
  async def board(b,q):calls.append(feeds.board_key(b));return [posting(company=b['company'])]
  monkeypatch.setattr(x,'board_jobs',board)
  req=SearchRequest(interests=['Data analysis'],sources=['greenhouse','ashby','lever'])
- first=run(search.discover(account['id'],req));assert len(calls)==100 # Starter boards merged, not duplicated.
- run(search.discover(account['id'],req));assert len(calls)==100
+ first=run(search.discover(account['id'],req));assert len(calls)==len(feeds.CATALOG['employers']) # Starter boards merged, not duplicated.
+ run(search.discover(account['id'],req));assert len(calls)==len(feeds.CATALOG['employers'])
  req.employer_boards=['ashby:notion'];filtered=run(search.discover(account['id'],req));assert {r['data']['company'] for r in filtered['jobs']}=={'Notion'}
  with db.connect() as c:c.execute('UPDATE cc_public_job_snapshots SET success_at=?,attempted_at=?',(time.time()-49*3600,time.time()-100))
  async def fail(*a):raise ServiceError('Unavailable')

@@ -1,6 +1,6 @@
 # Job Search sources
 
-The bundled catalog contains 100 curated employers across industries, not a
+The bundled catalog contains 143 curated employers across industries, not a
 ranking of the largest employers. Each record includes the career-page URL,
 working public Greenhouse, Ashby or Lever feed, identity label, verification date
 and number of postings observed. Availability changes over time. Account-added
@@ -55,3 +55,13 @@ The trial is limited evaluation access. Provider terms and appropriate licensing
 still apply; no paid upgrade is made automatically. Adzuna redirect URLs and
 attribution are retained. Its snippets are incomplete and require a full posting
 review before tailoring.
+
+## Employer industries and listing timers
+
+The 2026-10-28 expansion added 43 verified nontech employers across Science & research, Healthcare & life sciences, Education, Finance & professional services, Manufacturing & engineering, Climate & energy, Nonprofits & public interest, and Consumer services & logistics. Technology remains a separate preset. Public feed/platform coverage varies by sector; this is not a complete employer index. Zero current postings can still be a working feed. Verification dates and observed counts describe the check, not future availability.
+
+Industry presets select employer feeds, while role and location filters select jobs inside them. Presets resolve at search time, so matching catalog additions join later searches. All employers remains the default. Selecting individuals switches to Custom; previous explicit selections are preserved. Manual searches, daily checks and For You use the same saved source choices. USAJOBS and Adzuna are independently selectable.
+
+**Listing availability window — 30 days:** Current listings expire 30 days after their last source confirmation, or sooner if closed. A new source confirmation extends this window. Applications and their documents remain saved.
+
+**Reuse public feed results — 6 hours:** Searches and scheduled checks may reuse a downloaded public employer/community feed for six hours before fetching it again. Explicit Refresh can request an earlier update. These settings describe cache reuse and confirmed availability, separately from the selected posting-date window.

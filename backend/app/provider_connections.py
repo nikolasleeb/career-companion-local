@@ -128,8 +128,9 @@ api_router=APIRouter(prefix='/api/settings/api-connections',tags=['Connection ov
 @api_router.get('')
 def overview(user=Depends(auth.current)):
     from . import credentials
+    from .openai_connection_test import public as key_test
     own=bool(credentials.get(user['id']));shared=bool(config.OPENAI_KEY and config.ALLOW_SERVER_AI_KEY)
-    rows=[{'id':'openai','name':'OpenAI','manager':'account','configured':own,'status':'saved_not_tested' if own else 'not_configured','purpose':'AI writing, career guidance and interview practice'},
+    rows=[{'id':'openai','name':'OpenAI','manager':'account','configured':own,**key_test(user['id']),'purpose':'AI writing, career guidance and interview practice'},
           {'id':'adzuna','name':'Adzuna','manager':'account','configured':public(user['id'])['configured'],'status':'saved_not_tested' if public(user['id'])['configured'] else 'not_configured','purpose':'Optional additional job listings'},
           {'id':'onet','name':'O*NET','manager':'server','configured':bool(config.ONET_KEY),'status':'configured' if config.ONET_KEY else 'not_configured','purpose':'Optional live occupational services; Career Explorer browsing uses bundled data'},
           {'id':'usajobs','name':'USAJOBS','manager':'server','configured':bool(config.USAJOBS_KEY and config.USAJOBS_EMAIL),'status':'configured' if config.USAJOBS_KEY and config.USAJOBS_EMAIL else 'not_configured','purpose':'Federal job listings'}]

@@ -73,6 +73,7 @@ def associate_inputs(data,proposal,kind,submitted):
 
 def reviewed(c,user,conversation_id,data,proposal,kind,mark=True):
     """Called inside the same transaction as approval. Existing source records are not copied."""
+    if proposal.get('cleanup_unavailable') and not mark:return None
     if kind=='resume':
         if proposal.get('category')=='authorization':return None
         values=proposal.get('approved_values',{})
@@ -175,6 +176,7 @@ def drafts(user):
         for record in db.list_entities(user,kind):
             data=record['data']
             for q in stable_questions(data,builder):
+                if q.get('cleanup_answer_version')==q.get('answer_version'):continue
                 if not q.get('answer') or re.search(PRIVATE,q['answer'],re.I) or (q.get('reviewed_answer_version')==q['answer_version']):continue
                 project_ids=list(dict.fromkeys(r['experience_id'] for r in q.get('project_refs',[]) if r.get('experience_id')))
                 rows.append({'id':'draft:'+builder+':'+record['id']+':'+q['id'],'kind':'profile_answer','created_at':q.get('answered_at',record['updated_at']),'updated_at':record['updated_at'],'data':{'version':q['answer_version'],'status':'draft','answer_kind':'motivation' if q.get('topic')=='motivation' else 'experience','title':q['text'],'text':q['answer'],'experience_id':project_ids[0] if len(project_ids)==1 else '','sources':[{'builder':builder,'conversation_id':record['id'],'job_id':data['job_id'],'resume_id':data.get('resume_id',''),'questions':[{'id':q['id'],'text':q['text']}],'project_refs':copy.deepcopy(q.get('project_refs',[]))}]}})

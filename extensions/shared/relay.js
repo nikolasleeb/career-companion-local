@@ -4,7 +4,7 @@
   globalThis.__careerCompanionRelay=2;
   const api=globalThis.browser||globalThis.chrome;
   const extensionRoot=api.runtime.getURL('');
-  const approvedOrigins=new Set(['http://localhost:3000','http://127.0.0.1:3000']);
+  const approvedOrigins=new Set(['http://localhost:3000','http://127.0.0.1:3000','https://career-companion.austrich-server.com']);
   // Additional localhost ports are explicitly configured and checked by background.
   const isLocal=/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.origin);
   if(!approvedOrigins.has(location.origin)&&!isLocal)return;
@@ -24,7 +24,7 @@
       if(!me.ok||me.redirected)throw Error('Sign in to Career Companion, then reconnect this browser.');
       let account;try{account=await me.json();}catch{throw Error('Sign in to Career Companion. Its login response could not be read.');}
       if(message.accountId&&message.accountId!==account.id)throw Object.assign(Error('Account changed. Reconnect and pair again.'),{code:'account_changed'});
-      const response=await fetch('/api/application-agent'+(typeof route[1]==='function'?route[1](message.runId):route[1]),{method:route[0],...common,headers:{...common.headers,'Content-Type':'application/json','X-CSRF-Token':account.csrf},...(route[0]==='GET'?{}:{body:JSON.stringify(message.body)})});
+      const response=await fetch('/api/application-agent'+(typeof route[1]==='function'?route[1](message.runId):route[1]),{method:route[0],...common,headers:{...common.headers,'Content-Type':'application/json','X-CSRF-Token':account.csrf,'X-Account-Data-Revision':String(account.cleanup_revision||0)},...(route[0]==='GET'?{}:{body:JSON.stringify(message.body)})});
       if(response.status===401||response.redirected)throw Error('Login expired. Sign in to Career Companion, then reconnect.');
       let result;try{result=await response.json();}catch{throw Error('App returned an unreadable response. Check your login and connection.');}
       if(!response.ok)throw Error(typeof result.detail==='string'?result.detail:response.status===403?'Connection not approved, expired or revoked. Check Career Companion.':response.status===422?'Form scan was rejected. Review unsupported controls on the employer tab.':'Assistant request rejected ('+response.status+'). Refresh status before retrying.');

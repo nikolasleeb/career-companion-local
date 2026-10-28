@@ -112,7 +112,8 @@ async def discover(user,request,*,execution='manual'):
 
 async def _discover(user,request,*,execution='manual'):
     queries=request.interests or [request.title];chosen_levels=filters.levels(request);boards=feeds.catalog_boards(user)
-    if request.employer_boards is not None:boards=[b for b in boards if feeds.board_key(b) in request.employer_boards]
+    from .employer_industries import resolve
+    boards=resolve(boards,request.model_dump())
     trial_meta={'roles':[],'attempted_requests':0,'cached':False}
     info=provider_connections.public(user)
     trial=info['configured'] and info.get('usage')=='manual_trial'

@@ -31,8 +31,11 @@ async def lifespan(app):
     await asyncio.to_thread(job_cache.migrate)
     await asyncio.to_thread(job_cache.cleanup)
     maintenance=asyncio.create_task(job_cache.maintain())
+    cleanup_maintenance=asyncio.create_task(account_cleanup.maintain())
     scheduler=asyncio.create_task(job_alerts.scheduler()) if config.JOB_SCHEDULER_ENABLED else None
     yield
+    cleanup_maintenance.cancel()
+    await asyncio.gather(cleanup_maintenance,return_exceptions=True)
     maintenance.cancel()
     await asyncio.gather(maintenance,return_exceptions=True)
     if scheduler:
@@ -58,6 +61,9 @@ app.include_router(job_cache.router)
 from . import provider_connections
 app.include_router(provider_connections.router)
 app.include_router(provider_connections.api_router)
+from . import employer_industries,account_cleanup,openai_connection_test
+app.include_router(employer_industries.router)
+app.include_router(account_cleanup.router)
 from . import private_answers, private_profile, application_agent, assistant_ai
 app.include_router(private_answers.router)
 app.include_router(private_profile.router)
@@ -77,7 +83,17 @@ async def boundaries(request, call_next):
         origin=request.headers.get('origin')
         expected=request.url.scheme+'://'+request.headers.get('host','')
         if origin and origin!=expected: return JSONResponse({'detail':'Cross-origin changes are not allowed.'},403)
-    response=await call_next(request)
+    mutation_owner=None
+    if request.method not in ('GET','HEAD','OPTIONS') and request.url.path.startswith('/api/') and not request.url.path.startswith('/api/auth/') and request.cookies.get('next_step_session'):
+        try:mutation_owner=auth.current(request)['id']
+        except HTTPException as error:return JSONResponse({'detail':error.detail},error.status_code)
+        account_cleanup.mutations[mutation_owner]+=1
+    try:response=await call_next(request)
+    finally:
+        if mutation_owner:account_cleanup.mutations[mutation_owner]-=1
+    if hasattr(request.state,'cleanup_revision'):
+        response.headers['X-Account-Data-Revision']=str(account_cleanup.revision(request.state.account_id) if request.url.path=='/api/account/cleanup/apply' else request.state.cleanup_revision)
+        response.headers['X-Account-Id']=request.state.account_id
     response.headers['X-Content-Type-Options']='nosniff'
     response.headers['Referrer-Policy']='no-referrer'
     response.headers['X-Frame-Options']='SAMEORIGIN' if request.url.path.endswith('/preview') else 'DENY'
@@ -104,6 +120,7 @@ def capabilities_for(user):
     own=bool(credentials.get(user))
     return {**config.capabilities(),'openai':bool(own or (config.OPENAI_KEY if config.ALLOW_SERVER_AI_KEY else '')),
             'web_search':bool(credentials.effective(user) and config.ENABLE_WEB_SEARCH),
+            'cleanup_revision':account_cleanup.revision(user),'openai_test':openai_connection_test.public(user),
             'openai_key_source':'account' if own else 'installation' if config.OPENAI_KEY and config.ALLOW_SERVER_AI_KEY else 'none',
             'ai':ai_settings.public(db.settings(user)), 'job_search':job_alerts.capabilities(user),'adzuna':job_alerts.capabilities(user)['adzuna']}
 
@@ -146,7 +163,7 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio','openai_connection_test') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     atomic_token=task_atomic.bind(user,task_id)
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
@@ -178,7 +195,7 @@ def start_task(user,kind,work,inputs=None,cleanup=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio','openai_connection_test') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -341,6 +358,7 @@ app.include_router(cover_goals.router)
 app.include_router(application_offers.router)
 app.include_router(work_preferences.router)
 work_style_summary.install(app,start_task,require_ai)
+openai_connection_test.install(app,start_task)
 app.include_router(skills.router)
 knowledge_assistant.install(app,start_task,require_ai)
 personalized_jobs.install(app,start_task,require_ai)
@@ -348,7 +366,7 @@ chat_visuals.install(app,start_task,require_ai)
 @app.get('/api/ai-actions/{token}')
 def foreground_status(token:str,user=Depends(auth.current)):
     with db.connect() as c:
-        for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio') ORDER BY created_at DESC",(user['id'],)):
+        for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image','work_style_summary','interview_audio','openai_connection_test') ORDER BY created_at DESC",(user['id'],)):
             payload=json.loads(r['result'] or '{}');inputs=payload.get('_task_inputs',payload.get('inputs',{}))
             if inputs.get('request_token')==token:return {'task_id':r['id'],'status':r['status']}
     raise HTTPException(404,'No saved action was found. This lookup makes no AI request.')
@@ -443,6 +461,7 @@ def get_task(task_id:str,user=Depends(auth.current)):
     if not row: raise HTTPException(404,'Task not found.')
     result=dict(row);result['result']=json.loads(result['result']) if result['result'] else None
     payload=result['result'] if isinstance(result['result'],dict) else {}
+    if payload.get('deleted_by_cleanup'):raise HTTPException(410,'This recovered result was removed by account cleanup. Open the current saved workspace instead.')
     inputs=payload.get('_task_inputs',payload.get('inputs',{}))
     if inputs.get('operation') in ('document_upload','posting_upload') and db.get(user['id'],inputs.get('job_id',''),'job'):
         result['job_id']=inputs['job_id']

@@ -28,7 +28,8 @@ def board_key(b):return b['provider']+':'+b['board']+(':'+b['region'] if b.get('
 def catalog_boards(user):
     # Account additions override the label but do not duplicate a public board.
     boards={board_key(b):b for b in CATALOG['employers']}
-    for row in db.list_entities(user,'board'):boards[board_key(row['data'])]=row['data']
+    for row in db.list_entities(user,'board'):
+        key=board_key(row['data']);boards[key]={**boards.get(key,{}),**row['data']}
     return list(boards.values())
 
 def identity():
@@ -36,7 +37,7 @@ def identity():
     return {'catalog':REVISION,'snapshots':hashlib.sha256(json.dumps([tuple(r) for r in rows]).encode()).hexdigest()[:20]}
 
 def listing(user):
-    return [{'key':board_key(b),'company':b['company'],'provider':b['provider'],'career_url':b.get('career_url',''),'curated':any(board_key(b)==board_key(v) for v in CATALOG['employers'])} for b in catalog_boards(user)]
+    return [{'key':board_key(b),'company':b['company'],'provider':b['provider'],'career_url':b.get('career_url',''),'industries':b.get('industries',[]),'verified_at':b.get('verified_at',''),'verified_job_count':b.get('verified_job_count'),'curated':any(board_key(b)==board_key(v) for v in CATALOG['employers'])} for b in catalog_boards(user)]
 
 async def cached(source,load,*,refresh=False):
     # Locks are loop-scoped: test clients and reloads can create different loops.

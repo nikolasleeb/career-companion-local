@@ -1,7 +1,7 @@
 {
-  "revision": "2026-10-25.1",
+  "revision": "2026-10-28-broader-industries",
   "verified_at": "2026-10-25T03:44:35.064422+00:00",
-  "description": "100 curated public employer feeds across industries, not a size ranking. Availability can change.",
+  "description": "Public employer feeds across industries; industries choose employers, while job roles filter postings.",
   "attribution": {
     "name": "LastRound AI ATS Company Directory",
     "url": "https://github.com/fyrosofttech/lastroundai-hiring-data/tree/main/ats-directory",
@@ -21,7 +21,10 @@
       "verified_at": "2026-10-25T03:43:05.639321+00:00",
       "identity_label": "HelloFresh",
       "verified_job_count": 385,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Rocket Lab Corporation",
@@ -32,7 +35,10 @@
       "verified_at": "2026-10-25T03:43:02.892710+00:00",
       "identity_label": "Rocket Lab Corporation",
       "verified_job_count": 563,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "manufacturing"
+      ]
     },
     {
       "company": "Natera",
@@ -43,7 +49,11 @@
       "verified_at": "2026-10-25T03:43:02.999221+00:00",
       "identity_label": "Natera",
       "verified_job_count": 224,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "science",
+        "healthcare"
+      ]
     },
     {
       "company": "Maven",
@@ -54,7 +64,10 @@
       "verified_at": "2026-10-25T03:43:02.105989+00:00",
       "identity_label": "Maven Jobs ",
       "verified_job_count": 3,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "healthcare"
+      ]
     },
     {
       "company": "Freenome",
@@ -65,7 +78,11 @@
       "verified_at": "2026-10-25T03:43:02.648990+00:00",
       "identity_label": "Freenome",
       "verified_job_count": 30,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "science",
+        "healthcare"
+      ]
     },
     {
       "company": "Recursion",
@@ -76,7 +93,10 @@
       "verified_at": "2026-10-25T03:43:02.677188+00:00",
       "identity_label": "Recursion",
       "verified_job_count": 13,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "science"
+      ]
     },
     {
       "company": "Ginkgo Bioworks Inc.",
@@ -87,7 +107,10 @@
       "verified_at": "2026-10-25T03:43:02.672828+00:00",
       "identity_label": "Ginkgo Bioworks Inc.",
       "verified_job_count": 19,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "science"
+      ]
     },
     {
       "company": "Khan Academy",
@@ -98,7 +121,11 @@
       "verified_at": "2026-10-25T03:43:02.942229+00:00",
       "identity_label": "Khan Academy",
       "verified_job_count": 5,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "education",
+        "nonprofit"
+      ]
     },
     {
       "company": "Duolingo",
@@ -109,7 +136,10 @@
       "verified_at": "2026-10-25T03:43:03.475599+00:00",
       "identity_label": "Duolingo",
       "verified_job_count": 60,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "education"
+      ]
     },
     {
       "company": "Coursera",
@@ -120,7 +150,10 @@
       "verified_at": "2026-10-25T03:43:03.237205+00:00",
       "identity_label": "Coursera",
       "verified_job_count": 31,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "education"
+      ]
     },
     {
       "company": "Newsela",
@@ -131,7 +164,10 @@
       "verified_at": "2026-10-25T03:43:03.508743+00:00",
       "identity_label": "Newsela",
       "verified_job_count": 12,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "education"
+      ]
     },
     {
       "company": "Wikimedia Foundation",
@@ -142,7 +178,10 @@
       "verified_at": "2026-10-25T03:43:03.433331+00:00",
       "identity_label": "Wikimedia Foundation",
       "verified_job_count": 14,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "nonprofit"
+      ]
     },
     {
       "company": "Mozilla",
@@ -153,7 +192,10 @@
       "verified_at": "2026-10-25T03:43:03.499568+00:00",
       "identity_label": "Mozilla",
       "verified_job_count": 123,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "nonprofit"
+      ]
     },
     {
       "company": "Emily's Entourage",
@@ -164,7 +206,10 @@
       "verified_at": "2026-10-25T03:43:03.636156+00:00",
       "identity_label": "Emily's Entourage",
       "verified_job_count": 1,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "nonprofit"
+      ]
     },
     {
       "company": "Redwood Materials",
@@ -175,7 +220,11 @@
       "verified_at": "2026-10-25T03:43:04.200838+00:00",
       "identity_label": "Redwood Materials",
       "verified_job_count": 137,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "manufacturing",
+        "climate"
+      ]
     },
     {
       "company": "Gusto, Inc.",
@@ -186,7 +235,10 @@
       "verified_at": "2026-10-25T03:43:04.003805+00:00",
       "identity_label": "Gusto, Inc.",
       "verified_job_count": 101,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "SoFi",
@@ -197,7 +249,10 @@
       "verified_at": "2026-10-25T03:43:04.764955+00:00",
       "identity_label": "SoFi",
       "verified_job_count": 57,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "Jane Street",
@@ -208,7 +263,10 @@
       "verified_at": "2026-10-25T03:43:04.940343+00:00",
       "identity_label": "Jane Street",
       "verified_job_count": 220,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "Airbnb",
@@ -219,7 +277,10 @@
       "verified_at": "2026-10-25T03:43:05.198045+00:00",
       "identity_label": "Airbnb",
       "verified_job_count": 191,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Stripe",
@@ -230,7 +291,10 @@
       "verified_at": "2026-10-25T03:43:05.657400+00:00",
       "identity_label": "Stripe",
       "verified_job_count": 719,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "Figma",
@@ -241,7 +305,10 @@
       "verified_at": "2026-10-25T03:43:04.980473+00:00",
       "identity_label": "Figma",
       "verified_job_count": 138,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Cloudflare",
@@ -252,7 +319,10 @@
       "verified_at": "2026-10-25T03:43:05.311987+00:00",
       "identity_label": "Cloudflare",
       "verified_job_count": 454,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Datadog",
@@ -263,7 +333,10 @@
       "verified_at": "2026-10-25T03:43:05.288278+00:00",
       "identity_label": "Datadog",
       "verified_job_count": 433,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "GitLab",
@@ -274,7 +347,10 @@
       "verified_at": "2026-10-25T03:43:05.248418+00:00",
       "identity_label": "GitLab",
       "verified_job_count": 239,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Anthropic",
@@ -285,7 +361,10 @@
       "verified_at": "2026-10-25T03:43:05.796735+00:00",
       "identity_label": "Anthropic",
       "verified_job_count": 682,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Databricks",
@@ -296,7 +375,10 @@
       "verified_at": "2026-10-25T03:43:06.513721+00:00",
       "identity_label": "Databricks",
       "verified_job_count": 896,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Samsara",
@@ -307,7 +389,10 @@
       "verified_at": "2026-10-25T03:43:06.189291+00:00",
       "identity_label": "Samsara",
       "verified_job_count": 284,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "manufacturing"
+      ]
     },
     {
       "company": "Lyft",
@@ -318,7 +403,10 @@
       "verified_at": "2026-10-25T03:43:06.737061+00:00",
       "identity_label": "Lyft",
       "verified_job_count": 181,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Roblox",
@@ -329,7 +417,10 @@
       "verified_at": "2026-10-25T03:43:06.519847+00:00",
       "identity_label": "Roblox",
       "verified_job_count": 269,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Okta",
@@ -340,7 +431,10 @@
       "verified_at": "2026-10-25T03:43:06.484831+00:00",
       "identity_label": "Okta",
       "verified_job_count": 390,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Twilio",
@@ -351,7 +445,10 @@
       "verified_at": "2026-10-25T03:43:06.241775+00:00",
       "identity_label": "Twilio",
       "verified_job_count": 134,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Toast",
@@ -362,7 +459,10 @@
       "verified_at": "2026-10-25T03:43:07.164754+00:00",
       "identity_label": "Toast",
       "verified_job_count": 321,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Betterment",
@@ -373,7 +473,10 @@
       "verified_at": "2026-10-25T03:43:06.711075+00:00",
       "identity_label": "Betterment",
       "verified_job_count": 25,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "Elastic",
@@ -384,7 +487,10 @@
       "verified_at": "2026-10-25T03:43:07.202595+00:00",
       "identity_label": "Elastic",
       "verified_job_count": 402,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Affirm",
@@ -395,7 +501,10 @@
       "verified_at": "2026-10-25T03:43:07.069171+00:00",
       "identity_label": "Affirm",
       "verified_job_count": 225,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "Discord",
@@ -406,7 +515,10 @@
       "verified_at": "2026-10-25T03:43:07.369757+00:00",
       "identity_label": "Discord",
       "verified_job_count": 46,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Asana",
@@ -417,7 +529,10 @@
       "verified_at": "2026-10-25T03:43:07.958685+00:00",
       "identity_label": "Asana",
       "verified_job_count": 109,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Doximity",
@@ -428,7 +543,10 @@
       "verified_at": "2026-10-25T03:43:07.550418+00:00",
       "identity_label": "Doximity",
       "verified_job_count": 16,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "healthcare"
+      ]
     },
     {
       "company": "Squarespace",
@@ -439,7 +557,10 @@
       "verified_at": "2026-10-25T03:43:08.415056+00:00",
       "identity_label": "Squarespace",
       "verified_job_count": 28,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Carta",
@@ -450,7 +571,10 @@
       "verified_at": "2026-10-25T03:43:07.839044+00:00",
       "identity_label": "Carta",
       "verified_job_count": 74,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "Faire",
@@ -461,7 +585,10 @@
       "verified_at": "2026-10-25T03:43:08.575549+00:00",
       "identity_label": "Faire",
       "verified_job_count": 72,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Mixpanel",
@@ -472,7 +599,10 @@
       "verified_at": "2026-10-25T03:43:07.962321+00:00",
       "identity_label": "Mixpanel",
       "verified_job_count": 46,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Calendly",
@@ -483,7 +613,10 @@
       "verified_at": "2026-10-25T03:43:07.917563+00:00",
       "identity_label": "Calendly",
       "verified_job_count": 9,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "PagerDuty",
@@ -494,7 +627,10 @@
       "verified_at": "2026-10-25T03:43:08.229171+00:00",
       "identity_label": "PagerDuty",
       "verified_job_count": 50,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Amplitude",
@@ -505,7 +641,10 @@
       "verified_at": "2026-10-25T03:43:08.013294+00:00",
       "identity_label": "Amplitude Jobs ",
       "verified_job_count": 39,
-      "directory_crawled_at": "2026-07-12"
+      "directory_crawled_at": "2026-07-12",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Smartsheet",
@@ -516,7 +655,10 @@
       "verified_at": "2026-10-25T03:43:08.449514+00:00",
       "identity_label": "Smartsheet",
       "verified_job_count": 89,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Nextdoor",
@@ -527,7 +669,10 @@
       "verified_at": "2026-10-25T03:43:08.809949+00:00",
       "identity_label": "Nextdoor",
       "verified_job_count": 23,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Monzo",
@@ -538,7 +683,10 @@
       "verified_at": "2026-10-25T03:43:08.791574+00:00",
       "identity_label": "Monzo",
       "verified_job_count": 72,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "Grafana Labs",
@@ -549,7 +697,10 @@
       "verified_at": "2026-10-25T03:43:08.805530+00:00",
       "identity_label": "Grafana Labs",
       "verified_job_count": 145,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Braze",
@@ -560,7 +711,10 @@
       "verified_at": "2026-10-25T03:43:08.978469+00:00",
       "identity_label": "Braze",
       "verified_job_count": 337,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Contentful",
@@ -571,7 +725,10 @@
       "verified_at": "2026-10-25T03:43:08.923880+00:00",
       "identity_label": "Contentful",
       "verified_job_count": 24,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Algolia",
@@ -582,7 +739,10 @@
       "verified_at": "2026-10-25T03:43:09.034269+00:00",
       "identity_label": "Algolia",
       "verified_job_count": 28,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Fastly",
@@ -593,7 +753,10 @@
       "verified_at": "2026-10-25T03:43:09.621462+00:00",
       "identity_label": "Fastly",
       "verified_job_count": 53,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "StockX",
@@ -604,7 +767,10 @@
       "verified_at": "2026-10-25T03:43:09.238712+00:00",
       "identity_label": "StockX",
       "verified_job_count": 32,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Kickstarter PBC",
@@ -615,7 +781,10 @@
       "verified_at": "2026-10-25T03:43:09.219755+00:00",
       "identity_label": "Kickstarter PBC",
       "verified_job_count": 1,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Bitwarden",
@@ -626,7 +795,10 @@
       "verified_at": "2026-10-25T03:43:09.663760+00:00",
       "identity_label": "Bitwarden",
       "verified_job_count": 33,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Tailscale",
@@ -637,7 +809,10 @@
       "verified_at": "2026-10-25T03:43:09.600466+00:00",
       "identity_label": "Tailscale",
       "verified_job_count": 59,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Verkada",
@@ -648,7 +823,10 @@
       "verified_at": "2026-10-25T03:43:09.669713+00:00",
       "identity_label": "Verkada",
       "verified_job_count": 331,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "manufacturing"
+      ]
     },
     {
       "company": "CoreWeave",
@@ -659,7 +837,10 @@
       "verified_at": "2026-10-25T03:43:10.313649+00:00",
       "identity_label": "CoreWeave",
       "verified_job_count": 316,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Nuro",
@@ -670,7 +851,10 @@
       "verified_at": "2026-10-25T03:43:10.156557+00:00",
       "identity_label": "Nuro",
       "verified_job_count": 98,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "manufacturing"
+      ]
     },
     {
       "company": "Motive",
@@ -681,7 +865,10 @@
       "verified_at": "2026-10-25T03:43:09.877617+00:00",
       "identity_label": "Motive",
       "verified_job_count": 156,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "manufacturing"
+      ]
     },
     {
       "company": "Klaviyo",
@@ -692,7 +879,10 @@
       "verified_at": "2026-10-25T03:43:12.895599+00:00",
       "identity_label": "Klaviyo",
       "verified_job_count": 160,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Culture Amp",
@@ -703,7 +893,10 @@
       "verified_at": "2026-10-25T03:43:10.016015+00:00",
       "identity_label": "Culture Amp",
       "verified_job_count": 33,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Upwork",
@@ -714,7 +907,10 @@
       "verified_at": "2026-10-25T03:43:10.281475+00:00",
       "identity_label": "Upwork",
       "verified_job_count": 7,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "ZipRecruiter",
@@ -725,7 +921,10 @@
       "verified_at": "2026-10-25T03:43:10.450950+00:00",
       "identity_label": "ZipRecruiter",
       "verified_job_count": 44,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Calm.com",
@@ -736,7 +935,10 @@
       "verified_at": "2026-10-25T03:43:10.601752+00:00",
       "identity_label": "Calm.com",
       "verified_job_count": 1,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "healthcare"
+      ]
     },
     {
       "company": "Talkspace Psychiatry",
@@ -747,7 +949,10 @@
       "verified_at": "2026-10-25T03:43:10.805822+00:00",
       "identity_label": "Talkspace Psychiatry",
       "verified_job_count": 52,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "healthcare"
+      ]
     },
     {
       "company": "Modern Health",
@@ -758,7 +963,10 @@
       "verified_at": "2026-10-25T03:43:10.890791+00:00",
       "identity_label": "Modern Health",
       "verified_job_count": 7,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "healthcare"
+      ]
     },
     {
       "company": "MasterClass",
@@ -769,7 +977,10 @@
       "verified_at": "2026-10-25T03:43:10.974072+00:00",
       "identity_label": "MasterClass",
       "verified_job_count": 6,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "education"
+      ]
     },
     {
       "company": "GoGuardian",
@@ -780,7 +991,10 @@
       "verified_at": "2026-10-25T03:43:11.018570+00:00",
       "identity_label": "GoGuardian",
       "verified_job_count": 13,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "education"
+      ]
     },
     {
       "company": "Relativity Space",
@@ -791,7 +1005,10 @@
       "verified_at": "2026-10-25T03:43:12.109167+00:00",
       "identity_label": "Relativity Space",
       "verified_job_count": 397,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "manufacturing"
+      ]
     },
     {
       "company": "Taskrabbit",
@@ -802,7 +1019,10 @@
       "verified_at": "2026-10-25T03:43:11.366077+00:00",
       "identity_label": "Taskrabbit",
       "verified_job_count": 20,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Misfits Market",
@@ -813,7 +1033,10 @@
       "verified_at": "2026-10-25T03:43:11.454655+00:00",
       "identity_label": "Misfits Market",
       "verified_job_count": 66,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Weee! Inc",
@@ -824,7 +1047,10 @@
       "verified_at": "2026-10-25T03:43:11.534895+00:00",
       "identity_label": "Weee! Inc",
       "verified_job_count": 22,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Palantir Technologies",
@@ -835,7 +1061,10 @@
       "verified_at": "2026-10-25T03:43:12.420741+00:00",
       "identity_label": "Palantir Technologies ",
       "verified_job_count": 309,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Ro",
@@ -846,7 +1075,10 @@
       "verified_at": "2026-10-25T03:43:11.955679+00:00",
       "identity_label": "Ro ",
       "verified_job_count": 52,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "healthcare"
+      ]
     },
     {
       "company": "Zoox",
@@ -857,7 +1089,10 @@
       "verified_at": "2026-10-25T03:43:12.186452+00:00",
       "identity_label": "Zoox ",
       "verified_job_count": 236,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "manufacturing"
+      ]
     },
     {
       "company": "Ramp",
@@ -868,7 +1103,10 @@
       "verified_at": "2026-10-25T03:43:11.620941+00:00",
       "identity_label": "Ramp Jobs ",
       "verified_job_count": 167,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "Linear",
@@ -879,7 +1117,10 @@
       "verified_at": "2026-10-25T03:43:11.584427+00:00",
       "identity_label": "Linear Jobs ",
       "verified_job_count": 34,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Watershed",
@@ -890,7 +1131,10 @@
       "verified_at": "2026-10-25T03:43:11.952202+00:00",
       "identity_label": "Watershed Jobs ",
       "verified_job_count": 39,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "climate"
+      ]
     },
     {
       "company": "Substack",
@@ -901,7 +1145,10 @@
       "verified_at": "2026-10-25T03:43:11.959678+00:00",
       "identity_label": "Substack Jobs ",
       "verified_job_count": 16,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Notion",
@@ -912,7 +1159,10 @@
       "verified_at": "2026-10-25T03:43:12.113488+00:00",
       "identity_label": "Notion Jobs ",
       "verified_job_count": 140,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Runway",
@@ -923,7 +1173,10 @@
       "verified_at": "2026-10-25T03:43:12.049445+00:00",
       "identity_label": "Runway Jobs ",
       "verified_job_count": 48,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Synthesia",
@@ -934,7 +1187,10 @@
       "verified_at": "2026-10-25T03:43:12.190293+00:00",
       "identity_label": "Synthesia Jobs ",
       "verified_job_count": 34,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Replit",
@@ -945,7 +1201,10 @@
       "verified_at": "2026-10-25T03:43:12.382079+00:00",
       "identity_label": "Replit Jobs ",
       "verified_job_count": 37,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Vanta",
@@ -956,7 +1215,10 @@
       "verified_at": "2026-10-25T03:43:12.435169+00:00",
       "identity_label": "Vanta Jobs ",
       "verified_job_count": 83,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Abridge",
@@ -967,7 +1229,10 @@
       "verified_at": "2026-10-25T03:43:12.479396+00:00",
       "identity_label": "Abridge Jobs ",
       "verified_job_count": 36,
-      "directory_crawled_at": "2026-07-12"
+      "directory_crawled_at": "2026-07-12",
+      "industries": [
+        "healthcare"
+      ]
     },
     {
       "company": "Harvey",
@@ -978,7 +1243,10 @@
       "verified_at": "2026-10-25T03:43:12.605613+00:00",
       "identity_label": "Harvey Jobs ",
       "verified_job_count": 358,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Crusoe",
@@ -989,7 +1257,10 @@
       "verified_at": "2026-10-25T03:43:12.783958+00:00",
       "identity_label": "Crusoe Jobs ",
       "verified_job_count": 349,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "climate"
+      ]
     },
     {
       "company": "Headway",
@@ -1000,7 +1271,10 @@
       "verified_at": "2026-10-25T03:43:12.641807+00:00",
       "identity_label": "Headway Jobs ",
       "verified_job_count": 91,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "healthcare"
+      ]
     },
     {
       "company": "Aurora Solar",
@@ -1011,7 +1285,10 @@
       "verified_at": "2026-10-25T03:43:12.657656+00:00",
       "identity_label": "Aurora Solar Jobs ",
       "verified_job_count": 12,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "climate"
+      ]
     },
     {
       "company": "Rula",
@@ -1022,7 +1299,10 @@
       "verified_at": "2026-10-25T03:43:12.739617+00:00",
       "identity_label": "Rula Jobs ",
       "verified_job_count": 36,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "healthcare"
+      ]
     },
     {
       "company": "Skydio",
@@ -1033,7 +1313,10 @@
       "verified_at": "2026-10-25T03:43:12.882939+00:00",
       "identity_label": "Skydio Jobs ",
       "verified_job_count": 167,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "manufacturing"
+      ]
     },
     {
       "company": "Whoop",
@@ -1044,7 +1327,10 @@
       "verified_at": "2026-10-25T03:43:13.045556+00:00",
       "identity_label": "Whoop Jobs ",
       "verified_job_count": 168,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "Zapier",
@@ -1055,7 +1341,10 @@
       "verified_at": "2026-10-25T03:43:12.904060+00:00",
       "identity_label": "Zapier Jobs ",
       "verified_job_count": 12,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "Preply",
@@ -1066,7 +1355,10 @@
       "verified_at": "2026-10-25T03:43:13.135757+00:00",
       "identity_label": "Preply Jobs ",
       "verified_job_count": 120,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "education"
+      ]
     },
     {
       "company": "1Password",
@@ -1077,7 +1369,10 @@
       "verified_at": "2026-10-25T03:43:13.173277+00:00",
       "identity_label": "1Password Jobs ",
       "verified_job_count": 90,
-      "directory_crawled_at": "2026-07-12"
+      "directory_crawled_at": "2026-07-12",
+      "industries": [
+        "technology"
+      ]
     },
     {
       "company": "sweetgreen",
@@ -1088,7 +1383,10 @@
       "verified_at": "2026-10-25T03:43:15.024405+00:00",
       "identity_label": " sweetgreen",
       "verified_job_count": 63,
-      "directory_crawled_at": "2026-08-01"
+      "directory_crawled_at": "2026-08-01",
+      "industries": [
+        "consumer"
+      ]
     },
     {
       "company": "General Atlantic",
@@ -1099,7 +1397,10 @@
       "verified_at": "2026-10-25T03:43:13.450256+00:00",
       "identity_label": "General Atlantic ",
       "verified_job_count": 13,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "finance"
+      ]
     },
     {
       "company": "ACLU - Internships",
@@ -1110,7 +1411,619 @@
       "verified_at": "2026-10-25T03:43:13.611863+00:00",
       "identity_label": "ACLU - Internships",
       "verified_job_count": 42,
-      "directory_crawled_at": "2026-07-17"
+      "directory_crawled_at": "2026-07-17",
+      "industries": [
+        "nonprofit"
+      ]
+    },
+    {
+      "company": "Twist Bioscience",
+      "provider": "greenhouse",
+      "board": "twistbioscience",
+      "career_url": "https://job-boards.greenhouse.io/twistbioscience",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/twistbioscience/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/twistbioscience",
+      "verified_at": "2026-10-28T22:21:22.010388+00:00",
+      "identity_label": "Twist Bioscience",
+      "verified_job_count": 44,
+      "industries": [
+        "science",
+        "healthcare"
+      ]
+    },
+    {
+      "company": "Eikon Therapeutics",
+      "provider": "greenhouse",
+      "board": "eikontherapeutics",
+      "career_url": "https://job-boards.greenhouse.io/eikontherapeutics",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/eikontherapeutics/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/eikontherapeutics",
+      "verified_at": "2026-10-28T22:21:22.176722+00:00",
+      "identity_label": "Eikon Therapeutics",
+      "verified_job_count": 23,
+      "industries": [
+        "science",
+        "healthcare"
+      ]
+    },
+    {
+      "company": "Veracyte",
+      "provider": "greenhouse",
+      "board": "veracyte",
+      "career_url": "https://job-boards.greenhouse.io/veracyte",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/veracyte/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/veracyte",
+      "verified_at": "2026-10-28T22:21:22.326066+00:00",
+      "identity_label": "Veracyte",
+      "verified_job_count": 23,
+      "industries": [
+        "science",
+        "healthcare"
+      ]
+    },
+    {
+      "company": "Oscar Health",
+      "provider": "greenhouse",
+      "board": "oscar",
+      "career_url": "https://job-boards.greenhouse.io/oscar",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/oscar/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/oscar",
+      "verified_at": "2026-10-28T22:21:22.582687+00:00",
+      "identity_label": "Oscar Health",
+      "verified_job_count": 220,
+      "industries": [
+        "healthcare"
+      ]
+    },
+    {
+      "company": "Workit Health",
+      "provider": "greenhouse",
+      "board": "workithealth",
+      "career_url": "https://job-boards.greenhouse.io/workithealth",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/workithealth/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/workithealth",
+      "verified_at": "2026-10-28T22:21:22.772265+00:00",
+      "identity_label": "Workit Health",
+      "verified_job_count": 12,
+      "industries": [
+        "healthcare"
+      ]
+    },
+    {
+      "company": "Omada Health",
+      "provider": "greenhouse",
+      "board": "omadahealth",
+      "career_url": "https://job-boards.greenhouse.io/omadahealth",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/omadahealth/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/omadahealth",
+      "verified_at": "2026-10-28T22:21:22.815897+00:00",
+      "identity_label": "Omada Health",
+      "verified_job_count": 20,
+      "industries": [
+        "healthcare"
+      ]
+    },
+    {
+      "company": "Collective Health",
+      "provider": "greenhouse",
+      "board": "collectivehealth",
+      "career_url": "https://job-boards.greenhouse.io/collectivehealth",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/collectivehealth/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/collectivehealth",
+      "verified_at": "2026-10-28T22:21:22.895027+00:00",
+      "identity_label": "Collective Health",
+      "verified_job_count": 3,
+      "industries": [
+        "healthcare"
+      ]
+    },
+    {
+      "company": "Sword",
+      "provider": "greenhouse",
+      "board": "swordhealth",
+      "career_url": "https://job-boards.greenhouse.io/swordhealth",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/swordhealth/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/swordhealth",
+      "verified_at": "2026-10-28T22:21:22.986687+00:00",
+      "identity_label": "Sword",
+      "verified_job_count": 59,
+      "industries": [
+        "healthcare"
+      ]
+    },
+    {
+      "company": "CodePath",
+      "provider": "greenhouse",
+      "board": "codepath",
+      "career_url": "https://job-boards.greenhouse.io/codepath",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/codepath/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/codepath",
+      "verified_at": "2026-10-28T22:21:23.600049+00:00",
+      "identity_label": "CodePath",
+      "verified_job_count": 12,
+      "industries": [
+        "education",
+        "nonprofit"
+      ]
+    },
+    {
+      "company": "Edmentum",
+      "provider": "greenhouse",
+      "board": "edmentum",
+      "career_url": "https://job-boards.greenhouse.io/edmentum",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/edmentum/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/edmentum",
+      "verified_at": "2026-10-28T22:21:23.663479+00:00",
+      "identity_label": "Edmentum",
+      "verified_job_count": 26,
+      "industries": [
+        "education"
+      ]
+    },
+    {
+      "company": "Swing Education",
+      "provider": "greenhouse",
+      "board": "swingeducation",
+      "career_url": "https://job-boards.greenhouse.io/swingeducation",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/swingeducation/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/swingeducation",
+      "verified_at": "2026-10-28T22:21:23.679140+00:00",
+      "identity_label": "Swing Education",
+      "verified_job_count": 2,
+      "industries": [
+        "education"
+      ]
+    },
+    {
+      "company": "Art of Problem Solving",
+      "provider": "greenhouse",
+      "board": "artofproblemsolving",
+      "career_url": "https://job-boards.greenhouse.io/artofproblemsolving",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/artofproblemsolving/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/artofproblemsolving",
+      "verified_at": "2026-10-28T22:21:23.952060+00:00",
+      "identity_label": "Art of Problem Solving",
+      "verified_job_count": 81,
+      "industries": [
+        "education"
+      ]
+    },
+    {
+      "company": "Chime Financial, Inc",
+      "provider": "greenhouse",
+      "board": "chime",
+      "career_url": "https://job-boards.greenhouse.io/chime",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/chime/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/chime",
+      "verified_at": "2026-10-28T22:21:24.009999+00:00",
+      "identity_label": "Chime Financial, Inc",
+      "verified_job_count": 72,
+      "industries": [
+        "finance"
+      ]
+    },
+    {
+      "company": "Brex",
+      "provider": "greenhouse",
+      "board": "brex",
+      "career_url": "https://job-boards.greenhouse.io/brex",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/brex/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/brex",
+      "verified_at": "2026-10-28T22:21:24.056976+00:00",
+      "identity_label": "Brex",
+      "verified_job_count": 262,
+      "industries": [
+        "finance"
+      ]
+    },
+    {
+      "company": "Robinhood",
+      "provider": "greenhouse",
+      "board": "robinhood",
+      "career_url": "https://job-boards.greenhouse.io/robinhood",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/robinhood/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/robinhood",
+      "verified_at": "2026-10-28T22:21:24.110604+00:00",
+      "identity_label": "Robinhood",
+      "verified_job_count": 162,
+      "industries": [
+        "finance"
+      ]
+    },
+    {
+      "company": "Insurify",
+      "provider": "greenhouse",
+      "board": "insurify",
+      "career_url": "https://job-boards.greenhouse.io/insurify",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/insurify/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/insurify",
+      "verified_at": "2026-10-28T22:21:24.255854+00:00",
+      "identity_label": "Insurify",
+      "verified_job_count": 15,
+      "industries": [
+        "finance"
+      ]
+    },
+    {
+      "company": "Coalition, Inc.",
+      "provider": "greenhouse",
+      "board": "coalition",
+      "career_url": "https://job-boards.greenhouse.io/coalition",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/coalition/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/coalition",
+      "verified_at": "2026-10-28T22:21:24.421421+00:00",
+      "identity_label": "Coalition, Inc.",
+      "verified_job_count": 51,
+      "industries": [
+        "finance"
+      ]
+    },
+    {
+      "company": "Mercury",
+      "provider": "greenhouse",
+      "board": "mercury",
+      "career_url": "https://job-boards.greenhouse.io/mercury",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/mercury/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/mercury",
+      "verified_at": "2026-10-28T22:21:24.536373+00:00",
+      "identity_label": "Mercury",
+      "verified_job_count": 80,
+      "industries": [
+        "finance"
+      ]
+    },
+    {
+      "company": "Anduril Industries",
+      "provider": "greenhouse",
+      "board": "andurilindustries",
+      "career_url": "https://job-boards.greenhouse.io/andurilindustries",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/andurilindustries/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/andurilindustries",
+      "verified_at": "2026-10-28T22:21:24.925940+00:00",
+      "identity_label": "Anduril Industries",
+      "verified_job_count": 2544,
+      "industries": [
+        "manufacturing"
+      ]
+    },
+    {
+      "company": "Formlabs",
+      "provider": "greenhouse",
+      "board": "formlabs",
+      "career_url": "https://job-boards.greenhouse.io/formlabs",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/formlabs/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/formlabs",
+      "verified_at": "2026-10-28T22:21:24.794355+00:00",
+      "identity_label": "Formlabs",
+      "verified_job_count": 241,
+      "industries": [
+        "manufacturing"
+      ]
+    },
+    {
+      "company": "Figure",
+      "provider": "greenhouse",
+      "board": "figureai",
+      "career_url": "https://job-boards.greenhouse.io/figureai",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/figureai/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/figureai",
+      "verified_at": "2026-10-28T22:21:24.744188+00:00",
+      "identity_label": "Figure",
+      "verified_job_count": 99,
+      "industries": [
+        "manufacturing"
+      ]
+    },
+    {
+      "company": "Astranis",
+      "provider": "greenhouse",
+      "board": "astranis",
+      "career_url": "https://job-boards.greenhouse.io/astranis",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/astranis/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/astranis",
+      "verified_at": "2026-10-28T22:21:24.878275+00:00",
+      "identity_label": "Astranis",
+      "verified_job_count": 187,
+      "industries": [
+        "manufacturing"
+      ]
+    },
+    {
+      "company": "Vast",
+      "provider": "greenhouse",
+      "board": "vast",
+      "career_url": "https://job-boards.greenhouse.io/vast",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/vast/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/vast",
+      "verified_at": "2026-10-28T22:21:25.313686+00:00",
+      "identity_label": "Vast",
+      "verified_job_count": 182,
+      "industries": [
+        "manufacturing"
+      ]
+    },
+    {
+      "company": "Path Robotics",
+      "provider": "greenhouse",
+      "board": "pathrobotics",
+      "career_url": "https://job-boards.greenhouse.io/pathrobotics",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/pathrobotics/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/pathrobotics",
+      "verified_at": "2026-10-28T22:21:25.386774+00:00",
+      "identity_label": "Path Robotics",
+      "verified_job_count": 54,
+      "industries": [
+        "manufacturing"
+      ]
+    },
+    {
+      "company": "Pivot Bio",
+      "provider": "greenhouse",
+      "board": "pivotbio",
+      "career_url": "https://job-boards.greenhouse.io/pivotbio",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/pivotbio/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/pivotbio",
+      "verified_at": "2026-10-28T22:21:25.842986+00:00",
+      "identity_label": "Pivot Bio",
+      "verified_job_count": 11,
+      "industries": [
+        "climate"
+      ]
+    },
+    {
+      "company": "GiveWell",
+      "provider": "greenhouse",
+      "board": "givewell",
+      "career_url": "https://job-boards.greenhouse.io/givewell",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/givewell/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/givewell",
+      "verified_at": "2026-10-28T22:21:26.195091+00:00",
+      "identity_label": "GiveWell",
+      "verified_job_count": 15,
+      "industries": [
+        "nonprofit"
+      ]
+    },
+    {
+      "company": "GiveDirectly",
+      "provider": "greenhouse",
+      "board": "givedirectly",
+      "career_url": "https://job-boards.greenhouse.io/givedirectly",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/givedirectly/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/givedirectly",
+      "verified_at": "2026-10-28T22:21:26.280442+00:00",
+      "identity_label": "GiveDirectly",
+      "verified_job_count": 33,
+      "industries": [
+        "nonprofit"
+      ]
+    },
+    {
+      "company": "Code for America",
+      "provider": "greenhouse",
+      "board": "codeforamerica",
+      "career_url": "https://job-boards.greenhouse.io/codeforamerica",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/codeforamerica/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/codeforamerica",
+      "verified_at": "2026-10-28T22:21:26.315675+00:00",
+      "identity_label": "Code for America",
+      "verified_job_count": 9,
+      "industries": [
+        "nonprofit"
+      ]
+    },
+    {
+      "company": "ACLU - National Office",
+      "provider": "greenhouse",
+      "board": "aclu",
+      "career_url": "https://job-boards.greenhouse.io/aclu",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/aclu/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/aclu",
+      "verified_at": "2026-10-28T22:21:26.471851+00:00",
+      "identity_label": "ACLU - National Office",
+      "verified_job_count": 15,
+      "industries": [
+        "nonprofit"
+      ]
+    },
+    {
+      "company": "World Resources Institute",
+      "provider": "greenhouse",
+      "board": "wri",
+      "career_url": "https://job-boards.greenhouse.io/wri",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/wri/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/wri",
+      "verified_at": "2026-10-28T22:21:26.676251+00:00",
+      "identity_label": "World Resources Institute",
+      "verified_job_count": 0,
+      "industries": [
+        "nonprofit",
+        "climate"
+      ]
+    },
+    {
+      "company": "DonorsChoose",
+      "provider": "greenhouse",
+      "board": "donorschoose",
+      "career_url": "https://job-boards.greenhouse.io/donorschoose",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/donorschoose/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/donorschoose",
+      "verified_at": "2026-10-28T22:21:26.762561+00:00",
+      "identity_label": "DonorsChoose",
+      "verified_job_count": 5,
+      "industries": [
+        "education",
+        "nonprofit"
+      ]
+    },
+    {
+      "company": "Instacart",
+      "provider": "greenhouse",
+      "board": "instacart",
+      "career_url": "https://job-boards.greenhouse.io/instacart",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/instacart/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/instacart",
+      "verified_at": "2026-10-28T22:21:26.959073+00:00",
+      "identity_label": "Instacart",
+      "verified_job_count": 93,
+      "industries": [
+        "consumer"
+      ]
+    },
+    {
+      "company": "Flexport",
+      "provider": "greenhouse",
+      "board": "flexport",
+      "career_url": "https://job-boards.greenhouse.io/flexport",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/flexport/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/flexport",
+      "verified_at": "2026-10-28T22:21:27.117559+00:00",
+      "identity_label": "Flexport",
+      "verified_job_count": 188,
+      "industries": [
+        "consumer"
+      ]
+    },
+    {
+      "company": "FareHarbor",
+      "provider": "greenhouse",
+      "board": "fareharbor",
+      "career_url": "https://job-boards.greenhouse.io/fareharbor",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/fareharbor/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/fareharbor",
+      "verified_at": "2026-10-28T22:21:27.452615+00:00",
+      "identity_label": "FareHarbor",
+      "verified_job_count": 7,
+      "industries": [
+        "consumer"
+      ]
+    },
+    {
+      "company": "Everlane",
+      "provider": "greenhouse",
+      "board": "everlane",
+      "career_url": "https://job-boards.greenhouse.io/everlane",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/everlane/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/everlane",
+      "verified_at": "2026-10-28T22:21:27.456802+00:00",
+      "identity_label": "Everlane",
+      "verified_job_count": 33,
+      "industries": [
+        "consumer"
+      ]
+    },
+    {
+      "company": "Quince",
+      "provider": "greenhouse",
+      "board": "quince",
+      "career_url": "https://job-boards.greenhouse.io/quince",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/quince/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/quince",
+      "verified_at": "2026-10-28T22:21:27.495827+00:00",
+      "identity_label": "Quince",
+      "verified_job_count": 151,
+      "industries": [
+        "consumer"
+      ]
+    },
+    {
+      "company": "Stitch Fix",
+      "provider": "greenhouse",
+      "board": "stitchfix",
+      "career_url": "https://job-boards.greenhouse.io/stitchfix",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/stitchfix/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/stitchfix",
+      "verified_at": "2026-10-28T22:21:27.758256+00:00",
+      "identity_label": "Stitch Fix",
+      "verified_job_count": 14,
+      "industries": [
+        "consumer"
+      ]
+    },
+    {
+      "company": "Rent the Runway",
+      "provider": "greenhouse",
+      "board": "renttherunway",
+      "career_url": "https://job-boards.greenhouse.io/renttherunway",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/renttherunway/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/renttherunway",
+      "verified_at": "2026-10-28T22:21:27.791602+00:00",
+      "identity_label": "Rent the Runway",
+      "verified_job_count": 27,
+      "industries": [
+        "consumer"
+      ]
+    },
+    {
+      "company": "Charm Industrial",
+      "provider": "lever",
+      "board": "charmindustrial",
+      "career_url": "https://jobs.lever.co/charmindustrial",
+      "feed_url": "https://api.lever.co/v0/postings/charmindustrial?mode=json",
+      "identity_url": "https://jobs.lever.co/charmindustrial",
+      "verified_at": "2026-10-28T22:23:00.018570+00:00",
+      "identity_label": "Charm Industrial",
+      "verified_job_count": 10,
+      "industries": [
+        "climate"
+      ]
+    },
+    {
+      "company": "Crux",
+      "provider": "ashby",
+      "board": "crux",
+      "career_url": "https://jobs.ashbyhq.com/crux",
+      "feed_url": "https://api.ashbyhq.com/posting-api/job-board/crux",
+      "identity_url": "https://jobs.ashbyhq.com/crux",
+      "verified_at": "2026-10-28T22:22:57.499742+00:00",
+      "identity_label": "Crux",
+      "verified_job_count": 30,
+      "industries": [
+        "climate"
+      ]
+    },
+    {
+      "company": "Lunar Energy",
+      "provider": "greenhouse",
+      "board": "lunarenergy",
+      "career_url": "https://job-boards.greenhouse.io/lunarenergy",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/lunarenergy/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/lunarenergy",
+      "verified_at": "2026-10-28T22:22:58.427209+00:00",
+      "identity_label": "Lunar Energy",
+      "verified_job_count": 23,
+      "industries": [
+        "climate"
+      ]
+    },
+    {
+      "company": "Altos Labs",
+      "provider": "greenhouse",
+      "board": "altoslabs",
+      "career_url": "https://job-boards.greenhouse.io/altoslabs",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/altoslabs/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/altoslabs",
+      "verified_at": "2026-10-28T22:22:58.611240+00:00",
+      "identity_label": "Altos Labs",
+      "verified_job_count": 16,
+      "industries": [
+        "science"
+      ]
+    },
+    {
+      "company": "NewLimit",
+      "provider": "greenhouse",
+      "board": "newlimit",
+      "career_url": "https://job-boards.greenhouse.io/newlimit",
+      "feed_url": "https://boards-api.greenhouse.io/v1/boards/newlimit/jobs",
+      "identity_url": "https://boards-api.greenhouse.io/v1/boards/newlimit",
+      "verified_at": "2026-10-28T22:22:58.580312+00:00",
+      "identity_label": "NewLimit",
+      "verified_job_count": 17,
+      "industries": [
+        "science"
+      ]
     }
-  ]
+  ],
+  "verification_notes": "Original entries retain their individual verification dates. 43 additional employer identities and feeds checked on 2026-10-28. Zero active jobs is allowed and does not mean a feed is broken."
 }

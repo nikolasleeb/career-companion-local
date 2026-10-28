@@ -307,7 +307,16 @@ class SearchRequest(StrictModel):
     sources: list[Literal['greenhouse','ashby','lever','web','adzuna','usajobs','jobspy','github']] = Field(default_factory=lambda:['greenhouse','ashby','lever','adzuna','usajobs','github'],max_length=8)
     trial_roles: list[str] | None = Field(default=None,max_length=2)
     employer_boards: list[str] | None = Field(default=None,max_length=300)
+    employer_selection_mode: Literal['all','industries','custom'] | None = None
+    employer_industries: list[str] = Field(default_factory=list,max_length=9)
     request_token: str = Field(default='',max_length=100,pattern=r'^[a-zA-Z0-9_-]*$')
+
+    @field_validator('employer_industries')
+    @classmethod
+    def valid_employer_industries(cls,values):
+        from .employer_industries import INDUSTRIES
+        if set(values)-set(INDUSTRIES):raise ValueError('Choose industries from the employer catalog.')
+        return list(dict.fromkeys(values))
 
     @field_validator('interests','trial_roles')
     @classmethod

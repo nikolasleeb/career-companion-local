@@ -178,3 +178,18 @@ test('cancelling remains active and cancelled is terminal without another provid
  let calls=0;await assert.rejects(()=>pollTask('stoppable',async path=>{assert.equal(path,'/tasks/stoppable');return ++calls===1?{status:'cancelling'}:{status:'cancelled'};},immediate),e=>e.status===499&&e.message.includes('Previous saved results are unchanged'));
  assert.equal(calls,2);
 });
+
+test('account cleanup revisions travel with mutations and reject stale responses',async()=>{
+ const oldFetch=globalThis.fetch;let sent;
+ try{
+  globalThis.fetch=async()=>new Response(JSON.stringify({id:'cleanup-fixture',cleanup_revision:0}),{headers:{'X-Account-Id':'cleanup-fixture','X-Account-Data-Revision':'0'}});
+  await requestJSON('/auth/login','POST',{},'csrf');
+  globalThis.fetch=async()=>new Response(JSON.stringify({cleanup_revision:1}),{headers:{'X-Account-Id':'cleanup-fixture','X-Account-Data-Revision':'1'}});
+  await requestJSON('/account/cleanup/apply','POST',{},'csrf');
+  globalThis.fetch=async(url,options)=>{sent=options.headers;return new Response('{}',{headers:{'X-Account-Id':'cleanup-fixture','X-Account-Data-Revision':'1'}});};
+  await requestJSON('/settings','PUT',{},'csrf');assert.equal(sent['X-Account-Data-Revision'],'1');
+  globalThis.fetch=async()=>new Response('{}',{headers:{'X-Account-Id':'cleanup-fixture','X-Account-Data-Revision':'0'}});
+  await assert.rejects(()=>requestJSON('/workspace'),e=>e.status===409&&e.message.includes('cleared'));
+  globalThis.fetch=async()=>new Response('{}');await requestJSON('/auth/logout','POST',{},'csrf');
+ }finally{globalThis.fetch=oldFetch;}
+});
