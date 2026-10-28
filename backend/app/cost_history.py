@@ -41,6 +41,9 @@ class UsageEvent(StrictModel):
     reasoning_tokens:int=Field(default=0,ge=0,le=10**12)
     web_search_calls:int=Field(default=0,ge=0,le=100000)
     usage_reported:bool=False
+    token_counts_reported:bool|None=None
+    cached_counts_reported:bool|None=None
+    reasoning_counts_reported:bool|None=None
     token_cost_usd:float|None=Field(default=None,ge=0,le=10**9)
     tool_cost_usd:float|None=Field(default=None,ge=0,le=10**9)
     estimated_cost_usd:float|None=Field(default=None,ge=0,le=10**9)
@@ -78,6 +81,29 @@ def normalized(usage):
     details=usage.get('input_tokens_details') or {};details=details if isinstance(details,dict) else {}
     output=usage.get('output_tokens_details') or {};output=output if isinstance(output,dict) else {}
     return {'input_tokens':incoming,'cached_input_tokens':min(incoming,count(usage.get('cached_input_tokens',details.get('cached_tokens')))),'output_tokens':out,'reasoning_tokens':min(out,count(usage.get('reasoning_tokens',output.get('reasoning_tokens'))))}
+
+
+def token_flags(usage):
+    """Presence metadata, separate from whether a price or audio duration exists."""
+    raw=usage if isinstance(usage,dict) else {}
+    incoming=raw.get('input_tokens',raw.get('prompt_tokens'));outgoing=raw.get('output_tokens',raw.get('completion_tokens'))
+    inputs=raw.get('input_tokens_details') or raw.get('prompt_tokens_details') or raw.get('input_token_details') or {}
+    outputs=raw.get('output_tokens_details') or raw.get('completion_tokens_details') or raw.get('output_token_details') or {}
+    inputs=inputs if isinstance(inputs,dict) else {};outputs=outputs if isinstance(outputs,dict) else {}
+    cached=raw.get('cached_input_tokens',inputs.get('cached_tokens'));reasoning=raw.get('reasoning_tokens',outputs.get('reasoning_tokens'))
+    valid=lambda v:type(v) is int and 0<=v<=10**12
+    return {'token_counts_reported':valid(incoming) and valid(outgoing),'cached_counts_reported':valid(cached) and valid(incoming) and cached<=incoming,'reasoning_counts_reported':valid(reasoning) and valid(outgoing) and reasoning<=outgoing}
+
+def token_coverage(rows):
+    def total_known(r):
+        flag=r.get('token_counts_reported')
+        if flag is not None:return flag is True
+        # Older audio/image events used usage_reported for duration or modality
+        # usage, which cannot establish complete input/output token coverage.
+        return bool(r.get('usage_reported')) and r.get('process') not in ('interview_transcription','interview_delivery','interview_narration','chat_image')
+    def detail_known(r,flag,value):
+        return r[flag] is True if r.get(flag) is not None else r.get(value,0)>0
+    return {'token_requests_reported':sum(total_known(r) for r in rows),'token_requests_missing':sum(not total_known(r) for r in rows),'cached_requests_missing':sum(not detail_known(r,'cached_counts_reported','cached_input_tokens') for r in rows),'reasoning_requests_missing':sum(not detail_known(r,'reasoning_counts_reported','reasoning_tokens') for r in rows)}
 
 
 def metadata_key(meta):
@@ -149,7 +175,7 @@ def finish(user,event,body,response=None,http_status=200,status=None):
     reason=reason if isinstance(reason,str) and re.fullmatch(r'[A-Za-z0-9_.-]{0,80}',reason) else ''
     known=[v for v in (token,tools) if v is not None]
     key='response:'+str(response['id']) if isinstance(response.get('id'),str) and len(response['id'])<=180 else event['data']['event_key']
-    return write(user,{**event['data'],**counts,'model':model,'requested_service_tier':requested,'service_tier':actual,'event_key':key,'status':state,'incomplete_reason':reason,'usage_reported':reported,'web_search_calls':web,'token_cost_usd':token,'tool_cost_usd':tools,'estimated_cost_usd':round(sum(known),6) if (token is not None and tools is not None) or any(v>0 for v in known) else None,'partial':token is None or tools is None,'rates':snapshot,'notes':notes},event['id'])
+    return write(user,{**event['data'],**counts,'model':model,'requested_service_tier':requested,'service_tier':actual,'event_key':key,'status':state,'incomplete_reason':reason,'usage_reported':reported,**token_flags(raw),'web_search_calls':web,'token_cost_usd':token,'tool_cost_usd':tools,'estimated_cost_usd':round(sum(known),6) if (token is not None and tools is not None) or any(v>0 for v in known) else None,'partial':token is None or tools is None,'rates':snapshot,'notes':notes},event['id'])
 
 
 @independent
@@ -201,7 +227,7 @@ def recover(user):
         amount=meta.get('estimated_token_cost_usd')
         if type(amount) not in (int,float) or not math.isfinite(amount) or amount<0:amount=None
         step='Evidence audit' if 'audit_ai' in path else 'Layout correction' if 'layout_ai' in path else 'Recovered saved response'
-        data={'event_key':key,'occurred_at':meta['generated_at'],'model':meta['model'][:150],'process':process if process in PROCESSES else 'other','step':step,'task_id':task_id,'status':'recovered','origin':'recovered',**normalized(meta['usage']),'usage_reported':True,'token_cost_usd':amount,'tool_cost_usd':None,'estimated_cost_usd':amount,'partial':True,'pricing_date':str(meta.get('pricing_date',''))[:30],'metadata_key':fingerprint,'notes':['Recovered saved token estimate. Older failed/deleted calls and tool fees may be missing.']}
+        data={'event_key':key,'occurred_at':meta['generated_at'],'model':meta['model'][:150],'process':process if process in PROCESSES else 'other','step':step,'task_id':task_id,'status':'recovered','origin':'recovered',**normalized(meta['usage']),**token_flags(meta['usage']),'usage_reported':True,'token_cost_usd':amount,'tool_cost_usd':None,'estimated_cost_usd':amount,'partial':True,'pricing_date':str(meta.get('pricing_date',''))[:30],'metadata_key':fingerprint,'notes':['Recovered saved token estimate. Older failed/deleted calls and tool fees may be missing.']}
         try:write(user,data)
         except ValueError:continue
         seen.add(fingerprint);keys.add(key)
@@ -250,7 +276,7 @@ def totals(rows):
     ranged=any(r.get('estimated_cost_upper_usd') is not None for r in rows)
     bounded=all(r.get('estimated_cost_usd') is not None and (not r['partial'] or r.get('estimated_cost_upper_usd') is not None) for r in rows)
     upper=round(sum(r.get('estimated_cost_upper_usd') if r.get('estimated_cost_upper_usd') is not None else r['estimated_cost_usd'] for r in rows),6) if ranged and bounded else None
-    return {'estimated_cost_usd':subtotal('estimated_cost_usd'),'estimated_cost_upper_usd':upper,'token_cost_usd':subtotal('token_cost_usd'),'tool_cost_usd':subtotal('tool_cost_usd'),'requests':len(rows),'unpriced_requests':sum(r['partial'] or r['estimated_cost_usd'] is None for r in rows),'recovered_requests':sum(r['origin']=='recovered' for r in rows),**{key:sum(r.get(key,0) for r in rows) for key in ('input_tokens','cached_input_tokens','cache_write_tokens','output_tokens','reasoning_tokens','web_search_calls')}}
+    return {**token_coverage(rows),'estimated_cost_usd':subtotal('estimated_cost_usd'),'estimated_cost_upper_usd':upper,'token_cost_usd':subtotal('token_cost_usd'),'tool_cost_usd':subtotal('tool_cost_usd'),'requests':len(rows),'unpriced_requests':sum(r['partial'] or r['estimated_cost_usd'] is None for r in rows),'recovered_requests':sum(r['origin']=='recovered' for r in rows),**{key:sum(r.get(key,0) for r in rows) for key in ('input_tokens','cached_input_tokens','cache_write_tokens','output_tokens','reasoning_tokens','web_search_calls')}}
 
 
 def report(user,start='',end='',model='',process='',tz='UTC',bucket='day',offset=0,limit=30):

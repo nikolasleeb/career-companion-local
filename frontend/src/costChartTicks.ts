@@ -16,5 +16,5 @@ export function costTicks(rows:{key:string}[],bucket:string,width:number,start='
   if(i===candidates.length-1&&selected.length>1&&x(candidates[i])-x(candidates[selected.at(-1)!])<82)selected.pop();selected.push(i);
  }
  const acrossYears=new Date(min).getUTCFullYear()!==new Date(max).getUTCFullYear();
- return {times,min,max,position,ticks:selected.map(i=>({index:i,key:new Date(candidates[i]).toISOString().slice(0,bucket==='month'?7:10),x:x(candidates[i]),label:(bucket==='week'?'Wk ':'')+new Date(candidates[i]).toLocaleDateString(undefined,{timeZone:'UTC',month:'short',...(bucket==='month'?{year:'numeric' as const}:{day:'numeric' as const,...(acrossYears?{year:'2-digit' as const}:{})})})}))};
+ return {times,min,max,position,periods:candidates.map(value=>new Date(value).toISOString().slice(0,bucket==='month'?7:10)),ticks:selected.map(i=>({index:i,key:new Date(candidates[i]).toISOString().slice(0,bucket==='month'?7:10),x:x(candidates[i]),label:(bucket==='week'?'Wk ':'')+new Date(candidates[i]).toLocaleDateString(undefined,{timeZone:'UTC',month:'short',...(bucket==='month'?{year:'numeric' as const}:{day:'numeric' as const,...(acrossYears?{year:'2-digit' as const}:{})})})}))};
 }
