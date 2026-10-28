@@ -1,8 +1,9 @@
 """Previewed account-owned cleanup. Business deletion is transactional; file unlink is durable."""
 import asyncio,hashlib,json,re,time
 from collections import defaultdict
-from datetime import date
+from datetime import date,datetime,timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo,ZoneInfoNotFoundError
 from typing import Literal
 from fastapi import APIRouter,Depends,HTTPException
 from pydantic import Field,field_validator
@@ -36,6 +37,13 @@ class Preview(StrictModel):
  application_scope:Literal['current','archived','all']='current'
  start:str=''
  end:str=''
+ timezone:str=Field(default='UTC',max_length=100)
+ @field_validator('timezone')
+ @classmethod
+ def valid_timezone(cls,value):
+  try:ZoneInfo(value)
+  except (ZoneInfoNotFoundError,ValueError):raise ValueError('Choose a valid time zone.')
+  return value
  @field_validator('start','end')
  @classmethod
  def valid_date(cls,v):
@@ -64,9 +72,21 @@ def fingerprint(c,user):
  for table in SEARCH_HISTORY:parts += [tuple(r) for r in c.execute('SELECT * FROM '+table+' WHERE user_id=? ORDER BY 1,2',(user,))]
  parts += [tuple(r) for r in c.execute('SELECT id,status,updated_at FROM tasks WHERE user_id=? ORDER BY id',(user,))]
  return hashlib.sha256(repr(parts).encode()).hexdigest()
+def application_date(record,body):
+ d=record['data']
+ if d.get('applied_date'):return d['applied_date'][:10],'Date applied'
+ stamp=datetime.fromisoformat(record['created_at'].replace('Z','+00:00'))
+ if stamp.tzinfo is None:stamp=stamp.replace(tzinfo=timezone.utc)
+ return stamp.astimezone(ZoneInfo(body.timezone)).date().isoformat(),'Date added'
 def in_app_range(r,body):
- d=r['data'];when=(d.get('applied_date') or r['created_at'][:10])[:10]
+ d=r['data'];when,_=application_date(r,body)
  return (body.application_scope=='all' or bool(d.get('archived'))==(body.application_scope=='archived')) and (not body.start or when>=body.start) and (not body.end or when<=body.end)
+def preview_record(record,body):
+ d=record['data'];result={'id':record['id'],'kind':record['kind'],'title':str(d.get('title') or d.get('filename') or d.get('company') or record['kind'].replace('_',' '))[:200]}
+ if record['kind']=='application':
+  when,basis=application_date(record,body)
+  result.update(company=d.get('company',''),role=d.get('title',''),effective_date=when,date_basis=basis,archived=bool(d.get('archived')),status=d.get('status',''))
+ return result
 def refs(value,ids):
  if isinstance(value,str):return value in ids
  if isinstance(value,list):return any(refs(v,ids) for v in value)
@@ -103,8 +123,8 @@ def manifest(c,user,body):
  private=private_count(c,user) if 'private' in chosen else 0
  settings=json.loads(c.execute('SELECT settings FROM users WHERE id=?',(user,)).fetchone()[0]);personal=sum(bool(settings.get(k)) for k in PERSONAL) if 'personal' in chosen else 0
  private_records=([{'id':r['section'],'kind':'private_section','title':r['section'].replace('_',' ').title()} for r in c.execute('SELECT section FROM cc_private_profile WHERE user_id=?',(user,))]+[{'id':r['id'],'kind':'private_answer','title':'Saved private application answer'} for r in c.execute('SELECT id FROM cc_vault WHERE user_id=?',(user,))]) if 'private' in chosen else []
- selected=[{'id':r['id'],'kind':r['kind'],'title':str(r['data'].get('title') or r['data'].get('filename') or r['data'].get('company') or r['kind'].replace('_',' '))[:200]} for r in rows if r['id'] in targets]
- return {'search_history_counts':search_counts(c,user) if 'jobs' in chosen else {},'record_ids':sorted(targets),'records':selected,'private_records':private_records,'files':sorted(files),'preserved_shared_records':sorted(preserved),'preserved_records':[{'id':r['id'],'kind':r['kind'],'title':str(r['data'].get('title') or r['data'].get('filename') or r['kind'])[:200]} for r in rows if r['id'] in preserved],'private_sections':private,'personal_fields':personal,'personal_field_names':[k for k in PERSONAL if settings.get(k)] if 'personal' in chosen else [],'blockers':blocked(c,user),'retained_copies_notice':'Unselected uploads, saved documents and conversations may still contain historical copies. Downloaded and operator-held backups are outside this cleanup.','preserved_documents_notice':'Independently saved resumes and cover letters remain unless their own category is selected.','backup_notice':'Ordinary account backups exclude API credentials and the private-answer vault.'}
+ selected=[preview_record(r,body) for r in rows if r['id'] in targets]
+ return {'application_range':{'start':body.start,'end':body.end,'timezone':body.timezone,'scope':body.application_scope} if 'applications' in chosen else None,'application_count':sum(r['kind']=='application' for r in rows if r['id'] in targets),'search_history_counts':search_counts(c,user) if 'jobs' in chosen else {},'record_ids':sorted(targets),'records':selected,'private_records':private_records,'files':sorted(files),'preserved_shared_records':sorted(preserved),'preserved_records':[{'id':r['id'],'kind':r['kind'],'title':str(r['data'].get('title') or r['data'].get('filename') or r['kind'])[:200]} for r in rows if r['id'] in preserved],'private_sections':private,'personal_fields':personal,'personal_field_names':[k for k in PERSONAL if settings.get(k)] if 'personal' in chosen else [],'blockers':blocked(c,user),'retained_copies_notice':'Unselected uploads, saved documents and conversations may still contain historical copies. Downloaded and operator-held backups are outside this cleanup.','preserved_documents_notice':'Independently saved resumes and cover letters remain unless their own category is selected.','backup_notice':'Ordinary account backups exclude API credentials and the private-answer vault.'}
 @router.get('')
 def inventory(user=Depends(auth.current)):
  with db.connect() as c:
@@ -197,7 +217,7 @@ def apply(body:Apply,user=Depends(auth.current)):
     if r['id'] in ids:
      d=r['data'];d['archived']=request.action=='archive';write(c,u,r,d)
   rev=revision(u,c)+1;c.execute('INSERT INTO cc_cleanup_state VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET revision=excluded.revision',(u,rev))
-  receipt={'operation_id':body.preview_id,'action':request.action,'records_affected':len(m['record_ids']),'private_sections':m['private_sections'],'personal_fields':m['personal_fields'],'cleanup_revision':rev,'files_pending':len(m['files']) if request.action=='delete' else 0,'preserved_shared_records':len(m['preserved_shared_records'])}
+  receipt={'operation_id':body.preview_id,'action':request.action,'application_count':m.get('application_count',0),'application_range':m.get('application_range'),'records_affected':len(m['record_ids']),'private_sections':m['private_sections'],'personal_fields':m['personal_fields'],'cleanup_revision':rev,'files_pending':len(m['files']) if request.action=='delete' else 0,'preserved_shared_records':len(m['preserved_shared_records'])}
   c.execute("UPDATE cc_cleanup_operations SET state='applied',receipt=? WHERE id=? AND user_id=?",(json.dumps(receipt),body.preview_id,u))
  return receipt
 @router.get('/{identity}')

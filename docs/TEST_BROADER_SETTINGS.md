@@ -1,10 +1,12 @@
+> Employer counts and application cleanup controls were updated. Use [Test employers and cleanup](TEST_EMPLOYERS_AND_CLEANUP.md) for the current steps. The API-key and other regression checks below still apply.
+
 # Test broader job sources and account controls
 
 Use a disposable account for deletion tests. Deployment never runs account cleanup or a paid key test. Your installed localhost service is not updated by this rollout.
 
 ## Employer sources
 
-1. Open **Settings → Job Search**. The catalog now has **143 curated employers**, including 43 additions across eight nontech fields. Each employer retains its verification date and observed job count in the catalog; an empty feed is possible. Coverage depends on the supported public Greenhouse, Ashby and Lever feeds and is not a complete job-market index.
+1. Open **Settings → Job Search**. The catalog now has **298 distinct curated employers** across 299 supported feeds. Each employer retains its verification date and observed job count in the catalog; an empty feed is possible. Coverage depends on the supported public Greenhouse, Ashby and Lever feeds and is not a complete job-market index.
 2. Under **Employer industries**, select **Science & research** and another industry. The selected employer count should change. Multiple tags do not duplicate an employer.
 3. Expand **Choose individual employers**. Change one employer: the selection should say **Custom**. Choose **All employers** to restore the complete catalog.
 4. Open Job Search → Search options and sources → Manage search sources and employers. It should show the same choices. Search a role such as research assistant using an appropriate location and career level. Industry chooses company feeds; role filters choose postings within those companies. An industry does not promise a specific number of matching jobs.
@@ -21,17 +23,17 @@ Use a disposable account for deletion tests. Deployment never runs account clean
 2. Download a backup before testing permanent deletion. Ordinary backups exclude API credentials and private-answer vault data.
 3. Import a fictional backup. Its filename and 256 MB limit should appear below the button. Import adds records with new IDs and preserves existing records; it is not a replacement/reset operation.
 
-## Seasonal application reset
+## Applications by date range
 
 1. Create a few fictional applications with different Date applied values. Add a document and, optionally, offer information.
-2. In **Manage saved information → Application season**, optionally set From/Through dates. Date applied is used, otherwise Date added. Dates include both endpoints.
-3. Click **Archive current applications**. Review the preview, then confirm without entering a password. Statuses, dates, documents, offers and conversations should remain. Archived entries leave current lists and charts, while Career Coach can retrieve them as historical records.
-4. Click **Restore archived applications**, review and confirm. Eligible restored entries return to current lists and charts.
+2. In the separate **Manage applications** card, set both required From/Through dates. Date applied is used, otherwise Date added. Dates include both endpoints.
+3. Click **Archive applications**. Review the preview, then confirm without entering a password. Statuses, dates, documents, offers and conversations should remain. Archived entries leave current lists and charts, while Career Coach can retrieve them as historical records.
+4. Restore the archived record from the Applications page. Eligible restored entries return to current lists and charts.
 
 ## Selective permanent cleanup
 
-1. Use a disposable account and save unfinished work first. Cleanup refreshes browser views and clears recovery drafts to keep removed data from returning. Initially every category should be unchecked. Each Resume content section, Supporting Details, goals, assessments, summary/guidance, private answers, uploads, generated documents, resume/letter conversations, Resources, other conversations, interviews, saved postings and applications has its own selection/count.
-2. Select one category and choose **Preview permanent deletion**. Review exact affected records, files, shared records kept, and historical-copy notices. Changing the selection closes the old preview. A preview expires after ten minutes; a changed account requires a fresh preview.
+1. Use a disposable account and save unfinished work first. Cleanup refreshes browser views and clears recovery drafts to keep removed data from returning. Initially every category should be unchecked. Open a collapsed group to select its categories. Applications have a separate date-range card.
+2. Select one category and choose **Review selected deletion**. Review exact affected records, files, shared records kept, and historical-copy notices. Changing the selection closes the old preview. A preview expires after ten minutes; a changed account requires a fresh preview.
 3. Cancel first and confirm nothing changed. Previewing never deletes information.
 4. Preview again. Enter **DELETE** and the account password, then confirm. Wrong passwords fail without deleting anything. The operation can be checked again without applying deletion twice.
 5. Login, API connections, model/source preferences, welcome dismissal and Usage & costs should remain. Clearing goals disables goal sharing; clearing Work Styles summary or assessments disables the corresponding sharing. Removing education re-enables the existing setup requirements for Job Search and Applications; Resources remain accessible.

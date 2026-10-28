@@ -37,7 +37,7 @@ def identity():
     return {'catalog':REVISION,'snapshots':hashlib.sha256(json.dumps([tuple(r) for r in rows]).encode()).hexdigest()[:20]}
 
 def listing(user):
-    return [{'key':board_key(b),'company':b['company'],'provider':b['provider'],'career_url':b.get('career_url',''),'industries':b.get('industries',[]),'verified_at':b.get('verified_at',''),'verified_job_count':b.get('verified_job_count'),'curated':any(board_key(b)==board_key(v) for v in CATALOG['employers'])} for b in catalog_boards(user)]
+    return [{'key':board_key(b),'employer_id':b.get('employer_id') or board_key(b),'company':b['company'],'provider':b['provider'],'career_url':b.get('career_url',''),'industries':b.get('industries',[]),'verified_at':b.get('verified_at',''),'verified_job_count':b.get('verified_job_count'),'curated':any(board_key(b)==board_key(v) for v in CATALOG['employers'])} for b in catalog_boards(user)]
 
 async def cached(source,load,*,refresh=False):
     # Locks are loop-scoped: test clients and reloads can create different loops.

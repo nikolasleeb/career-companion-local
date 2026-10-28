@@ -105,6 +105,23 @@ async def usajobs(query,location):
     rows,meta=await feeds.cached(key,lambda:_usajobs_raw(query,location),refresh=feeds.FORCE.get())
     return [{**v,'snapshot_at':meta['last_success'],'snapshot_stale':meta['stale'],'_last_verified_epoch':v.get('_last_verified_epoch',meta['last_success']),'_cache_source':key,'_cache_scope':'public','cache_status':'cached' if meta['cached'] else 'refreshed'} for v in rows]
 
+EMPLOYER_SCAN_SECONDS=180
+
+async def employer_phase(entries,statuses):
+    """Keep completed source results when a large/slow catalog exhausts its budget."""
+    tasks={asyncio.create_task(work):label for label,work in entries}
+    if not tasks:return
+    try:
+        done,pending=await asyncio.wait(tasks,timeout=EMPLOYER_SCAN_SECONDS)
+        for task in pending:task.cancel()
+        if pending:await asyncio.gather(*pending,return_exceptions=True)
+        for task in pending:statuses.append({'source':tasks[task],'status':'incomplete','message':'Not checked completely within the three-minute employer scan. Completed results are retained. Narrow employer industries or try again later; this does not mean there are no openings.'})
+        for task in done:task.result()
+    finally:
+        remaining=[task for task in tasks if not task.done()]
+        for task in remaining:task.cancel()
+        if remaining:await asyncio.gather(*remaining,return_exceptions=True)
+
 async def discover(user,request,*,execution='manual'):
     token=feeds.FORCE.set(request.refresh)
     try:return await _discover(user,request,execution=execution)
@@ -144,7 +161,7 @@ async def _discover(user,request,*,execution='manual'):
                 if any(code in str(e) for code in ('HTTP 401','HTTP 403','HTTP 429')):stopped.add(label)
                 statuses.append({'source':label,'status':'error','message':str(e) if isinstance(e,ServiceError) else 'Source timed out. Retry later; other results are retained.'})
     task_progress.stage('searching_jobs')
-    calls=[]
+    calls=[];employer_calls=[]
     async def board_search(board):
         label=feeds.board_key(board)
         async with sem:
@@ -163,7 +180,7 @@ async def _discover(user,request,*,execution='manual'):
         if source in ('greenhouse','ashby','lever'):
             chosen=[b for b in boards if b['provider']==source]
             if not chosen:statuses.append({'source':source,'status':'setup','message':'No employer boards selected for this source.'})
-            for board in chosen:calls.append(board_search(board))
+            for board in chosen:employer_calls.append((feeds.board_key(board),board_search(board)))
         elif source=='github':calls.append(community_search())
         elif source in ('adzuna','usajobs'):
             if source=='adzuna' and trial:
@@ -175,6 +192,7 @@ async def _discover(user,request,*,execution='manual'):
                 term=ALIASES.get(query.casefold(),[query])[0]
                 calls.append(collect(source,lambda s=source,q=term:(adzuna(user,q,'United States' if request.locations else request.location) if s=='adzuna' else usajobs(q,'United States' if request.locations else request.location))))
         elif source=='jobspy':statuses.append({'source':'jobspy','status':'disabled','message':'Experimental scraping is retired. Indeed is excluded.'})
+    if employer_calls:calls.append(employer_phase(employer_calls,statuses))
     await asyncio.gather(*calls)
     if 'web' in request.sources:
         if not config.ENABLE_WEB_SEARCH:statuses.append({'source':'web','status':'disabled','message':'AI web expansion is disabled.'})

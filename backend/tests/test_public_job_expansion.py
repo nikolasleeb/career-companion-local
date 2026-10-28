@@ -19,7 +19,7 @@ def setup_trial(client,account,monkeypatch):
 
 def test_catalog_has_verified_unique_boards():
  rows=feeds.CATALOG['employers']
- assert len(rows)==143 and len({feeds.board_key(b) for b in rows})==143
+ assert len(rows)>=299 and len({feeds.board_key(b) for b in rows})==len(rows)
  assert {r['provider'] for r in rows}=={'greenhouse','ashby','lever'}
  assert all(r['identity_label'] and r['verified_at'] and r['verified_job_count']>=0 and r['career_url'].startswith('https://') for r in rows)
  assert feeds.CATALOG['attribution']['license']=='CC BY 4.0'

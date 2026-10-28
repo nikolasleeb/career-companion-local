@@ -9,7 +9,7 @@ INDUSTRIES={'science':'Science & research','healthcare':'Healthcare & life scien
 class Selection(StrictModel):
     employer_selection_mode:Literal['all','industries','custom']='all'
     employer_industries:list[str]=Field(default_factory=list,max_length=9)
-    employer_boards:list[str]|None=Field(default=None,max_length=300)
+    employer_boards:list[str]|None=Field(default=None,max_length=1000)
 
 def validate(mode,industries):
     if set(industries)-set(INDUSTRIES):raise ValueError('Choose industries from the employer catalog.')

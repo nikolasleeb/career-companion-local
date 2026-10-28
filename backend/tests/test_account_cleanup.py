@@ -145,3 +145,27 @@ def test_file_worker_retries_temporary_database_failure(monkeypatch):
  monkeypatch.setattr(cleanup,'remove_files',remove);monkeypatch.setattr(cleanup.asyncio,'sleep',sleep)
  with pytest.raises(asyncio.CancelledError):asyncio.run(cleanup.maintain())
  assert len(calls)==2
+
+
+def test_application_range_timezone_metadata_and_archive_delete_scope(client,account):
+ u=account['id'];fix_password(client,u)
+ a=db.save(u,'application',{'company':'Fictional','title':'Midnight','archived':False,'status':'applied'})
+ with db.connect() as c:c.execute('UPDATE entities SET created_at=? WHERE id=?',('2026-07-01T02:00:00+00:00',a['id']))
+ b=db.save(u,'application',{'company':'Fictional','title':'Archived','applied_date':'2026-06-30','archived':True})
+ goal=db.save(u,'career_goals',{'text':'Keep my goal'})
+ p=preview(client,['applications'],action='archive',start='2026-06-30',end='2026-06-30',timezone='America/Phoenix')
+ assert p['application_count']==1 and p['application_range']['timezone']=='America/Phoenix'
+ row=p['records'][0];assert row['id']==a['id'] and row['effective_date']=='2026-06-30' and row['date_basis']=='Date added' and row['role']=='Midnight' and not row['archived']
+ assert apply(client,p).status_code==200
+ assert db.get(u,b['id'])['data']['archived'] and db.get(u,goal['id'])
+ client.headers['X-Account-Data-Revision']='1'
+ p=preview(client,['applications'],application_scope='all',start='2026-06-30',end='2026-06-30',timezone='America/Phoenix')
+ assert p['application_count']==2 and all(r['archived'] for r in p['records'])
+ assert apply(client,p).status_code==200 and db.get(u,goal['id'])
+ assert not db.get(u,a['id']) and not db.get(u,b['id'])
+
+def test_application_timezone_invalid_reversed_empty_and_legacy(client,account):
+ assert client.post('/api/account/cleanup/preview',json={'categories':['applications'],'timezone':'not/a-zone'}).status_code==422
+ assert client.post('/api/account/cleanup/preview',json={'categories':['applications'],'start':'2026-07-02','end':'2026-07-01'}).status_code==422
+ p=preview(client,['applications'],start='2000-01-01',end='2000-01-02');assert not p['records'] and p['application_count']==0
+ p=preview(client,['applications'],action='restore',application_scope='archived');assert p['application_range']['timezone']=='UTC'
