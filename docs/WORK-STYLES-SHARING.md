@@ -1,6 +1,6 @@
 # Work Styles summary and AI access
 
-Profile keeps Assessment at a glance and Open full Work Styles assessment above the summary workspace. Generate summary is an explicit paid action, with a local cost estimate. Drafts appear above the generation button. The attached revision box requests changes with one model call; each replacement must be reviewed before saving. Manual edits remain free. Generation never changes a saved paragraph or enables sharing automatically.
+Profile keeps Assessment at a glance and Open full Work Styles assessment above the summary workspace. Generate summary is an explicit paid action, with a local cost estimate. Drafts appear above the generation button. The attached revision box requests changes with one model call; each replacement must be reviewed before saving. There is no manual paragraph editor. Generate with AI first, then request revisions in the attached changes box. If no work-comparison choices are saved, complete those in the full assessment before generating. Generation never changes a saved paragraph or enables sharing automatically.
 
 Use Work Styles for AI guidance takes effect only after review and Save summary & AI guidance. It enables two distinct scopes:
 
