@@ -98,3 +98,7 @@ A newer commit can exist without a new release. Unknown or diverged builds are
 reported explicitly. Checks only read this public repository; they send no
 account data, cookies or credentials. Pushing to GitHub does not deploy the
 separately operated hosted server.
+
+## Career Explorer
+
+Resources → **Career Explorer** offers occupation search, education links, skills, national pay/outlook comparisons and an account-owned shortlist. Browsing needs no AI key and works before Profile setup. See [Career Explorer](docs/CAREER-EXPLORER.md) for data sources, limitations and saving behavior.

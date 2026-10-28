@@ -8,8 +8,8 @@ test('fresh sign-in starts in Profile and old application navigation cannot bypa
  assert.equal(restoredSetup(null,false).view,'master');
  for(const view of ['applications','jobs','tailor','cover','agent','prep','interests','guide'])assert.deepEqual(restoredSetup({view,jobId:'stale',applicationId:'stale'},false),{view:'master',jobId:'',applicationId:''});
 });
-test('Profile and Settings remain available while resources require education',()=>{
- for(const view of ['master','settings'])assert.equal(setupView(view,false),view);
+test('Profile, Settings and Career Explorer remain available before education setup',()=>{
+ for(const view of ['master','settings','explorer'])assert.equal(setupView(view,false),view);
  assert.equal(restoredSetup({view:'prep',jobId:'old'},false).view,'master');
 });
 test('completed accounts retain Applications-first and exact workspace restoration',()=>{

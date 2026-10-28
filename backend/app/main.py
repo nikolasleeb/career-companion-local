@@ -329,6 +329,8 @@ career_coach.install(app,start_task,require_ai)
 interview_practice.install(app,start_task,require_ai)
 from . import interview_audio
 interview_audio.install(app,start_task,require_ai)
+from . import career_explorer
+app.include_router(career_explorer.router)
 app.include_router(career_goals.router)
 app.include_router(work_preferences.router)
 work_style_summary.install(app,start_task,require_ai)
@@ -1233,7 +1235,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1272,6 +1274,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         if len(setup_records)>1:raise ValueError()
         for record in records:
             if record['kind'] not in BACKUP_KINDS or not isinstance(record['data'],dict): raise ValueError()
+            career_explorer.validate_backup(record)
             if record['kind']=='onboarding':onboarding.validate_backup(record['data'])
             if record['kind']=='usage_event':cost_history.UsageEvent.model_validate(record['data'])
             project_routes.validate_nested_references(record['data'],kinds,by_id)
@@ -1374,6 +1377,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                     if flow.step=='agent' and not (flow.cover_skipped or flow.cover_letter_id):raise ValueError()
                     if flow.cover_letter_id and (by_id[flow.cover_letter_id]['data']['resume_id']!=flow.resume_id or by_id[flow.cover_letter_id]['data']['job_id']!=application.job_id):raise ValueError()
 
+        career_explorer.validate_import(user['id'],records)
         for old,content in payload.get('files',{}).items():
             if old not in ids or not any(r['id']==old and r['kind']=='document' for r in records): raise ValueError()
             decoded[ids[old]]=base64.b64decode(content,validate=True)
@@ -1409,6 +1413,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             saved=db.save(user['id'],record['kind'],restored,ids[record['id']])
             if record['kind']=='job':
                 with db.connect() as c:job_cache.bind(c,user['id'],saved)
+        elif record['kind']=='saved_career':career_explorer.restore(user['id'],record['data'])
         elif record['kind']=='career_goals':
             current_goals=career_goals.read(user['id'])
             if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data'].get('note',record['data']['text']),items=record['data'].get('items'),use_for_ai=record['data'].get('use_for_ai',False),expected_revision=current_goals['revision']))
