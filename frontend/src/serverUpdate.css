@@ -1,0 +1,5 @@
+.server-update-banner{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.25rem;margin:0 0 1.5rem;border:1px solid #9bb8d0;border-left:4px solid #275681;border-radius:8px;background:#eef5fc;color:#102d4e;}
+.server-update-banner p{margin:.35rem 0 0;max-width:68ch;color:inherit;font-size:.9rem;}
+.server-update-actions{display:flex;gap:.6rem;flex-shrink:0;}
+.server-update-actions button{white-space:nowrap;}
+@media(max-width:700px){.server-update-banner{align-items:flex-start;flex-direction:column;}.server-update-actions{flex-wrap:wrap;}}

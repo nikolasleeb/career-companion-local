@@ -213,6 +213,11 @@ def update_status(user=Depends(auth.current)):
 def check_updates(body:updates.Check,user=Depends(auth.current)):
     return updates.check(force=body.force)
 
+@app.get('/api/version')
+def server_version(user=Depends(auth.current)):
+    from . import build_info
+    return JSONResponse({'build_id':build_info.current()},headers={'Cache-Control':'no-store, max-age=0','Vary':'Cookie'})
+
 @app.post('/api/auth/register')
 def register(body:Credentials,request:Request,response:Response):
     auth.throttle(('register',request.client.host if request.client else 'local'))
@@ -1455,7 +1460,7 @@ def delete_account(body:DeleteAccount,response:Response,user=Depends(auth.curren
 def frontend(path:str):
     if path.startswith('api/'): raise HTTPException(404,'API route not found.')
     target=(config.STATIC_DIR/path).resolve()
-    if target.is_relative_to(config.STATIC_DIR.resolve()) and target.is_file(): return FileResponse(target)
+    if target.is_relative_to(config.STATIC_DIR.resolve()) and target.is_file(): return FileResponse(target,headers={'Cache-Control':'no-cache'} if target.name in ('index.html','build-info.json') else None)
     index=config.STATIC_DIR/'index.html'
-    if index.exists(): return FileResponse(index)
+    if index.exists(): return FileResponse(index,headers={'Cache-Control':'no-cache'})
     return JSONResponse({'detail':'Frontend has not been built. Run the Docker build or the frontend build script.'},503)

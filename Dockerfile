@@ -3,6 +3,9 @@ WORKDIR /build
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 RUN npm install -g pnpm@11.25.0 && pnpm install --frozen-lockfile
 COPY frontend/ ./
+COPY backend/app/ /backend/app/
+COPY backend/requirements.lock /backend/requirements.lock
+COPY data/ /data/
 RUN pnpm run build
 
 FROM python:3.12-slim-bookworm
