@@ -41,7 +41,7 @@ def coach_context(user):
  row=db.get(user,d.get('assessment_id',''),'work_style')
  if not row or row['data'].get('status')!='completed':return None
  report=row['data'].get('report') or {'domains':row['data'].get('scores',[])}
- fields=('dimension_id','facet_id','name','total','minimum','maximum','mean','pattern','suggestion','lower_end','upper_end','potential','friction','environment')
+ fields=('dimension_id','facet_id','name','total','minimum','maximum','mean','description','pattern','suggestion','lower_end','upper_end','potential','friction','environment')
  def scores(key,limit):return [{k:v[k] for k in fields if k in v and isinstance(v[k],(str,int,float))} for v in report.get(key,[])[:limit] if isinstance(v,dict)]
  choices=[{k:v[k] for k in ('theme','left','right','choice','selected') if isinstance(v.get(k),str)} for v in report.get('preferences',[])[:12] if isinstance(v,dict)]
  return {'record_id':row['id'],'revision':str(d['revision'])+':'+row['updated_at'],'report':{'version':str(report.get('version','legacy')),'explanation':str(report.get('explanation','Self-reflection, not qualifications or a hiring prediction.')),'domains':scores('domains',5),'facets':scores('facets',30),'work_choices':choices}}

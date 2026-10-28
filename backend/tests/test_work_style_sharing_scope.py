@@ -65,3 +65,11 @@ def test_backup_restore_requires_fresh_sharing_consent(client,account):
  assert restored.status_code==200,restored.text
  assert not work_preferences.read(u)['use_for_ai'] and not work_preferences.read(u)['coach_report_access']
  assert work_preferences.coach_context(u) is None
+
+
+def test_legacy_report_descriptions_remain_available_without_raw_answers(client,account):
+ u=account['id'];row=db.save(u,'work_style',{'status':'completed','scores':[{'dimension_id':'E','name':'Extraversion','total':30,'minimum':10,'maximum':50,'description':'Original saved response-scale description.'}],'answers':{'private':'SECRET_LEGACY_ANSWER'}})
+ assert save(client,row,coach_report_access=True).status_code==200
+ report=work_preferences.coach_context(u)
+ assert report['report']['domains'][0]['description']=='Original saved response-scale description.'
+ assert 'SECRET' not in json.dumps(report)
