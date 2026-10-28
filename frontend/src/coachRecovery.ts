@@ -23,5 +23,5 @@ export function initialCoachDraft(account:string,id:string,fallback:string,stora
 
 export function draftAfterSend(current:string,sent:string){return current===sent?'':current;}
 export function clearCoachBrowser(account:string,local:Storage=localStorage,session:Storage=sessionStorage){
- for(const storage of [local,session])try{for(let i=storage.length-1;i>=0;i--){const k=storage.key(i)||'';if(k.startsWith('career-coach-action:'+account+':')||k.startsWith('career-coach-draft:'+account+':')||k==='career-coach-selected:'+account)storage.removeItem(k);}}catch{}
+ for(const storage of [local,session])try{for(let i=storage.length-1;i>=0;i--){const k=storage.key(i)||'';if(k.startsWith('career-coach-action:'+account+':')||k.startsWith('career-explicit-draft:'+account+':')||k==='career-plan-input:'+account||k.startsWith('career-coach-draft:'+account+':')||k==='career-coach-selected:'+account)storage.removeItem(k);}}catch{}
 }

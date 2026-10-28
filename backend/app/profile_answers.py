@@ -95,7 +95,7 @@ def reviewed(c,user,conversation_id,data,proposal,kind,mark=True):
     if kind=='resume':source['proposed_fields']=copy.deepcopy(proposal.get('fields',[]))
     job=db.decode(c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='job'",(data['job_id'],user)).fetchone())
     posting=data.get('posting_snapshot') or (job or {}).get('data',{})
-    source.update({k:copy.deepcopy(proposal[k]) for k in ('user_quote','suggested_text','editing_note','improvement_suggestions') if k in proposal})
+    source.update({k:copy.deepcopy(proposal[k]) for k in ('user_quote','suggested_text','editing_note','improvement_suggestions','career_goal_source') if k in proposal})
     value={'version':1,'status':'confirmed','answer_kind':answer_kind,'title':title,'text':text,'experience_id':experience_id,'experience_ids':links,'category':proposal.get('category') or proposal.get('profile_category','project'),'record_context':{},'backed_fields':backed,'scope':{'job_id':data['job_id'],'company':posting.get('company',''),'role':posting.get('title','')},'sources':[source],'history':[]}
     if kind=='cover':
         sid=proposal.get('related_source_id','');parts=sid.split(':')

@@ -154,9 +154,10 @@ def explore(body:Explore,user=Depends(auth.current)):
 
 @router.get('/occupations/{code}')
 def detail(code:str,user=Depends(auth.current)):
+ from . import explicit_context
  o=occupation(code);p=profile(user['id']);known={frozenset(words(s)) for s in p['skills']}
  def annotate(item):return {**item,'profile_status':'Recorded in Profile' if frozenset(words(item['name'])) in known else 'Not documented in Profile'}
- return {**summary(code),'skills':[annotate(s) for s in o['skills']],'technologies':[annotate(t) for t in o['technologies']],'industries':[{'naics':s['naics'],'title':s['title'],'share':o['sectors'][s['naics']]} for s in DATA['sectors'] if s['naics'] in o['sectors']],'related':[{'code':c,'title':OCCUPATIONS[c]['title']} for c in o['related'] if c in OCCUPATIONS],'metadata':META}
+ return {**summary(code),'context_ref':explicit_context.occupation_reference(code),'occupation_link':explicit_context.occupation_link(code),'skills':[annotate(s) for s in o['skills']],'technologies':[annotate(t) for t in o['technologies']],'industries':[{'naics':s['naics'],'title':s['title'],'share':o['sectors'][s['naics']]} for s in DATA['sectors'] if s['naics'] in o['sectors']],'related':[{'code':c,'title':OCCUPATIONS[c]['title']} for c in o['related'] if c in OCCUPATIONS],'metadata':META}
 
 def saved_list(user):
  rows=list(reversed(db.list_entities(user,'saved_career')))

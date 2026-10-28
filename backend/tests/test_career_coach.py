@@ -30,7 +30,13 @@ def wait(client,task):
   time.sleep(.01)
  raise AssertionError('Fictional task did not finish')
 def act(client,id,operation='plan',text='',token='fictional-request-0001'):
- response=client.post('/api/career-coach/chats/'+id+'/actions',json={'operation':operation,'text':text,'request_token':token});assert response.status_code==200,response.text;return wait(client,response.json())
+ response=client.post('/api/career-coach/chats/'+id+'/actions',json={'operation':operation,'text':text,'request_token':token});assert response.status_code==200,response.text
+ result=wait(client,response.json())
+ # These legacy roadmap regression fixtures explicitly accept successful proposals.
+ if result['status']=='completed' and operation in ('plan','research'):
+  saved=client.post('/api/career-coach/chats/'+id+'/roadmap',json={'message_id':result['result']['id']})
+  assert saved.status_code==200,saved.text
+ return result
 
 def test_navigation_and_goal_saving_are_free_and_scoped(client,account,model):
  a=make(client);b=make(client,goal='Explore nursing and public health',title='Healthcare direction')

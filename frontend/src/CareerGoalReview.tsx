@@ -1,0 +1,19 @@
+import React,{useEffect,useRef,useState} from 'react';
+import {goalCategories,goalLabel} from './CareerGoals';
+
+export function CareerGoalReview({career,api,onClose,onSaved}:{career:any;api:any;onClose:()=>void;onSaved:()=>void}){
+ const [saved,setSaved]=useState<any>(null),[entry,setEntry]=useState<any>({id:'',category:'dream_role',text:'Explore a career as '+career.title+' and learn whether its day-to-day work interests me.',target:'',priority:'medium',progress:'planned'}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[editing,setEditing]=useState(false);
+ const input=useRef<HTMLTextAreaElement>(null);
+ async function load(first=false){try{const value=await api('/profile/career-goals');setSaved(value);setError('');if(first){const existing=value.items.find((g:any)=>g.occupation?.code===career.code||g.id==='explorer-'+career.code.replaceAll('.','-'));if(existing){setEntry(existing);setEditing(true);}}}catch(e){setError((e as Error).message);}}
+ useEffect(()=>{void load(true);input.current?.focus();},[career.code]);
+ const change=(field:string,value:string)=>setEntry((e:any)=>({...e,[field]:value}));
+ return <form className="single-goal-form top-space" aria-label="Review career goal" onSubmit={async e=>{e.preventDefault();if(busy||!saved)return;setBusy(true);setError('');try{const value={...entry,id:entry.id||crypto.randomUUID(),text:entry.text.trim(),occupation:career.occupation_link};const items=editing?saved.items.map((g:any)=>g.id===entry.id?value:g):[...saved.items,value];if(editing&&!saved.items.some((g:any)=>g.id===entry.id))throw Error('This goal was removed. Cancel and reopen the form to create a new goal.');await api('/profile/career-goals','PUT',{expected_revision:saved.revision,items});window.dispatchEvent(new Event('career-context-updated'));onSaved();}catch(err){setError((err as Error).message);}finally{setBusy(false);}}}>
+ <fieldset disabled={busy||!saved}><legend>{editing?'Edit linked Career Goal':'Review before adding to Career Goals'}</legend><p>{editing?'This occupation already has a saved goal. Review or edit it below.':'An aspiration for exploration, separate from qualifications.'}</p>
+ <label>Goal category<select value={entry.category} onChange={e=>change('category',e.target.value)}>{goalCategories.map(c=><option key={c} value={c} disabled={c==='general_statement'&&saved?.items.some((g:any)=>g.category===c&&g.id!==entry.id)}>{goalLabel(c)}</option>)}</select></label>
+ <label>My goal<textarea ref={input} rows={3} required maxLength={entry.category==='general_statement'?36000:1000} value={entry.text} onChange={e=>change('text',e.target.value)}/></label>
+ {entry.category!=='general_statement'&&<div className="form-grid"><label>Target date or horizon (optional)<input value={entry.target} maxLength={100} onChange={e=>change('target',e.target.value)}/></label><label>Priority<select value={entry.priority} onChange={e=>change('priority',e.target.value)}>{['low','medium','high'].map(v=><option key={v} value={v}>{goalLabel(v)}</option>)}</select></label><label>Progress<select value={entry.progress} onChange={e=>change('progress',e.target.value)}>{['planned','in_progress','completed'].map(v=><option key={v} value={v}>{goalLabel(v)}</option>)}</select></label></div>}
+ <p className="small muted">Linked occupation: {career.title} · O*NET {career.code} · {career.dataset_version}. Your automatic AI guidance setting stays unchanged. Saving uses no AI.</p>
+ <div className="card-actions"><button className="button primary" disabled={!entry.text.trim()}>{busy?'Saving…':editing?'Save changes':'Save goal'}</button><button type="button" className="button secondary" onClick={onClose}>Cancel</button></div></fieldset>
+ {error&&<div role="alert"><p>{error}</p><button type="button" className="text-button" disabled={busy} onClick={()=>void load()}>Load latest saved goals · keep my draft</button></div>}
+ </form>;
+}

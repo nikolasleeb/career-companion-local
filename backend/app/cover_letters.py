@@ -24,6 +24,8 @@ from .network import ServiceError
 
 INSTRUCTIONS=ai.INSTRUCTIONS.replace('Ask useful questions about qualification evidence and job duties, never availability questions. Direct eligibility and authorization answers to private Profile settings.','For cover letters, ask useful questions about genuine motivation, relevant stories, individual decisions, audience and outcomes. Do not ask eligibility, authorization or availability questions. Reviewed answer sources are applicant evidence; unreviewed chat may only produce proposals for human review.')
 
+INSTRUCTIONS += ' Selected Career Goals are ambitions, never qualifications or completed experience. Reviewed motivation may explain a career transition or interest only. Never imply a planned credential or career transition already happened.'
+
 def source_resume(user,job_id,resume_id):
     job=require(user,job_id,'job');resume=require(user,resume_id,'resume');data=resume['data']
     linked=data.get('job_id')
@@ -69,7 +71,8 @@ def sources(data):
 
 def effective_context(user,data):
     effective=[];active_answers={r['id'] for r in profile_answers.confirmed(user)}
-    for p in data.get('context_proposals',[]):
+    from . import cover_goals
+    for p in cover_goals.active_proposals(data):
         value=copy.deepcopy(p);answer=db.get(user,p.get('profile_answer_id',''),'profile_answer') if p.get('profile_answer_id') else None
         if answer:
             if answer['id'] not in active_answers:continue
@@ -117,6 +120,8 @@ def state(user,id):
 
 
 def begin(user,id,body,preserve_preview=False):
+    from . import cover_goals
+    cover_goals.validate_current(user,require(user,id,'cover_workspace')['data'])
     token=body.request_token or db.uid()
     def change(data,c):
         data['effective_context']=effective_context(user,data)
@@ -211,7 +216,7 @@ def commit_revision(user,workspace,token,content,layout,artifacts,evidence,summa
     context_used=approved_context if approved_context is not None else (parent or {}).get('data',{}).get('approved_context',[])
     def change(current,c):
         if current['request_token']!=token:raise HTTPException(409,'A newer letter preview superseded this result.')
-        value={'project_snapshot_ids':list(data.get('project_snapshot_ids',[])),'workspace_id':id,'job_id':data['job_id'],'resume_id':data['resume_id'],'resume_snapshot':data['resume_snapshot'],'posting_snapshot':data['posting_snapshot'],'title':title(data['resume_snapshot'],data['posting_snapshot']),'content':content,'layout':layout,'artifacts':artifacts,'evidence':evidence,'summary':summary,'usage':usage,'request_token':token,'approved_context':context_used,'writing_guidance':writing_guidance,'library_sources':copy.deepcopy((parent or {}).get('data',{}).get('library_sources',[]) if approved_context is None else data.get('library_sources',[]))}
+        value={'project_snapshot_ids':list(data.get('project_snapshot_ids',[])),'workspace_id':id,'job_id':data['job_id'],'resume_id':data['resume_id'],'resume_snapshot':data['resume_snapshot'],'posting_snapshot':data['posting_snapshot'],'title':title(data['resume_snapshot'],data['posting_snapshot']),'content':content,'layout':layout,'artifacts':artifacts,'evidence':evidence,'summary':summary,'usage':usage,'request_token':token,'approved_context':context_used,'writing_guidance':writing_guidance,'career_goal_selection':copy.deepcopy(data.get('career_goal_selection',{})),'library_sources':copy.deepcopy((parent or {}).get('data',{}).get('library_sources',[]) if approved_context is None else data.get('library_sources',[]))}
         if approved_context is not None:current['context_dirty']=False;current.pop('pending_context_feedback',None)
         write(c,user,'cover_revision',value,revision_id)
         current.setdefault('messages',[]).extend(messages or [])
@@ -266,7 +271,7 @@ async def draft(user,workspace,token,body,feedback=None,chat_meta=None):
         affected=[i for i,p in enumerate(previous.get('evidence',[])) if any(e['source_id']!='posting' and (e['source_id'] not in allowed or not ai.valid_quote(e['quote'],allowed[e['source_id']])) for e in p['evidence'])]
         feedback=copy.deepcopy(feedback);feedback['paragraph_indices']=list(dict.fromkeys(feedback.get('paragraph_indices',[])+affected))
         if affected:payload['requested_refinement']+=' Use the current reviewed sources to correct paragraphs whose prior facts changed or were archived; do not retain outdated source claims.'
-    output,meta=await ai.structured(CoverLetterOutput,payload,body.mode,instructions=INSTRUCTIONS)
+    output,meta=await ai.structured(CoverLetterOutput,payload,body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
     if feedback and not feedback['revise_all']:
         indices=set(feedback['paragraph_indices'])
         if any(i<0 or i>=len(body.content.paragraphs) for i in indices):raise ServiceError('The chat referred to an unavailable paragraph. Your previous letter is preserved.')
@@ -279,7 +284,7 @@ async def draft(user,workspace,token,body,feedback=None,chat_meta=None):
                 else:output['paragraphs'][i]={'text':text,'evidence':[{'source_id':r['id'],'quote':r['text']} for r in sorted(rows,key=lambda r:-len(set(re.findall(r'[a-z]+',text.lower())) & set(re.findall(r'[a-z]+',r['text'].lower()))))[:12]]}
     validate_output(output,rows,data['posting_snapshot'])
     task_progress.stage('checking')
-    audit,audit_meta=await ai.structured(DraftAudit,{'task':'''Check every applicant claim in this cover letter ONLY against the exact saved-resume sources AND reviewed answer sources. Approved personal motivation may come from an answer. Unreviewed chat and writing guidance (including fictional examples) are not evidence. Company claims must be supported by the posting. The job posting establishes employer facts, not applicant qualifications. Reject invented or exaggerated achievements, tools, metrics, degree status, responsibilities, employer research, unsupported references, removed limitations, team work presented as individual work, or future work presented as completed. Check that each paragraph's cited sources support its applicant claims. approved=true only if all claims are grounded. Do not rewrite.''','saved_resume_sources':rows,'posting':data['posting_snapshot'],'letter':output},body.mode,instructions=INSTRUCTIONS)
+    audit,audit_meta=await ai.structured(DraftAudit,{'task':'''Check every applicant claim in this cover letter ONLY against the exact saved-resume sources AND reviewed answer sources. Approved personal motivation may come from an answer. Unreviewed chat and writing guidance (including fictional examples) are not evidence. Company claims must be supported by the posting. The job posting establishes employer facts, not applicant qualifications. Reject invented or exaggerated achievements, tools, metrics, degree status, responsibilities, employer research, unsupported references, removed limitations, team work presented as individual work, or future work presented as completed. Check that each paragraph's cited sources support its applicant claims. approved=true only if all claims are grounded. Do not rewrite.''','saved_resume_sources':rows,'posting':data['posting_snapshot'],'letter':output},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
     if not audit['approved'] or audit['issues']:raise ServiceError('The source check could not approve the letter. '+' '.join(audit['issues'][:3])+' Your previous draft and inputs remain available.')
     content={**body.content.model_dump(),'paragraphs':[p['text'] for p in output['paragraphs']]}
     task_progress.stage('rendering')

@@ -1,3 +1,4 @@
+import {OfferDetails} from './OfferDetails';
 import React,{useEffect,useId,useRef,useState} from 'react';
 import {ApplicationDocuments} from './ApplicationDocuments';
 import {applicationConflicts,applicationDirty,applicationSavePayload,mergeApplicationDraft} from './applicationDetailsState';
@@ -15,13 +16,14 @@ export function ApplicationDetails({record,close,initialSubmitted=false,initialT
  const [draft,setDraft]=useState<any>(()=>initialSubmitted?applicationStatusChange(structuredClone(record?.data||empty()),'applied'):structuredClone(record?.data||empty()));
  const [tab,setTab]=useState<Tab>(initialTab),[eventDate,setEventDate]=useState(initialSubmitted?localToday():''),[dateTouched,setDateTouched]=useState(false);
  const [saving,setSaving]=useState(false),[fileBusy,setFileBusy]=useState(false),[fileEditing,setFileEditing]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState(''),[conflict,setConflict]=useState(false),[editJob,setEditJob]=useState(!record),[editHistory,setEditHistory]=useState<number|null>(null),[editInterview,setEditInterview]=useState<number|null>(null);
- const dirty=applicationDirty(baseline,draft),locked=saving||fileBusy||confirmClose;
+ const [offerBusy,setOfferBusy]=useState(false),[offerEditing,setOfferEditing]=useState(false);
+ const dirty=applicationDirty(baseline,draft),locked=saving||fileBusy||offerBusy||confirmClose;
  const latest=useRef({draft,baseline});latest.current={draft,baseline};
  useEffect(()=>{dialog.current?.showModal();return()=>dialog.current?.close();},[]);
  useEffect(()=>{if(confirmClose)keepEditing.current?.focus();},[confirmClose]);
  useEffect(()=>{if(!success)return;const timer=setTimeout(()=>setSuccess(''),4000);return()=>clearTimeout(timer);},[success]);
- useEffect(()=>{function beforeUnload(e:BeforeUnloadEvent){if(dirty||fileEditing){e.preventDefault();e.returnValue='';}}window.addEventListener('beforeunload',beforeUnload);return()=>window.removeEventListener('beforeunload',beforeUnload);},[dirty,fileEditing]);
- function requestClose(){if(locked)return;if(dirty||fileEditing){setConfirmClose(true);return;}close();}
+ useEffect(()=>{function beforeUnload(e:BeforeUnloadEvent){if(dirty||fileEditing||offerEditing){e.preventDefault();e.returnValue='';}}window.addEventListener('beforeunload',beforeUnload);return()=>window.removeEventListener('beforeunload',beforeUnload);},[dirty,fileEditing,offerEditing]);
+ function requestClose(){if(locked)return;if(dirty||fileEditing||offerEditing){setConfirmClose(true);return;}close();}
  function edit(changes:any){setDraft((old:any)=>({...old,...changes}));setSuccess('');if(!conflict)setError('');}
  async function filesChanged(remote:Entity){const state=latest.current;if(applicationConflicts(state.baseline,state.draft,remote.data).length){setConflict(true);setError('Another window changed fields you were editing. Your pending edits are kept. Reload saved changes before saving.');}setDraft(mergeApplicationDraft(state.baseline,state.draft,remote.data));setBaseline(structuredClone(remote.data));setSaved(remote);await refresh();}
  function chooseTab(value:Tab){setTab(value);body.current?.scrollTo({top:0});}
@@ -50,6 +52,7 @@ export function ApplicationDetails({record,close,initialSubmitted=false,initialT
  {draft.status!==(baseline.status||'preparing')&&<p className="small muted">This status change will be added to Activity when you save. Change or clear its date if needed.</p>}
  <section className="details-overview-notes"><label>Notes<textarea rows={4} disabled={locked} maxLength={12000} value={draft.notes} onChange={e=>edit({notes:e.target.value})} placeholder="Next steps, contacts, or anything you want to remember."/></label></section>
  <details className="details-secondary" open={editJob} onToggle={e=>setEditJob(e.currentTarget.open)}><summary>Edit job details</summary><div className="details-field-grid">{!saved&&<label>Saved posting<select disabled={locked} value={draft.job_id} onChange={e=>{const job=workspace.job.find(j=>j.id===e.target.value);edit({job_id:job?.id||'',title:job?.data.title||draft.title,company:job?.data.company||draft.company,url:job?.data.url||draft.url,posting_snapshot:job?.data||{description:''}});}}><option value="">Enter details manually</option>{workspace.job.filter(j=>!workspace.application.some(a=>a.data.job_id===j.id)).map(j=><option key={j.id} value={j.id}>{j.data.title} · {j.data.company}</option>)}</select></label>}<label>Job title<input ref={titleInput} disabled={locked} maxLength={250} value={draft.title} onChange={e=>edit({title:e.target.value})}/></label><label>Company<input disabled={locked} maxLength={250} value={draft.company} onChange={e=>edit({company:e.target.value})}/></label><label>Posting link<input disabled={locked} type="url" maxLength={2000} value={draft.url} onChange={e=>edit({url:e.target.value})}/></label></div></details>
+ {saved&&<OfferDetails application={saved} call={call} disabled={locked||dirty||fileEditing} onBusy={setOfferBusy} onDirty={setOfferEditing} onDiscuss={close}/>}
  <details className="details-secondary"><summary>View saved job posting</summary>{!saved&&!draft.job_id?<label>Job description<textarea maxLength={100000} disabled={locked} value={draft.posting_snapshot.description||''} onChange={e=>edit({posting_snapshot:{...draft.posting_snapshot,description:e.target.value}})}/></label>:<p className="preserve">{draft.posting_snapshot.description||'No posting text saved.'}</p>}</details>
  </section>
  <section role="tabpanel" hidden={tab!=='documents'} id={uid+'-panel-documents'} aria-labelledby={uid+'-tab-documents'} tabIndex={0}>
@@ -65,7 +68,7 @@ export function ApplicationDetails({record,close,initialSubmitted=false,initialT
  </section>
  </section>
  </div>
- <footer className="application-details-footer">{confirmClose?<div className="details-close-confirm" role="alert"><p><strong>Discard unsaved edits?</strong><br/>Files already uploaded or renamed will stay saved.</p><div><button ref={keepEditing} type="button" className="button secondary" onClick={()=>setConfirmClose(false)}>Keep editing</button><button type="button" className="button primary" onClick={close}>Discard unsaved edits</button></div></div>:<><span className="details-footer-status" aria-live="polite">{fileBusy?'Saving file…':fileEditing?'Finish or cancel the filename edit':dirty?'Unsaved application changes':!saved?'Add job details to create this application':'All application changes saved'}</span><div><button type="button" className="button secondary" disabled={locked} onClick={requestClose}>Close</button>{dirty&&<button type="submit" className="button primary" disabled={locked||fileEditing||conflict}>{saving?'Saving…':'Save changes'}</button>}</div></>}</footer>
+ <footer className="application-details-footer">{confirmClose?<div className="details-close-confirm" role="alert"><p><strong>Discard unsaved edits?</strong><br/>Files already uploaded or renamed will stay saved.</p><div><button ref={keepEditing} type="button" className="button secondary" onClick={()=>setConfirmClose(false)}>Keep editing</button><button type="button" className="button primary" onClick={close}>Discard unsaved edits</button></div></div>:<><span className="details-footer-status" aria-live="polite">{offerBusy?'Saving offer…':offerEditing?'Unsaved offer details · use Save offer details above':fileBusy?'Saving file…':fileEditing?'Finish or cancel the filename edit':dirty?'Unsaved application changes':!saved?'Add job details to create this application':'All application changes saved'}</span><div><button type="button" className="button secondary" disabled={locked} onClick={requestClose}>Close</button>{dirty&&<button type="submit" className="button primary" disabled={locked||fileEditing||conflict}>{saving?'Saving…':'Save changes'}</button>}</div></>}</footer>
  </form>
  </dialog>;
 }

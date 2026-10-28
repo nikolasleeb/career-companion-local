@@ -332,6 +332,9 @@ interview_audio.install(app,start_task,require_ai)
 from . import career_explorer
 app.include_router(career_explorer.router)
 app.include_router(career_goals.router)
+from . import cover_goals,application_offers
+app.include_router(cover_goals.router)
+app.include_router(application_offers.router)
 app.include_router(work_preferences.router)
 work_style_summary.install(app,start_task,require_ai)
 app.include_router(skills.router)
@@ -1139,7 +1142,12 @@ def delete_application(entity_id:str,user=Depends(auth.current)):
     blocker=interview_practice.removal_blocker(user['id'],record)
     if blocker:raise HTTPException(409,blocker)
     if any(a.get('kind')=='document' for a in record['data'].get('attachments',[])):raise HTTPException(409,'Remove uploaded files first, or archive this application to preserve its documents.')
-    require(user['id'],entity_id,'application');db.delete(user['id'],entity_id)
+    require(user['id'],entity_id,'application')
+    with db.connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        c.execute("DELETE FROM entities WHERE user_id=? AND id=? AND kind='application_offer'",(user['id'],application_offers.identity(user['id'],entity_id)))
+        c.execute("DELETE FROM entities WHERE user_id=? AND id=? AND kind='application'",(user['id'],entity_id))
+        c.execute('DELETE FROM evidence_fts WHERE user_id=? AND id=?',(user['id'],entity_id))
     return {'ok':True}
 
 @app.get('/api/guidance')
@@ -1235,7 +1243,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'application_offer','saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1360,6 +1368,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 else:
                     if kinds.get(data['workspace_id'])!='cover_workspace':raise ValueError()
                     if data.get('finalized_letter_id') and kinds.get(data['finalized_letter_id'])!='cover_letter':raise ValueError()
+            application_offers.validate_backup(record,kinds)
             if record['kind']=='application':
                 application=ApplicationInput.model_validate(record['data'])
                 kinds={r['id']:r['kind'] for r in records}
@@ -1401,6 +1410,8 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
     existing_usage={r['data']['event_key']:r['id'] for r in db.list_entities(user['id'],'usage_event')}
     for record in records:
         if record['kind']=='usage_event':ids[record['id']]=existing_usage.get(record['data']['event_key'],cost_history.digest([user['id'],record['data']['event_key']])[:32])
+    for record in records:
+        if record['kind']=='application_offer':ids[record['id']]=application_offers.identity(user['id'],ids[record['data']['application_id']])
     # Import is additive; existing records are preserved and IDs are remapped.
     for record in records:
         if record['kind']=='usage_event':
@@ -1416,7 +1427,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         elif record['kind']=='saved_career':career_explorer.restore(user['id'],record['data'])
         elif record['kind']=='career_goals':
             current_goals=career_goals.read(user['id'])
-            if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data'].get('note',record['data']['text']),items=record['data'].get('items'),use_for_ai=record['data'].get('use_for_ai',False),expected_revision=current_goals['revision']))
+            if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data'].get('note',record['data']['text']),items=record['data'].get('items'),use_for_ai=record['data'].get('use_for_ai',False),expected_revision=current_goals['revision']),restoring=True)
         elif record['kind']=='work_preferences':
             current_work=work_preferences.read(user['id'])
             restored_work=current_work if current_work.get('summary') or current_work['preferences'] else remap(record['data'])
@@ -1429,7 +1440,13 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if stamp:
                 with db.connect() as c:c.execute('UPDATE entities SET created_at=? WHERE user_id=? AND id=?',(stamp.isoformat(),user['id'],saved['id']))
         elif record['kind']=='ai_job_match':db.save(user['id'],record['kind'],{**remap(record['data']),'state':'imported','error':'Imported review is read-only. Start a new review to use your current Profile.','profile_revision':'imported','in_flight':None},ids[record['id']])
-        elif record['kind']!='onboarding':db.save(user['id'],record['kind'],remap(record['data']),ids[record['id']])
+        elif record['kind']!='onboarding':
+            restored=remap(record['data'])
+            if record['kind']=='cover_workspace' and restored.get('career_goal_selection'):
+                restored['career_goal_selection']={**restored['career_goal_selection'],'enabled':False,'goal_ids':[]}
+                for proposal in restored.get('context_proposals',[]):
+                    if proposal.get('career_goal_source') and proposal.get('status')=='pending':proposal['status']='rejected'
+            db.save(user['id'],record['kind'],restored,ids[record['id']])
     onboarding.restore(user['id'],setup_records[0]['data'] if setup_records else None,legacy=any(r['kind'] in onboarding.LEGACY for r in records))
     # Restored pending proposals use the new record timestamp only when their reviewed
     # original still matches. Conflicting/newer source data continues to block approval.

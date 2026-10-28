@@ -7,6 +7,12 @@ from . import auth,db
 from .models import StrictModel
 router=APIRouter(prefix='/api/profile/career-goals')
 EXPLANATION='Describe your career ambitions, dream jobs, skills you want to learn or certifications you’re considering. Career Goals mainly helps Career Coach personalize its advice. You can also choose to use relevant goals when drafting open-ended application answers, such as “Why do you want this job?” Goals are not qualifications and are not automatically added to resumes, cover letters or application fields.'
+class OccupationLink(StrictModel):
+ code:str=Field(pattern=r'^\d{2}-\d{4}\.\d{2}$')
+ title:str=Field(min_length=1,max_length=300)
+ dataset_version:str=Field(max_length=100)
+ revision:str=Field(pattern=r'^[a-f0-9]{64}$')
+
 class Goal(StrictModel):
  id:str=Field(min_length=1,max_length=64,pattern=r'^[A-Za-z0-9_-]+$')
  category:Literal['general_statement','dream_role','skill','certification','promotion','leadership','education','career_change','impact','networking','custom']='custom'
@@ -14,6 +20,7 @@ class Goal(StrictModel):
  target:str=Field(default='',max_length=100)
  priority:Literal['low','medium','high']='medium'
  progress:Literal['planned','in_progress','completed']='planned'
+ occupation:OccupationLink|None=None
  @model_validator(mode='after')
  def valid_text(self):
   if not self.text.strip() or self.category!='general_statement' and len(self.text)>1000:raise ValueError('Enter a goal within its text limit.')
@@ -27,6 +34,8 @@ class Change(StrictModel):
  @model_validator(mode='after')
  def valid_items(self):
   if self.items is not None:
+   links=[v.occupation.code for v in self.items if v.occupation]
+   if len(links)!=len(set(links)):raise ValueError('Each occupation can link to only one goal.')
    if len({v.id for v in self.items})!=len(self.items):raise ValueError('Each goal needs a unique identifier.')
    if sum(v.category=='general_statement' for v in self.items)>1:raise ValueError('Only one General statement is allowed.')
    if sum(v.category!='general_statement' for v in self.items)>30:raise ValueError('Keep at most 30 specific goals.')
@@ -42,7 +51,7 @@ def canonical_items(d):
  note=d.get('note',d.get('text','') if not items else '')
  if note and not any(v['category']=='general_statement' for v in items):
   id=general_id(items)
-  items.insert(0,Goal(id=id,category='general_statement',text=note).model_dump())
+  items.insert(0,Goal(id=id,category='general_statement',text=note).model_dump(exclude_none=True))
  return items
 
 def read(user):
@@ -57,13 +66,13 @@ def context(user,snapshot=None):
  value=snapshot if snapshot is not None else current
  return {**value,'use_for_ai':True}
 
-def save(user,body):
+def save(user,body,*,restoring=False):
  from .resume_conversation import write
  with db.connect() as c:
   c.execute('BEGIN IMMEDIATE');row=c.execute("SELECT payload FROM entities WHERE id=? AND user_id=? AND kind='career_goals'",(identity(user),user)).fetchone()
   old=json.loads(row[0]) if row else {'revision':0}
   if old['revision']!=body.expected_revision:raise HTTPException(409,'Career Goals changed in another tab. Reload them before saving; your text is preserved.')
-  items=[v.model_dump() for v in body.items] if body.items is not None else canonical_items(old)
+  items=[v.model_dump(exclude_none=True) for v in body.items] if body.items is not None else canonical_items(old)
   if body.text is not None:
    general=next((v for v in items if v['category']=='general_statement'),None)
    # Old clients and explicit chat saves use text as the general statement.
@@ -73,6 +82,15 @@ def save(user,body):
   if len({v['id'] for v in items})!=len(items):raise HTTPException(422,'Each goal needs a unique identifier.')
   if sum(v['category']=='general_statement' for v in items)>1:raise HTTPException(422,'Only one General statement is allowed. Edit the existing statement.')
   if sum(v['category']!='general_statement' for v in items)>30:raise HTTPException(422,'Keep at most 30 specific goals.')
+  linked=[v['occupation']['code'] for v in items if v.get('occupation')]
+  if len(set(linked))!=len(linked):raise HTTPException(409,'This occupation already has a Career Goal. Edit the existing goal.')
+  old_links={v['id']:v.get('occupation') for v in canonical_items(old)}
+  from . import explicit_context
+  for value in items:
+   link=value.get('occupation')
+   if link and link!=old_links.get(value['id']) and not restoring:
+    canonical=explicit_context.occupation_link(link['code'])
+    if link!=canonical:raise HTTPException(409,'The occupation information changed. Reload its details and review this goal again. Your draft is preserved.')
   note=next((v['text'] for v in items if v['category']=='general_statement'),'')
   rendered='\n'.join(v['text'] if v['category']=='general_statement' else v['category'].replace('_',' ')+': '+v['text']+(' — target '+v['target'] if v['target'] else '')+' ('+v['progress'].replace('_',' ')+')' for v in items).strip()
   write(c,user,'career_goals',{'text':rendered,'note':note,'items':items,'format_version':2,'use_for_ai':body.use_for_ai if body.use_for_ai is not None else bool(old.get('use_for_ai',False)),'revision':old['revision']+1},identity(user))

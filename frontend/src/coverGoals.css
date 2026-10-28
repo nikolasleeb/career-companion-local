@@ -1,0 +1,5 @@
+.cover-letter-page .cover-chat-column,.cover-letter-page .cover-preview{min-width:0}
+.cover-letter-page [aria-label="Career Goals for this cover letter"]{overflow-wrap:anywhere}
+.cover-letter-page [aria-label="Career Goals for this cover letter"] .card-actions{flex-wrap:wrap}
+.cover-letter-page [aria-label="Career Goals for this cover letter"] button{white-space:normal}
+@media(max-width:1000px){.cover-letter-page .cover-workspace{grid-template-columns:minmax(0,1fr)}.cover-letter-page .cover-preview{position:static;max-width:100%}}
