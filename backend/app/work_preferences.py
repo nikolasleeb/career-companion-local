@@ -78,6 +78,8 @@ def put(body:Change,user=Depends(auth.current)):
    result=json.loads(task['result']);result=result.get('_task_result',result)
    if result.get('expected_revision')!=body.expected_revision:raise HTTPException(409,'This AI proposal belongs to an older summary revision. Your draft is preserved.')
    generation={'task_id':body.generation_task_id,'ai':result['ai'],'references':result['references'],'source_snapshot':result['source_snapshot'],'edited_after_generation':summary!=result['summary']}
+  elif summary and isinstance(old.get('generation'),dict):
+   generation={**old['generation'],'edited_after_generation':old['generation'].get('edited_after_generation',False) or summary!=old.get('summary','')}
   data={**old,**body.model_dump(exclude={'expected_revision','summary','generation_task_id'}),'preferences':values if summary is None else old.get('preferences',[]),'revision':old['revision']+1}
   data['coach_report_access']=coach_access
   if summary is not None:data.update(summary=summary,generation=generation)

@@ -144,3 +144,22 @@ def test_summary_action_preserves_education_gate(client,account,monkeypatch):
  assert client.get('/api/profile/work-preferences').status_code==403
  assert client.post('/api/profile/work-preferences/summary/actions',json=body()).status_code==403
  assert not db.list_entities(other['id'],'usage_event')
+
+
+def test_generated_summary_direct_edits_preserve_provenance_and_require_review(client,work,monkeypatch):
+ async def model(schema,payload,*args,**kwargs):
+  source=payload['source_statements'][0]
+  return {'summary':'I prefer focused preparation before collaboration.','references':[{'source_id':source['id'],'quote':source['text']}]},{'model':'fictional'}
+ monkeypatch.setattr(ai,'structured',model)
+ task=client.post('/api/profile/work-preferences/summary/actions',json=body(request_token='editable-summary-provenance')).json()
+ result=wait(client,task);assert result['status']=='completed',result
+ first=client.put('/api/profile/work-preferences',json={'summary':'I prefer quiet preparation before team discussions.','reviewed':False,'use_for_ai':False,'expected_revision':0,'generation_task_id':task['task_id']})
+ assert first.status_code==200,first.text
+ assert first.json()['generation']['edited_after_generation'] is True
+ refs=first.json()['generation']['references']
+ second=client.put('/api/profile/work-preferences',json={'summary':'I prefer quiet preparation and planned discussions.','reviewed':False,'use_for_ai':False,'expected_revision':1})
+ assert second.status_code==200,second.text
+ assert second.json()['generation']['task_id']==task['task_id']
+ assert second.json()['generation']['edited_after_generation'] is True
+ assert second.json()['generation']['references']==refs
+ assert not work_preferences.context(work)['preferences']
