@@ -41,7 +41,19 @@ are possibilities, not proof of qualifications. Unmatched studies show an
 explanation and the option to browse other directions. Users can choose title,
 pay or growth ordering instead of relevance. Unknown numeric values sort last.
 
-Only confirmed education supplies initial major suggestions. Users can edit
+Only confirmed education supplies initial major suggestions. A responsive four-,
+three-, two- or one-column course picker loads confirmed education lists and
+standalone coursework records. It merges duplicate course names, shows their
+Profile sources and starts with none selected. Select all / Clear selection apply
+only to Profile courses. A separate field accepts other subjects to explore.
+
+Selected course IDs are account-scoped and resolved from the current confirmed
+Profile on each study search; deleted or unconfirmed selections produce a conflict
+instead of silently using stale facts. The existing free-text course field remains
+compatible. Profile selection is independent of its 2,000-character limit. Course
+listings are not proof of completion.
+
+Users can edit
 these temporary fields without changing Profile. Skill labels compare exact
 normalized names against skill items in confirmed Profile records; absence means
 **Not documented in Profile**, not that the person lacks the skill. Personality

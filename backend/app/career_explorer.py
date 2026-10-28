@@ -1,7 +1,7 @@
 """Account-scoped career exploration from attributed public snapshots, without AI."""
 import hashlib,json,re,unicodedata
 from pathlib import Path
-from typing import Literal
+from typing import Annotated,Literal
 from fastapi import APIRouter,Depends,HTTPException,Query
 from pydantic import Field
 from . import auth,db
@@ -31,6 +31,7 @@ class Explore(StrictModel):
  mode:Literal['studies','browse']='browse'
  major:str=Field(default='',max_length=300)
  courses:str=Field(default='',max_length=2000)
+ profile_course_ids:list[Annotated[str,Field(pattern=r'^[a-f0-9]{24}$')]]=Field(default_factory=list,max_length=1000)
  query:str=Field(default='',max_length=120)
  industry:str=Field(default='',max_length=8)
  preparation:Literal['all','college']='all'
@@ -51,16 +52,28 @@ def occupation(code):
  return OCCUPATIONS[code]
 
 def profile(user):
- majors=[];courses=[];skills=[]
+ majors=[];skills=[];course_rows={}
+ def add_course(title,record):
+  title=re.sub(r'\s+',' ',title).strip()
+  if not title:return
+  key=unicodedata.normalize('NFKC',title).casefold()
+  if key not in course_rows:course_rows[key]={'id':hashlib.sha256((user+':course:'+key).encode()).hexdigest()[:24],'title':title,'sources':[]}
+  source=record.get('organization') or record.get('title') or 'Confirmed Profile record'
+  if source not in course_rows[key]['sources']:course_rows[key]['sources'].append(source)
  for r in db.list_entities(user,'experience'):
   d=r['data']
   if not d.get('confirmed'):continue
   if d.get('category')=='education':
    majors.extend(d.get('majors') or []);majors.extend(d.get('minors') or [])
-   courses.extend(v.strip() for v in re.split(r'[,;\n]',d.get('relevant_courses') or '') if v.strip())
+  if d.get('category') in ('education','coursework'):
+   raw=d.get('relevant_courses') or ''
+   # Transcript-reviewed lists use semicolons; keep punctuation inside those titles.
+   for value in re.split(r'[;\n]' if re.search(r'[;\n]',raw) else ',',raw):add_course(value,d)
+   if d.get('category')=='coursework' and d.get('title','').strip().casefold() not in ('coursework','courses','relevant coursework','relevant courses'):add_course(d.get('title',''),d)
   skills.extend(s['name'] for s in d.get('skill_items',[]) if isinstance(s,dict) and isinstance(s.get('name'),str))
  unique=lambda v:list(dict.fromkeys(x.strip() for x in v if isinstance(x,str) and x.strip()))
- return {'majors':unique(majors)[:6],'courses':unique(courses)[:30],'skills':unique(skills)}
+ choices=sorted(course_rows.values(),key=lambda x:x['title'].casefold())
+ return {'majors':unique(majors)[:6],'courses':[c['title'] for c in choices],'course_options':choices,'skills':unique(skills)}
 
 def programs(text):
  need=subject(text)
@@ -72,11 +85,16 @@ def programs(text):
   if need<=have:rows.append((have!=need,len(have-need),code,title))
  return [{'code':code,'title':title,'exact':not loose} for loose,_,code,title in sorted(rows)[:3]]
 
-def study_links(body):
+def study_links(body,selected_courses=()):
  links={};matched=[]
- for kind,texts in (('major',re.split(r'[;\n]',body.major)),('course',re.split(r'[;\n]',body.courses))):
+ for kind,texts in (('major',re.split(r'[;\n]',body.major)),('course',list(selected_courses)+re.split(r'[;\n]',body.courses))):
+  seen=set()
   for text in texts:
-   for p in programs(text.strip()):
+   key=re.sub(r'\s+',' ',text).strip().casefold()
+   if not key or key in seen:continue
+   seen.add(key)
+   lookup=re.sub(r'^[A-Z]{2,8}\s*\d{2,4}[A-Za-z]?\s*[-:–—]?\s+','',text.strip()) if kind=='course' else text.strip()
+   for p in programs(lookup):
     matched.append({**p,'input':text.strip(),'kind':kind})
     for code in DATA['program_links'].get(p['code'],[]):
      if code not in OCCUPATIONS:continue
@@ -97,13 +115,18 @@ def summary(code,reason='',also=''):
 @router.get('/options')
 def options(user=Depends(auth.current)):
  p=profile(user['id'])
- return {'profile':{k:p[k] for k in ('majors','courses')},'industries':DATA['sectors'],'metadata':META,'occupations':len(OCCUPATIONS),'saved_limit':MAX_SAVED}
+ return {'profile':{k:p[k] for k in ('majors','courses','course_options')},'industries':DATA['sectors'],'metadata':META,'occupations':len(OCCUPATIONS),'saved_limit':MAX_SAVED}
 
 @router.post('/explore')
 def explore(body:Explore,user=Depends(auth.current)):
  if body.industry and body.industry not in {s['naics'] for s in DATA['sectors']}:raise HTTPException(422,'Choose an industry from the list.')
- if body.mode=='studies' and not (body.major.strip() or body.courses.strip()):raise HTTPException(422,'Enter a major or course, or choose Explore other directions.')
- links,matched=study_links(body) if body.mode=='studies' else ({},[])
+ selected_courses=[]
+ if body.mode=='studies':
+  choices={c['id']:c['title'] for c in profile(user['id'])['course_options']}
+  if any(id not in choices for id in body.profile_course_ids):raise HTTPException(409,'A selected course is no longer in your confirmed Profile. Reload Career Explorer and review your selection.')
+  selected_courses=[choices[id] for id in dict.fromkeys(body.profile_course_ids)]
+  if not (body.major.strip() or body.courses.strip() or selected_courses):raise HTTPException(422,'Enter a major, select a Profile course, or choose Explore other directions.')
+ links,matched=study_links(body,selected_courses) if body.mode=='studies' else ({},[])
  query=body.query.strip();need=words(query);rows=[]
  for code,o in OCCUPATIONS.items():
   if body.preparation=='college' and o['job_zone'] not in (4,5):continue

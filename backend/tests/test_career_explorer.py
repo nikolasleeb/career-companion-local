@@ -45,7 +45,39 @@ def test_only_confirmed_education_is_offered(client,account):
  db.save(account['id'],'experience',{'confirmed':True,'category':'education','majors':['Computer Science'],'minors':[],'relevant_courses':'Statistics; Accounting'})
  db.save(account['id'],'experience',{'confirmed':False,'category':'education','majors':['Secret draft major']})
  r=client.get(BASE+'/options').json()['profile']
- assert 'Computer Science' in r['majors'] and 'Secret draft major' not in r['majors'] and r['courses']==['Statistics','Accounting']
+ assert 'Computer Science' in r['majors'] and 'Secret draft major' not in r['majors'] and set(r['courses'])=={'Statistics','Accounting'}
+
+def test_course_picker_merges_confirmed_records_without_clipping(client,account):
+ u=account['id'];names=['Course '+str(i)+' with a sufficiently descriptive title' for i in range(45)]
+ db.save(u,'experience',{'confirmed':True,'category':'education','organization':'Fictional School A','relevant_courses':'; '.join(names+['Statistics','Data, Ethics and Society'])})
+ db.save(u,'experience',{'confirmed':True,'category':'coursework','title':' statistics ','organization':'Fictional School B'})
+ db.save(u,'experience',{'confirmed':True,'category':'coursework','title':'MATH 101 Accounting','organization':'Fictional School B'})
+ db.save(u,'experience',{'confirmed':False,'category':'coursework','title':'Unreviewed course'})
+ r=client.get(BASE+'/options').json()['profile'];choices=r['course_options']
+ assert len(choices)==48 and len(r['courses'])==48 and len('; '.join(r['courses']))>2000
+ assert 'Data, Ethics and Society' in r['courses'] and 'Unreviewed course' not in r['courses']
+ stats=next(c for c in choices if c['title'].casefold()=='statistics')
+ assert set(stats['sources'])=={'Fictional School A','Fictional School B'}
+ before=db.list_entities(u,'experience')
+ result=client.post(BASE+'/explore',json={'mode':'studies','profile_course_ids':[c['id'] for c in choices]})
+ assert result.status_code==200,result.text
+ assert result.json()['matched_programs']
+ assert any(p['input']=='MATH 101 Accounting' for p in result.json()['matched_programs'])
+ assert db.list_entities(u,'experience')==before and not db.list_entities(u,'usage_event')
+
+def test_selected_courses_are_account_scoped_current_and_deduplicated(client,account):
+ u=account['id'];course=db.save(u,'experience',{'confirmed':True,'category':'coursework','title':'Statistics'})
+ selected=client.get(BASE+'/options').json()['profile']['course_options'][0]['id']
+ body={'mode':'studies','profile_course_ids':[selected,selected],'courses':'Statistics'}
+ result=client.post(BASE+'/explore',json=body);assert result.status_code==200
+ matches=result.json()['matched_programs'];assert len(matches)==len({(p['kind'],p['input'],p['code']) for p in matches})
+ other=client.post('/api/auth/register',json={'username':'courseother','password':'fictional-password'}).json();client.headers['X-CSRF-Token']=other['csrf']
+ db.save(other['id'],'experience',{'confirmed':True,'category':'coursework','title':'Statistics'})
+ other_id=client.get(BASE+'/options').json()['profile']['course_options'][0]['id'];assert other_id!=selected
+ assert client.post(BASE+'/explore',json=body).status_code==409
+ assert client.post(BASE+'/explore',json={**body,'mode':'browse'}).status_code==200
+ db.delete(other['id'],next(r['id'] for r in db.list_entities(other['id'],'experience') if r['data'].get('title')=='Statistics'))
+ assert client.post(BASE+'/explore',json={'mode':'studies','profile_course_ids':[other_id]}).status_code==409
 
 def test_account_isolation_and_idempotent_saving(client,account):
  user=account['id'];before=db.list_entities(user,'experience')
