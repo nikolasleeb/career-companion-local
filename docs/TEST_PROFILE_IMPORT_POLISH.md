@@ -36,3 +36,7 @@ Use a disposable account and fictional documents first. Preparing a review, canc
 Both editions are built and tested before rollout. Hosted data, uploads, configuration, vault key and the previous image are backed up before deployment. The installed localhost service is not changed. Audited localhost source and these instructions are pushed to GitHub without a release or tag. Deployment does not import Profile information or make paid AI requests.
 
 For past education dates, GPA alignment and the exclusive same/separate choices, see [Education and import choices](TEST_EDUCATION_AND_IMPORT_CHOICES.md).
+
+## Imported name capitalization
+
+Try an all-caps or lowercase full name, including a hyphenated surname, apostrophe, accented letter, initials or suffix. The proposed name should use normal capitalization. If the other document provides the same spelling with existing mixed capitalization (for example Alex de la Cruz), that spelling takes precedence. Original source text stays available. Different names still need a choice. You can edit the proposal; preparing a review does not recase existing saved Profile information.

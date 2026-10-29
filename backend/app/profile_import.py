@@ -49,6 +49,8 @@ def parse(text,kind='resume'):
  candidates=list(dict.fromkeys(import_values.EMAIL.findall(contact)))
  if parsed.get('profile',{}).get('email') and parsed['profile']['email'] not in candidates:candidates.insert(0,parsed['profile']['email'])
  parsed['profile_candidates']={'email':candidates} if candidates else {}
+ if parsed['profile'].get('name'):
+  original_name=parsed['profile']['name'];parsed['profile_candidates']['name']=[original_name];parsed['profile']['name']=import_values.personal_name(original_name)
  if candidates and 'email' not in parsed['profile']:parsed['profile']['email']=candidates[0]
  for entry in parsed['entries']:
   data=entry['data'];uncertain=any(('not confidently' in w or 'not separately' in w) for w in entry.get('warnings',[]))
@@ -77,4 +79,4 @@ def parse_document(document):
  parsed['text_hash']=hashlib.sha256(document['data']['text'].encode()).hexdigest()
  return parsed
 
-def version(kind):return resume_parser.VERSION+('-linkedin2' if kind=='linkedin_pdf' else '-polish1')
+def version(kind):return resume_parser.VERSION+('-linkedin3' if kind=='linkedin_pdf' else '-polish2')

@@ -1,9 +1,39 @@
 """Field-aware import equivalence. Originals remain available as source evidence."""
-import re
+import re,unicodedata
 from urllib.parse import urlsplit, urlunsplit
 
 EMAIL=re.compile(r'\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b',re.I)
 MONTHS={name:i for i,names in enumerate(('jan january','feb february','mar march','apr april','may','jun june','jul july','aug august','sep sept september','oct october','nov november','dec december'),1) for name in names.split()}
+
+NAME_SUFFIXES={'jr':'Jr','sr':'Sr',**{v.casefold():v for v in ('II','III','IV','V','VI','VII','VIII','IX','X')}}
+def name_core(value):
+    words=unicodedata.normalize('NFC',' '.join(str(value or '').split())).split()
+    while words and words[-1].strip('.,').casefold() in NAME_SUFFIXES:words.pop()
+    return ' '.join(words)
+
+def preferred_name_case(value):
+    core=name_core(value)
+    return bool(core and not core.isupper() and not core.islower() and any(c.isupper() for c in core) and any(c.islower() for c in core))
+
+def personal_name(value):
+    value=unicodedata.normalize('NFC',' '.join(str(value or '').split()))
+    core=name_core(value)
+    # Respect casing already supplied by a person/source, including McDonald,
+    # de la Cruz and intentionally styled names. Only uniform case is changed.
+    if not core or not (core.isupper() or core.islower()):return value
+    words=value.split()
+    def word(token,index):
+        suffix=token.strip('.,').casefold()
+        if index==len(words)-1 and suffix in NAME_SUFFIXES:
+            return re.sub(r'[^\W\d_]+',lambda m:NAME_SUFFIXES[suffix],token,count=1)
+        if re.fullmatch(r'(?:[^\W\d_]\.)+',token,re.UNICODE):return token.upper()
+        if index==0 and token.isalpha() and len(token)<=2 and token.isupper():return token
+        def capitalize(match):
+            part=match.group();formatted=part[:1].upper()+part[1:].lower()
+            if len(part)>4 and formatted.startswith('Mc'):formatted='Mc'+formatted[2:3].upper()+formatted[3:]
+            return formatted
+        return re.sub(r'[^\W\d_]+',capitalize,token)
+    return ' '.join(word(token,index) for index,token in enumerate(words))
 
 def phone(value):
     value=str(value or '').strip()
@@ -40,6 +70,7 @@ def date_key(value):
 
 def normalized(field,value):
     if not isinstance(value,str):return value
+    if field=='name':return personal_name(value)
     if field=='phone':return phone(value)
     if field in ('linkedin','website','github','project_url'):return url(value)
     return ' '.join(value.split())

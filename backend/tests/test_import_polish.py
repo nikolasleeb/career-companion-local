@@ -153,3 +153,46 @@ def test_legacy_grouped_credentials_are_skipped_without_rewriting_group(client,a
  assert all(e['already_saved'] for e in p['data']['resume_parse']['entries'])
  r=approve(client,p);assert r.status_code==200 and r.json()['created']==0 and r.json()['skipped']==2
  assert db.get(account['id'],old['id'])==old
+
+
+@pytest.mark.parametrize('raw,expected',[
+ ('ALEX EXAMPLE-SMITH','Alex Example-Smith'),
+ ('  alex   example-smith  ','Alex Example-Smith'),
+ ("MARY O'NEILL","Mary O'Neill"),
+ ('ÉLODIE D’ARCY','Élodie D’Arcy'),
+ ('ALEX J. EXAMPLE III','Alex J. Example III'),
+ ('ALEX J.R. EXAMPLE JR.','Alex J.R. Example Jr.'),
+ ('ALEX MCDONALD','Alex McDonald'),
+ ('AJ EXAMPLE','AJ Example'),
+ ('Alex de la Cruz','Alex de la Cruz'),
+ ('Alex van der Waals','Alex van der Waals'),
+ ('Alex McDONALD','Alex McDONALD'),
+ ('e. e. cummings','E. E. Cummings'),
+ ('王小明','王小明'),
+])
+def test_imported_personal_name_capitalization(raw,expected):
+ assert import_values.personal_name(raw)==expected
+ assert import_values.personal_name(expected)==expected
+ assert import_values.normalized('organization','NASA')=='NASA'
+
+
+def test_combined_names_prefer_existing_casing_keep_original_sources(client,account):
+ a=source(account['id'],text(name='ALEX DE LA CRUZ'));b=source(account['id'],text(name='Alex de la Cruz'),'linkedin_pdf')
+ p=prepare(client,a,b);parsed=p['data']['resume_parse'];assert parsed['profile']['name']=='Alex de la Cruz'
+ assert 'name' not in parsed['profile_conflicts']
+ originals=[r['original_value'] for o in parsed['profile_sources']['name'] for r in o['sources']]
+ assert originals==['ALEX DE LA CRUZ','Alex de la Cruz']
+ assert 'ALEX DE LA CRUZ' in parsed['profile_evidence']['name']
+ assert db.settings(account['id']).get('name','')==''
+ r=approve(client,p,[],profile_updates={'name':parsed['profile']['name']});assert r.status_code==200,r.text
+ assert db.settings(account['id'])['name']=='Alex de la Cruz'
+
+
+def test_name_formatting_does_not_merge_different_names_or_rewrite_saved_profile(client,account):
+ db.update_settings(account['id'],{'name':'ALEX EXAMPLE'})
+ a=source(account['id'],text(name='Alex Example'));p=prepare(client,a)
+ assert p['data']['resume_parse']['profile']['name']=='Alex Example'
+ assert p['data']['resume_parse']['profile_states']['name']=='unchanged'
+ assert db.settings(account['id'])['name']=='ALEX EXAMPLE'
+ b=source(account['id'],text(name='Jordan Example'),'linkedin_pdf');p=prepare(client,a,b)
+ assert 'name' in p['data']['resume_parse']['profile_conflicts']

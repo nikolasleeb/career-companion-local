@@ -78,13 +78,15 @@ def combine(documents,separate):
    entries.append({'id':identity,'data':data,'label':part[0]['data']['title'],'source_text':'\n\n'.join(sources[e['document_id']]['data']['filename']+'\n'+e['source_text'] for e in part),'sources':[{'document_id':e['document_id'],'filename':sources[e['document_id']]['data']['filename'],'entry_id':e['id']} for e in part],'field_sources':dict(fields),'conflicts':conflicts,'requires_merge_confirmation':len(part)>1 and bool(conflicts),'review_state':'needs_review' if any(e.get('review_state')=='needs_review' for e in part) else 'needs_choice' if conflicts else 'ready','warnings':list(dict.fromkeys(w for e in part for w in e.get('warnings',[])))})
  profiles={k:alternatives(k,v) for k,v in profiles.items()}
  profile_conflicts={k:v for k,v in profiles.items() if len(v)>1}
- return {'review_version':2,'entries':entries,'profile':{k:('' if k in profile_conflicts else v[0]['value']) for k,v in profiles.items()},'profile_sources':dict(profiles),'profile_conflicts':profile_conflicts,'profile_evidence':{k:'\n'.join(x['source']['filename']+': '+str(x['value']) for x in v) for k,v in profiles.items()},'warnings':list(dict.fromkeys(warnings)),'unmapped':unmapped}
+ return {'review_version':2,'entries':entries,'profile':{k:('' if k in profile_conflicts else v[0]['value']) for k,v in profiles.items()},'profile_sources':dict(profiles),'profile_conflicts':profile_conflicts,'profile_evidence':{k:'\n'.join(r['filename']+': '+str(r['original_value']) for x in v for r in x['sources']) for k,v in profiles.items()},'warnings':list(dict.fromkeys(warnings)),'unmapped':unmapped}
 def alternatives(field,options):
  result=[]
  for option in options:
   value=import_values.normalized(field,option['value']);found=next((v for v in result if import_values.same(field,v['value'],value)),None)
   reference={**option['source'],'original_value':option['value']}
-  if found:found['sources'].append(reference)
+  if found:
+   if field=='name' and import_values.preferred_name_case(option['value']) and not any(import_values.preferred_name_case(r['original_value']) for r in found['sources']):found['value']=value;found['source']=option['source']
+   found['sources'].append(reference)
   else:result.append({'value':value,'source':option['source'],'sources':[reference]})
  return result
 
