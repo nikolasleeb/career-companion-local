@@ -25,6 +25,7 @@ def subject(value):
 def covers(need,have):return bool(need) and all(any(t.startswith(w) for t in have) for w in need)
 TITLE_WORDS={code:words(o['title']) for code,o in OCCUPATIONS.items()}
 ALT_WORDS={code:[(title,words(title)) for title in o['titles']] for code,o in OCCUPATIONS.items()}
+OCCUPATION_SKILLS={code:{career_evidence.canonical(item['name']) for item in o['skills']+o['technologies']} for code,o in OCCUPATIONS.items()}
 PROGRAM_WORDS={code:subject(title) for code,title in DATA['programs'].items()}
 
 class Explore(StrictModel):
@@ -32,6 +33,7 @@ class Explore(StrictModel):
  major:str=Field(default='',max_length=300)
  courses:str=Field(default='',max_length=2000)
  profile_course_ids:list[Annotated[str,Field(pattern=r'^[a-f0-9]{24}$')]]=Field(default_factory=list,max_length=1000)
+ profile_skill_ids:list[Annotated[str,Field(pattern=r'^[a-f0-9]{24}$')]]=Field(default_factory=list,max_length=1000)
  query:str=Field(default='',max_length=120)
  industry:str=Field(default='',max_length=8)
  industries:list[Annotated[str,Field(min_length=1,max_length=8)]]=Field(default_factory=list,max_length=len(DATA['sectors']))
@@ -54,7 +56,7 @@ def occupation(code):
  return OCCUPATIONS[code]
 
 def profile(user):
- majors=[];skills=[];course_rows={}
+ majors=[];skills=[];course_rows={};skill_rows={}
  def add_course(title,record):
   title=re.sub(r'\s+',' ',title).strip()
   if not title:return
@@ -72,10 +74,17 @@ def profile(user):
    # Transcript-reviewed lists use semicolons; keep punctuation inside those titles.
    for value in re.split(r'[;\n]' if re.search(r'[;\n]',raw) else ',',raw):add_course(value,d)
    if d.get('category')=='coursework' and d.get('title','').strip().casefold() not in ('coursework','courses','relevant coursework','relevant courses'):add_course(d.get('title',''),d)
-  skills.extend(s['name'] for s in d.get('skill_items',[]) if isinstance(s,dict) and isinstance(s.get('name'),str))
+  for item in d.get('skill_items',[]):
+   if not isinstance(item,dict) or not isinstance(item.get('name'),str):continue
+   title=re.sub(r'\s+',' ',item['name']).strip();key=career_evidence.canonical(title)
+   if not key:continue
+   if key not in skill_rows:skill_rows[key]={'id':hashlib.sha256((user+':skill:'+key).encode()).hexdigest()[:24],'title':title,'sources':[]}
+   source=d.get('organization') or d.get('title') or 'Confirmed Profile skills'
+   if source not in skill_rows[key]['sources']:skill_rows[key]['sources'].append(source)
+   skills.append(title)
  unique=lambda v:list(dict.fromkeys(x.strip() for x in v if isinstance(x,str) and x.strip()))
  choices=sorted(course_rows.values(),key=lambda x:x['title'].casefold())
- return {'majors':unique(majors)[:6],'courses':[c['title'] for c in choices],'course_options':choices,'skills':unique(skills)}
+ return {'majors':unique(majors)[:6],'courses':[c['title'] for c in choices],'course_options':choices,'skills':unique(skills),'skill_options':sorted(skill_rows.values(),key=lambda x:x['title'].casefold())}
 
 def programs(text):
  need=subject(text)
@@ -117,7 +126,7 @@ def summary(code,reason='',also='',salary_area='US'):
 @router.get('/options')
 def options(user=Depends(auth.current)):
  p=profile(user['id'])
- return {'profile':{k:p[k] for k in ('majors','courses','course_options')},'industries':DATA['sectors'],'metadata':META,'occupations':len(OCCUPATIONS),'saved_limit':MAX_SAVED,'salary_areas':salary_areas.catalog(),'wage_metadata':career_wages.data()['metadata'],'work_style':{k:v for k,v in career_evidence.style(user['id']).items() if k!='summary'}}
+ return {'profile':{k:p[k] for k in ('majors','courses','course_options','skill_options')},'industries':DATA['sectors'],'metadata':META,'occupations':len(OCCUPATIONS),'saved_limit':MAX_SAVED,'salary_areas':salary_areas.catalog(),'wage_metadata':career_wages.data()['metadata'],'work_style':{k:v for k,v in career_evidence.style(user['id']).items() if k!='summary'}}
 
 @router.post('/explore')
 def explore(body:Explore,user=Depends(auth.current)):
@@ -125,9 +134,15 @@ def explore(body:Explore,user=Depends(auth.current)):
  selected_industries=set(body.industries)|({body.industry} if body.industry else set())
  if selected_industries-{s['naics'] for s in DATA['sectors']}:raise HTTPException(422,'Choose industries from the list.')
  def industry_share(o):return max((o['sectors'].get(code,0) for code in selected_industries),default=0)
+ p=profile(user['id'])
+ skill_choices={s['id']:s['title'] for s in p['skill_options']}
+ if any(id not in skill_choices for id in body.profile_skill_ids):raise HTTPException(409,'A selected skill is no longer in your confirmed Profile. Reload Career Explorer and review your selection.')
+ selected_skills=list(dict.fromkeys(skill_choices[id] for id in body.profile_skill_ids))
+ selected_keys={name:career_evidence.canonical(name) for name in selected_skills}
+ skill_matches={code:[name for name,key in selected_keys.items() if key in names] for code,names in OCCUPATION_SKILLS.items()} if selected_skills else {}
  selected_courses=[]
  if body.mode=='studies':
-  choices={c['id']:c['title'] for c in profile(user['id'])['course_options']}
+  choices={c['id']:c['title'] for c in p['course_options']}
   if any(id not in choices for id in body.profile_course_ids):raise HTTPException(409,'A selected course is no longer in your confirmed Profile. Reload Career Explorer and review your selection.')
   selected_courses=[choices[id] for id in dict.fromkeys(body.profile_course_ids)]
   if not (body.major.strip() or body.courses.strip() or selected_courses):raise HTTPException(422,'Enter a major, select a Profile course, or choose Explore other directions.')
@@ -137,6 +152,7 @@ def explore(body:Explore,user=Depends(auth.current)):
   if body.preparation=='college' and o['job_zone'] not in (4,5):continue
   if selected_industries and industry_share(o)<1:continue
   if body.mode=='studies' and code not in links:continue
+  if selected_skills and not skill_matches[code]:continue
   quality=0;also=''
   if query:
    if code.startswith(query) or covers(need,TITLE_WORDS[code]):quality=3
@@ -154,9 +170,9 @@ def explore(body:Explore,user=Depends(auth.current)):
    value=career_wages.median(code,body.salary_area) if body.sort=='pay' else o['growth']
    return (value is None,-value if value is not None else 0,o['title'])
   if body.sort=='title':return (o['title'],)
-  return (-quality,-tier,-industry_share(o),o['title'])
+  return (-quality,-len(skill_matches.get(code,[])),-tier,-industry_share(o),o['title'])
  rows.sort(key=order)
- return {'results':[summary(code,reason,also,body.salary_area) for code,_,_,reason,also in rows[body.offset:body.offset+body.limit]],'total':len(rows),'offset':body.offset,'matched_programs':matched,'metadata':META,'notice':'No education-program connection was found. Try a fuller major name, or Explore other directions.' if body.mode=='studies' and not matched else ''}
+ return {'results':[{**summary(code,reason,also,body.salary_area),'matched_skills':skill_matches.get(code,[])} for code,_,_,reason,also in rows[body.offset:body.offset+body.limit]],'total':len(rows),'offset':body.offset,'matched_programs':matched,'unmatched_skills':[name for name in selected_skills if not any(selected_keys[name] in names for names in OCCUPATION_SKILLS.values())],'metadata':META,'notice':'No education-program connection was found. Try a fuller major name, or Explore other directions.' if body.mode=='studies' and not matched else ''}
 
 @router.get('/occupations/{code}')
 def detail(code:str,salary_area:str='US',user=Depends(auth.current)):
@@ -213,6 +229,7 @@ class SearchRecord(StrictModel):
  name:str=Field(min_length=1,max_length=100)
  query:Explore
  course_refs:list[CourseRef]=Field(default_factory=list,max_length=1000)
+ skill_refs:list[CourseRef]=Field(default_factory=list,max_length=1000)
 class SearchChange(StrictModel):
  name:str=Field(min_length=1,max_length=100)
  query:Explore
@@ -224,9 +241,11 @@ def save_search(user,body,id=None):
  if not body.name.strip():raise HTTPException(422,'Name this career search.')
  # Reuse exploration validation, without any external or AI request.
  explore(body.query,{'id':user})
- courses={c['id']:c['title'] for c in profile(user)['course_options']}
+ p=profile(user)
+ courses={c['id']:c['title'] for c in p['course_options']}
+ skills={s['id']:s['title'] for s in p['skill_options']}
  refs=[{'id':id,'title':courses[id]} for id in dict.fromkeys(body.query.profile_course_ids)] if body.query.mode=='studies' else []
- value=SearchRecord(name=body.name.strip(),query=body.query,course_refs=refs).model_dump();value['query']['offset']=0
+ value=SearchRecord(name=body.name.strip(),query=body.query,course_refs=refs,skill_refs=[{'id':id,'title':skills[id]} for id in dict.fromkeys(body.query.profile_skill_ids)]).model_dump();value['query']['offset']=0
  with db.connect() as c:
   c.execute('BEGIN IMMEDIATE')
   if id:
@@ -248,14 +267,20 @@ def delete_search(id:str,user=Depends(auth.current)):
 def load_search(id:str,user=Depends(auth.current)):
  row=db.get(user['id'],id,SEARCH_KIND)
  if not row:raise HTTPException(404,'Saved career search not found.')
- d=SearchRecord.model_validate(row['data']).model_dump();courses={c['title'].casefold():c['id'] for c in profile(user['id'])['course_options']};missing=[];ids=[]
+ d=SearchRecord.model_validate(row['data']).model_dump();p=profile(user['id']);courses={c['title'].casefold():c['id'] for c in p['course_options']};missing=[];ids=[]
  for ref in d['course_refs']:
   match=courses.get(ref['title'].casefold())
   if match:ids.append(match)
   else:missing.append(ref['title'])
  d['query']['profile_course_ids']=list(dict.fromkeys(ids));d['query']['offset']=0
+ skills={career_evidence.canonical(s['title']):s['id'] for s in p['skill_options']};missing_skills=[];skill_ids=[]
+ for ref in d['skill_refs']:
+  match=skills.get(career_evidence.canonical(ref['title']))
+  if match:skill_ids.append(match)
+  else:missing_skills.append(ref['title'])
+ d['query']['profile_skill_ids']=list(dict.fromkeys(skill_ids))
  missing_area=d['query']['salary_area'] not in career_wages.data()['areas']
- return {**row,'data':d,'unavailable_courses':missing,'unavailable_salary_area':missing_area}
+ return {**row,'data':d,'unavailable_courses':missing,'unavailable_skills':missing_skills,'unavailable_salary_area':missing_area}
 
 class RenameSearch(StrictModel):
  name:str=Field(min_length=1,max_length=100)
@@ -275,6 +300,8 @@ def search_digest(data):
  value=SearchRecord.model_validate(data).model_dump()
  # Course titles survive reference remapping during account backup restoration.
  value['query']['profile_course_ids']=[]
+ value['query']['profile_skill_ids']=[]
+ value['skill_refs']=sorted({career_evidence.canonical(r['title']) for r in value['skill_refs']})
  value['course_refs']=sorted({r['title'].casefold() for r in value['course_refs']})
  return hashlib.sha256(json.dumps(value,sort_keys=True).encode()).hexdigest()
 def restore_search(user,data):
