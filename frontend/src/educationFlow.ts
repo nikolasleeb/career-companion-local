@@ -3,6 +3,11 @@ export function subjects(data:any,field:'major'|'minor'):string[]{
  const values=Array.isArray(data?.[field+'s'])?data[field+'s']:[data?.[field]||''];
  const seen=new Set<string>();return values.map((v:string)=>v.trim()).filter((v:string)=>{const key=v.toLocaleLowerCase();if(!v||seen.has(key))return false;seen.add(key);return true;});
 }
+// Keep input drafts verbatim: trailing spaces and new blank rows are editable.
+// Only subjects()/educationPayload() trim and deduplicate the saved values.
+export function subjectDrafts(data:any,field:'major'|'minor'):string[]{
+ return Array.isArray(data?.[field+'s'])?[...data[field+'s']]:data?.[field]?[data[field]]:[];
+}
 export function educationPayload(data:any){const majors=subjects(data,'major'),minors=subjects(data,'minor');return {majors,minors,major:majors[0]||'',minor:minors[0]||''};}
 export function educationTitle(data:any){const majors=subjects(data,'major').join(' & ');return data.category==='education'&&data.degree?[data.degree,majors?'in '+majors:''].filter(Boolean).join(' '):data.title;}
 export function replacementCourses(courses:any[],selected:string[]){

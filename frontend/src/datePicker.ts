@@ -14,9 +14,9 @@ export function dateParts(value:string):DateParts{
  return recognized?{y,m,d,legacy:false}:{...blankDate(),legacy:!!value&&value!=='Present'};
 }
 export function updateDateParts(parts:DateParts,key:'y'|'m'|'d',value:string):DateParts{return {...parts,[key]:value,legacy:false};}
-export function formatDate(parts:DateParts){return !parts.y||parts.d&&!parts.m?'':parts.m?months[Number(parts.m)-1]+' '+(parts.d?parts.d+', ':'')+parts.y:parts.y;}
+export function formatDate(parts:DateParts){return !/^[1-9]\d{3}$/.test(parts.y)||parts.d&&!parts.m?'':parts.m?months[Number(parts.m)-1]+' '+(parts.d?parts.d+', ':'')+parts.y:parts.y;}
 export function interval(parts:DateParts):[Date,Date]|null{
- if(!parts.y||parts.d&&!parts.m||parts.d&&Number(parts.d)>daysInMonth(parts.y,parts.m))return null;
+ if(!/^[1-9]\d{3}$/.test(parts.y)||parts.d&&!parts.m||parts.d&&Number(parts.d)>daysInMonth(parts.y,parts.m))return null;
  const y=Number(parts.y),m=Number(parts.m);
  return [localDate(y,m||1,Number(parts.d)||1),localDate(y,m||12,Number(parts.d)||(m?daysInMonth(parts.y,parts.m):31))];
 }
@@ -35,6 +35,7 @@ export function sameDate(a:DateParts,b:DateParts){return !!a.y&&a.y===b.y&&a.m==
 export function dateError(parts:DateParts,policy:DatePolicy,today=new Date(),after='',preserved=''){
  if(parts.legacy||!parts.y&&!parts.m&&!parts.d)return '';
  if(!parts.y)return 'Choose a year to finish this date.';
+ if(!/^[1-9]\d{3}$/.test(parts.y))return 'Enter a valid four-digit year.';
  if(parts.d&&!parts.m)return 'Choose a month for the selected day.';
  if(!interval(parts))return 'Choose a valid day for this month and year.';
  const range=interval(parts)!;const start=interval(dateParts(after));

@@ -128,3 +128,10 @@ test('graduates can choose past attendance ends in either month/year order',()=>
  assert.equal(dateError(dateParts('2021'),policy,today,'August 2021'),'');
  assert.equal(dateError(dateParts('May 2020'),policy,today,'August 2016'),'');
 });
+
+test('typed partial or invalid years stay pending and never emit a guessed date',()=>{
+ for(const y of ['2','20','202','abcd','20x5','0000']){
+  const parts={y,m:'5',d:'',legacy:false};assert.match(dateError(parts,'education-end',today),/four-digit year/);assert.equal(formatDate(parts),'');assert.equal(dateAllowed(parts,'education-end',today),false);
+ }
+ const complete={y:'2025',m:'5',d:'',legacy:false};assert.equal(dateError(complete,'education-end',today),'');assert.equal(formatDate(complete),'May 2025');
+});

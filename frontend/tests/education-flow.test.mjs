@@ -45,3 +45,24 @@ test('explicit source list and scalar choices stay synchronized, including omiss
  assert.equal(editImportFields({category:'project'},{project_urls:[]}).data.project_url,'');
  assert.deepEqual(editImportFields({category:'education',minors:['Old'],minor:'Old'},{minor:''}).data.minors,[]);
 });
+
+const {subjectDrafts}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('major and minor drafts retain spaces through character-by-character edits and newly added empty rows',()=>{
+ for(const field of ['major','minor']){
+  let data={category:'education',degree:'Bachelor of Science',[field+'s']:['']};
+  for(const char of 'Business Information Technology'){
+   const values=subjectDrafts(data,field);values[0]+=char;
+   data=editImportFields(data,{[field+'s']:values}).data;
+   assert.equal(subjectDrafts(data,field)[0],values[0]);
+  }
+  data=editImportFields(data,{[field+'s']:[...subjectDrafts(data,field),'']}).data;
+  assert.deepEqual(subjectDrafts(data,field),['Business Information Technology','']);
+  assert.deepEqual(educationPayload(data)[field+'s'],['Business Information Technology']);
+  const values=subjectDrafts(data,field);values[0]='changed';assert.equal(data[field+'s'][0],'Business Information Technology');
+ }
+});
+test('draft subjects preserve whitespace and duplicates until payload normalization',()=>{
+ const data={majors:['  Business Information Technology  ','business information technology',''],minor:'Applied Statistics '};
+ assert.deepEqual(subjectDrafts(data,'major'),data.majors);assert.deepEqual(subjectDrafts(data,'minor'),['Applied Statistics ']);
+ assert.deepEqual(educationPayload(data).majors,['Business Information Technology']);assert.equal(educationPayload(data).minor,'Applied Statistics');
+});
