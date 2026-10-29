@@ -93,7 +93,7 @@ def install(app,start_task,require_ai):
         # The exact text has not been downloaded yet; budget each selected file at the analysis cap.
         chosen=[f for f in source['data'].get('available_files',[]) if f['file_path'] in body.file_paths]
         visual,pages=project_documents.visual_files(user['id'],chosen)
-        return {**sources.estimate(user['id'],mode,min(60000,len(body.file_paths)*12000),visual_pages=pages,visual_count=len(visual)),'note':'Planning estimate for the selected files; actual extracted text and usage may be lower or higher.'}
+        return {**sources.estimate(user['id'],mode,min(60000,len(body.file_paths)*12000),visual_pages=pages,visual_count=len(visual),project=True,file_count=len(chosen)),'note':'Planning estimate for the selected files; actual extracted text and usage may be lower or higher.'}
     @app.post('/api/project-sources/{id}/select')
     async def select(id:str,body:Selection,user=Depends(auth.current)):
         return await sources.select(user['id'],id,body.file_paths,body.experience_id)
@@ -154,7 +154,7 @@ def install(app,start_task,require_ai):
     def estimate(id:str,mode:str='economy',user=Depends(auth.current)):
         data=sources.require(user['id'],id,'project_snapshot')['data']
         visual,pages=project_documents.visual_files(user['id'],data['files'])
-        return sources.estimate(user['id'],mode,sum(len(f['text']) for f in sources.passages(data)),visual_pages=pages,visual_count=len(visual))
+        return sources.estimate(user['id'],mode,sum(len(f['text']) for f in sources.passages(data)),visual_pages=pages,visual_count=len(visual),project=True,file_count=len(data['files']))
     @app.post('/api/project-snapshots/{id}/notes')
     def source_notes(id:str,user=Depends(auth.current)):
         snap=sources.require(user['id'],id,'project_snapshot')

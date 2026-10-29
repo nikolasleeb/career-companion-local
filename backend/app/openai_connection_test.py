@@ -9,7 +9,7 @@ router=APIRouter(prefix='/api/settings/openai-key/test')
 def init(c):
  c.execute('CREATE TABLE IF NOT EXISTS cc_openai_tests(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,token TEXT NOT NULL,credential_revision TEXT NOT NULL,task_id TEXT NOT NULL,model TEXT NOT NULL,checked_at TEXT NOT NULL,result TEXT NOT NULL,PRIMARY KEY(user_id,token))')
 def options(user):
- o=ai_settings.resolve(db.settings(user));efforts=ai_settings.CATALOG.get(o['model'],{}).get('efforts',ai_settings.EFFORTS);return {'model':o['model'],'reasoning_effort':efforts[0],'service_tier':'default','max_output_tokens':512}
+ o=ai_settings.resolve(db.settings(user));efforts=ai_settings.CATALOG.get(o['model'],{}).get('efforts',ai_settings.EFFORTS);return {'model':o['model'],'reasoning_effort':efforts[0],'service_tier':'default','max_output_tokens':ai_settings.output_limit(db.settings(user),512,ceiling=512)}
 def public(user):
  version=credentials.revision(user)
  if not version:return {'status':'not_configured','tested_at':None,'tested_model':None}
@@ -48,7 +48,7 @@ def install(app,start_task):
    result={}
    try:
     if credentials.revision(u)!=version:raise ServiceError('The saved key changed. Start a new test explicitly.')
-    reply=await asyncio.wait_for(ai.call_api({'model':o['model'],'input':'Reply with exactly OK.','reasoning':{'effort':o['reasoning_effort']},'service_tier':'default','max_output_tokens':512,'store':False},retry_allowed=False),60)
+    reply=await asyncio.wait_for(ai.call_api({'model':o['model'],'input':'Reply with exactly OK.','reasoning':{'effort':o['reasoning_effort']},'service_tier':'default','max_output_tokens':o['max_output_tokens'],'store':False},retry_allowed=False),60)
     if not ai.output_text(reply).strip():raise ServiceError('The test returned no text. Access could not be fully verified; no retry was sent.')
     result={'success':True,'model':o['model'],'message':'A short text response completed successfully. Voice and other features were not tested.'}
     return result

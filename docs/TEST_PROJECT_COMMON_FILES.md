@@ -11,3 +11,9 @@ Use fictional files and a disposable account. Never use a real provider call for
 - Another account cannot download or analyze the original. Missing or changed originals must stop preparation before a provider call. Export/import must retain original bytes and remap all nested references; missing originals or forged hashes must reject the backup before any records are written. Account cleanup removes project originals with their dependent upload records. These files cannot be imported as resumes.
 
 Verify desktop and narrow-screen geometry, reopening after reload, mixed uploads plus GitHub links, and the normal top progress bar throughout preparation and the provider request. Do not replace a live deployment while a user task is running.
+
+## Response budgets and settings
+
+Project analysis requests compact findings with 32,000 response tokens automatically, or 64,000 for more than eight files, more than 20 visual pages/slides, or extra-high/maximum reasoning. Settings → AI setup provides Automatic or a saved account response limit from 1 to 128,000 tokens. The selected limit includes reasoning and formatting tokens; input tokens are billed separately. Project estimates show the effective limit. The preference is included in account backups and affects only future calls. It does not change the model or reasoning level. Connection tests and Application Assistant retain their smaller budgets; image generation and audio use separate limits.
+
+Simulate an incomplete provider response: exactly one POST, recorded incomplete usage and effective limit, no replacement of earlier analysis, and no automatic retry. Simulate a temporary provider failure and verify the same no-retry behavior. Work Styles autosaves and free estimate POSTs must not create global processing entries; their screen retains save/error feedback while real provider tasks stay visible.

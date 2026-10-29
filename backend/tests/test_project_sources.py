@@ -93,7 +93,7 @@ def test_two_repositories_have_distinct_files_one_analysis_and_reusable_links(cl
     assert snap['data']['urls']==urls and len(snap['data']['members'])==2
     assert len({f['url'] for f in snap['data']['files']})==2
     assert all('/blob/'+f['commit']+'/README.md' in f['url'] for f in snap['data']['files'])
-    async def fake(schema,payload,mode):
+    async def fake(schema,payload,mode,**kwargs):
         paid.append(payload)
         assert len(payload['files'])==2 and len({f['repository'] for f in payload['files']})==2
         return {'summary':'Original and extension materials.','findings':[{'file_path':f['file_path'],'quote':f['text'],'observation':'Source content.'} for f in payload['files']],'questions':['What was your individual contribution across both classes?']},{'model':'fixture'}

@@ -14,6 +14,11 @@ CATALOG={
  'gpt-5.6-sol':{'name':'Sol 5.6','input':4.,'cached_input':.4,'output':20.},
 }
 
+def output_limit(profile,automatic,*,ceiling=128000):
+    configured=profile.get('ai_max_output_tokens',0)
+    if type(configured) is not int or not 0<=configured<=128000:raise ValueError('Choose Automatic or a response limit from 1 to 128,000 tokens.')
+    return min(configured or automatic,ceiling)
+
 def speeds(model):
     return ['standard','fast','ultrafast'] if model=='gpt-6.1-sol' else ['standard','fast'] if model in CATALOG else ['standard']
 
@@ -44,16 +49,17 @@ def resolve(profile,mode=None):
         model=config.MODEL;effort='high' if mode=='deep' else 'low';speed='standard'
     return {'model':model,'reasoning_effort':effort,'mode':mode,'speed':speed,'service_tier':'default' if speed=='standard' else speed}
 
-def estimate(model,effort,input_tokens=6000,answer_tokens=1500,service_tier='default'):
+def estimate(model,effort,input_tokens=6000,answer_tokens=1500,service_tier='default',max_output_tokens=None):
     rate=rates(model,service_tier)
     output=answer_tokens+REASONING_ALLOWANCE[effort]
+    if max_output_tokens is not None:output=min(output,max_output_tokens)
     return {'usd':round((input_tokens*rate['input']+output*rate['output'])/1_000_000,6) if rate else None,
             'input_tokens':input_tokens,'answer_tokens':answer_tokens,'assumed_reasoning_tokens':REASONING_ALLOWANCE[effort],
             'total_output_tokens':output,'service_tier':service_tier,'pricing_date':PRICE_DATE,'kind':'illustrative estimate; not a quote'}
 
 def public(profile):
     active=resolve(profile)
-    return {'active':{**active,'estimate':estimate(active['model'],active['reasoning_effort'],service_tier=active['service_tier'])},
+    return {'active':{**active,'estimate':estimate(active['model'],active['reasoning_effort'],service_tier=active['service_tier'],max_output_tokens=profile.get('ai_max_output_tokens') or None)},
             'catalog':[{**rate,'id':model,'efforts':rate.get('efforts',EFFORTS),'speeds':[{'id':speed,'name':SPEED_NAMES[speed],'rates':rates(model,speed)} for speed in speeds(model)],'url':'https://developers.openai.com/api/docs/models/'+model} for model,rate in CATALOG.items()],
             'reasoning_allowance':REASONING_ALLOWANCE,'pricing_date':PRICE_DATE,
             'custom_model':profile.get('custom_model','gpt-5.6-terra'),'custom_reasoning':profile.get('custom_reasoning','medium'),'custom_speed':profile.get('custom_speed','standard')}

@@ -229,6 +229,7 @@ class SettingsUpdate(StrictModel):
     custom_model: Literal['gpt-6.1-sol','gpt-6-luna','gpt-5.6-sol','gpt-5.6-luna','gpt-5.6-terra'] | None = None
     custom_reasoning: Literal['none','low','medium','high','xhigh','max'] | None = None
     custom_speed: Literal['standard','fast','ultrafast'] | None = None
+    ai_max_output_tokens: int | None = Field(default=None,ge=0,le=128000,strict=True)
     mode: Literal['economy','deep','custom'] | None = None
     name: str | None = Field(default=None,max_length=150)
     contact: str | None = Field(default=None,max_length=500)

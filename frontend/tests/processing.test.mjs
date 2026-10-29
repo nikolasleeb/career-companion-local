@@ -94,3 +94,18 @@ test('upload byte progress changes to waiting without resetting total time or cr
  report({loaded:2048,total:2048,sent:true});assert.equal(store.snapshot()[0].progress.kind,'upload_wait');assert.equal(store.snapshot()[0].progress.label,'Waiting for ZIP preview');assert.equal(store.snapshot()[0].progress.started_at,started);
  store.setOwner('two');report({loaded:2048,total:2048,sent:true});assert.deepEqual(store.snapshot(),[]);wait.resolve({id:'source'});await pending;assert.deepEqual(store.snapshot(),[]);
 });
+
+test('Work Styles autosaves and free estimates never flash a processing entry',async()=>{
+ const store=new ProcessingStore();store.setOwner('one');let notices=0;store.subscribe(()=>{if(store.snapshot().length)notices++;});
+ for(const [path,method] of [['/work-style/example/progress','PUT'],['/profile/work-preferences/summary/estimate','POST'],['/project-sources/source/estimate?mode=deep','POST']]){
+  const pending=deferred(),request=store.request(path,method,()=>pending.promise);
+  assert.equal(store.snapshot().length,0);pending.resolve({saved:true});await request;
+ }
+ assert.equal(notices,0);
+});
+
+test('A failed background Work Styles save rejects locally without inventing an AI task',async()=>{
+ const store=new ProcessingStore();store.setOwner('one');store.update({...task('real-ai'),progress:{code:'provider',kind:'provider',label:'Waiting for AI response'}});
+ await assert.rejects(store.request('/work-style/example/progress','PUT',async()=>{throw new Error('Offline');}));
+ assert.equal(store.snapshot().length,1);assert.equal(store.snapshot()[0].id,'real-ai');assert.equal(store.snapshot()[0].connection_lost,false);
+});
