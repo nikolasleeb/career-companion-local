@@ -41,7 +41,8 @@ def test_profile_analysis_has_no_questions_no_new_draft_and_one_dispatch(client,
     monkeypatch.setattr(config,'OPENAI_KEY','fictional-no-network');record,snap,old=project(client,account['id'])
     legacy=db.save(account['id'],'answer_draft',{'version':1,'status':'draft','builder':'project','title':'Old notes','text':'My typed notes.','contribution':'','experience_id':record['id'],'snapshot_id':snap['id'],'analysis_id':old['id'],'questions':[{'id':'old','text':'What did you do?'}],'question_answers':{'old':'I wrote the report.'},'findings':[],'history':[]})
     calls=[]
-    async def provider(body):
+    async def provider(body,**kwargs):
+        assert kwargs.get('retry_allowed') is False
         calls.append(body);payload=json.loads(body['input']);assert 'Do not ask applicant questions' in payload['task']
         assert set(body['text']['format']['schema']['properties'])=={'summary','findings'}
         return {'output':[{'content':[{'type':'output_text','text':json.dumps({'summary':'Materials describe modeling.','findings':old['data']['findings'] and [{k:v for k,v in old['data']['findings'][0].items() if k in ('file_path','quote','observation')}]})}]}]}
