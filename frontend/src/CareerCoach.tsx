@@ -1,4 +1,3 @@
-import {goalLabel} from './CareerGoals';
 import {readPlanningDraft,planningDraftKey} from './planWorkspaceData';
 import {goalLabel} from './CareerGoals';
 import {PlanChecklist} from './PlanChecklist';
