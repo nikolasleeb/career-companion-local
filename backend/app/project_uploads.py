@@ -8,7 +8,7 @@ import zipfile
 import zlib
 from pathlib import PurePosixPath
 from fastapi import HTTPException
-from . import db, project_sources as sources
+from . import db, project_sources as sources, project_documents
 from .network import ServiceError
 
 MAX_UPLOAD=32*1024*1024
@@ -47,6 +47,7 @@ def preview(user,uploads,experience_id=''):
         size=len(entry['text'].encode())
         if text_bytes+size>sources.MAX_TOTAL:omit(path,'2 MB extracted preview text limit');return
         text_bytes+=size
+        if entry.get('visual_needed'):entry['_visual_raw']=raw
         files.append({**entry,'size':len(raw),'suggested':True,'archive':archive,'original_sha256':hashlib.sha256(raw).hexdigest()})
     for filename,raw in uploads:
         filename=filename.replace('\\','/')
@@ -79,8 +80,10 @@ def preview(user,uploads,experience_id=''):
                         add(path,content,archive)
                     except (zipfile.BadZipFile,RuntimeError,NotImplementedError,EOFError,OSError,zlib.error):omit(path,'ZIP member could not be read')
         except (zipfile.BadZipFile,EOFError,OSError):raise HTTPException(400,'This ZIP could not be read. Export a standard, unencrypted ZIP or upload individual files.') from None
-    if not files:raise HTTPException(400,'No readable project files. Upload code, notebooks, text, PDF or DOCX in a standard ZIP or as individual files.')
-    return db.save(user,'project_source',{'version':1,'provider':'upload_preview','label':uploads[0][0][:200]+(' and other files' if len(uploads)>1 else ''),'available_files':files,'excluded':excluded,'experience_id':experience_id,'urls':[],'archived':False})
+    if not files:raise HTTPException(400,'No readable project files. Upload code, notebooks, Office documents, PDFs or images in a standard ZIP or as individual files.')
+    created=project_documents.persist_entries(user,files)
+    try:return db.save(user,'project_source',{'version':1,'provider':'upload_preview','label':uploads[0][0][:200]+(' and other files' if len(uploads)>1 else ''),'available_files':files,'excluded':excluded,'experience_id':experience_id,'urls':[],'archived':False})
+    except Exception:project_documents.cleanup(user,created);raise
 
 def safe_path(path):
     p=PurePosixPath(path)

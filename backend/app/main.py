@@ -503,6 +503,8 @@ def remove_record(entity_id:str,user=Depends(auth.current)):
     if record['kind'] in ('onboarding','profile_answer','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts'):raise HTTPException(409,'Archive reviewed answers to preserve their source history.')
     if record['kind'] in ('job','analysis','resume','resume_draft','resume_revision','resume_conversation','application','cover_workspace','cover_revision','cover_letter','search'):onboarding.require_complete(user['id'])
     if record['kind']=='document':
+        if record['data'].get('purpose')=='project_material' and any(account_cleanup.refs(row['data'],{entity_id}) for kind in ('project_source','project_snapshot') for row in db.list_entities(user['id'],kind)):
+            raise HTTPException(409,'This original is used by saved project materials. Remove project uploads through Settings to preserve their references.')
         if record['data'].get('purpose')=='certificate' and any(v.get('document_id')==entity_id for row in db.list_entities(user['id'],'experience') for v in row['data'].get('certification_items',[])):
             raise HTTPException(409,'Remove this attachment from its certification before deleting the file.')
         file=config.DATA_DIR/'uploads'/user['id']/entity_id
@@ -590,13 +592,13 @@ class DocumentReview(StrictModel):
 @app.put('/api/documents/{entity_id}/review')
 def review_document(entity_id:str,body:DocumentReview,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'document')
-    if record['data'].get('purpose') in ('application','interview_prep'):raise HTTPException(400,'Review application resume text within its application.')
+    if record['data'].get('purpose') in ('application','interview_prep','project_material'):raise HTTPException(400,'Review application resume text within its application.')
     return db.save(user['id'],'document',{**record['data'],'text':body.text,'reviewed':True,'source_text_corrected':True},entity_id)
 
 @app.post('/api/documents/{entity_id}/parse')
 def parse_resume_document(entity_id:str,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'document');data=dict(record['data'])
-    if record['data'].get('purpose') in ('certificate','application','interview_prep'): raise HTTPException(400,'Manage this document in its original application or certification.')
+    if record['data'].get('purpose') in ('certificate','application','interview_prep','project_material'): raise HTTPException(400,'Manage this document in its original application or certification.')
     text=data['text']
     if data.get('format')=='docx' and not data.get('reviewed'):
         path=config.DATA_DIR/'uploads'/user['id']/entity_id
@@ -615,7 +617,7 @@ def parse_resume_document(entity_id:str,user=Depends(auth.current)):
 @app.get('/api/documents/{entity_id}/import-preview')
 def preview_resume_import(entity_id:str,user=Depends(auth.current)):
     document=require(user['id'],entity_id,'document')['data']
-    if document.get('purpose') in ('application','interview_prep'):raise HTTPException(400,'Application files are not Profile imports.')
+    if document.get('purpose') in ('application','interview_prep','project_material'):raise HTTPException(400,'Application files are not Profile imports.')
     return profile_import.preview(document.get('resume_parse') or {},db.list_entities(user['id'],'experience'))
 
 @app.post('/api/documents/{entity_id}/import-resume')
@@ -630,7 +632,7 @@ def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(a
         row=c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='document'",(entity_id,user['id'])).fetchone()
         if not row: raise HTTPException(404,'Document not found.')
         document=json.loads(row['payload'])
-        if document.get('purpose') in ('application','interview_prep'):raise HTTPException(400,'Application files are not Profile imports.')
+        if document.get('purpose') in ('application','interview_prep','project_material'):raise HTTPException(400,'Application files are not Profile imports.')
         parsed=document.get('resume_parse') or {}
         if body.text_hash!=parsed.get('text_hash') or hashlib.sha256(document['text'].encode()).hexdigest()!=body.text_hash:
             raise HTTPException(409,'The source changed. Parse the updated text and review its suggestions again.')
@@ -1421,8 +1423,15 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if by_id[old]['data'].get('purpose') in ('application','job_example','interview_prep'):
                 checked=application_documents.inspect(by_id[old]['data']['filename'],decoded[ids[old]])
                 if checked['sha256']!=by_id[old]['data'].get('sha256'):raise ValueError()
+            if by_id[old]['data'].get('purpose')=='project_material':
+                from . import project_documents
+                project_documents.validate_original(by_id[old]['data'],decoded[ids[old]])
             if by_id[old]['data'].get('purpose')=='certificate':
                 certifications.inspect_file(by_id[old]['data']['filename'],decoded[ids[old]])
+        for record in records:
+            if record['kind'] in ('project_source','project_snapshot'):
+                for f in record['data'].get('available_files',record['data'].get('files',[])):
+                    if f.get('visual_document_id') and f['visual_document_id'] not in payload.get('files',{}):raise ValueError('Missing original project file')
         profile=SettingsUpdate.model_validate(payload.get('profile',{})).model_dump(exclude_none=True)
         ai_settings.validate_custom({**db.settings(user['id']),**profile})
         if profile.get('contact') and 'contact_reviewed' not in profile: profile['contact_reviewed']=False

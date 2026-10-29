@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from . import db
 from .network import ServiceError
 
-NOTICE='Project materials describe artifacts, not confirmed personal contributions. Use only to ask posting-specific questions; reuse already reviewed answers first.'
+NOTICE='Visual/file findings are unverified AI interpretations to check against the original. Project materials describe artifacts, not confirmed personal contributions. Use only to ask posting-specific questions; reuse already reviewed answers first.'
 
 def answered_questions(user):
     from .profile_answers import confirmed,norm,experience_ids
@@ -45,7 +45,8 @@ def catalog(user,data):
             if value.get('provider')=='github' and links and links!=saved:continue
             seen.add(rid)
         files={f['file_path']:f['text'] for f in value['files']}
-        findings=[copy.deepcopy(f) for f in (analysis or {}).get('data',{}).get('findings',[]) if f.get('file_path') in files and f.get('quote') and f['quote'] in files[f['file_path']]]
+        originals={f['file_path']:f for f in value['files'] if f.get('visual_document_id')}
+        findings=[copy.deepcopy(f) for f in (analysis or {}).get('data',{}).get('findings',[]) if f.get('file_path') in files and ((f.get('evidence_kind','text')=='text' and f.get('quote') and f['quote'] in files[f['file_path']]) or f.get('requires_review') and f.get('evidence_kind') in ('visual','file') and f.get('visual_document_id') and f.get('visual_document_id')==originals.get(f['file_path'],{}).get('visual_document_id'))]
         results.append({'context_id':analysis['id'] if analysis else sid,'experience_id':rid if project else '',
             'project_title':project['data']['title'] if project else value['label'],'snapshot_id':sid,'analysis_id':analysis['id'] if analysis else '',
             'label':value['label'],'summary':(analysis or {}).get('data',{}).get('summary',''),'findings':findings,

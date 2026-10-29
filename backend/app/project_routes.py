@@ -3,8 +3,9 @@ import asyncio
 import json
 import re
 from fastapi import Depends, UploadFile, File, Form, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import Field, StrictInt
-from . import auth, db, project_uploads, project_sources as sources, work_style, answer_drafts
+from . import auth, db, project_uploads, project_documents, project_sources as sources, work_style, answer_drafts
 from .models import StrictModel
 from .network import ServiceError
 
@@ -90,7 +91,9 @@ def install(app,start_task,require_ai):
         available={f['file_path'] for f in source['data'].get('available_files',[])}
         if len(set(body.file_paths))!=len(body.file_paths) or set(body.file_paths)-available:raise HTTPException(400,'Choose files from this project.')
         # The exact text has not been downloaded yet; budget each selected file at the analysis cap.
-        return {**sources.estimate(user['id'],mode,min(60000,len(body.file_paths)*12000)),'note':'Planning estimate for the selected files; actual extracted text and usage may be lower or higher.'}
+        chosen=[f for f in source['data'].get('available_files',[]) if f['file_path'] in body.file_paths]
+        visual,pages=project_documents.visual_files(user['id'],chosen)
+        return {**sources.estimate(user['id'],mode,min(60000,len(body.file_paths)*12000),visual_pages=pages,visual_count=len(visual)),'note':'Planning estimate for the selected files; actual extracted text and usage may be lower or higher.'}
     @app.post('/api/project-sources/{id}/select')
     async def select(id:str,body:Selection,user=Depends(auth.current)):
         return await sources.select(user['id'],id,body.file_paths,body.experience_id)
@@ -129,16 +132,29 @@ def install(app,start_task,require_ai):
             except ServiceError as e:excluded.append({'file_path':path,'reason':str(e)});continue
             if sum(len(x['text'].encode()) for x in selected)+len(entry['text'].encode())>sources.MAX_TOTAL:
                 excluded.append({'file_path':path,'reason':'2 MB extracted text limit'});continue
+            if entry.get('visual_needed'):entry['_visual_raw']=raw
             selected.append(entry)
-        if not selected:raise HTTPException(400,'No readable files. Use text/code, notebooks, PDF, or DOCX; archives and binaries are excluded.')
-        source=db.save(user['id'],'project_source',{'provider':'upload','label':selected[0]['file_path']+(' and other files' if len(selected)>1 else ''),'archived':False,'version':1})
-        return sources.snapshot(user['id'],source,selected,excluded,experience_id)
+        if not selected:raise HTTPException(400,'No readable files. Use code, notebooks, Office documents, PDFs or images; archives and binaries are excluded.')
+        created=project_documents.persist_entries(user['id'],selected)
+        try:
+            source=db.save(user['id'],'project_source',{'provider':'upload','label':selected[0]['file_path']+(' and other files' if len(selected)>1 else ''),'archived':False,'version':1})
+            return sources.snapshot(user['id'],source,selected,excluded,experience_id)
+        except Exception:project_documents.cleanup(user['id'],created);raise
+    @app.get('/api/project-documents/{id}/download')
+    def project_download(id:str,user=Depends(auth.current)):
+        row=sources.require(user['id'],id,'document')
+        if row['data'].get('purpose')!='project_material':raise HTTPException(404,'Project file not found.')
+        from . import config
+        path=config.DATA_DIR/'uploads'/user['id']/id
+        if not path.is_file():raise HTTPException(404,'Project file unavailable.')
+        return FileResponse(path,media_type='application/octet-stream',filename=row['data']['filename'],headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'})
     @app.get('/api/project-snapshots/{id}')
     def snapshot(id:str,user=Depends(auth.current)):return sources.require(user['id'],id,'project_snapshot')
     @app.get('/api/project-snapshots/{id}/estimate')
     def estimate(id:str,mode:str='economy',user=Depends(auth.current)):
         data=sources.require(user['id'],id,'project_snapshot')['data']
-        return sources.estimate(user['id'],mode,sum(len(f['text']) for f in sources.passages(data)))
+        visual,pages=project_documents.visual_files(user['id'],data['files'])
+        return sources.estimate(user['id'],mode,sum(len(f['text']) for f in sources.passages(data)),visual_pages=pages,visual_count=len(visual))
     @app.post('/api/project-snapshots/{id}/notes')
     def source_notes(id:str,user=Depends(auth.current)):
         snap=sources.require(user['id'],id,'project_snapshot')
@@ -224,6 +240,14 @@ def validate_backup(record,kinds,by_id):
         if not data.get('source_id') or not 1<=len(data['files'])<=30:raise ValueError()
         if any(not sources.allowed(f['file_path']) or not isinstance(f['text'],str) or len(f['text'].encode())>sources.MAX_FILE for f in data['files']):raise ValueError()
         if sum(len(f['text'].encode()) for f in data['files'])>sources.MAX_TOTAL:raise ValueError()
+    if kind in ('project_source','project_snapshot'):
+        for file in data.get('files',[]) if kind=='project_snapshot' else data.get('available_files',[]):
+            if not file.get('visual_needed'):continue
+            original=by_id.get(file.get('visual_document_id'),{})
+            if original.get('kind')!='document' or original.get('data',{}).get('purpose')!='project_material' or original['data'].get('sha256')!=file.get('original_sha256') or file.get('review_kind') not in ('pdf','image','file') or not isinstance(file.get('pages'),int) or not 0<=file['pages']<=100:raise ValueError('Invalid project original metadata')
+    if kind=='project_analysis':
+        snap=by_id.get(data.get('snapshot_id'),{}).get('data',{})
+        for finding in data.get('findings',[]):validate_finding(finding,snap)
     if kind=='answer_draft':
         Draft(expected_version=data['version'],title=data['title'],text=data.get('text',''),contribution=data.get('contribution',''),question_answers=data.get('question_answers',{}))
         if data['status'] not in ('draft','rejected','reviewed') or data['builder'] not in ('project','work_style'):raise ValueError()
@@ -238,6 +262,7 @@ def validate_nested_references(value,kinds,by_id=None):
         for item in value:validate_nested_references(item,kinds,by_id)
     elif isinstance(value,dict):
         for key,item in value.items():
+            if key=='visual_document_id' and item and (kinds.get(item)!='document' or by_id is not None and by_id[item]['data'].get('purpose')!='project_material'):raise ValueError('Invalid original project file reference')
             if key=='project_snapshot_ids' and (not isinstance(item,list) or any(kinds.get(id)!='project_snapshot' for id in item)):raise ValueError()
             if key=='project_context_ids' and (not isinstance(item,list) or any(kinds.get(id) not in ('project_snapshot','project_analysis') for id in item)):raise ValueError()
             if key=='experience_ids' and ('answer_kind' in value or value.get('kind') in ('experience','motivation')) and (not isinstance(item,list) or len(item)>10 or len(set(item))!=len(item) or any(not isinstance(id,str) or kinds.get(id)!='experience' for id in item)):raise ValueError()
@@ -250,6 +275,19 @@ def validate_nested_references(value,kinds,by_id=None):
                     if ref.get('analysis_id') and kinds.get(ref['analysis_id'])!='project_analysis':raise ValueError()
                     if by_id:
                         if ref.get('analysis_id') and by_id[ref['analysis_id']]['data']['snapshot_id']!=ref['snapshot_id']:raise ValueError()
-                        files={f['file_path']:f['text'] for f in by_id[ref['snapshot_id']]['data']['files']}
-                        if any(not f.get('quote') or f.get('file_path') not in files or f['quote'] not in files[f['file_path']] for f in ref.get('findings',[])):raise ValueError()
+                        for finding in ref.get('findings',[]):validate_finding(finding,by_id[ref['snapshot_id']]['data'])
             validate_nested_references(item,kinds,by_id)
+
+
+def validate_finding(finding,snapshot):
+    file=next((f for f in snapshot.get('files',[]) if f['file_path']==finding.get('file_path')),None)
+    if not file:raise ValueError('Invalid project finding file')
+    kind=finding.get('evidence_kind','text')
+    if kind=='text':
+        if not finding.get('quote') or finding['quote'] not in file['text'] or file['text']==project_documents.NOTICE:raise ValueError('Invalid project quote')
+    elif kind in ('visual','file'):
+        page=finding.get('page',0)
+        if not finding.get('requires_review') or not finding.get('visual_document_id') or finding['visual_document_id']!=file.get('visual_document_id') or not file.get('visual_needed') or not isinstance(page,int) or not 0<=page<=100:raise ValueError('Invalid original project finding')
+        if kind=='visual' and (file.get('review_kind') not in ('pdf','image') or page<1):raise ValueError('Invalid visual project finding')
+        if kind=='file' and file.get('review_kind')!='file':raise ValueError('Invalid file project finding')
+    else:raise ValueError('Unknown project finding kind')

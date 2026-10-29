@@ -16,7 +16,7 @@ ARG APP_REVISION=unknown
 ARG APP_BUILT_AT=
 ARG APP_CHANNEL=custom
 LABEL org.opencontainers.image.source="https://github.com/nikolasleeb/career-companion-local" org.opencontainers.image.version="$APP_VERSION" org.opencontainers.image.revision="$APP_REVISION"
-RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core fonts-liberation libreoffice-writer poppler-utils tesseract-ocr tesseract-ocr-eng && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core fonts-liberation libreoffice-writer libreoffice-impress poppler-utils tesseract-ocr tesseract-ocr-eng && rm -rf /var/lib/apt/lists/*
 COPY backend/requirements.lock ./requirements.lock
 RUN pip install --no-cache-dir -r requirements.lock
 ARG INSTALL_JOBSPY=false

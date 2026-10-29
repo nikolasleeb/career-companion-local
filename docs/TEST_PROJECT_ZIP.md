@@ -11,7 +11,7 @@ Use a disposable account and fictional project materials. No OpenAI request star
 7. Choose Analyze once. The preparation/progress bar should stay visible; the normal model/cost confirmation and existing request-token protection still apply. Reopening materials should load the saved snapshot/results without starting another analysis.
 8. Export and restore an ordinary account backup in the disposable account. Local preview text, original file/archive names, source hashes, selected snapshot and reference links should be retained. Another account must not be able to read or select the source IDs.
 
-Only bounded extracted text and provenance are saved. The ZIP container and excluded files are not retained. Keep your own original archive. Existing individual-file uploads and older snapshots/backups continue to work.
+Bounded extracted text and provenance are saved. Originals needing explicit OpenAI file or visual review are also retained privately and included in account backups; see TEST_PROJECT_COMMON_FILES.md. The ZIP container and excluded files are not retained. Keep your own original archive. Existing individual-file uploads and older snapshots/backups continue to work.
 
 ## Oversized uploads and transfer progress
 
