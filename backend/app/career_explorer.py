@@ -136,14 +136,14 @@ def explore(body:Explore,user=Depends(auth.current)):
  def industry_share(o):return max((o['sectors'].get(code,0) for code in selected_industries),default=0)
  p=profile(user['id'])
  skill_choices={s['id']:s['title'] for s in p['skill_options']}
- if any(id not in skill_choices for id in body.profile_skill_ids):raise HTTPException(409,'A selected skill is no longer in your confirmed Profile. Reload Career Explorer and review your selection.')
+ if any(id not in skill_choices for id in body.profile_skill_ids):raise HTTPException(409,'A selected skill is no longer in your confirmed Profile. Reload Explore Occupations and review your selection.')
  selected_skills=list(dict.fromkeys(skill_choices[id] for id in body.profile_skill_ids))
  selected_keys={name:career_evidence.canonical(name) for name in selected_skills}
  skill_matches={code:[name for name,key in selected_keys.items() if key in names] for code,names in OCCUPATION_SKILLS.items()} if selected_skills else {}
  selected_courses=[]
  if body.mode=='studies':
   choices={c['id']:c['title'] for c in p['course_options']}
-  if any(id not in choices for id in body.profile_course_ids):raise HTTPException(409,'A selected course is no longer in your confirmed Profile. Reload Career Explorer and review your selection.')
+  if any(id not in choices for id in body.profile_course_ids):raise HTTPException(409,'A selected course is no longer in your confirmed Profile. Reload Explore Occupations and review your selection.')
   selected_courses=[choices[id] for id in dict.fromkeys(body.profile_course_ids)]
   if not (body.major.strip() or body.courses.strip() or selected_courses):raise HTTPException(422,'Enter a major, select a Profile course, or choose Explore other directions.')
  links,matched=study_links(body,selected_courses) if body.mode=='studies' else ({},[])

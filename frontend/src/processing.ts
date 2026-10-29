@@ -2,7 +2,7 @@ import type {TaskStatus} from './taskProgress';
 export type ProcessingEntry=TaskStatus&{id:string;request?:boolean;settled?:boolean;serial:number;label?:string};
 const active=(s:string)=>['queued','running','cancelling','unknown'].includes(s);
 export function actionLabel(path:string){
- if(path.includes('/profile-review/actions'))return 'Reviewing Career Explorer Profile connections';
+ if(path.includes('/profile-review/actions'))return 'Reviewing Explore Occupations Profile connections';
  if(/^\/cover-workspaces\/[^/]+\/(?:message|answers\/review)$/.test(path))return 'Reviewing cover-letter answers or changes';
  if(/^\/cover-workspaces\/[^/]+\/questions$/.test(path))return 'Preparing cover-letter questions';
  if(/^\/cover-workspaces\/[^/]+\/generate$/.test(path))return 'Building cover letter';

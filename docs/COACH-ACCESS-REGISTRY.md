@@ -10,7 +10,7 @@
 | Project analysis / Explorer review | Completed saved findings, source passages, limitations and outdated status. Generated interpretation remains separate from applicant evidence. |
 | Resumes / letters | Final saved documents, not draft workspaces, unfinalized revisions or pending proposals. |
 | Applications / postings | Professional posting and tracking fields only. No private answers, offers, sensitive disclosures or workflow drafts. |
-| Careers / searches / plans | Saved career interests, applied search criteria, saved skills plans and explicitly saved reviewed Career Plans. |
+| Careers / searches / plans | Saved career interests, applied search criteria, saved skills plans and explicitly saved reviewed Action Plans. |
 | Interview feedback | Completed saved coaching output, excluding raw answers and proposed useful-details records. Not confirmed applicant experience. |
 | Career Goals | Existing automatic-guidance consent remains required. |
 | Work Styles | Reviewed summary requires existing guidance consent. Report/scores additionally require existing explicit Coach report permission. Raw questionnaire answers never enter retrieval. |

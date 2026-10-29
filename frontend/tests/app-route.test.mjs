@@ -32,3 +32,11 @@ test('legacy Work Styles links preserve attempt identities in canonical Profile 
  route.resetRoutes();location.hash='#/work-styles?item=attempt-2';route.initializeRoutes('legacy',true);
  assert.deepEqual(route.routeNow(),{view:'master',tab:'workstyles',item:'attempt-2'});assert.equal(location.hash,'#/profile?tab=workstyles&item=attempt-2');
 });
+
+test('skill resource links retain a bounded topic and exact plan milestone references',()=>{
+ const value={view:'prep',topic:'Patient communication',plan:'saved123',milestone:'step:abc'};
+ assert.deepEqual(route.parseRoute(route.routeHash(value)),value);
+ assert.deepEqual(route.parseRoute('#/skills?topic='+encodeURIComponent('x'.repeat(151))),{view:'prep'});
+ assert.deepEqual(route.parseRoute('#/skills?topic='+encodeURIComponent('SQL\nsecret')),{view:'prep'});
+ assert.equal(route.routeHash({view:'coach',item:'chat1',plan:'version2',milestone:'step:abc'}),'#/career-plans?item=chat1&plan=version2&milestone=step%3Aabc');
+});

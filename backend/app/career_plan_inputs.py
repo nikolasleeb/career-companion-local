@@ -15,6 +15,7 @@ class PlanInput(StrictModel):
     goals_revision: int = Field(default=0, ge=0)
 
 class MilestoneEdit(StrictModel):
+    learning_topics: list[Annotated[str,Field(min_length=1,max_length=150)]] | None = Field(default=None,max_length=5)
     id: str = Field(min_length=1, max_length=100)
     title: str = Field(min_length=1, max_length=160)
     steps: list[Annotated[str, Field(min_length=1, max_length=1000)]] = Field(min_length=1, max_length=5)

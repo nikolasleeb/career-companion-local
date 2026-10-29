@@ -1,11 +1,123 @@
 [
- {"id":"sql_lemur","skill":"SQL","title":"DataLemur SQL and data interview practice","url":"https://datalemur.com/questions","description":"Practice SQL and data interview questions. Check each question's access requirements.","access":"Free and premium questions","activity":"Practice a join and an aggregation; explain why your query answers the question."},
- {"id":"sql_bolt","skill":"SQL","title":"SQLBolt interactive lessons","url":"https://sqlbolt.com/","description":"Browser-based SQL lessons and exercises.","access":"Check provider for current access","activity":"Complete a lesson, then write a query on your own example data."},
- {"id":"python","skill":"Python","title":"Official Python tutorial","url":"https://docs.python.org/3/tutorial/","description":"Python language fundamentals from the official documentation.","access":"Public documentation","activity":"Write a small script and explain the inputs, errors, and output."},
- {"id":"stats","skill":"Statistics","title":"OpenIntro statistics resources","url":"https://www.openintro.org/book/os/","description":"Statistics concepts, examples, and textbook resources.","access":"Check provider for current options","activity":"Explain one statistical assumption and test it on practice data."},
- {"id":"powerbi","skill":"Dashboards","title":"Microsoft Learn Power BI","url":"https://learn.microsoft.com/en-us/training/powerplatform/power-bi","description":"Power BI learning paths and modules.","access":"Public learning material; software access varies","activity":"Build one chart around a clear question; document a design choice."},
- {"id":"git","skill":"Git","title":"GitHub Skills","url":"https://skills.github.com/","description":"Guided exercises for GitHub workflows.","access":"GitHub account may be required","activity":"Create meaningful commits and review a small change."},
- {"id":"net","skill":"Networking","title":"Cisco Skills for All","url":"https://www.netacad.com/","description":"Networking and IT learning catalog.","access":"Account and course access vary","activity":"In a permitted lab, document a DNS or connectivity investigation."},
- {"id":"linux","skill":"Linux","title":"Ubuntu command line tutorial","url":"https://ubuntu.com/tutorials/command-line-for-beginners","description":"An introduction to working with the Linux command line.","access":"Public tutorial","activity":"Practice file navigation and permissions in a lab; write reproducible steps."},
- {"id":"support","skill":"Troubleshooting","title":"Microsoft Windows troubleshooting","url":"https://learn.microsoft.com/en-us/troubleshoot/windows-client/","description":"Technical troubleshooting documentation for Windows clients.","access":"Public documentation","activity":"Write a support ticket with symptoms, investigation, verification, and escalation."}
+  {
+    "id": "sql_lemur",
+    "skill": "SQL",
+    "title": "DataLemur — SQL and Data Interview Questions",
+    "url": "https://datalemur.com/questions",
+    "description": "Practice SQL and data interview questions. Check each question's access requirements.",
+    "access": "Free and premium questions",
+    "activity": "Practice a join and an aggregation; explain why your query answers the question."
+  },
+  {
+    "id": "sql_bolt",
+    "skill": "SQL",
+    "title": "SQLBolt — Interactive SQL Lessons",
+    "url": "https://sqlbolt.com/",
+    "description": "Browser-based SQL lessons and exercises.",
+    "access": "Check provider for current access",
+    "activity": "Complete a lesson, then write a query on your own example data."
+  },
+  {
+    "id": "python",
+    "skill": "Python",
+    "title": "Python documentation — The Python Tutorial",
+    "url": "https://docs.python.org/3/tutorial/",
+    "description": "Python language fundamentals from the official documentation.",
+    "access": "Public documentation",
+    "activity": "Write a small script and explain the inputs, errors, and output."
+  },
+  {
+    "id": "stats",
+    "skill": "Statistics",
+    "title": "OpenIntro — OpenIntro Statistics",
+    "url": "https://www.openintro.org/book/os/",
+    "description": "Statistics concepts, examples, and textbook resources.",
+    "access": "Check provider for current options",
+    "activity": "Explain one statistical assumption and test it on practice data."
+  },
+  {
+    "id": "powerbi",
+    "skill": "Dashboards",
+    "title": "Microsoft Learn — Power BI Training",
+    "url": "https://learn.microsoft.com/en-us/training/powerplatform/power-bi",
+    "description": "Power BI learning paths and modules.",
+    "access": "Public learning material; software access varies",
+    "activity": "Build one chart around a clear question; document a design choice."
+  },
+  {
+    "id": "git",
+    "skill": "Git",
+    "title": "GitHub Learn",
+    "url": "https://learn.github.com/",
+    "description": "GitHub learning resources and guided exercises for developer workflows.",
+    "access": "GitHub account may be required",
+    "activity": "Create meaningful commits and review a small change."
+  },
+  {
+    "id": "net",
+    "skill": "Networking",
+    "title": "Cisco Networking Academy",
+    "url": "https://www.netacad.com/",
+    "description": "Networking and IT learning catalog.",
+    "access": "Account and course access vary",
+    "activity": "In a permitted lab, document a DNS or connectivity investigation."
+  },
+  {
+    "id": "linux",
+    "skill": "Linux",
+    "title": "Ubuntu — Command Line for Beginners",
+    "url": "https://ubuntu.com/tutorials/command-line-for-beginners",
+    "description": "An introduction to working with the Linux command line.",
+    "access": "Public tutorial",
+    "activity": "Practice file navigation and permissions in a lab; write reproducible steps."
+  },
+  {
+    "id": "support",
+    "skill": "Troubleshooting",
+    "title": "Microsoft Learn — Windows Client Troubleshooting",
+    "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/",
+    "description": "Technical troubleshooting documentation for Windows clients.",
+    "access": "Public documentation",
+    "activity": "Write a support ticket with symptoms, investigation, verification, and escalation."
+  },
+  {
+    "id": "codecademy-python",
+    "skill": "Python",
+    "title": "Codecademy — Learn Python 3",
+    "url": "https://www.codecademy.com/learn/learn-python-3",
+    "description": "Python fundamentals with interactive exercises and projects.",
+    "field": "Tech & Data",
+    "access": "Account required; full course features depend on your plan. Check current access.",
+    "activity": "Write a small Python program using a loop and explain how you checked its output."
+  },
+  {
+    "id": "codecademy-sql",
+    "skill": "SQL",
+    "title": "Codecademy — Learn SQL",
+    "url": "https://www.codecademy.com/learn/learn-sql",
+    "description": "Interactive SQL lessons covering queries, aggregation and multiple tables.",
+    "field": "Tech & Data",
+    "access": "Course currently listed as free; account and some features may require a paid plan.",
+    "activity": "Write a query with a filter and aggregation, then explain its result."
+  },
+  {
+    "id": "datacamp-python",
+    "skill": "Python",
+    "title": "DataCamp — Introduction to Python",
+    "url": "https://www.datacamp.com/courses/intro-to-python-for-data-science",
+    "description": "An introduction to Python syntax, data types, lists and data analysis basics.",
+    "field": "Tech & Data",
+    "access": "Account required. Free introductory access; full access may require a subscription.",
+    "activity": "Use a small dataset to practice lists and numerical operations; explain the result."
+  },
+  {
+    "id": "datacamp-sql",
+    "skill": "SQL",
+    "title": "DataCamp — Introduction to SQL",
+    "url": "https://www.datacamp.com/courses/introduction-to-sql",
+    "description": "An introduction to relational databases and SQL queries.",
+    "field": "Tech & Data",
+    "access": "Account required. Free introductory access; full access may require a subscription.",
+    "activity": "Query a practice table and explain the difference between rows and columns."
+  }
 ]

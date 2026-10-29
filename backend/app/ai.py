@@ -229,12 +229,13 @@ async def analyze(user, job, mode):
 async def prepare(user, job, gaps, mode):
     from . import skills,career_coach,career_goals
     library = skills.library()
-    gaps=[v for v in gaps if skills.learnable(v)]
-    output, meta = await structured(PrepOutput, {'task':'Suggest up to 3 priorities, select at most 5 resource IDs from the provided catalog, and return an empty questions list (interview questions now belong to Interview Practice). Only describe confirmed gaps as gaps; other requirements are questions to investigate. Do not invent URLs or imply course completion demonstrates competence.', 'posting':job,'confirmed_gaps':gaps,'reviewed_professional_profile':career_coach.profile(user),'career_goals_as_aspirations':career_goals.guidance_context(user),'resource_catalog':library},mode,retry_allowed=False)
+    gaps=list(dict.fromkeys(v.strip() for v in gaps if skills.learnable(v) and len(v.strip())<=150))
+    if not gaps:raise ServiceError('Choose a concrete skill or practice topic first.')
+    output, meta = await structured(PrepOutput, {'task':'Suggest up to 3 focused, standalone practice activities for the selected topics and at most 5 relevant resource IDs from the provided catalog. Do not create a roadmap, timeline, milestones, deadlines or checklist; those belong in Action Plans. Selected topics are interests, never confirmed weaknesses. Return an empty questions list. Do not invent URLs or imply course completion demonstrates competence.', 'posting':job,'selected_topics':gaps,'reviewed_professional_profile':career_coach.profile(user),'career_goals_as_aspirations':career_goals.guidance_context(user),'resource_catalog':library},mode,retry_allowed=False)
     allowed = {r['id'] for r in library}
-    if any(i not in allowed for i in output['resource_ids']):
+    if len(output['priorities'])>3 or len(output['resource_ids'])>5 or any(i not in allowed for i in output['resource_ids']):
         raise ServiceError('The AI selected an unknown learning resource. Retry the action.')
-    return {**output,'resources':[r for r in library if r['id'] in output['resource_ids']],'confirmed_gaps':gaps,'ai':meta}
+    return {**output,'resources':[r for r in library if r['id'] in output['resource_ids']],'selected_topics':gaps,'ai':meta}
 
 async def interview(user, job, question, answer, mode):
     from . import profile_answers

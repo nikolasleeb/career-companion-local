@@ -1,6 +1,6 @@
 # Broader career support
 
-Career Plans preserves the dedicated planning chats and roadmap versions. The circular Career Coach opens a read-only account-scoped assistant beside any signed-in page. It retrieves reviewed professional evidence, aspirations, approved work preferences and saved outputs with SQLite full-text search. Output labels distinguish evidence from generated material. Sources can be pinned or excluded; current outside facts trigger bounded primary-source research. No Profile, application, resume or settings write tools are provided.
+Action Plans preserves the dedicated planning chats and roadmap versions. The circular Career Coach opens a read-only account-scoped assistant beside any signed-in page. It retrieves reviewed professional evidence, aspirations, approved work preferences and saved outputs with SQLite full-text search. Output labels distinguish evidence from generated material. Sources can be pinned or excluded; current outside facts trigger bounded primary-source research. No Profile, application, resume or settings write tools are provided.
 
 Work Styles summaries require review and explicit AI opt-in. Raw questionnaire answers and private disclosures stay out of automatic coaching context. Published questionnaire items and scoring are unchanged; new app-authored guidance is discipline-neutral. Historical reports retain their original versions. Career Goals cards preserve legacy text and revision checks; future credentials are never qualification evidence.
 
