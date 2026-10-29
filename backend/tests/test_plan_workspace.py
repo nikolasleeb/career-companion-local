@@ -105,3 +105,19 @@ def test_daily_dst_repeated_requests_and_partial_tool_costs(client,account):
  event(u,'first','2026-11-01T04:00:00+00:00',.6,'completed',True)
  value=daily_usage.summary(u,now=now);assert value['requests']==2 and value['estimated_cost_usd']==1.3 and value['partial']
  backup=client.get('/api/account/export').json();assert backup['profile']['daily_spend_warning_usd']==1 and backup['profile']['usage_timezone']=='America/New_York'
+
+def test_older_selected_version_is_revision_parent_and_consent_rechecked(client,workspace):
+ u,chat,first,calls=workspace;mid=first['data']['actions'][0]['id'];path='/api/career-coach/plans/'+first['id']+'/progress'
+ client.patch(path,json={'expected_revision':0,'milestone_id':mid,'completed':True})
+ result=act(client,chat['id'],'message','Create another version','version-parent-other')
+ second=client.post('/api/career-coach/chats/'+chat['id']+'/roadmap',json={'message_id':result['result']['id']}).json()
+ client.patch('/api/career-coach/plans/'+second['id']+'/progress',json={'expected_revision':0,'milestone_id':mid,'completed':False})
+ r=client.post('/api/career-coach/chats/'+chat['id']+'/actions',json={'operation':'message','text':'Revise this older plan','plan_ref':{'plan_id':first['id']},'request_token':'version-parent-selected'})
+ result=wait(client,r.json());assert result['status']=='completed'
+ third=client.post('/api/career-coach/chats/'+chat['id']+'/roadmap',json={'message_id':result['result']['id']}).json()
+ assert client.get('/api/career-coach/plans/'+third['id']+'/progress').json()['completed']==3
+ assert client.get('/api/career-coach/plans/'+second['id']+'/progress').json()['completed']==0
+ # A previously copied gated input cannot be shared through a plan after consent is off.
+ db.save(u,'coach_plan',{**first['data'],'work_style_summary':'Private reviewed summary'},first['id']);before=len(calls)
+ response=client.post('/api/career-coach/chats/'+chat['id']+'/actions',json={'operation':'message','text':'Use this plan','plan_ref':{'plan_id':first['id']},'request_token':'revoked-consent'})
+ assert response.status_code==409 and len(calls)==before

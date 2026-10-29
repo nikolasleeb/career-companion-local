@@ -40,6 +40,11 @@ def snapshot(user,plan):
   milestones[action['id']]={'completed':done,'total':len(keys),'state':'completed' if done==len(keys) else 'in_progress' if done or value.get('started',{}).get(action['id']) else 'planned','completed_at':max((value['steps'].get(s,{}).get('completed_at','') for s in keys),default='') if done==len(keys) else ''}
  return {**value,'step_ids':ids,'milestones':milestones,'completed':completed,'total':total,'percent':round(100*completed/total) if total else 0}
 
+def source_snapshot(user,plan):
+ # Legacy readable plan projections may predate linked conversations/checklists.
+ if not db.get(user,plan['data'].get('chat_id',''),'coach_chat'):return None
+ return snapshot(user,plan)
+
 def initialize(c,user,plan,previous=None):
  from .resume_conversation import write
  # A saved new version inherits only exact, stable step identities.
