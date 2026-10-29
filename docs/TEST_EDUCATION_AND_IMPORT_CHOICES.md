@@ -2,10 +2,10 @@
 
 Use fictional documents and a disposable account first. These controls do not run AI.
 
-1. Open **Profile → Upload / import**, prepare two documents with a possible education/employment match, then choose **Edit details** on an education proposal.
+1. Open **Profile → Upload / import**, prepare two documents with a possible education/employment match, then review the education proposal’s full fields directly on the page.
 2. Choose an attendance start such as August 2018 and an attendance end such as May 2022. Past end years should be selectable, with the current year and recent past years first. Future years are in a separate **Future years** group.
 3. End dates earlier than the start must stay unavailable. Unknown month/day may remain blank. **Expected graduation** keeps its separate future-date rules.
-4. GPA and GPA scale should share one row on desktop and mobile. No scale is inferred: fill it only when known. **Use these details** changes the proposal, not saved Profile information.
+4. GPA and GPA scale should share one row on desktop and mobile. No scale is inferred: fill it only when known. Edits change only the proposal; saved Profile information changes only after final import approval.
 5. For a possible match, **These sources describe the same record** and **Keep these as separate records** are two radio choices in one group. Only one can be selected. Tab and arrow keys should work.
 6. Edit a contact value or a different record, then separate a pair. The pair becomes two source entries; unrelated edits, selections and match choices should remain. The final accuracy confirmation resets for the changed review.
 7. Separate entries keep their original source values. If a source or saved Profile changed while you were reviewing, a fresh review replaces stale choices.

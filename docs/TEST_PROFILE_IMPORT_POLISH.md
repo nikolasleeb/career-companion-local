@@ -40,3 +40,12 @@ For past education dates, GPA alignment and the exclusive same/separate choices,
 ## Imported name capitalization
 
 Try an all-caps or lowercase full name, including a hyphenated surname, apostrophe, accented letter, initials or suffix. The proposed name should use normal capitalization. If the other document provides the same spelling with existing mixed capitalization (for example Alex de la Cruz), that spelling takes precedence. Original source text stays available. Different names still need a choice. You can edit the proposal; preparing a review does not recase existing saved Profile information.
+
+## Full forms in import review
+
+- Prepare a resume, LinkedIn PDF or combined review with a fictional account. Each selected record shows its full edit fields directly, without an Edit details dialog.
+- In education, choose a common degree/qualification or Other / type my own. An imported custom qualification must remain unchanged until you choose or edit it. Check majors/minors, attendance dates, GPA, scale, classes and notes.
+- Source alternatives sit beside the affected fields. Choosing a source or typing directly resolves that field; equivalent compatibility fields and generated education titles stay aligned. Confirm possible source matches explicitly. Unresolved selected conflicts still block approval.
+- Clear a required field or leave a date partly entered: importing must focus the invalid control without saving. An unchecked proposal must not block other selected information or be imported.
+- Edit fields, collapse source details, navigate internally or separate an unrelated match: existing draft recovery rules apply. Preparing, editing and closing review leave Profile unchanged. Only final accuracy confirmation plus Import selected changes saves information.
+- Check wide and narrow screens, keyboard controls and labels for multiple education/date/course fields. Test the same qualification choices in the ordinary Profile education editor and preserve custom values when editing existing records.

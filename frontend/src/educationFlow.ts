@@ -17,3 +17,22 @@ export function activeImportWarnings(item:any):string[]{
  const role=normal(item.data.title),employer=normal(item.data.organization);
  return (item.warnings||[]).filter((warning:string)=>!(warning===roleWarning&&item.data.category==='employment'&&role&&employer&&role!==employer));
 }
+
+// Editing a visible import field reconciles its legacy compatibility values as
+// well. Only direct user edits call this; preparing a review chooses no winner.
+export function editImportFields(data:Record<string,any>,patch:Record<string,any>){
+ const next={...data,...patch};const touched=new Set(Object.keys(patch));
+ for(const field of ['major','minor'] as const){
+  if(field+'s' in patch){next[field]=subjects(next,field)[0]||'';touched.add(field);}
+  else if(field in patch){next[field+'s']=patch[field]?[patch[field]]:[];touched.add(field+'s');}
+ }
+ if(data.category==='education'&&['degree','major','majors'].some(k=>k in patch)){
+  next.title=educationTitle(next)||next.organization||'Education';touched.add('title');
+ }
+ if(['start_date','end_date','expected_graduation'].some(k=>k in patch)){
+  next.dates=[[next.start_date,next.end_date].filter(Boolean).join(' – '),next.category==='education'&&next.expected_graduation?'Expected graduation '+next.expected_graduation:''].filter(Boolean).join('; ');touched.add('dates');
+ }
+ if('project_urls' in patch){next.project_url=patch.project_urls.find((v:string)=>v.trim())||'';touched.add('project_url');}
+ if('project_url' in patch){next.project_urls=patch.project_url?[patch.project_url]:[];touched.add('project_urls');}
+ return {data:next,touched:[...touched]};
+}

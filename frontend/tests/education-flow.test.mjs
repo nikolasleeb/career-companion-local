@@ -27,3 +27,21 @@ test('role warning resolves after correction without clearing unrelated parser w
  assert.deepEqual(activeImportWarnings(item),['Dates need review.']);assert.deepEqual(item.warnings,[role,'Dates need review.']);assert.equal(item.source_text,'Original heading');
  for(const data of [{title:' Employer ',organization:'employer'},{title:'Associate',organization:''},{title:'',organization:'Employer'}])assert.deepEqual(activeImportWarnings({...item,data:{category:'employment',...data}}),item.warnings);
 });
+const {editImportFields}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('editing inline subjects reconciles legacy fields and the education title without modifying source data',()=>{
+ const original={category:'education',degree:'Master of Science (MS)',major:'Old',majors:['Old'],title:'Old title'};
+ const result=editImportFields(original,{majors:['Data Science','Statistics']});
+ assert.equal(result.data.major,'Data Science');assert.equal(result.data.title,'Master of Science (MS) in Data Science & Statistics');
+ assert.deepEqual(result.touched.sort(),['major','majors','title']);assert.equal(original.major,'Old');
+ const scalar=editImportFields(original,{major:'Economics'});assert.deepEqual(scalar.data.majors,['Economics']);
+});
+test('editing structured dates reconciles original wording with explicit dates and preserves date precision',()=>{
+ const result=editImportFields({category:'education',start_date:'2020',end_date:'',expected_graduation:'May 2027',dates:'Unresolved source dates'},{end_date:'2024'});
+ assert.equal(result.data.dates,'2020 – 2024; Expected graduation May 2027');assert.deepEqual(result.touched,['end_date','dates']);
+ assert.equal(editImportFields(result.data,{description:'Reviewed notes'}).data.dates,result.data.dates);
+});
+test('explicit source list and scalar choices stay synchronized, including omissions',()=>{
+ assert.deepEqual(editImportFields({category:'project',project_urls:['old']},{project_url:'https://example.test/project'}).data.project_urls,['https://example.test/project']);
+ assert.equal(editImportFields({category:'project'},{project_urls:[]}).data.project_url,'');
+ assert.deepEqual(editImportFields({category:'education',minors:['Old'],minor:'Old'},{minor:''}).data.minors,[]);
+});
