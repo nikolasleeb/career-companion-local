@@ -39,7 +39,7 @@ def context(user, plan):
     catalog = {g['id']: g for g in current['items']}
     if any(g not in catalog for g in plan.goal_ids):
         raise HTTPException(404, 'A selected planning goal is no longer available.')
-    return {**plan.model_dump(), 'selected_goals_as_aspirations': [catalog[g] for g in dict.fromkeys(plan.goal_ids)]}
+    return {**plan.model_dump(), 'selected_goals_as_aspirations': [career_goals.for_guidance_goal(catalog[g]) for g in dict.fromkeys(plan.goal_ids)], 'career_goal_guidance':career_goals.GUIDANCE}
 
 def date_supported(value, citations):
     if not value:

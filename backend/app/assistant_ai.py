@@ -72,6 +72,8 @@ def provider_body(payload):
         schema['properties']['sentences']={'type':'array','maxItems':4,'items':{'type':'object','properties':{'kind':{'type':'string','enum':['aspiration','qualification']},'text':{'type':'string'},'source_id':{'type':'string'},'quote':{'type':'string'}},'required':['kind','text','source_id','quote'],'additionalProperties':False}}
         schema['required'].append('sentences')
         instructions+=' For draft_short_answer, return 2–4 short sentences with kind aspiration or qualification and exact source quotes. Career Goals are aspirations, NEVER completed credentials, qualifications or experience. Goals use source_id career_goals. Only reviewed professional evidence supports qualification claims; use its exact quote as the sentence. For aspiration sentences, describe genuine interest or direction, never claim existing ability or eligibility. No unsupported employer facts. Return empty excerpts.'
+    payload=dict(payload)
+    if 'career_goals_as_aspirations' in payload:payload['career_goals_as_aspirations']=career_goals.model_context(payload['career_goals_as_aspirations'])
     return {'model':MODEL,'service_tier':'default','instructions':instructions,'input':json.dumps(payload),'reasoning':{'effort':'none'},'max_output_tokens':MAX_OUTPUT,'store':False,'text':{'format':{'type':'json_schema','name':'AssistantHelp','strict':True,'schema':schema}}}
 
 

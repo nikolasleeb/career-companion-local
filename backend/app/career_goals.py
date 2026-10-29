@@ -13,6 +13,37 @@ class OccupationLink(StrictModel):
  dataset_version:str=Field(max_length=100)
  revision:str=Field(pattern=r'^[a-f0-9]{64}$')
 
+def normalize_omissions(text):
+ if '[blank]' not in text:return text
+ return re.sub(r'[ \t]+',' ',text.replace('[blank]','')).strip()
+
+class StatementFields(StrictModel):
+ graduation:str=Field(default='',max_length=1000)
+ degree:str=Field(default='',max_length=1000)
+ completed_degree:str=Field(default='',max_length=1000)
+ future_education:str=Field(default='',max_length=1000)
+ field:str=Field(default='',max_length=1000)
+ focus:str=Field(default='',max_length=1000)
+ skills:str=Field(default='',max_length=1000)
+ certifications:str=Field(default='',max_length=1000)
+ timing:str=Field(default='',max_length=1000)
+ commitments:str=Field(default='',max_length=1000)
+ priorities:str=Field(default='',max_length=1000)
+ reason:str=Field(default='',max_length=1000)
+ other:str=Field(default='',max_length=3000)
+ @model_validator(mode='after')
+ def omissions(self):
+  for key in type(self).model_fields:
+   value=getattr(self,key).strip()
+   setattr(self,key,'' if value=='[blank]' else value)
+  return self
+
+class StatementEditor(StrictModel):
+ version:Literal[1]=1
+ mode:Literal['guided','direct']='guided'
+ education:Literal['yes','no','skip']='skip'
+ fields:StatementFields=Field(default_factory=StatementFields)
+
 class Goal(StrictModel):
  id:str=Field(min_length=1,max_length=64,pattern=r'^[A-Za-z0-9_-]+$')
  category:Literal['general_statement','dream_role','skill','certification','promotion','leadership','education','career_change','impact','networking','custom']='custom'
@@ -21,9 +52,12 @@ class Goal(StrictModel):
  priority:Literal['low','medium','high']='medium'
  progress:Literal['planned','in_progress','completed']='planned'
  occupation:OccupationLink|None=None
+ guided_editor:StatementEditor|None=None
  @model_validator(mode='after')
  def valid_text(self):
-  if not self.text.strip() or self.category!='general_statement' and len(self.text)>1000:raise ValueError('Enter a goal within its text limit.')
+  self.text=normalize_omissions(self.text)
+  if not re.search(r'[^\W_]',self.text) or self.category!='general_statement' and len(self.text)>1000:raise ValueError('Enter a meaningful goal within its text limit.')
+  if self.guided_editor and self.category!='general_statement':raise ValueError('Guided fields belong only to Overall career direction.')
   if self.category=='general_statement':self.target='';self.priority='medium';self.progress='planned'
   return self
 class Change(StrictModel):
@@ -37,7 +71,7 @@ class Change(StrictModel):
    links=[v.occupation.code for v in self.items if v.occupation]
    if len(links)!=len(set(links)):raise ValueError('Each occupation can link to only one goal.')
    if len({v.id for v in self.items})!=len(self.items):raise ValueError('Each goal needs a unique identifier.')
-   if sum(v.category=='general_statement' for v in self.items)>1:raise ValueError('Only one General statement is allowed.')
+   if sum(v.category=='general_statement' for v in self.items)>1:raise ValueError('Only one Overall career direction statement is allowed.')
    if sum(v.category!='general_statement' for v in self.items)>30:raise ValueError('Keep at most 30 specific goals.')
   return self
 def identity(user):return hashlib.sha256((user+':career-goals').encode()).hexdigest()[:32]
@@ -64,7 +98,28 @@ def context(user,snapshot=None):
  current=read(user)
  if not current['use_for_ai']:return {'text':'','note':'','items':[],'revision':current['revision'],'use_for_ai':False}
  value=snapshot if snapshot is not None else current
- return {**value,'use_for_ai':True}
+ return {**value,'items':[for_guidance_goal(g) for g in canonical_items(value)],'use_for_ai':True}
+
+GUIDANCE='Overall career direction describes broad aspirations; specific goals are independent milestones. Connect relevant milestones to the direction without repeating equivalent ambitions. Ask about conflicting dates or priorities instead of silently resolving them. Skills to learn and certifications to earn are not existing qualifications or accomplishments.'
+
+def for_guidance_goal(goal):
+ return {key:value for key,value in goal.items() if key!='guided_editor'}
+
+def guidance_text(value):
+ """One text representation, with editing aids excluded from provider context."""
+ items=canonical_items(value)
+ direction=next((normalize_omissions(g['text']) for g in items if g['category']=='general_statement'),'')
+ milestones=[g for g in items if g['category']!='general_statement']
+ parts=['Overall career direction (aspiration):\n'+direction] if direction else []
+ if milestones:
+  parts.append('Specific goals (milestones, not qualifications):\n'+'\n'.join(g['category'].replace('_',' ')+': '+normalize_omissions(g['text'])+(' — target '+g['target'] if g.get('target') else '')+' ('+g.get('progress','planned').replace('_',' ')+')' for g in milestones))
+ return '\n\n'.join(parts)
+
+def model_context(value):
+ return {'text':guidance_text(value),'revision':value.get('revision',0),'use_for_ai':value.get('use_for_ai',False),'guidance':GUIDANCE}
+
+def guidance_context(user,snapshot=None):
+ return model_context(context(user,snapshot))
 
 def save(user,body,*,restoring=False):
  from .resume_conversation import write
@@ -78,9 +133,9 @@ def save(user,body,*,restoring=False):
    # Old clients and explicit chat saves use text as the general statement.
    if body.items is None or not general:
     items=[v for v in items if v['category']!='general_statement']
-    if body.text.strip():items.insert(0,Goal(id=(general or {}).get('id') or general_id(items),category='general_statement',text=body.text.strip()).model_dump())
+    if body.text.strip():items.insert(0,Goal(id=(general or {}).get('id') or general_id(items),category='general_statement',text=body.text.strip()).model_dump(exclude_none=True))
   if len({v['id'] for v in items})!=len(items):raise HTTPException(422,'Each goal needs a unique identifier.')
-  if sum(v['category']=='general_statement' for v in items)>1:raise HTTPException(422,'Only one General statement is allowed. Edit the existing statement.')
+  if sum(v['category']=='general_statement' for v in items)>1:raise HTTPException(422,'Only one Overall career direction statement is allowed. Edit the existing statement.')
   if sum(v['category']!='general_statement' for v in items)>30:raise HTTPException(422,'Keep at most 30 specific goals.')
   linked=[v['occupation']['code'] for v in items if v.get('occupation')]
   if len(set(linked))!=len(linked):raise HTTPException(409,'This occupation already has a Career Goal. Edit the existing goal.')
