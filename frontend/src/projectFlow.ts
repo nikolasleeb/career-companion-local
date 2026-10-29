@@ -60,3 +60,11 @@ export function selectedProjectFiles(selected:string[],previous:string[],files:{
  const paths=new Set(files.map(f=>f.file_path));
  return previous.some(p=>paths.has(p))?selected.filter(p=>paths.has(p)):files.filter(f=>f.suggested).slice(0,10).map(f=>f.file_path);
 }
+
+export function projectUploadError(files:{name:string;size:number}[]){
+ if(files.length>30)return 'Choose at most 30 files or ZIPs.';
+ const total=files.reduce((n,f)=>n+f.size,0);
+ if(total>32*1024*1024)return `These uploads total ${(total/1024/1024).toFixed(1)} MB. The limit is 32 MB per upload. Create a smaller ZIP with code, notebooks and reports; leave out large datasets, environments and caches. Nothing was uploaded.`;
+ const large=files.find(f=>!f.name.toLowerCase().endsWith('.zip')&&f.size>10*1024*1024);
+ return large?`${large.name} exceeds the 10 MB individual-file limit. Nothing was uploaded.`:'';
+}

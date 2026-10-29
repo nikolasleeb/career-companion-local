@@ -1,5 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {analyzeProject,selectedProjectFiles,githubLink,projectLinks,savedProjectForRecord,latestProjectRecovery,scopedProjectLibrary,ProfileProjectRequest} from './projectFlow';
+import {analyzeProject,projectUploadError,selectedProjectFiles,githubLink,projectLinks,savedProjectForRecord,latestProjectRecovery,scopedProjectLibrary,ProfileProjectRequest} from './projectFlow';
 import {pollTask,clearProjectTask} from './apiClient';
 import {savedEvidenceText,addSavedEvidence} from './savedEvidence';
 
@@ -116,7 +116,7 @@ export function ProjectSources({services:s,initialURL='',attachment,onAttached,e
  {urls.filter(v=>!githubLink(v)).map(v=><p className="small" key={v}>Reference link (not read): <Link url={v}>{v}</Link></p>)}
  {loading&&<p role="status">Loading project files…</p>}{error&&<p role="alert">{error} {!source&&!snapshot&&<button className="text-button" onClick={()=>setRetry(v=>v+1)}>Retry loading files</button>}</p>}
  {!loading&&urls.length>0&&!allGitHub&&<p className="small muted">Public GitHub links supply readable files. Other http/https links are saved as references only; private AWS links are not opened. Upload the code, notebooks or reports you want analyzed.</p>}
- {!draft&&<details className="source-alternatives" open={!!profileRequest&&!githubLink(profileRequest.url)}><summary>Add ZIPs, files or pasted text</summary><label>Project ZIPs or files<input type="file" multiple disabled={!!s.busy} accept=".zip,.scala,.tf,.hcl,.conf,.properties,.xml,.csv,.py,.r,.js,.jsx,.ts,.tsx,.sql,.md,.txt,.ipynb,.java,.c,.cpp,.h,.css,.html,.yaml,.yml,.toml,.json,.sh,.pdf,.docx" onChange={e=>{const files=Array.from(e.target.files||[]);if(files.length){const form=new FormData();files.forEach(f=>form.append('files',f));if(experience)form.append('experience_id',experience);act('Reading project ZIPs and files',async()=>{
+ {!draft&&<details className="source-alternatives" open={!!profileRequest&&!githubLink(profileRequest.url)}><summary>Add ZIPs, files or pasted text</summary><label>Project ZIPs or files<input type="file" multiple disabled={!!s.busy} accept=".zip,.scala,.tf,.hcl,.conf,.properties,.xml,.csv,.py,.r,.js,.jsx,.ts,.tsx,.sql,.md,.txt,.ipynb,.java,.c,.cpp,.h,.css,.html,.yaml,.yml,.toml,.json,.sh,.pdf,.docx" onChange={e=>{const files=Array.from(e.target.files||[]),problem=projectUploadError(files);if(problem){setError(problem);e.target.value='';return;}if(files.length){const form=new FormData();files.forEach(f=>form.append('files',f));if(experience)form.append('experience_id',experience);act('Reading project ZIPs and files',async()=>{
  const row=await s.api('/project-sources/upload-preview','POST',form);
  const previous=localSource||library.sources.find((r:any)=>r.id===snapshot?.data.source_id&&(r.data.available_files?.some((f:any)=>typeof f.text==='string')||['upload','paste'].includes(r.data.provider)));
  const combined=previous?await s.api('/project-sources/combine','POST',{source_ids:[previous.id,row.id],urls:[],experience_id:experience}):row;

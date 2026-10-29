@@ -11,7 +11,7 @@ export function actionLabel(path:string){
  if(/\/answers$|\/progress$/.test(path))return 'Saving responses locally';
  if(path==='/analyses/from-document')return 'Reading job posting';
  if(path==='/analyses')return 'Comparing your Profile to the posting';
- if(path==='/project-sources/upload-preview')return 'Reading project ZIPs and files';
+ if(path==='/project-sources/upload-preview')return 'Uploading project ZIPs and files';
  if(path==='/project-sources/combine')return 'Combining project files';
  if(/^\/project-sources\/[^/]+\/select$/.test(path))return 'Preparing selected project files';
  if(/\/analyze$/.test(path))return 'Analyzing project materials';
@@ -50,11 +50,16 @@ export class ProcessingStore{
   this.emit();
  }
  disconnected(){for(const [id,value] of this.records)if(!value.request||value.settled)this.records.set(id,{...value,connection_lost:true,status:'unknown',checked_at:value.checked_at||new Date().toISOString()});this.emit();}
- async request(path:string,method:string,call:()=>Promise<any>){
+ async request(path:string,method:string,call:(onTransfer:(value:{loaded:number;total:number;sent:boolean})=>void)=>Promise<any>){
   const epoch=this.epoch,write=method!=='GET'&&method!=='HEAD',id='request:'+String(++this.serial),stamp=new Date().toISOString();
-  if(write&&!path.endsWith('/cancel')){this.records.set(id,{id,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:['/project-sources/upload-preview','/project-sources/combine'].includes(path)?'local':/^\/project-sources\/[^/]+\/select$/.test(path)?'source_preparation':'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
+  if(write&&!path.endsWith('/cancel')){this.records.set(id,{id,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:path==='/project-sources/upload-preview'?'upload':path==='/project-sources/combine'?'local':/^\/project-sources\/[^/]+\/select$/.test(path)?'source_preparation':'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
   try{
-   const value=await call();if(epoch!==this.epoch)return value;
+   const value=await call(transfer=>{
+    if(epoch!==this.epoch||path!=='/project-sources/upload-preview')return;
+    const entry=this.records.get(id);if(!entry?.progress)return;
+    const code=transfer.sent?'uploaded':'upload',changed=entry.progress.code!==code;
+    this.records.set(id,{...entry,serial:++this.serial,progress:{...entry.progress,code,label:transfer.sent?'Waiting for ZIP preview':'Uploading project ZIPs and files',kind:transfer.sent?'upload_wait':'upload',stage_started_at:changed?new Date().toISOString():entry.progress.stage_started_at,loaded_bytes:transfer.loaded,total_bytes:transfer.total}});this.emit();
+   });if(epoch!==this.epoch)return value;
    if(write)this.records.delete(id);
    if(value?.task_id)this.update({id:value.task_id,status:value.status||'queued',created_at:stamp,label:actionLabel(path)});
    else if(/^\/tasks\/[^/]+$/.test(path)&&!path.endsWith('/active'))this.update(value);

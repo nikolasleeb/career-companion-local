@@ -4,13 +4,44 @@ export class ApiError extends Error{
  get transient(){return this.status===0||this.status===429||this.status>=500;}
 }
 
-export async function requestJSON(path:string,method='GET',body?:unknown,csrf='',signal?:AbortSignal){
+export type UploadTransfer={loaded:number;total:number;sent:boolean};
+// Only free project previews use XHR, so the upload phase has real byte progress.
+// All responses still pass through the shared account, CSRF and Access checks below.
+export function uploadProjectPreview(body:FormData,headers:Record<string,string>,signal?:AbortSignal,onTransfer?:(value:UploadTransfer)=>void):Promise<Response>{
+ return new Promise((resolve,reject)=>{
+  const xhr=new XMLHttpRequest();let loaded=0,total=0,settled=false;
+  const cleanup=()=>signal?.removeEventListener('abort',abort);
+  const fail=()=>{if(settled)return;settled=true;cleanup();reject(new Error('Project upload interrupted'));};
+  const abort=()=>{xhr.abort();fail();};
+  if(signal?.aborted){fail();return;}
+  xhr.open('POST','/api/project-sources/upload-preview');xhr.withCredentials=true;
+  Object.entries(headers).forEach(([key,value])=>xhr.setRequestHeader(key,value));
+  xhr.upload.onprogress=e=>{loaded=e.loaded;total=e.lengthComputable?e.total:0;onTransfer?.({loaded,total,sent:false});};
+  xhr.upload.onload=()=>onTransfer?.({loaded,total,sent:true});
+  xhr.onerror=fail;xhr.onabort=fail;xhr.ontimeout=fail;
+  xhr.onload=()=>{
+   if(settled)return;
+   if(!xhr.status){fail();return;}
+   settled=true;cleanup();
+   try{
+    const responseHeaders=new Headers();xhr.getAllResponseHeaders().trim().split(/[\r\n]+/).filter(Boolean).forEach(line=>{const i=line.indexOf(':');if(i>0)responseHeaders.append(line.slice(0,i),line.slice(i+1).trim());});
+    const response=new Response(xhr.status===204?null:xhr.responseText,{status:xhr.status,statusText:xhr.statusText,headers:responseHeaders});
+    const url=xhr.responseURL||'';Object.defineProperties(response,{url:{value:url},redirected:{value:!!url&&!url.endsWith('/api/project-sources/upload-preview')}});
+    resolve(response);
+   }catch(error){reject(error);}
+  };
+  signal?.addEventListener('abort',abort,{once:true});
+  try{xhr.send(body);}catch{fail();}
+ });
+}
+
+export async function requestJSON(path:string,method='GET',body?:unknown,csrf='',signal?:AbortSignal,onTransfer?:(value:UploadTransfer)=>void){
  const requestAccount=revisionAccount;const headers:Record<string,string>={'X-Requested-With':'XMLHttpRequest','X-Account-Data-Revision':String(accountRevision)};
  if(method!=='GET')headers['X-CSRF-Token']=csrf;
  if(body instanceof Blob)headers['Content-Type']=body.type||'application/octet-stream';
  if(body!==undefined&&!(body instanceof FormData)&&!(body instanceof Blob))headers['Content-Type']='application/json';
  let response:Response;
- try{response=await fetch('/api'+path,{method,headers,credentials:'same-origin',signal,body:body===undefined?undefined:body instanceof FormData||body instanceof Blob?body:JSON.stringify(body)});}
+ try{response=path==='/project-sources/upload-preview'&&method==='POST'&&body instanceof FormData?await uploadProjectPreview(body,headers,signal,onTransfer):await fetch('/api'+path,{method,headers,credentials:'same-origin',signal,body:body===undefined?undefined:body instanceof FormData||body instanceof Blob?body:JSON.stringify(body)});}
  catch{throw new ApiError('The connection to the app was interrupted. Your saved inputs remain available. Check the connection and try again.');}
  const accessExpired=()=>new ApiError('Your secure access verification expired. Reload the sign-in page to verify your email, then sign in again.',response.status===403?403:401,'access');
  // Access may return its HTML login page instead of the app's JSON response.

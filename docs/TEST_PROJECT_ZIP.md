@@ -12,3 +12,9 @@ Use a disposable account and fictional project materials. No OpenAI request star
 8. Export and restore an ordinary account backup in the disposable account. Local preview text, original file/archive names, source hashes, selected snapshot and reference links should be retained. Another account must not be able to read or select the source IDs.
 
 Only bounded extracted text and provenance are saved. The ZIP container and excluded files are not retained. Keep your own original archive. Existing individual-file uploads and older snapshots/backups continue to work.
+
+## Oversized uploads and transfer progress
+
+Choose a file larger than 32 MB (or several files totaling over 32 MB). The browser must immediately show the actual total and the limit, with **Nothing was uploaded**, before any POST. An individual non-ZIP file over 10 MB and more than 30 uploads are also rejected before transfer.
+
+For accepted files, the top bar first says **Uploading project ZIPs and files**, showing bytes/percentage when the browser supplies a total. After the transfer finishes it says **Waiting for ZIP preview**. Neither stage makes an OpenAI request. A slow transfer is distinct from waiting for the workspace to prepare the file list. Connection or Access errors must be shown without replaying the upload. Existing file selections and Profile records remain intact when an oversized selection is rejected.

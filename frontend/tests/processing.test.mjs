@@ -82,7 +82,15 @@ test('project ZIP previews and combining files report local preparation before a
  const store=new ProcessingStore();
  for(const path of ['/project-sources/upload-preview','/project-sources/combine']){
   const pending=deferred();const result=store.request(path,'POST',()=>pending.promise);
-  assert.equal(store.snapshot()[0].progress.kind,'local');assert.match(store.snapshot()[0].progress.label,/project/i);
+  assert.equal(store.snapshot()[0].progress.kind,path.endsWith('/upload-preview')?'upload':'local');assert.match(store.snapshot()[0].progress.label,/project/i);
   pending.resolve({id:'local-source'});await result;assert.equal(store.snapshot().length,0);
  }
+});
+
+test('upload byte progress changes to waiting without resetting total time or crossing accounts',async()=>{
+ const store=new ProcessingStore();store.setOwner('one');const wait=deferred();let report;
+ const pending=store.request('/project-sources/upload-preview','POST',callback=>{report=callback;return wait.promise;});const started=store.snapshot()[0].progress.started_at;
+ report({loaded:1024,total:2048,sent:false});assert.equal(store.snapshot()[0].progress.kind,'upload');assert.equal(store.snapshot()[0].progress.loaded_bytes,1024);
+ report({loaded:2048,total:2048,sent:true});assert.equal(store.snapshot()[0].progress.kind,'upload_wait');assert.equal(store.snapshot()[0].progress.label,'Waiting for ZIP preview');assert.equal(store.snapshot()[0].progress.started_at,started);
+ store.setOwner('two');report({loaded:2048,total:2048,sent:true});assert.deepEqual(store.snapshot(),[]);wait.resolve({id:'source'});await pending;assert.deepEqual(store.snapshot(),[]);
 });

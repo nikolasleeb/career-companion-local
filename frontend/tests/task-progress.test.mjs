@@ -31,3 +31,9 @@ test('project file preparation explicitly precedes OpenAI processing',()=>{
  assert.equal(v.label,'Preparing selected project files');assert.match(v.detail,/Downloading and reading selected files/);assert.match(v.detail,/No OpenAI request/);
  assert.doesNotMatch(v.detail,/Waiting for AI response/);
 });
+
+test('ZIP progress distinguishes real upload bytes from waiting for local processing',()=>{
+ const transfer={...task,progress:{...task.progress,kind:'upload',loaded_bytes:1024*1024,total_bytes:2*1024*1024,label:'Uploading project ZIPs and files'}};
+ assert.match(progressView(transfer,Date.now()).detail,/1.0 MB of 2.0 MB \(50%\)/);
+ const waiting=progressView({...transfer,progress:{...transfer.progress,kind:'upload_wait',label:'Waiting for ZIP preview'}},Date.now());assert.match(waiting.detail,/Upload sent/);assert.match(waiting.detail,/No OpenAI request/);assert.doesNotMatch(waiting.detail,/Processing locally|Waiting for AI response/);
+});

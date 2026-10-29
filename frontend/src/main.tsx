@@ -69,7 +69,7 @@ type User={onboarding:SetupState;id:string;username:string;csrf:string;settings:
 type Workspace=Record<string,Entity[]>;
 type View='master'|'tailor'|'cover'|'guide'|'agent'|'applications'|'prep'|'interviews'|'interests'|'jobs'|'coach'|'explorer'|'settings';
 let csrf='';
-async function api(path:string,method='GET',body?:unknown){return processing.request(path,method,()=>requestJSON(path,method,body,csrf));}
+async function api(path:string,method='GET',body?:unknown){return processing.request(path,method,onTransfer=>requestJSON(path,method,body,csrf,undefined,onTransfer));}
 
 async function download(path:string,filename:string){
  const r=await fetch('/api'+path,{credentials:'same-origin'});
