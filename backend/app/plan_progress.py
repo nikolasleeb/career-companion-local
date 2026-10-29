@@ -86,7 +86,10 @@ class Reference(StrictModel):
  milestone_id:str=Field(default='',max_length=100)
  step_id:str=Field(default='',max_length=100)
 def context(user,ref,chat_id):
- if not ref:return None
+ if not ref:
+  chat=db.get(user,chat_id,'coach_chat')
+  if not chat or not chat['data'].get('plan_id'):return None
+  ref=Reference(plan_id=chat['data']['plan_id'])
  plan=owned(user,ref.plan_id,'coach_plan')
  if plan['data']['chat_id']!=chat_id:raise HTTPException(404,'This plan belongs to another conversation.')
  from . import coach_access
