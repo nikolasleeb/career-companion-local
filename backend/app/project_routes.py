@@ -4,7 +4,7 @@ import json
 import re
 from fastapi import Depends, UploadFile, File, Form, HTTPException
 from pydantic import Field, StrictInt
-from . import auth, db, project_sources as sources, work_style, answer_drafts
+from . import auth, db, project_uploads, project_sources as sources, work_style, answer_drafts
 from .models import StrictModel
 from .network import ServiceError
 
@@ -13,6 +13,10 @@ class SourceURL(StrictModel):
     urls:list[str]=Field(default_factory=list,max_length=5)
 class Selection(StrictModel):
     file_paths:list[str]=Field(min_length=1,max_length=30)
+    experience_id:str=Field(default='',max_length=64)
+class Combined(StrictModel):
+    source_ids:list[str]=Field(min_length=1,max_length=5)
+    urls:list[str]=Field(default_factory=list,max_length=5)
     experience_id:str=Field(default='',max_length=64)
 class Pasted(StrictModel):
     title:str=Field(min_length=1,max_length=200)
@@ -90,6 +94,19 @@ def install(app,start_task,require_ai):
     @app.post('/api/project-sources/{id}/select')
     async def select(id:str,body:Selection,user=Depends(auth.current)):
         return await sources.select(user['id'],id,body.file_paths,body.experience_id)
+    @app.post('/api/project-sources/combine')
+    def combine(body:Combined,user=Depends(auth.current)):
+        return project_uploads.combine(user['id'],body.source_ids,body.urls,body.experience_id)
+    @app.post('/api/project-sources/upload-preview')
+    async def upload_preview(files:list[UploadFile]=File(...),experience_id:str=Form(default='',max_length=64),user=Depends(auth.current)):
+        if experience_id:sources.require(user['id'],experience_id,'experience')
+        if len(files)>30:raise HTTPException(400,'Choose at most 30 uploads.')
+        uploads=[];total=0
+        for f in files:
+            raw=await f.read(project_uploads.MAX_UPLOAD+1);total+=len(raw)
+            if total>project_uploads.MAX_UPLOAD:raise HTTPException(413,'This upload exceeds 32 MB.')
+            uploads.append((f.filename or 'upload.txt',raw))
+        return await asyncio.to_thread(project_uploads.preview,user['id'],uploads,experience_id)
     @app.post('/api/project-sources/paste')
     def paste(body:Pasted,user=Depends(auth.current)):
         from .models import validate_link
@@ -196,6 +213,13 @@ def validate_backup(record,kinds,by_id):
     refs={'source_id':'project_source','snapshot_id':'project_snapshot','analysis_id':'project_analysis','experience_id':'experience','profile_answer_id':'profile_answer','prompt_id':'story_prompts','job_id':'job'}
     for key,target in refs.items():
         if data.get(key) and kinds.get(data[key])!=target:raise ValueError('Invalid project/reflection reference')
+    if kind=='project_source' and data.get('provider') in ('upload_preview','mixed'):
+        files=data.get('available_files',[])
+        if not 1<=len(files)<=3000:raise ValueError()
+        if any(not sources.allowed(f['file_path']) or len(f['file_path'])>500 or ('text' in f and (not isinstance(f['text'],str) or len(f['text'].encode())>sources.MAX_FILE)) for f in files):raise ValueError()
+        if sum(len(f.get('text','').encode()) for f in files)>sources.MAX_TOTAL:raise ValueError()
+        try:project_uploads.links(data.get('urls',[]))
+        except HTTPException:raise ValueError() from None
     if kind=='project_snapshot':
         if not data.get('source_id') or not 1<=len(data['files'])<=30:raise ValueError()
         if any(not sources.allowed(f['file_path']) or not isinstance(f['text'],str) or len(f['text'].encode())>sources.MAX_FILE for f in data['files']):raise ValueError()

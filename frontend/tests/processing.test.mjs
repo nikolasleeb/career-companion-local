@@ -77,3 +77,12 @@ test('project file preparation transitions to one confirmed AI task without anot
  store.reconcile(store.snapshot(),store.serial);assert.equal(posts,2);
  store.update({...task('analysis','completed')});assert.equal(store.snapshot().length,0);
 });
+
+test('project ZIP previews and combining files report local preparation before analysis',async()=>{
+ const store=new ProcessingStore();
+ for(const path of ['/project-sources/upload-preview','/project-sources/combine']){
+  const pending=deferred();const result=store.request(path,'POST',()=>pending.promise);
+  assert.equal(store.snapshot()[0].progress.kind,'local');assert.match(store.snapshot()[0].progress.label,/project/i);
+  pending.resolve({id:'local-source'});await result;assert.equal(store.snapshot().length,0);
+ }
+});

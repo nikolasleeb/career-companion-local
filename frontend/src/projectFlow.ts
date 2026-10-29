@@ -26,7 +26,7 @@ export function projectLinkDrafts(data:any):string[]{
 }
 export function projectLinks(data:any):string[]{const seen=new Set<string>();return [data?.project_url,...(data?.project_urls||[])].filter((v):v is string=>typeof v==='string'&&!!v.trim()).map(v=>v.trim()).filter(v=>{const key=v.replace(/\/+$/,'');if(seen.has(key))return false;seen.add(key);return true;});}
 export type ProfileProjectRequest={id:string;experienceId:string;url:string;urls?:string[];title:string};
-export function savedProjectForRecord(snapshots:any[],request:ProfileProjectRequest){const all=request.urls?.length?request.urls:[request.url],supported=all.filter(githubLink),links=(supported.length?supported:all).map(v=>v.replace(/\/+$/,'')).sort();return snapshots.find(row=>!row.data.archived&&row.data.experience_id===request.experienceId&&JSON.stringify((row.data.urls?.length?row.data.urls:[row.data.url||'']).map((v:string)=>v.replace(/\/+$/,'')).sort())===JSON.stringify(links));}
+export function savedProjectForRecord(snapshots:any[],request:ProfileProjectRequest){const all=request.urls?.length?request.urls:[request.url],links=all.map(v=>v.replace(/\/+$/,'')).sort();return snapshots.find(row=>!row.data.archived&&row.data.experience_id===request.experienceId&&JSON.stringify((row.data.urls?.length?row.data.urls:[row.data.url||'']).map((v:string)=>v.replace(/\/+$/,'')).sort())===JSON.stringify(links))||(!all.some(githubLink)?snapshots.find(row=>!row.data.archived&&row.data.experience_id===request.experienceId&&['upload_preview','mixed','upload'].includes(row.data.provider)):undefined);}
 
 export function latestProjectRecovery(library:any){
  for(const task of library.tasks||[]){
@@ -39,7 +39,7 @@ export function latestProjectRecovery(library:any){
 // Each Profile dialog sees only snapshots assigned to its own project (or unlinked materials).
 export function scopedProjectLibrary(library:any,experienceId:string,projectIds?:string[]){
  const snapshots=(library.snapshots||[]).filter((r:any)=>(r.data.experience_id||'')===experienceId||experienceId===''&&projectIds!==undefined&&!projectIds.includes(r.data.experience_id)),ids=new Set(snapshots.map((r:any)=>r.id)),sourceIds=new Set(snapshots.map((r:any)=>r.data.source_id));
- return {...library,snapshots,sources:(library.sources||[]).filter((r:any)=>sourceIds.has(r.id)),analyses:(library.analyses||[]).filter((r:any)=>ids.has(r.data.snapshot_id)),drafts:(library.drafts||[]).filter((r:any)=>ids.has(r.data.snapshot_id)),tasks:(library.tasks||[]).filter((r:any)=>ids.has(r.snapshot_id))};
+ return {...library,snapshots,sources:(library.sources||[]).filter((r:any)=>sourceIds.has(r.id)||(r.data?.experience_id||'')===experienceId&&Array.isArray(r.data?.available_files)),analyses:(library.analyses||[]).filter((r:any)=>ids.has(r.data.snapshot_id)),drafts:(library.drafts||[]).filter((r:any)=>ids.has(r.data.snapshot_id)),tasks:(library.tasks||[]).filter((r:any)=>ids.has(r.snapshot_id))};
 }
 export function projectMaterialsStatus(library:any,experienceId:string,urls:string[]=[]){
  const scoped=scopedProjectLibrary(library,experienceId),request={id:'',experienceId,url:urls[0]||'',urls,title:''};
@@ -53,4 +53,10 @@ export function projectMaterialsStatus(library:any,experienceId:string,urls:stri
  if(task&&['failed','interrupted'].includes(task.status))return {label:'View analysis',status:'Analysis '+task.status};
  if(snapshot&&scoped.analyses.some((r:any)=>r.data.snapshot_id===snapshot.id))return {label:'View analysis',status:'Analysis saved'};
  return {label:'Analyze project with OpenAI',status:snapshot?'Files saved':''};
+}
+
+// Refreshing or adding material must not recheck files the user excluded.
+export function selectedProjectFiles(selected:string[],previous:string[],files:{file_path:string;suggested?:boolean}[]){
+ const paths=new Set(files.map(f=>f.file_path));
+ return previous.some(p=>paths.has(p))?selected.filter(p=>paths.has(p)):files.filter(f=>f.suggested).slice(0,10).map(f=>f.file_path);
 }

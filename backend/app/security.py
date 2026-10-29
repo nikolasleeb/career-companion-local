@@ -8,7 +8,7 @@ def request_limit(path):
     if __import__('re').fullmatch(r'/api/profile-import/[^/]+/approve',path):return 4*1024*1024
     if __import__('re').fullmatch(r'/api/interview-practice/sessions/[^/]+/voice',path):return 20*1024*1024
     if __import__('re').fullmatch(r'/api/applications/[^/]+/documents',path):return 11*1024*1024
-    return {'/api/jobs/from-document':51*1024*1024,'/api/jobs/import-document':51*1024*1024,'/api/analyses/from-document':51*1024*1024,'/api/account/import':257*1024*1024,'/api/job-search/ai/examples':11*1024*1024,'/api/project-sources/upload':33*1024*1024,'/api/documents':11*1024*1024,'/api/transcripts/parse':11*1024*1024,'/api/certificates':11*1024*1024}.get(path,1024*1024)
+    return {'/api/jobs/from-document':51*1024*1024,'/api/jobs/import-document':51*1024*1024,'/api/analyses/from-document':51*1024*1024,'/api/account/import':257*1024*1024,'/api/job-search/ai/examples':11*1024*1024,'/api/project-sources/upload-preview':33*1024*1024,'/api/project-sources/upload':33*1024*1024,'/api/documents':11*1024*1024,'/api/transcripts/parse':11*1024*1024,'/api/certificates':11*1024*1024}.get(path,1024*1024)
 
 class ResourceBoundary:
     def __init__(self,app):self.app=app;self.lock=threading.Lock();self.active=0;self.expensive=0

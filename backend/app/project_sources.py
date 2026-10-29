@@ -13,7 +13,7 @@ from .network import public_fetch, ServiceError
 
 MAX_FILE=200*1024
 MAX_TOTAL=2*1024*1024
-EXTENSIONS={'.py','.r','.js','.jsx','.ts','.tsx','.sql','.md','.txt','.ipynb','.java','.c','.cpp','.h','.css','.html','.yaml','.yml','.toml','.json','.sh','.pdf','.docx'}
+EXTENSIONS={'.py','.r','.js','.jsx','.ts','.tsx','.sql','.md','.txt','.ipynb','.java','.c','.cpp','.h','.css','.html','.yaml','.yml','.toml','.json','.sh','.pdf','.docx','.scala','.tf','.hcl','.conf','.properties','.xml','.csv'}
 BLOCKED={'node_modules','vendor','.git','.venv','venv','__pycache__','dist','build','coverage','site-packages','.aws','.ssh'}
 
 def allowed(path):
@@ -137,7 +137,8 @@ def snapshot(user,source,files,excluded=None,experience_id=''):
 
 async def select(user,id,paths,experience_id=''):
     source=require(user,id,'project_source');data=source['data']
-    if data['provider']!='github':raise HTTPException(400,'Only GitHub sources have a remote file picker. Open the saved upload snapshot instead.')
+    if data['provider'] not in ('github','upload_preview','mixed'):raise HTTPException(400,'Open the saved snapshot or choose a file-picker source.')
+    if experience_id:require(user,experience_id,'experience')
     allowed_files={f['file_path']:f for f in data['available_files']}
     if not paths or len(paths)>30 or len(set(paths))!=len(paths) or set(paths)-allowed_files.keys():raise HTTPException(400,'Choose up to 30 different files from this source.')
     files=[];excluded=[]
@@ -146,14 +147,19 @@ async def select(user,id,paths,experience_id=''):
         if info['size']>10*1024*1024:
             excluded.append({'file_path':path,'reason':'File exceeds 10 MB download limit'});continue
         try:
-            repo=info.get('source_repo',data['repo'])
+            if 'text' in info:
+                if sum(len(f['text'].encode()) for f in files)+len(info['text'].encode())>MAX_TOTAL:
+                    excluded.append({'file_path':path,'reason':'2 MB extracted text limit'});continue
+                files.append({k:info[k] for k in ('file_path','text','truncated','sha256','archive','original_sha256') if k in info})
+                continue
+            repo=info.get('source_repo',data.get('repo',''))
             blob=await github('repos/'+repo+'/git/blobs/'+info['sha'])
             import base64
             if blob.get('encoding')!='base64':raise ServiceError('Unsupported GitHub encoding.')
             try:raw=base64.b64decode(''.join(blob['content'].split()),validate=True)
             except (ValueError,KeyError,TypeError):raise ServiceError('GitHub returned an unreadable file encoding; upload this file instead.') from None
             file=await asyncio.to_thread(extracted,path,raw)
-            file['blob_sha']=info['sha'];file['url']=info.get('source_url',data['url'])+'/blob/'+info.get('source_commit',data['commit'])+'/'+quote(info.get('original_path',path))
+            file['blob_sha']=info['sha'];file['url']=info.get('source_url',data.get('url',''))+'/blob/'+info.get('source_commit',data.get('commit',''))+'/'+quote(info.get('original_path',path))
             if data.get('members'):file.update(repository=repo,commit=info['source_commit'])
             if sum(len(f['text'].encode()) for f in files)+len(file['text'].encode())>MAX_TOTAL:
                 excluded.append({'file_path':path,'reason':'2 MB extracted text limit'});continue

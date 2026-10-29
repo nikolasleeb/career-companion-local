@@ -85,3 +85,32 @@ test('project link drafts retain added empty rows, partial text and duplicates u
  const rows=projectLinkDrafts(data);rows[0]='changed';assert.equal(data.project_urls[0],first);
  assert.deepEqual(projectLinkDrafts({project_url:first,project_urls:[]}),[first]);assert.deepEqual(projectLinkDrafts({project_url:first,project_urls:['https://example.test/extra','']}),[first,'https://example.test/extra','']);assert.deepEqual(projectLinkDrafts({project_urls:['']}),['']);
 });
+
+test('ZIP-based projects recover uploaded materials with reference links after reopening',()=>{
+ const saved={id:'zip-snapshot',data:{provider:'mixed',experience_id:'aws-project',urls:['https://example.org/aws-project']}};
+ const request={id:'open-again',experienceId:'aws-project',url:'',urls:[],title:'AWS project'};
+ assert.equal(savedProjectForRecord([saved],request).id,'zip-snapshot');
+ assert.equal(savedProjectForRecord([saved],{...request,experienceId:'another-project'}),undefined);
+ assert.equal(savedProjectForRecord([{...saved,data:{...saved.data,archived:true}}],request),undefined);
+ assert.equal(savedProjectForRecord([saved],{...request,url:'https://github.com/example/new-project'}),undefined);
+});
+test('mixed sources compare every saved reference without discarding non-GitHub links',()=>{
+ const urls=['https://github.com/example/project','https://example.org/report'];
+ const request={id:'open',experienceId:'p',url:urls[0],urls,title:'Project'};
+ const row={id:'mixed',data:{provider:'mixed',experience_id:'p',urls}};
+ assert.equal(savedProjectForRecord([row],request).id,'mixed');
+ assert.equal(savedProjectForRecord([row],{...request,urls:[urls[0],'https://example.org/different-report']}),undefined);
+});
+
+test('pending ZIP previews remain in their own project library before analysis',()=>{
+ const library={snapshots:[],sources:[{id:'upload-a',data:{experience_id:'a',available_files:[{file_path:'main.py',text:'fixture'}]}},{id:'upload-b',data:{experience_id:'b',available_files:[]}}]};
+ assert.deepEqual(scopedProjectLibrary(library,'a').sources.map(r=>r.id),['upload-a']);
+});
+
+const {selectedProjectFiles}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('adding ZIPs or links preserves exclusions, including an entirely unchecked selection',()=>{
+ const initial=[{file_path:'zip/a.py',suggested:true},{file_path:'zip/b.py',suggested:true}],expanded=[...initial,{file_path:'README.md',suggested:true}];
+ assert.deepEqual(selectedProjectFiles([],[],initial),['zip/a.py','zip/b.py']);
+ assert.deepEqual(selectedProjectFiles(['zip/a.py'],initial.map(f=>f.file_path),expanded),['zip/a.py']);
+ assert.deepEqual(selectedProjectFiles([],initial.map(f=>f.file_path),expanded),[]);
+});

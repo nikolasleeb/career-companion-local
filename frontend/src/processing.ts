@@ -11,6 +11,8 @@ export function actionLabel(path:string){
  if(/\/answers$|\/progress$/.test(path))return 'Saving responses locally';
  if(path==='/analyses/from-document')return 'Reading job posting';
  if(path==='/analyses')return 'Comparing your Profile to the posting';
+ if(path==='/project-sources/upload-preview')return 'Reading project ZIPs and files';
+ if(path==='/project-sources/combine')return 'Combining project files';
  if(/^\/project-sources\/[^/]+\/select$/.test(path))return 'Preparing selected project files';
  if(/\/analyze$/.test(path))return 'Analyzing project materials';
  if(/\/build$/.test(path))return 'Building the resume draft';
@@ -50,7 +52,7 @@ export class ProcessingStore{
  disconnected(){for(const [id,value] of this.records)if(!value.request||value.settled)this.records.set(id,{...value,connection_lost:true,status:'unknown',checked_at:value.checked_at||new Date().toISOString()});this.emit();}
  async request(path:string,method:string,call:()=>Promise<any>){
   const epoch=this.epoch,write=method!=='GET'&&method!=='HEAD',id='request:'+String(++this.serial),stamp=new Date().toISOString();
-  if(write&&!path.endsWith('/cancel')){this.records.set(id,{id,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:/^\/project-sources\/[^/]+\/select$/.test(path)?'source_preparation':'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
+  if(write&&!path.endsWith('/cancel')){this.records.set(id,{id,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:['/project-sources/upload-preview','/project-sources/combine'].includes(path)?'local':/^\/project-sources\/[^/]+\/select$/.test(path)?'source_preparation':'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
   try{
    const value=await call();if(epoch!==this.epoch)return value;
    if(write)this.records.delete(id);
