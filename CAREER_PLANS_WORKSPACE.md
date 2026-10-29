@@ -2,6 +2,8 @@
 
 Career Plans uses one composer for questions and proposed plans. Optional planning inputs remain local drafts until an explicit AI action. The saved plan is the main workspace; version-specific plan assistance is separate from the global Career Coach. Older chat and plan routes remain valid. Existing proposal review, citations, cancellation, output budgets and request tokens remain in use. There is no automatic paid retry.
 
+Generated proposals open for review on the left, with **Edit plan** and a persistent **Save plan & start tracking** action. Saving is explicit and free of AI; it switches to the saved checklist and its tracking-enabled status. Plan questions and AI revision requests stay on the right. Proposed updates can be reviewed without changing the current saved plan; returning to it keeps pending edits in the open workspace.
+
 ## Checklists and versions
 
 `GET/PATCH /api/career-coach/plans/{id}/progress` read/write an account-owned `coach_plan_progress` entity. PATCH requires an expected revision and a valid milestone/optional step. A conflict never overwrites another window. The interface retains the unsaved checkbox choice and saved totals on failures, with reload, retry and discard controls.
