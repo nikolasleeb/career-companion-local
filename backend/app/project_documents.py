@@ -95,7 +95,11 @@ def read(path,raw):
             pdf=PdfReader(io.BytesIO(raw))
             if pdf.is_encrypted:raise ServiceError('Upload an unlocked PDF.')
             if not 1<=len(pdf.pages)<=100:raise ServiceError('Choose a PDF with 1 to 100 pages.')
-            texts=[page.extract_text() or '' for page in pdf.pages]
+            texts=[]
+            for page in pdf.pages:
+                try:texts.append(page.extract_text() or '')
+                except Exception:
+                    texts.append('');warnings.append('A PDF page has unreadable native text; OCR and original visual review are available.')
         except ServiceError:raise
         except Exception:raise ServiceError('This PDF could not be read. Export a new PDF.') from None
         missing=[i+1 for i,t in enumerate(texts) if len(t.strip())<30]

@@ -173,3 +173,16 @@ def test_successful_ocr_still_allows_original_visual_review_and_foreign_download
     other=client.post('/api/auth/register',json={'username':'different-person','password':'fictional-test-password'});assert other.status_code==200
     client.headers['X-CSRF-Token']=other.json()['csrf']
     assert client.get('/api/project-documents/'+file['visual_document_id']+'/download').status_code==404
+
+
+def test_valid_pdf_with_unreadable_native_text_uses_visual_fallback(monkeypatch):
+    no_ocr(monkeypatch)
+    class Page:
+        def extract_text(self):raise ValueError('Fictional broken font map')
+    class Reader:
+        is_encrypted=False
+        pages=[Page()]
+    monkeypatch.setattr(docs,'PdfReader',lambda raw:Reader())
+    out=docs.read('report.pdf',b'fictional valid PDF fixture')
+    assert out['visual_needed'] and out['pages']==1 and out['text']==docs.NOTICE
+    assert any('unreadable native text' in warning for warning in out['warnings'])
