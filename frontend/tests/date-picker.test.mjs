@@ -104,7 +104,27 @@ test('employment dates retain partial precision and chronological validation',()
 });
 test('employment policies apply to the shared editor without changing other date ranges',()=>{
  assert.equal(entryDatePolicy('employment','start_date'),'employment-start');assert.equal(entryDatePolicy('employment','end_date'),'employment-end');
- assert.equal(entryDatePolicy('education','start_date'),'past');assert.equal(entryDatePolicy('education','end_date'),'end');assert.equal(entryDatePolicy('education','expected_graduation'),'future');
+ assert.equal(entryDatePolicy('education','start_date'),'past');assert.equal(entryDatePolicy('education','end_date'),'education-end');assert.equal(entryDatePolicy('education','expected_graduation'),'future');
  for(const category of ['project','volunteering','coursework'])assert.equal(entryDatePolicy(category,'end_date'),'end');
  assert.equal(dateAllowed(dateParts('October 21, 2036'),entryDatePolicy('education','end_date'),today),true);
+});
+
+
+test('education end lists current and past years first, with future years separate',()=>{
+ const policy=entryDatePolicy('education','end_date'),years=dateYears(policy,today);
+ assert.deepEqual(years.normal.slice(0,4),[2026,2025,2024,2023]);assert.equal(years.normal.at(-1),1900);
+ assert.deepEqual(years.future,Array.from({length:10},(_,i)=>2027+i));
+ assert.equal(dateYears(policy,today,'May 2030').saved,null);
+ assert.equal(dateYears(policy,today,'May 2040').saved,2040);
+});
+
+test('graduates can choose past attendance ends in either month/year order',()=>{
+ const policy=entryDatePolicy('education','end_date');
+ for(const order of ['my','ym']){
+  let parts=blankDate();for(const k of order)parts=updateDateParts(parts,k,k==='m'?'5':'2025');
+  assert.equal(formatDate(parts),'May 2025');assert.equal(dateAllowed(parts,policy,today,'August 2021'),true);assert.equal(dateError(parts,policy,today,'August 2021'),'');
+ }
+ assert.match(dateError(dateParts('May 2021'),policy,today,'August 2021'),/before the start/);
+ assert.equal(dateError(dateParts('2021'),policy,today,'August 2021'),'');
+ assert.equal(dateError(dateParts('May 2020'),policy,today,'August 2016'),'');
 });

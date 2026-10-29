@@ -285,7 +285,7 @@ function EntryForm({initial,id,category='project',close,onDraftSave}:{initial?:a
  {kind==='education'?<>
   <div className="form-grid">{field('organization','Institution',{required:true})}{field('degree','Degree or qualification',{placeholder:'BS, BA, associate degree…',max:150,required:!entry.title||entry.title==='Education'})}<EducationSubjects field="major" values={entry.majors} onChange={values=>change('majors',values)}/><EducationSubjects field="minor" values={entry.minors} onChange={values=>change('minors',values)}/>{field('concentration','Concentration (optional)')}{field('location','School location',{max:300})}</div>
   {!entry.degree&&entry.title&&field('title','Existing education title',{required:true})}
-  <div className="form-grid">{dateField('start_date','Attendance start')}{dateField('end_date','Attendance end (if known)')}{dateField('expected_graduation','Expected graduation (optional)')}{legacyDates}{field('gpa','GPA (optional)',{max:30,placeholder:'3.8'})}{field('gpa_scale','GPA scale (optional)',{max:30,placeholder:'4.0 — only if confirmed'})}</div>
+  <div className="form-grid education-attendance-dates">{dateField('start_date','Attendance start')}{dateField('end_date','Attendance end (if known)')}{dateField('expected_graduation','Expected graduation (optional)')}</div>{legacyDates}<div className="education-gpa-row">{field('gpa','GPA (optional)',{max:30,placeholder:'3.8'})}{field('gpa_scale','GPA scale (optional)',{max:30,placeholder:'4.0 — only if confirmed'})}</div>
   {(entry.start_date||entry.end_date||entry.expected_graduation)&&entry.dates&&<p className="small muted">New attendance and graduation fields take precedence over the existing date description in new exports.</p>}
   {field('honors','Honors and awards',{area:true,max:3000})}<TranscriptCourses value={entry.relevant_courses||''} onChange={value=>change('relevant_courses',value)}/>{field('description','Additional education notes',{area:true,max:12000})}{entry.contribution&&field('contribution','Existing contribution details',{area:true,max:6000})}{entry.tools&&field('tools','Existing tools or methods',{max:1000})}
  </>:kind==='employment'?<>
@@ -366,21 +366,23 @@ function Master(){
 }
 
 function ResumeImportReview({document,onUpdate,close,onManual,embedded=false}:{embedded?:boolean;document:Entity;onUpdate:(d:Entity)=>void;close:()=>void;onManual:(category:string,text:string)=>void}) {
- const {user,workspace,run,refresh,notify}=useApp(), parsed=document.data.resume_parse, combined=!!document.data.combined;
+ const {user,workspace,run,refresh,notify}=useApp(), parsed=document.data.resume_parse, combined=!!document.data.combined,carry=document.data.import_review_state;
  const [choices,setChoices]=useState<Record<string,Record<string,string>>>({}),[profileChoices,setProfileChoices]=useState<Record<string,string>>({}),[merges,setMerges]=useState<string[]>([]),[recordChoices,setRecordChoices]=useState<Record<string,string>>({});
- const [entries,setEntries]=useState<any[]>(parsed.entries),[profile,setProfile]=useState<Record<string,string>>({...parsed.profile}),[selectedProfile,setSelectedProfile]=useState<string[]>([]),[selected,setSelected]=useState<string[]>([]);
+ const [entries,setEntries]=useState<any[]>(()=>parsed.entries.map((e:any)=>carry?.entryData?.[e.id]?{...e,data:carry.entryData[e.id]}:e)),[profile,setProfile]=useState<Record<string,string>>({...parsed.profile,...carry?.profile}),[selectedProfile,setSelectedProfile]=useState<string[]>([]),[selected,setSelected]=useState<string[]>([]);
  const [reviewed,setReviewed]=useState(false),[editing,setEditing]=useState<string|null>(null),[source,setSource]=useState(document.data.text),[showSource,setShowSource]=useState(false),[destination,setDestination]=useState('project');
  const [comparison,setComparison]=useState<any>(null),[compareError,setCompareError]=useState(''),[changes,setChanges]=useState<Record<string,{target:string;fields:string[]}>>({});
+ const [separating,setSeparating]=useState('');
  const root=useRef<HTMLElement|null>(null),lastIssue=useRef<HTMLElement|null>(null);
  const labels:Record<string,string>={...Object.fromEntries(profileFields.map(([key,label])=>[key,label])),title:'Title',organization:'School / employer / organization',degree:'Degree',major:'Major',minor:'Minor',majors:'Majors',minors:'Minors',concentration:'Concentration',location:'Location',dates:'Dates',start_date:'Start',end_date:'End',expected_graduation:'Expected graduation',gpa:'GPA',gpa_scale:'GPA scale',honors:'Honors',relevant_courses:'Relevant classes',tools:'Tools / methods',description:'Details',contribution:'Individual contribution',accomplishments:'Accomplishments',work_arrangement:'Work arrangement',project_url:'Project link',project_urls:'Project links'};
  const personalKeys=Object.keys(profile).filter(k=>k!=='headline');
  const loadComparison=()=>{
   setComparison(null);setCompareError('');setChanges({});setReviewed(false);
   api(combined?'/profile-import/'+document.id+'/preview':'/documents/'+document.id+'/import-preview').then(v=>{
-   setComparison(v);setSelected(entries.filter(e=>!v[e.id]?.exact.length&&e.review_state!=='needs_review').map(e=>e.id));
-   setSelectedProfile(personalKeys.filter(k=>parsed.profile_states?.[k]!=='unchanged'));
-   setProfileChoices(Object.fromEntries(personalKeys.filter(k=>!parsed.profile_conflicts?.[k]&&k==='email').map(k=>[k,'0'])));
-   setChoices({});setRecordChoices({});setMerges([]);
+   setComparison(v);setSelected(carry?carry.selected.filter((id:string)=>!v[id]?.exact.length):entries.filter(e=>!v[e.id]?.exact.length&&e.review_state!=='needs_review').map(e=>e.id));
+   setSelectedProfile(carry?.selectedProfile||personalKeys.filter(k=>parsed.profile_states?.[k]!=='unchanged'));
+   setProfileChoices(carry?.profileChoices||Object.fromEntries(personalKeys.filter(k=>!parsed.profile_conflicts?.[k]&&k==='email').map(k=>[k,'0'])));
+   setChoices(carry?.choices||{});setRecordChoices(carry?.recordChoices||{});setMerges(carry?.merges||[]);setChanges(carry?.changes||{});
+   if(carry?.focusEntry)requestAnimationFrame(()=>{const target=root.current?.querySelector<HTMLElement>('[data-import-entry="'+carry.focusEntry+'"]');target?.focus();target?.scrollIntoView({block:'nearest'});});
   }).catch(e=>setCompareError(e.message));
  };
  useEffect(loadComparison,[document.id,parsed.text_hash]);
@@ -397,7 +399,21 @@ function ResumeImportReview({document,onUpdate,close,onManual,embedded=false}:{e
  const selectedCount=selected.length+selectedProfile.length+selectedUpdates.length;
  const current=entries.find(e=>e.id===editing);
  function chooseField(id:string,key:string,choice:string,value:any){setChoices(v=>({...v,[id]:{...v[id],[key]:choice}}));setEntries(v=>v.map(e=>e.id===id?{...e,data:{...e.data,[key]:value}}:e));setReviewed(false);}
- async function separate(item:any){await run('Separating source proposals',async()=>onUpdate(await api('/profile-import/preview','POST',{document_ids:document.data.combined.documents.map((d:any)=>d.id),separate_groups:[...document.data.combined.separate_groups,item.id]})));}
+ async function separate(item:any){
+  setSeparating(item.id);setReviewed(false);
+  try{await run('Separating source proposals',async()=>{
+   const result=await api('/profile-import/preview','POST',{document_ids:document.data.combined.documents.map((d:any)=>d.id),separate_groups:[...document.data.combined.separate_groups,item.id]});
+   const before=document.data.combined,after=result.data.combined;
+   const equal=(x:any,y:any)=>Object.keys(x||{}).length===Object.keys(y||{}).length&&Object.keys(x||{}).every(k=>x[k]===y?.[k]);
+   const unchanged=before.cleanup_revision===after.cleanup_revision&&equal(before.profile_base,after.profile_base)&&equal(before.comparison._versions,after.comparison._versions)&&before.documents.length===after.documents.length&&before.documents.every((d:any)=>after.documents.some((n:any)=>n.id===d.id&&n.hash===d.hash&&n.updated_at===d.updated_at));
+   if(unchanged){
+    const ids=new Set<string>(result.data.resume_parse.entries.map((e:any)=>e.id));const oldIds=new Set(entries.map(e=>e.id));const fresh=result.data.resume_parse.entries.filter((e:any)=>!oldIds.has(e.id));
+    const keep=(value:any)=>Object.fromEntries(Object.entries(value).filter(([id])=>ids.has(id)));
+    result.data.import_review_state={entryData:Object.fromEntries(entries.filter(e=>ids.has(e.id)).map(e=>[e.id,e.data])),profile,selectedProfile,profileChoices,choices:keep(choices),recordChoices:keep(recordChoices),merges:merges.filter(id=>ids.has(id)),changes:keep(changes),selected:[...selected.filter(id=>ids.has(id)),...fresh.filter((e:any)=>selected.includes(item.id)&&e.review_state!=='needs_review').map((e:any)=>e.id)],focusEntry:fresh[0]?.id};
+   }
+   onUpdate(result);notify(unchanged?'Sources kept as separate records. Your other review choices were preserved.':'Source or saved Profile information changed. Review the fresh proposals before importing.');
+  });}finally{setSeparating('');}
+ }
  function selectSection(items:any[],include:boolean){const ids=items.filter(e=>!comparison?.[e.id]?.exact.length&&!changes[e.id]?.target).map(e=>e.id);if(include)setRecordChoices(v=>Object.fromEntries(Object.entries(v).map(([id,c])=>[id,ids.includes(id)&&c==='keep'?'':c])));setSelected(v=>include?Array.from(new Set([...v,...ids])):v.filter(id=>!items.some(e=>e.id===id)));if(!include)setChanges(v=>Object.fromEntries(Object.entries(v).map(([id,c])=>[id,items.some(e=>e.id===id)?{...c,fields:[]}:c])));setReviewed(false);}
  function nextIssue(){const issues=Array.from(root.current?.querySelectorAll<HTMLElement>('[data-import-issue="true"]')||[]);const active=issues.findIndex(e=>e===window.document.activeElement||e.contains(window.document.activeElement));const previous=active>=0?active:issues.indexOf(lastIssue.current!);const target=issues[(previous+1)%issues.length];lastIssue.current=target;target?.focus();target?.scrollIntoView({behavior:'smooth',block:'center'});}
  function overlap(item:any){
@@ -434,13 +450,13 @@ function ResumeImportReview({document,onUpdate,close,onManual,embedded=false}:{e
    })}</div></section>}
    {groupOrder.map(kind=>{const items=entries.filter(e=>e.data.category===kind);return items.length>0&&<section className="parse-section" key={kind}>
     <div className="import-section-heading"><h3>{sectionInfo[kind].title}</h3><span>{items.filter(selectedItem).length} of {items.length} selected</span><button type="button" disabled={!comparison} onClick={()=>selectSection(items,true)}>Select all</button><button type="button" onClick={()=>selectSection(items,false)}>Clear</button></div>
-    {items.map(item=>{const already=!!comparison?.[item.id]?.exact.length,issue=itemIssue(item);return <article className={'parse-entry '+(kind==='skills'?'parse-skill-entry ':'')+(issue?'import-needs-choice':'')} key={item.id} tabIndex={-1} data-import-issue={issue}>
+    {items.map(item=>{const already=!!comparison?.[item.id]?.exact.length,issue=itemIssue(item);return <article className={'parse-entry '+(kind==='skills'?'parse-skill-entry ':'')+(issue?'import-needs-choice':'')} key={item.id} tabIndex={-1} data-import-entry={item.id} data-import-issue={issue}>
      <div className="parse-entry-head"><label className="check-line"><input type="checkbox" checked={selected.includes(item.id)} disabled={already||!comparison||!!changes[item.id]?.target} onChange={e=>{setSelected(e.target.checked?[...selected,item.id]:selected.filter(id=>id!==item.id));if(e.target.checked&&recordChoices[item.id]==='keep')setRecordChoices(v=>({...v,[item.id]:''}));setReviewed(false);}}/><span><strong>{item.label||entryTitle(item.data)}</strong><small>{[item.data.organization,item.data.location,entryDates(item.data)].filter(Boolean).join(' · ')}</small></span></label><Button secondary onClick={()=>setEditing(item.id)}>Edit details</Button></div>
      {issue&&<p className="import-choice-notice">Needs your choice · Resolve the highlighted differences or uncheck this proposal.</p>}
      {item.sources&&<p className="small muted">Sources: {item.sources.map((v:any)=>v.filename).join(' · ')}</p>}
      {already?<p className="small muted">Already saved · this exact information will be skipped.</p>:<>
       {item.review_state==='needs_review'&&<label className="check-line"><input type="checkbox" checked={choices[item.id]?._review==='reviewed'} onChange={e=>{setChoices(v=>({...v,[item.id]:{...v[item.id],_review:e.target.checked?'reviewed':''}}));setReviewed(false);}}/>I checked the extracted fields against the source</label>}
-      {item.requires_merge_confirmation&&<div className="import-merge-review"><p>Possible match between your documents. Confirm it is one record, or keep the entries separate.</p><label className="check-line"><input type="checkbox" checked={merges.includes(item.id)} onChange={e=>{setMerges(v=>e.target.checked?[...v,item.id]:v.filter(id=>id!==item.id));setReviewed(false);}}/>These sources describe the same record</label><Button secondary onClick={()=>void separate(item)}>Keep these as separate records</Button></div>}
+      {item.requires_merge_confirmation&&<fieldset className="import-merge-review"><legend>How do these sources relate?</legend><p>Choose one option for this possible match.</p><label className="check-line"><input type="radio" name={'import-record-match-'+document.id+'-'+item.id} value="same" checked={merges.includes(item.id)&&separating!==item.id} onChange={()=>{setMerges(v=>Array.from(new Set([...v,item.id])));setReviewed(false);}}/>These sources describe the same record</label><label className="check-line"><input type="radio" name={'import-record-match-'+document.id+'-'+item.id} value="separate" checked={separating===item.id} onChange={()=>void separate(item)}/>Keep these as separate records</label></fieldset>}
       {Object.entries(item.conflicts||{}).map(([key,options])=><ImportConflict key={key} field={key} label={labels[key]} options={options as any[]} choice={choices[item.id]?.[key]} value={item.data[key]} onChange={(choice,value)=>chooseField(item.id,key,choice,value)}/>)}
       {overlap(item)}
      </>}
@@ -454,7 +470,7 @@ function ResumeImportReview({document,onUpdate,close,onManual,embedded=false}:{e
    })}>Import selected changes ↗</Button></div></div>
   </>}
  </>;
- return <>{embedded?<section ref={root} className="panel inline-import-review">{reviewContent}</section>:<Modal wide title="Review imported information" close={close}><section ref={root}>{reviewContent}</section></Modal>}{current&&<EntryForm key={current.id} initial={current.data} category={current.data.category} close={()=>setEditing(null)} onDraftSave={data=>{
+ return <>{embedded?<section ref={root} className="panel inline-import-review"><fieldset className="import-review-content" disabled={!!separating}>{reviewContent}</fieldset></section>:<Modal wide title="Review imported information" close={close}><section ref={root}><fieldset className="import-review-content" disabled={!!separating}>{reviewContent}</fieldset></section></Modal>}{current&&<EntryForm key={current.id} initial={current.data} category={current.data.category} close={()=>setEditing(null)} onDraftSave={data=>{
   setChoices(v=>({...v,[current.id]:{...v[current.id],_review:'reviewed',...Object.fromEntries(Object.keys(current.conflicts||{}).filter(k=>JSON.stringify(data[k])!==JSON.stringify(current.data[k])).map(k=>[k,'edited']))}}));setEntries(v=>v.map(e=>e.id===editing?{...e,data:{...data,confirmed:false}}:e));setReviewed(false);
  }}/>}</>;
 }

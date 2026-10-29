@@ -1,7 +1,7 @@
 export const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-export type DatePolicy='past'|'end'|'future'|'employment-start'|'employment-end';
+export type DatePolicy='past'|'end'|'education-end'|'future'|'employment-start'|'employment-end';
 export function preserveSavedDate(policy:DatePolicy){return policy!=='employment-start'&&policy!=='employment-end';}
-export function entryDatePolicy(category:string,field:string):DatePolicy{return category==='employment'&&field==='start_date'?'employment-start':category==='employment'&&field==='end_date'?'employment-end':category==='education'&&field==='start_date'?'past':field==='expected_graduation'?'future':'end';}
+export function entryDatePolicy(category:string,field:string):DatePolicy{return category==='employment'&&field==='start_date'?'employment-start':category==='employment'&&field==='end_date'?'employment-end':category==='education'&&field==='start_date'?'past':category==='education'&&field==='end_date'?'education-end':field==='expected_graduation'?'future':'end';}
 export type DateParts={y:string;m:string;d:string;legacy:boolean};
 export const blankDate=():DateParts=>({y:'',m:'',d:'',legacy:false});
 function localDate(y:number,m:number,d:number){return new Date(y,m-1,d);}
@@ -44,6 +44,7 @@ export function dateError(parts:DateParts,policy:DatePolicy,today=new Date(),aft
 }
 export function dateYears(policy:DatePolicy,today=new Date(),preserved=''){
  const y=today.getFullYear();const upcoming=Array.from({length:policy==='employment-end'?2:11},(_,i)=>y+i);const past=Array.from({length:Math.max(0,y-1900)},(_,i)=>y-i-1);
- const normal=policy==='past'||policy==='employment-start'?[y,...past]:policy==='future'?upcoming:[...upcoming,...past];
- const old=Number(dateParts(preserved).y);return {normal,saved:old&&!normal.includes(old)?old:null};
+ const normal=policy==='past'||policy==='employment-start'||policy==='education-end'?[y,...past]:policy==='future'?upcoming:[...upcoming,...past];
+ const future=policy==='education-end'?upcoming.slice(1):[];
+ const old=Number(dateParts(preserved).y);return {normal,future,saved:old&&![...normal,...future].includes(old)?old:null};
 }

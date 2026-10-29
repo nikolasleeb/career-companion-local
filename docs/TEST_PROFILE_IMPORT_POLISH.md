@@ -34,3 +34,5 @@ Use a disposable account and fictional documents first. Preparing a review, canc
 ## Rollout and rollback
 
 Both editions are built and tested before rollout. Hosted data, uploads, configuration, vault key and the previous image are backed up before deployment. The installed localhost service is not changed. Audited localhost source and these instructions are pushed to GitHub without a release or tag. Deployment does not import Profile information or make paid AI requests.
+
+For past education dates, GPA alignment and the exclusive same/separate choices, see [Education and import choices](TEST_EDUCATION_AND_IMPORT_CHOICES.md).
