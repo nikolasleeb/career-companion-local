@@ -7,7 +7,7 @@ from .models import StrictModel
 
 class PlanInput(StrictModel):
     purpose: Literal['explore', 'internships', 'graduation', 'career_change', 'certification', 'custom'] = 'custom'
-    objective: str = Field(min_length=1, max_length=2000)
+    objective: str = Field(min_length=1, max_length=8000)
     target: str = Field(default='', max_length=150)
     time_available: str = Field(default='', max_length=200)
     budget: str = Field(default='', max_length=200)

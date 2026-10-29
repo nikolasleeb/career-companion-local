@@ -311,6 +311,10 @@ def remove_openai_key(user=Depends(auth.current)):
     credentials.remove(user['id'])
     return {'configured':bool(config.OPENAI_KEY and config.ALLOW_SERVER_AI_KEY),'message':'Saved account key removed.'}
 
+from . import daily_usage,plan_progress
+app.include_router(daily_usage.router)
+app.include_router(plan_progress.router)
+
 @app.get('/api/usage')
 def usage_history(start:str='',end:str='',model:str='',process:str='',tz:str='UTC',bucket:Literal['day','week','month']='day',offset:int=Query(default=0,ge=0),limit:int=Query(default=30,ge=1,le=100),user=Depends(auth.current)):
     try:return cost_history.report(user['id'],start,end,model,process,tz,bucket,offset,limit)
@@ -1272,7 +1276,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'career_explorer_search','career_explorer_review','application_offer','saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'coach_plan_progress','career_explorer_search','career_explorer_review','application_offer','saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):

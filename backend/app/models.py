@@ -222,6 +222,18 @@ class OpenAIKeyUpdate(StrictModel):
         return SecretStr(key)
 
 class SettingsUpdate(StrictModel):
+    daily_spend_warning_usd: float | None = Field(default=None,ge=0,le=1000000,allow_inf_nan=False)
+    usage_timezone: str | None = Field(default=None,max_length=100)
+
+    @field_validator("usage_timezone")
+    @classmethod
+    def valid_usage_timezone(cls,value):
+        if value:
+            from zoneinfo import ZoneInfo
+            try: ZoneInfo(value)
+            except (ValueError,KeyError): raise ValueError("Choose a valid timezone.")
+        return value
+
     us_citizen: Literal["", "yes", "no", "unsure"] | None = None
     authorized_us: Literal["", "yes", "no", "unsure"] | None = None
     sponsorship_now: Literal["", "yes", "no", "unsure"] | None = None

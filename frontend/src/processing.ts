@@ -28,7 +28,7 @@ export function actionLabel(path:string){
  if(path==='/jobs/search')return 'Searching job sources';
  return 'Processing your request';
 }
-export function backgroundLocalRequest(path:string,method:string){const route=path.split('?')[0];return method==='POST'&&route==='/career-explorer/explore'||route.endsWith('/estimate')||method==='PUT'&&/^\/work-style\/[^/]+\/progress$/.test(route);}
+export function backgroundLocalRequest(path:string,method:string){const route=path.split('?')[0];return method==='PATCH'&&/^\/career-coach\/plans\/[^/]+\/progress$/.test(route)||method==='POST'&&route==='/career-explorer/explore'||route.endsWith('/estimate')||method==='PUT'&&/^\/work-style\/[^/]+\/progress$/.test(route);}
 export function processingGroups(entries:ProcessingEntry[]){
  return {confirmed:entries.filter(v=>!v.connection_lost&&v.status!=='unknown'),uncertain:entries.filter(v=>v.connection_lost||v.status==='unknown')};
 }

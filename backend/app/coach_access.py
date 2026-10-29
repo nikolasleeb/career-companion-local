@@ -77,7 +77,9 @@ def project(user,r,permissions=None):
  if kind=='job':return None if d.get('cache_tombstone') else text(pick(d,('title','company','location','description')))
  if kind=='analysis':return text(pick(d,('summary','suggestions')))
  if kind=='prep':return text(pick(d,('priorities','steps','title','resources','summary')))
- if kind=='coach_plan':return text(pick(d,('direction','actions')))
+ if kind=='coach_plan':
+  from . import plan_progress
+  return text({**pick(d,('direction','actions')),'checklist':plan_progress.snapshot(user,r)})
  if kind=='saved_career':return text(pick(d,('code','title')))
  if kind=='career_explorer_search':return text(pick(d,('name','query','course_refs')))
  if kind=='project_analysis':
@@ -121,4 +123,4 @@ def records(user,excluded=()):
   if value and value not in ('{}','[]'):
    label=('Archived application · historical record' if r['data'].get('archived') else 'Application') if r['kind']=='application' else REGISTRY[r['kind']]
    status='saved_record' if r['kind'] in ('application','job','document','project_snapshot','saved_career','career_explorer_search') else 'saved_output'
-   yield {'record_id':r['id'],'kind':r['kind'],'label':label+' · '+str(r['data'].get('title') or r['data'].get('name') or r['data'].get('company') or r['data'].get('code') or ''),'revision':r['updated_at'],'status':status,'text':value}
+   yield {'record_id':r['id'],'kind':r['kind'],'label':label+' · '+str(r['data'].get('title') or r['data'].get('name') or r['data'].get('company') or r['data'].get('code') or ''),'revision':r['updated_at']+(':progress:'+str(__import__('app.plan_progress',fromlist=['snapshot']).snapshot(user,r)['revision']) if r['kind']=='coach_plan' else ''),'status':status,'text':value}
