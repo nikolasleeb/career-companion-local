@@ -1,7 +1,9 @@
-# Career Companion Local 1.0.10
+# Career Companion Local 1.0.11
 
 This release packages the current Career Companion features for localhost. It starts with an empty workspace and contains no hosted accounts, uploaded documents, private chats, cached jobs, API keys, notification credentials or vault keys.
 
+- Work Styles summaries now synthesize broad completed-assessment results, work choices and optionally approved project/work context into a natural, tentative workplace profile. Raw ratings and sensitive facets stay excluded; new drafts still need review before saving or sharing.
+- Project cards offer Retry analysis after a failed attempt without successful findings. Selected materials use consistent file rows, keeping visual-review notes and original downloads inside the corresponding file. Earlier output-limit errors are explicitly labeled as previous attempts.
 - Review resume and LinkedIn imports in the actual Profile tabs, with full editable forms, standardized personal names, explicit source choices, common degree options, typed years and reliable multiword majors and project links. Imported details remain proposals until approved.
 - Add project ZIPs, files and public GitHub links together. Preview and select materials before analysis. PowerPoint, Word, PDF, Excel and common image formats are supported alongside code and notebooks. Local text/OCR preparation makes no AI request; selected originals needing file or visual review are included only when you choose Analyze. Visual findings are labeled for review and originals stay in private account backups. Existing size and analysis limits apply.
 - Mark individual projects explicitly. Project observations describe materials without assuming authorship, personal contribution or proficiency. Reviewed application answers remain the source of personal evidence.
