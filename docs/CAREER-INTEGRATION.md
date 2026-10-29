@@ -1,12 +1,12 @@
-# Career Explorer Goals Plans and Offer Context
+# Explore Occupations Goals Plans and Offer Context
 
-Career Explorer supports deliberate handoffs into the existing career workspace. Browsing occupations, saving bookmarks, reviewing goals and opening message drafts make no AI request.
+Explore Occupations supports deliberate handoffs into the existing career workspace. Browsing occupations, saving bookmarks, reviewing goals and opening message drafts make no AI request.
 
 ## Explorer and Profile
 
 Add as Career Goal opens a review form. Existing linked occupations open their saved goal for editing. Saving preserves the O*NET code, title, dataset version and revision, without changing the account's automatic AI setting. Bookmarks and goals are independent.
 
-Discuss with Career Coach and Explore in Career Plans open an editable question with a visible occupation preview. Sending explicitly shares that occupation even if automatic Career Goals context is off. Other goals/bookmarks are not included by that selection. Context revisions are checked before dispatch, and the submitted snapshot is saved with the conversation. These descriptions and ambitions are not qualification evidence.
+Discuss with Career Coach and Explore in Action Plans open an editable question with a visible occupation preview. Sending explicitly shares that occupation even if automatic Career Goals context is off. Other goals/bookmarks are not included by that selection. Context revisions are checked before dispatch, and the submitted snapshot is saved with the conversation. These descriptions and ambitions are not qualification evidence.
 
 ## Cover letters
 
@@ -14,7 +14,7 @@ Use selected Career Goals for this letter starts off. Apply goal selection creat
 
 Turning the selection off removes its motivation from future generation without rewriting historical letters. Changed goals require a refreshed selection and review. Backup imports retain historical sources but disable automatic reuse of imported per-letter goal selections until reviewed again. This setting never enables goals globally or changes resumes.
 
-## Career Plans
+## Action Plans
 
 Ask & explore keeps normal questions, starters and saved chats. My plans lists the same saved roadmap records, with next steps and access to the original conversation. Previous versions are optional; progress remains attached to stable milestone identities.
 

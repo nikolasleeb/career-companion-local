@@ -18,7 +18,7 @@ Specific goals remain independent milestones with categories, optional dates, pr
 
 The existing sharing choice is preserved, off by default for new accounts. When enabled, guidance uses labeled overall-direction and milestone text as aspirations. Guided-editor fields are excluded from provider payloads; the statement is sent once rather than repeated in note, items and editor fields. Guidance connects relevant milestones without treating future skills/certifications as qualifications and asks about contradictory dates/priorities.
 
-Career Plans can explicitly include selected direction/milestones even when automatic sharing is off. Cover letters and application motivation retain their separate explicit selection and review rules. Existing conversations/plans/documents retain their snapshots. Saving goals does not itself launch generation or rewrite employer documents.
+Action Plans can explicitly include selected direction/milestones even when automatic sharing is off. Cover letters and application motivation retain their separate explicit selection and review rules. Existing conversations/plans/documents retain their snapshots. Saving goals does not itself launch generation or rewrite employer documents.
 
 ## Compatibility
 

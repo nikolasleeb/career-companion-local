@@ -1,7 +1,7 @@
 [
   {
     "id": "explore",
-    "title": "Explore occupations before choosing a path",
+    "title": "BLS Occupational Outlook Handbook",
     "url": "https://www.bls.gov/ooh/",
     "topics": [
       "career exploration",
@@ -9,11 +9,12 @@
       "education"
     ],
     "text": "Compare the work itself, typical entry education, work environment and occupational outlook. Occupational statistics describe groups, not an individual hiring probability. Choose a few plausible paths and identify small, practical ways to explore each.",
-    "editorial": true
+    "editorial": true,
+    "description": "Official occupation profiles covering work, education, pay and outlook."
   },
   {
     "id": "practice",
-    "title": "Build evidence through deliberate practice",
+    "title": "University of Arizona — Center for Career Readiness",
     "url": "https://career.arizona.edu/",
     "topics": [
       "projects",
@@ -22,11 +23,12 @@
       "career exploration"
     ],
     "text": "Choose one skill connected to a real goal. Build a small artifact, explain your own contribution and document how you checked the result. A completed course alone does not establish proficiency. Ask for feedback, revise the artifact and retain honest evidence of what you did.",
-    "editorial": true
+    "editorial": true,
+    "description": "University of Arizona career services, advising, events and career-readiness resources."
   },
   {
     "id": "cert-choice",
-    "title": "Evaluate a certification before paying",
+    "title": "CareerOneStop — Certification Finder",
     "url": "https://www.careeronestop.org/Toolkit/Training/find-certifications.aspx",
     "topics": [
       "certifications",
@@ -34,11 +36,12 @@
       "credentials"
     ],
     "text": "Check whether a credential appears in relevant employer requirements and whether the provider has published prerequisites, fees, renewal rules and exam details. Prefer free foundational practice before paying when the benefit is unclear. A certificate is not a job guarantee or a substitute for required professional licensure.",
-    "editorial": true
+    "editorial": true,
+    "description": "Search for certifications by occupation, industry or keyword."
   },
   {
     "id": "python",
-    "title": "Python tutorial",
+    "title": "Python documentation — The Python Tutorial",
     "url": "https://docs.python.org/3/tutorial/",
     "topics": [
       "Python",
@@ -46,11 +49,12 @@
       "data science"
     ],
     "text": "Use the official Python tutorial to practice language fundamentals, data structures, modules and exceptions. Pair reading with a small reproducible project and tests. The tutorial is a learning resource; completing it does not itself certify professional proficiency.",
-    "editorial": true
+    "editorial": true,
+    "description": "The Python language tutorial in the official documentation."
   },
   {
     "id": "sql",
-    "title": "SQL practice with SQLBolt",
+    "title": "SQLBolt — Interactive SQL Lessons",
     "url": "https://sqlbolt.com/",
     "topics": [
       "SQL",
@@ -58,11 +62,12 @@
       "data engineering"
     ],
     "text": "Practice filtering, grouping, joins and database changes using interactive SQL lessons. Demonstrate the skill with documented queries against a public or fictional dataset, including checks for duplicates and missing values. Check the provider for current access conditions.",
-    "editorial": true
+    "editorial": true,
+    "description": "Interactive lessons and exercises covering SQL queries and database concepts."
   },
   {
     "id": "stats",
-    "title": "OpenIntro statistics",
+    "title": "OpenIntro — OpenIntro Statistics",
     "url": "https://www.openintro.org/book/os/",
     "topics": [
       "statistics",
@@ -71,11 +76,12 @@
       "research"
     ],
     "text": "Study sampling, uncertainty and statistical reasoning, then apply them to a transparent analysis with assumptions and limitations. Explain what the analysis can and cannot establish. Check the provider for current materials and access options.",
-    "editorial": true
+    "editorial": true,
+    "description": "Statistics textbooks and supporting learning materials from OpenIntro."
   },
   {
     "id": "cloud",
-    "title": "AWS training and certification",
+    "title": "AWS — Training and Certification",
     "url": "https://aws.amazon.com/training/",
     "topics": [
       "cloud infrastructure",
@@ -83,11 +89,12 @@
       "IT and systems"
     ],
     "text": "Compare official AWS learning paths with the tasks in your target roles. Practice with a small architecture and explain security, reliability and cost decisions. Verify current exam fees, prerequisites and cloud-service charges on the provider site before committing.",
-    "editorial": true
+    "editorial": true,
+    "description": "AWS training resources, learning paths and certification information."
   },
   {
     "id": "microsoft",
-    "title": "Microsoft Learn",
+    "title": "Microsoft Learn — Training",
     "url": "https://learn.microsoft.com/training/",
     "topics": [
       "Azure",
@@ -96,11 +103,12 @@
       "data analysis"
     ],
     "text": "Use official learning paths for relevant Microsoft tools. Choose modules that fit a concrete task and build an artifact that demonstrates it. Distinguish training modules from an earned certification; verify current exam requirements and pricing with Microsoft.",
-    "editorial": true
+    "editorial": true,
+    "description": "Microsoft training modules and learning paths across its products and technologies."
   },
   {
     "id": "it",
-    "title": "CompTIA certification information",
+    "title": "CompTIA — Certifications",
     "url": "https://www.comptia.org/certifications",
     "topics": [
       "IT and systems",
@@ -108,11 +116,12 @@
       "technical support"
     ],
     "text": "Compare IT certification objectives with your current foundations and target support, systems or security roles. Review official recommended experience, exam details and renewal conditions. Practice troubleshooting and document diagnostic reasoning before treating an exam as the only preparation.",
-    "editorial": true
+    "editorial": true,
+    "description": "CompTIA credential information and preparation options for IT careers."
   },
   {
     "id": "software",
-    "title": "MDN web development learning",
+    "title": "MDN — Learn Web Development",
     "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development",
     "topics": [
       "software engineering",
@@ -120,11 +129,12 @@
       "computer science"
     ],
     "text": "Practice accessible HTML, CSS, JavaScript and web fundamentals through MDN learning materials. Build and test a small application, explain design decisions and document limitations. Accessibility and clear documentation can make a portfolio easier to review.",
-    "editorial": true
+    "editorial": true,
+    "description": "Web development learning materials covering HTML, CSS, JavaScript and web fundamentals."
   },
   {
     "id": "consulting",
-    "title": "Management analyst occupational information",
+    "title": "BLS — Management Analysts",
     "url": "https://www.bls.gov/ooh/business-and-financial/management-analysts.htm",
     "topics": [
       "management consulting",
@@ -132,11 +142,12 @@
       "consulting"
     ],
     "text": "Explore management-analysis duties and typical occupational entry preparation using BLS information. Practice framing a business problem, comparing options and explaining recommendations with evidence. Do not infer consulting readiness from a degree title alone.",
-    "editorial": true
+    "editorial": true,
+    "description": "Occupational information about management analysts, including duties and typical preparation."
   },
   {
     "id": "marketing",
-    "title": "Marketing occupational information",
+    "title": "BLS — Advertising, Promotions, and Marketing Managers",
     "url": "https://www.bls.gov/ooh/management/advertising-promotions-and-marketing-managers.htm",
     "topics": [
       "marketing",
@@ -144,11 +155,12 @@
       "communication"
     ],
     "text": "Use occupational information to understand marketing responsibilities and distinguish experienced management roles from starting positions. A useful practice project can define an audience, a campaign hypothesis, measures and limitations using fictional or public information.",
-    "editorial": true
+    "editorial": true,
+    "description": "Occupational information about marketing management roles."
   },
   {
     "id": "accounting",
-    "title": "Accounting career information",
+    "title": "BLS — Accountants and Auditors",
     "url": "https://www.bls.gov/ooh/business-and-financial/accountants-and-auditors.htm",
     "topics": [
       "accounting",
@@ -156,11 +168,12 @@
       "CPA"
     ],
     "text": "Compare accounting duties and education pathways with the work you want to pursue. Use official state-board and credential-provider information for licensure eligibility; degree labels alone cannot establish CPA eligibility. Practice a clearly labeled fictional accounting or audit case.",
-    "editorial": true
+    "editorial": true,
+    "description": "Occupational information about accounting and auditing work."
   },
   {
     "id": "finance",
-    "title": "Financial analyst career information",
+    "title": "BLS — Financial Analysts",
     "url": "https://www.bls.gov/ooh/business-and-financial/financial-analysts.htm",
     "topics": [
       "finance",
@@ -168,23 +181,25 @@
       "business"
     ],
     "text": "Explore analyst responsibilities, occupational education information and possible specializations. Build a transparent financial analysis using public or fictional data and explain assumptions and uncertainty. A career exercise is not personalized investment advice.",
-    "editorial": true
+    "editorial": true,
+    "description": "Occupational information about financial analyst roles."
   },
   {
     "id": "operations",
-    "title": "Project Management Institute certification information",
+    "title": "Project Management Institute — Certifications",
     "url": "https://www.pmi.org/certifications",
     "topics": [
       "operations",
       "project management",
       "business analysis"
     ],
-    "text": "Compare project-management learning with the coordination work you want to perform. Verify each credential\u2019s current experience and education prerequisites directly with PMI. A practical artifact can include scope, stakeholders, risks and a retrospective of an actual or fictional project.",
-    "editorial": true
+    "text": "Compare project-management learning with the coordination work you want to perform. Verify each credential’s current experience and education prerequisites directly with PMI. A practical artifact can include scope, stakeholders, risks and a retrospective of an actual or fictional project.",
+    "editorial": true,
+    "description": "PMI credential information, including eligibility and examination pathways."
   },
   {
     "id": "engineering",
-    "title": "Engineering occupation overview",
+    "title": "BLS — Architecture and Engineering Occupations",
     "url": "https://www.bls.gov/ooh/architecture-and-engineering/",
     "topics": [
       "engineering",
@@ -193,11 +208,12 @@
       "civil engineering"
     ],
     "text": "Compare engineering disciplines through their duties, education and work environments. Choose a discipline-specific design exercise with calculations, assumptions, testing and documentation. Do not infer licensure or authority to practice from a project or degree alone.",
-    "editorial": true
+    "editorial": true,
+    "description": "An overview of architecture and engineering occupations."
   },
   {
     "id": "engineering-license",
-    "title": "NCEES engineering exam information",
+    "title": "NCEES — Exams",
     "url": "https://ncees.org/exams/",
     "topics": [
       "engineering",
@@ -207,11 +223,12 @@
       "mechanical engineering"
     ],
     "text": "Use NCEES and the relevant licensing board to check engineering exam and licensure pathways. Requirements vary by jurisdiction and pathway. Treat official eligibility and exam information as prerequisites to investigate, not a credential the student already holds.",
-    "editorial": true
+    "editorial": true,
+    "description": "Official engineering and surveying examination information."
   },
   {
     "id": "cad",
-    "title": "Autodesk learning",
+    "title": "Autodesk — Learning",
     "url": "https://www.autodesk.com/learn",
     "topics": [
       "engineering",
@@ -220,11 +237,12 @@
       "design"
     ],
     "text": "Choose learning materials for the design tools used in relevant roles. Practice with a small documented model or drawing, including constraints, dimensions and validation. Verify software access, training and credential requirements directly with the provider.",
-    "editorial": true
+    "editorial": true,
+    "description": "Learning materials for Autodesk design and engineering software."
   },
   {
     "id": "nursing",
-    "title": "Nursing occupation information",
+    "title": "BLS — Registered Nurses",
     "url": "https://www.bls.gov/ooh/healthcare/registered-nurses.htm",
     "topics": [
       "nursing",
@@ -232,24 +250,26 @@
       "healthcare"
     ],
     "text": "Explore nursing duties, work environment and education pathways through occupational information. Required education and licensure must be checked with official programs and the relevant nursing board. Do not equate interest in healthcare with permission to perform regulated clinical work.",
-    "editorial": true
+    "editorial": true,
+    "description": "Occupational information about registered nursing work and typical preparation."
   },
   {
     "id": "public-health",
-    "title": "CDC public-health training",
-    "url": "https://www.cdc.gov/training/",
+    "title": "CDC — Learning Connection",
+    "url": "https://www.cdc.gov/learning-connection/",
     "topics": [
       "public health",
       "healthcare",
       "epidemiology"
     ],
     "text": "Explore CDC training relevant to public-health interests. Choose a learning activity and explain its application to a public-health question using public or fictional data. Verify current eligibility, continuing-education credit and access on the provider page.",
-    "editorial": true
+    "editorial": true,
+    "description": "Public-health training resources curated by CDC."
   },
   {
     "id": "clinical",
-    "title": "NIH clinical research training information",
-    "url": "https://ocr.od.nih.gov/courses/",
+    "title": "NIH — Clinical Research Education",
+    "url": "https://ocreco.od.nih.gov/clinical_research_training.html",
     "topics": [
       "clinical research",
       "medical laboratory science",
@@ -257,11 +277,12 @@
       "research"
     ],
     "text": "Explore NIH clinical-research educational courses and check their intended audience and current availability. Pair learning with a literature-review or research-methods artifact. Course participation does not establish clinical qualification or authorization to work with patients.",
-    "editorial": true
+    "editorial": true,
+    "description": "NIH clinical research education and course information."
   },
   {
     "id": "health-admin",
-    "title": "Health services management occupational information",
+    "title": "BLS — Medical and Health Services Managers",
     "url": "https://www.bls.gov/ooh/management/medical-and-health-services-managers.htm",
     "topics": [
       "healthcare administration",
@@ -269,11 +290,12 @@
       "operations"
     ],
     "text": "Explore healthcare-management responsibilities and typical preparation. Distinguish management pathways from clinical professions and look for appropriate starting or experienced roles. Practice an operations analysis with fictional information and explicit privacy assumptions.",
-    "editorial": true
+    "editorial": true,
+    "description": "Occupational information about medical and health services management."
   },
   {
     "id": "teaching",
-    "title": "Teaching career information",
+    "title": "BLS — Educational Instruction and Library Occupations",
     "url": "https://www.bls.gov/ooh/education-training-and-library/",
     "topics": [
       "education",
@@ -281,12 +303,13 @@
       "public service"
     ],
     "text": "Explore education and training occupations and their typical preparation. Check the relevant jurisdiction and program for credential requirements. A practice artifact can include a lesson plan, an assessment and a reflection on how to evaluate learning.",
-    "editorial": true
+    "editorial": true,
+    "description": "An overview of education, training and library occupations."
   },
   {
     "id": "public-service",
-    "title": "USAJOBS students and graduates",
-    "url": "https://help.usajobs.gov/working-in-government/unique-hiring-paths/students",
+    "title": "USAJOBS — Early Careers",
+    "url": "https://www.usajobs.gov/EarlyCareers",
     "topics": [
       "public service",
       "government",
@@ -294,11 +317,12 @@
       "graduates"
     ],
     "text": "Explore official federal student and graduate hiring-path information. Eligibility must be read from the actual announcement and official program rules. Build examples that show the tasks and evidence requested rather than assuming that student status qualifies someone for every program.",
-    "editorial": true
+    "editorial": true,
+    "description": "Federal early-career opportunities and guidance for students, recent graduates and other applicants."
   },
   {
     "id": "writing",
-    "title": "Purdue OWL writing resources",
+    "title": "Purdue OWL — Online Writing Lab",
     "url": "https://owl.purdue.edu/",
     "topics": [
       "writing",
@@ -307,11 +331,12 @@
       "technical writing"
     ],
     "text": "Use writing resources to practice audience, structure, clarity and evidence. Create a concise sample for a specific audience and revise it after feedback. Clearly label fictional work and distinguish your individual contribution from group authorship.",
-    "editorial": true
+    "editorial": true,
+    "description": "Writing guidance and reference materials from Purdue University."
   },
   {
     "id": "design",
-    "title": "Figma learning resources",
+    "title": "Figma Help Center — Figma Design",
     "url": "https://help.figma.com/hc/en-us/categories/360002042553-Figma-design",
     "topics": [
       "design",
@@ -320,11 +345,12 @@
       "user experience"
     ],
     "text": "Explore official Figma learning resources for relevant design tasks. Build a small portfolio case study that explains the problem, design choices, feedback and iterations. A polished screenshot alone does not explain usability or individual contribution.",
-    "editorial": true
+    "editorial": true,
+    "description": "Product documentation and learning resources for Figma Design."
   },
   {
     "id": "journalism",
-    "title": "Journalism occupational information",
+    "title": "BLS — News Analysts, Reporters, and Journalists",
     "url": "https://www.bls.gov/ooh/media-and-communication/news-analysts-reporters-and-journalists.htm",
     "topics": [
       "journalism",
@@ -332,11 +358,12 @@
       "media"
     ],
     "text": "Explore reporting duties and occupational preparation, then practice with accurate attribution and source verification. A writing portfolio should explain what you reported or produced and how claims were checked. Do not fabricate interviews, sources or publication history.",
-    "editorial": true
+    "editorial": true,
+    "description": "Occupational information about reporting and journalism work."
   },
   {
     "id": "science",
-    "title": "Science occupation overview",
+    "title": "BLS — Life, Physical, and Social Science Occupations",
     "url": "https://www.bls.gov/ooh/life-physical-and-social-science/",
     "topics": [
       "science",
@@ -346,11 +373,12 @@
       "chemistry"
     ],
     "text": "Compare scientific roles through their work, education and specialization requirements. Practice literature review, experimental design, data interpretation and reproducibility using appropriate public or fictional materials. Training does not imply permission to perform regulated or hazardous laboratory work.",
-    "editorial": true
+    "editorial": true,
+    "description": "An overview of scientific occupations and their typical preparation."
   },
   {
     "id": "research-methods",
-    "title": "NIH research training resources",
+    "title": "NIH — Research Training and Career Development",
     "url": "https://researchtraining.nih.gov/",
     "topics": [
       "research",
@@ -359,11 +387,12 @@
       "laboratory"
     ],
     "text": "Explore official research-training opportunities and read their eligibility criteria. Identify a research question and create a transparent methods or reproducibility artifact. Separate coursework, proposed research and completed personal contributions.",
-    "editorial": true
+    "editorial": true,
+    "description": "Information about NIH research training programs and career-development opportunities."
   },
   {
     "id": "environment",
-    "title": "Environmental science occupational information",
+    "title": "BLS — Environmental Scientists and Specialists",
     "url": "https://www.bls.gov/ooh/life-physical-and-social-science/environmental-scientists-and-specialists.htm",
     "topics": [
       "environmental engineering",
@@ -371,11 +400,12 @@
       "science"
     ],
     "text": "Explore environmental-science responsibilities and occupational preparation. A useful practice artifact can analyze a public environmental dataset with documented quality checks, assumptions and limitations. Verify specialized credential and safety requirements with the appropriate provider.",
-    "editorial": true
+    "editorial": true,
+    "description": "Occupational information about environmental science roles."
   },
   {
     "id": "networking",
-    "title": "University of Arizona career development",
+    "title": "University of Arizona — Center for Career Readiness",
     "url": "https://career.arizona.edu/",
     "topics": [
       "networking",
@@ -384,11 +414,12 @@
       "business"
     ],
     "text": "Prepare focused questions for an informational conversation and connect them to a career goal. Use university career resources to explore advising, employer events and practical preparation. Do not imply that a contact, event or credential guarantees employment.",
-    "editorial": true
+    "editorial": true,
+    "description": "University of Arizona career services, advising, events and career-readiness resources."
   },
   {
     "id": "data-engineering",
-    "title": "PostgreSQL tutorial",
+    "title": "PostgreSQL documentation — Tutorial",
     "url": "https://www.postgresql.org/docs/current/tutorial.html",
     "topics": [
       "data engineering",
@@ -396,11 +427,12 @@
       "databases"
     ],
     "text": "Practice relational data concepts using the PostgreSQL tutorial. Build a reproducible data pipeline or database example with validation, clear schema decisions and documented failure cases. Check software and hosting choices for any charges before deploying.",
-    "editorial": true
+    "editorial": true,
+    "description": "The official PostgreSQL tutorial for relational database and SQL concepts."
   },
   {
     "id": "cfa",
-    "title": "CFA Institute program information",
+    "title": "CFA Institute — CFA Program",
     "url": "https://www.cfainstitute.org/programs/cfa-program",
     "topics": [
       "finance",
@@ -408,11 +440,12 @@
       "certifications"
     ],
     "text": "Compare official program requirements with your career goal, current foundations and budget. Check current registration requirements, exam fees, experience conditions and ongoing obligations directly with CFA Institute. Exploring a program or passing an exam does not establish that you hold a professional designation.",
-    "editorial": true
+    "editorial": true,
+    "description": "Official CFA Program information, including requirements and examination pathways."
   },
   {
     "id": "cpa",
-    "title": "CPA pathway information",
+    "title": "AICPA — ThisWayToCPA",
     "url": "https://www.thiswaytocpa.com/",
     "topics": [
       "accounting",
@@ -420,22 +453,24 @@
       "certifications"
     ],
     "text": "Use official CPA pathway information and the relevant licensing board to investigate education, examination and experience requirements. Requirements and fees need current verification for the chosen jurisdiction. An accounting degree alone does not establish CPA eligibility or licensure.",
-    "editorial": true
+    "editorial": true,
+    "description": "Information about the CPA pathway and becoming a CPA."
   },
   {
     "id": "marketing-cert",
-    "title": "American Marketing Association certifications",
+    "title": "American Marketing Association — Certifications",
     "url": "https://www.ama.org/certifications/",
     "topics": [
       "marketing",
       "certifications"
     ],
-    "text": "Compare official marketing certification learning objectives with the skills in your desired roles. Check the provider\u2019s current eligibility, exam, fees and renewal information. Pair learning with a campaign or research artifact and explain its audience, measures and limitations.",
-    "editorial": true
+    "text": "Compare official marketing certification learning objectives with the skills in your desired roles. Check the provider’s current eligibility, exam, fees and renewal information. Pair learning with a campaign or research artifact and explain its audience, measures and limitations.",
+    "editorial": true,
+    "description": "Official AMA marketing certification information."
   },
   {
     "id": "nursing-cert",
-    "title": "ANCC certification information",
+    "title": "American Nurses Credentialing Center — Certifications",
     "url": "https://www.nursingworld.org/our-certifications/",
     "topics": [
       "nursing",
@@ -444,12 +479,13 @@
       "certifications"
     ],
     "text": "Explore official nursing certification information only in relation to the relevant education, licensure and professional pathway. Verify the current prerequisites, practice requirements, fees and renewal conditions. A career interest or a completed course does not establish eligibility for a nursing credential.",
-    "editorial": true
+    "editorial": true,
+    "description": "ANCC nursing credential information and eligibility pathways."
   },
   {
     "id": "lab-cert",
-    "title": "ASCP Board of Certification",
-    "url": "https://www.ascp.org/content/board-of-certification",
+    "title": "ASCP — Board of Certification",
+    "url": "https://www.ascp.org/boc",
     "topics": [
       "medical laboratory science",
       "laboratory",
@@ -457,11 +493,12 @@
       "certifications"
     ],
     "text": "Review official laboratory certification routes and their current education, training and experience requirements. Compare the published pathway with confirmed background details and leave unknown eligibility unresolved. Verify fees and application requirements before making a commitment.",
-    "editorial": true
+    "editorial": true,
+    "description": "ASCP laboratory credential information and certification pathways."
   },
   {
     "id": "quality-cert",
-    "title": "ASQ certification information",
+    "title": "ASQ — Certifications",
     "url": "https://www.asq.org/cert",
     "topics": [
       "industrial engineering",
@@ -471,23 +508,25 @@
       "certifications"
     ],
     "text": "Compare quality-related credential objectives with your intended work and existing evidence. Use official ASQ information to check current prerequisites, examination, costs and renewal rules. Demonstrate relevant methods through a documented improvement or quality-analysis project.",
-    "editorial": true
+    "editorial": true,
+    "description": "ASQ quality-related certification information."
   },
   {
     "id": "hr-cert",
-    "title": "SHRM certification information",
+    "title": "SHRM — Certification",
     "url": "https://www.shrm.org/credentials/certification",
     "topics": [
       "human resources",
       "business",
       "certifications"
     ],
-    "text": "Explore official human-resources certification information and check the provider\u2019s current eligibility, examination and fee requirements. Choose a pathway that fits your target responsibilities. A credential is one development option, not a guarantee of an HR role.",
-    "editorial": true
+    "text": "Explore official human-resources certification information and check the provider’s current eligibility, examination and fee requirements. Choose a pathway that fits your target responsibilities. A credential is one development option, not a guarantee of an HR role.",
+    "editorial": true,
+    "description": "SHRM human-resources certification information."
   },
   {
     "id": "google-cert",
-    "title": "Google Career Certificates",
+    "title": "Google — Career Certificates",
     "url": "https://grow.google/certificates/",
     "topics": [
       "project management",
@@ -497,6 +536,7 @@
       "digital marketing"
     ],
     "text": "Compare official certificate learning paths with your career goal and the experience you want to demonstrate. Verify current access, subscription costs, expected effort and regional availability. Build a practical artifact and distinguish course completion from demonstrated proficiency.",
-    "editorial": true
+    "editorial": true,
+    "description": "Google certificate programs and learning pathways."
   }
 ]

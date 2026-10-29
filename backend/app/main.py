@@ -1196,7 +1196,7 @@ async def preparation(body:PrepRequest,user=Depends(auth.current)):
     require_ai(user['id']);job=require(user['id'],body.job_id,'job') if body.job_id else {'data':{'title':'Profile-based learning','description':''}}
     if job['data'].get('description_incomplete'):raise ServiceError('This provider supplied only a description snippet. Edit the posting with its full text or import the full posting before tailoring.')
     if body.analysis_id: require(user['id'],body.analysis_id,'analysis')
-    async def work(): return db.save(user['id'],'prep',{**(await ai.prepare(user['id'],job['data'],body.confirmed_gaps,body.mode)),'job_id':body.job_id,'analysis_id':body.analysis_id})
+    async def work(): return db.save(user['id'],'prep',{**(await ai.prepare(user['id'],job['data'],body.selected_topics if body.selected_topics is not None else body.confirmed_gaps,body.mode)),'job_id':body.job_id,'analysis_id':body.analysis_id})
     return start_task(user['id'],'preparation',work)
 
 @app.post('/api/interviews')

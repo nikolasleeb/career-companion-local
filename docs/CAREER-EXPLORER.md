@@ -1,8 +1,8 @@
-# Career Explorer
+# Explore Occupations
 
-Resources → **Career Explorer** has **Explore careers**, **My saved careers** and **Saved searches**.
+Resources → **Explore Occupations** has **Explore careers**, **My saved careers** and **Saved searches**.
 It is available to signed-in accounts before Profile setup is complete. The
-existing Career Plans, Skills and Interview Practice remain separate. Work Styles lives under Profile.
+existing Action Plans, Skills and Interview Practice remain separate. Work Styles lives under Profile.
 No AI, O*NET key, external request or questionnaire score is needed to browse.
 
 ## Public data and attribution
@@ -101,7 +101,7 @@ The importer reads cross-industry, all-ownership rows, preserves published suppr
 
 An O*NET specialty maps to its six-digit SOC wage occupation. No specialty-specific distribution is invented. Missing local rows retain a clearly labelled national comparison. The 10th–90th range describes the published wage distribution, not starting pay or years of experience. Annual and hourly distributions retain their units; pay sorting orders published annual figures, then hourly figures, with missing medians last. Published top-codes use their reporting floor for sorting and remain labelled “or more.” The May 2025 reporting thresholds are $239,200/year and $115/hour; see <https://www.bls.gov/oes/methods_25.pdf>.
 
-Saved searches store applied filters and selected course titles. Reopening reruns the current catalog. Unavailable courses or salary areas require review; nothing is silently substituted. Search and review entities are account-owned, included in account exports/imports, and listed under Career Explorer in selective cleanup. Restoration preserves current saved reviews and marks imported reviews outdated.
+Saved searches store applied filters and selected course titles. Reopening reruns the current catalog. Unavailable courses or salary areas require review; nothing is silently substituted. Search and review entities are account-owned, included in account exports/imports, and listed under Explore Occupations in selective cleanup. Restoration preserves current saved reviews and marks imported reviews outdated.
 
 Work Styles lives in Profile. Legacy `#/work-styles?item=…` links canonicalize to `#/profile?tab=workstyles&item=…`, retaining attempt IDs and the existing account-scoped draft buffers. Moving the workspace grants no additional sharing consent.
 
@@ -129,6 +129,6 @@ skills for review, and does not silently rerun when selections are unavailable.
 Backup/import validation and deduplication include these references. Older searches
 retain their existing behavior with no skills selected.
 
-Career Plans saved chats expand inline into a compact, searchable list. Choosing a
+Action Plans saved chats expand inline into a compact, searchable list. Choosing a
 conversation keeps the existing route and conversation behavior; expanding the list
 never sends an AI request.
