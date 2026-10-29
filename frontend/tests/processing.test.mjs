@@ -109,3 +109,12 @@ test('A failed background Work Styles save rejects locally without inventing an 
  await assert.rejects(store.request('/work-style/example/progress','PUT',async()=>{throw new Error('Offline');}));
  assert.equal(store.snapshot().length,1);assert.equal(store.snapshot()[0].id,'real-ai');assert.equal(store.snapshot()[0].connection_lost,false);
 });
+
+test('free Explorer pagination stays inline, including errors, without hiding real AI progress',async()=>{
+ const store=new ProcessingStore(),page=deferred();let calls=0;
+ const result=store.request('/career-explorer/explore','POST',()=>{calls++;return page.promise;});assert.deepEqual(store.snapshot(),[]);
+ page.resolve({total:86,offset:24,results:[]});await result;assert.deepEqual(store.snapshot(),[]);assert.equal(calls,1);
+ await assert.rejects(store.request('/career-explorer/explore','POST',async()=>{throw Error('offline');}));assert.deepEqual(store.snapshot(),[]);
+ const review=deferred();const action=store.request('/career-explorer/occupations/15-1243.00/profile-review/actions','POST',()=>review.promise);assert.equal(store.snapshot().length,1);
+ review.resolve({task_id:'real-review',status:'queued'});await action;assert.equal(store.snapshot()[0].id,'real-review');
+});
