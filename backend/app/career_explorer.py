@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Annotated,Literal
 from fastapi import APIRouter,Depends,HTTPException,Query
 from pydantic import Field
-from . import auth,db,career_evidence,career_wages,credentials
+from . import auth,db,career_evidence,career_wages,credentials,salary_areas
 from .models import StrictModel
 from .resume_conversation import write
 
@@ -117,7 +117,7 @@ def summary(code,reason='',also='',salary_area='US'):
 @router.get('/options')
 def options(user=Depends(auth.current)):
  p=profile(user['id'])
- return {'profile':{k:p[k] for k in ('majors','courses','course_options')},'industries':DATA['sectors'],'metadata':META,'occupations':len(OCCUPATIONS),'saved_limit':MAX_SAVED,'salary_areas':career_wages.areas(),'wage_metadata':career_wages.data()['metadata'],'work_style':{k:v for k,v in career_evidence.style(user['id']).items() if k!='summary'}}
+ return {'profile':{k:p[k] for k in ('majors','courses','course_options')},'industries':DATA['sectors'],'metadata':META,'occupations':len(OCCUPATIONS),'saved_limit':MAX_SAVED,'salary_areas':salary_areas.catalog(),'wage_metadata':career_wages.data()['metadata'],'work_style':{k:v for k,v in career_evidence.style(user['id']).items() if k!='summary'}}
 
 @router.post('/explore')
 def explore(body:Explore,user=Depends(auth.current)):
@@ -162,7 +162,7 @@ def explore(body:Explore,user=Depends(auth.current)):
 def detail(code:str,salary_area:str='US',user=Depends(auth.current)):
  from . import explicit_context
  o=occupation(code);rows=career_evidence.sources(user['id']);style=career_evidence.style(user['id'])
- return {**summary(code,salary_area=salary_area),'context_ref':explicit_context.occupation_reference(code),'occupation_link':explicit_context.occupation_link(code),'skills':[career_evidence.matches(s,rows) for s in o['skills']],'technologies':[career_evidence.matches(t,rows) for t in o['technologies']],'ai_available':bool(credentials.get(user['id'])),'ai_mode':db.settings(user['id']).get('mode','economy'),'profile_revision':career_evidence.revision(rows),'work_style':{k:v for k,v in style.items() if k!='summary'},'industries':[{'naics':s['naics'],'title':s['title'],'share':o['sectors'][s['naics']]} for s in DATA['sectors'] if s['naics'] in o['sectors']],'related':[{'code':c,'title':OCCUPATIONS[c]['title']} for c in o['related'] if c in OCCUPATIONS],'metadata':META}
+ return {**summary(code,salary_area=salary_area),'context_ref':explicit_context.occupation_reference(code,None if salary_area=='US' else salary_area),'occupation_link':explicit_context.occupation_link(code),'skills':[career_evidence.matches(s,rows) for s in o['skills']],'technologies':[career_evidence.matches(t,rows) for t in o['technologies']],'ai_available':bool(credentials.get(user['id'])),'ai_mode':db.settings(user['id']).get('mode','economy'),'profile_revision':career_evidence.revision(rows),'work_style':{k:v for k,v in style.items() if k!='summary'},'industries':[{'naics':s['naics'],'title':s['title'],'share':o['sectors'][s['naics']]} for s in DATA['sectors'] if s['naics'] in o['sectors']],'related':[{'code':c,'title':OCCUPATIONS[c]['title']} for c in o['related'] if c in OCCUPATIONS],'metadata':META}
 
 def saved_list(user,salary_area='US'):
  career_wages.area(salary_area)

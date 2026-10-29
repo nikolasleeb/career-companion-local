@@ -26,3 +26,8 @@ test('saved context retains the exact submitted revision until explicitly refres
  const calls=[];const updated=await data.refreshExplicit(items[0],async(path,...args)=>{calls.push([path,...args]);return {context_ref:{revision:'b'.repeat(64)}};});
  assert.equal(updated.context_ref.revision,'b'.repeat(64));assert.deepEqual(calls,[['/applications/application-one/offer/preview']]);assert.equal(items[0].context_ref.revision,'a'.repeat(64));
 });
+test('occupation handoff refresh and saved snapshots preserve selected salary area',async()=>{
+ const local={context_ref:{kind:'occupation',id:'15-1243.00',salary_area:'metro:47900',revision:'a'.repeat(64)}};
+ let requested;await data.refreshExplicit(local,async p=>{requested=p;return local;});assert.equal(requested,'/career-explorer/occupations/15-1243.00?salary_area=metro%3A47900');
+ assert.equal(data.contextFromSources([{record_id:'15-1243.00',kind:'explicit_occupation',revision:'a'.repeat(64),snapshot:{salary_area:'metro:47900'}}])[0].context_ref.salary_area,'metro:47900');
+});

@@ -1,0 +1,42 @@
+{
+  "scope": "Career Coach read-only access and Explorer desktop cleanup",
+  "hosted_backend_full": {
+    "passed": 1136,
+    "skipped": 1
+  },
+  "public_backend_full": {
+    "passed": 1161,
+    "skipped": 1
+  },
+  "final_focused_regressions": {
+    "passed": 42,
+    "scope": "permissions, source chains, tracking dates, local lookup boundaries, consent, history"
+  },
+  "frontend_tests": {
+    "hosted_passed": 235,
+    "public_passed": 236
+  },
+  "desktop": {
+    "desktopOnly": true,
+    "salarySearchKeyboardAndCommit": true,
+    "crossStateMetro": true,
+    "dmvAlias": true,
+    "control44px": true,
+    "savedSearchAreaRestored": true,
+    "compareButtonSizeAnd32pxGap": true,
+    "reviewCollapsedBeforeSkills": true,
+    "noExternalWorkStylesButtons": true,
+    "selectedAreaCoachHandoff": true,
+    "coachLocalLookupSources": true,
+    "legacyRouteAndAttemptPreserved": true,
+    "assessmentAutosave": true,
+    "summaryDraftAndConsentPreserved": true,
+    "simulatedProviderCalls": 3,
+    "paidProviderCalls": 0
+  },
+  "public_source_audit": "passed",
+  "mobile_checks": false,
+  "paid_account_requests": false,
+  "installed_localhost_changed": false,
+  "release_or_git_version_tag": false
+}

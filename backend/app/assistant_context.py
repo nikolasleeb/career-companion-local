@@ -1,54 +1,41 @@
 """Rebuilt, versioned account-only SQLite FTS retrieval. No stale private index."""
 import json,re,sqlite3,hashlib
 from . import db,career_coach,career_goals,work_preferences,job_ai
-VERSION='account-context-v3'
+VERSION='account-context-v4'
 PRIVATE=re.compile(r'citizenship|visa|sponsor|work authori|vaccin|disabil|veteran|religio|politic|sexual|marital|date of birth|social security|api.?key|password',re.I)
 def clean(value):
- text=job_ai.clean(str(value))
- return '\n'.join(line for line in text.splitlines() if not PRIVATE.search(line))
-def sources(user):
+ # Keep valid ISO tracking dates; the generic phone scrubber also matches them.
+ from datetime import date
+ dates={}
+ def keep(match):
+  try:date.fromisoformat(match[0])
+  except ValueError:return match[0]
+  marker='KEEPSAVEDDATE'+chr(65+len(dates)//26)+chr(65+len(dates)%26)+'END'
+  dates[marker]=match[0];return marker
+ text=job_ai.clean(re.sub(r'\b\d{4}-\d{2}-\d{2}\b',keep,str(value)))
+ text='\n'.join(line for line in text.splitlines() if not PRIVATE.search(line))
+ for marker,value in dates.items():text=text.replace(marker,value)
+ return text
+def sources(user,excluded=()):
+ from . import coach_access,coach_bls
  rows=[]
- def add(id,record,kind,label,text,revision,report=False):
-  text=job_ai.clean(text) if report else clean(text)
-  if not text.strip():return
-  for at in range(0,min(len(text),96000 if report else 24000),1800):
-   chunk=text[at:at+1800];rows.append({'source_id':id+':'+str(at),'record_id':record,'kind':kind,'label':label[:180],'text':chunk,'revision':revision,'index_version':VERSION})
- for s in career_coach.profile(user)['sources']:add('profile:'+s['id'],s['record_id'],'reviewed_profile','Reviewed Profile · '+s['field'],s['text'],hashlib.sha256(s['text'].encode()).hexdigest())
- g=career_goals.context(user);add('goals',career_goals.identity(user),'aspiration','Career Goals · aspirations, not qualifications',g['text'],str(g['revision']))
+ def add(record,report=False):
+  value=job_ai.clean(record['text']) if report else clean(record['text'])
+  if not value.strip():return
+  for at in range(0,min(len(value),96000 if report else 24000),1800):
+   rows.append({**{k:record[k] for k in ('record_id','kind','label','revision','status')},'source_id':record['record_id']+':'+str(at),'label':clean(record['label']) or 'Saved professional source','text':value[at:at+1800],'index_version':VERSION})
+ for record in coach_access.records(user,excluded):add(record)
+ g=career_goals.context(user)
+ if g['text']:add({'record_id':career_goals.identity(user),'kind':'aspiration','label':'Career Goals · aspirations, not qualifications','revision':str(g['revision']),'status':'shared','text':g['text']})
  w=work_preferences.context(user)
- if w['preferences']:add('preferences',work_preferences.identity(user),'preference','Approved Work Styles summary · not qualifications','\n'.join(w['preferences']),str(w['revision']))
+ if w['preferences']:add({'record_id':work_preferences.identity(user),'kind':'preference','label':'Approved Work Styles summary · not qualifications','revision':str(w['revision']),'status':'shared','text':'\n'.join(w['preferences'])})
  report=work_preferences.coach_context(user)
- if report:add('work-style-report',report['record_id'],'work_style_report','Work Styles report and scores · self-reflection, not qualifications',json.dumps(report['report'],ensure_ascii=False,indent=2),report['revision'],report=True)
- def resume_text(d):
-  if not isinstance(d,dict):return ''
-  if isinstance(d.get('snapshot'),dict):d=d['snapshot']
-  if isinstance(d.get('resume'),dict):d=d['resume']
-  return '\n'.join([str(d.get('headline') or ''),*[str(e.get('title',''))+'\n'+'\n'.join(str(x) for x in e.get('bullets',[])) for s in d.get('sections',[]) if isinstance(s,dict) for e in s.get('entries',[]) if isinstance(e,dict)]])
- allowed={'resume','resume_revision','application','job','analysis','prep','coach_plan'}
- # Fetch only supported account-owned records. Raw documents, vaults, settings,
- # questionnaire answers and private reusable answers never enter this catalog.
- # Derived Work Styles reports have their own explicit, revisioned consent above.
- with db.connect() as c:
-  records=[db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind IN ('resume','resume_revision','application','job','analysis','prep','coach_plan') ORDER BY updated_at DESC LIMIT 1200",(user,))]
- for r in records:
-  d=r['data'];kind=r['kind'];label=str(d.get('title') or d.get('company') or d.get('direction') or kind.replace('_',' '))[:150];text=''
-  if kind in ('resume','resume_revision'):text=resume_text(d);label='Saved generated resume · '+label
-  elif kind=='application':
-   text='\n'.join(str(d.get(k) or '') for k in ('title','company','status'))
-   historical=bool(d.get('archived'))
-   label=('Archived application · historical record · ' if historical else 'Application · ')+label
-   if historical:text='Archived application · historical record. Not a current application.\n'+text
-  elif kind=='job':
-   if d.get('cache_tombstone'):continue
-   text='\n'.join(str(d.get(k) or '') for k in ('title','company','location','description'));label='Employer posting · '+label
-  elif kind=='analysis':text=str(d.get('summary',''))+'\n'+'\n'.join(str(v.get(k,'')) for v in d.get('suggestions',[]) if isinstance(v,dict) for k in ('original','proposed','reason'));label='Saved analysis / recorded edits · '+label
-  elif kind=='prep':text='\n'.join(str(v) for v in d.get('priorities',[]));label='Saved learning plan'
-  elif kind=='coach_plan':text=str(d.get('direction',''))+'\n'+'\n'.join(str(a.get('title',''))+' '+str(a.get('why',''))+' '+' '.join(a.get('steps',[])) for a in d.get('actions',[]));label='Saved generated career plan'
-  add(r['id'],r['id'],kind,label,text,r['updated_at'])
+ if report:add({'record_id':report['record_id'],'kind':'work_style_report','label':'Work Styles report and scores · self-reflection, not qualifications','revision':report['revision'],'status':'shared','text':json.dumps(report['report'],ensure_ascii=False,indent=2)},True)
+ for record in coach_bls.public_sources():add(record)
  return rows
 
 def retrieve(user,question,pinned=(),excluded=()):
- rows=[s for s in sources(user) if s['record_id'] not in excluded]
+ rows=[s for s in sources(user,excluded) if s['record_id'] not in excluded]
  existing={s['record_id'] for s in rows}
  if any(id not in existing for id in pinned):
   from fastapi import HTTPException

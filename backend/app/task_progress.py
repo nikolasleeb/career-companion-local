@@ -9,6 +9,7 @@ LABELS={'interview_audio':'interview audio','work_style_summary':'Work Styles su
 STAGES={
     'work_summary_draft':('Drafting your Work Styles summary','provider'),
     'coach_research':('Checking current career resources','provider'),
+    'coach_local_lookup':('Reading local BLS and occupation tables','local'),
     'coach_retrieval':('Retrieving relevant guidance and evidence','local'),
     'coach_generation':('Preparing your sourced coaching response','provider'),
     'coach_validation':('Checking sources and saving the response','local'),

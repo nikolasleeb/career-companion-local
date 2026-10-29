@@ -9,26 +9,28 @@ from .models import StrictModel
 class Reference(StrictModel):
     kind: Literal['occupation', 'offer']
     id: str = Field(min_length=1, max_length=64)
+    salary_area: str | None = Field(default=None,max_length=40)
     revision: str = Field(pattern=r'^[a-f0-9]{64}$')
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
-def occupation_snapshot(code):
+def occupation_snapshot(code,salary_area=None):
     from . import career_explorer as explorer
     value = explorer.occupation(code)
-    data = {**explorer.summary(code), 'skills': value['skills'], 'metadata': explorer.META}
+    data = {**explorer.summary(code,salary_area=salary_area or 'US'), 'skills': value['skills'], 'metadata': explorer.META}
     data.pop('reason', None)
     data.pop('also', None)
+    if salary_area is not None:data['salary_area']=salary_area
     return data
 
-def occupation_link(code):
-    value = occupation_snapshot(code)
-    return {'code': code, 'title': value['title'], 'dataset_version': value['dataset_version'], 'revision': digest(value)}
+def occupation_link(code,salary_area=None):
+    value = occupation_snapshot(code,salary_area)
+    return {'code': code, 'title': value['title'], 'dataset_version': value['dataset_version'], 'revision': digest(value),**({'salary_area':salary_area} if salary_area is not None else {})}
 
-def occupation_reference(code):
-    link = occupation_link(code)
-    return {'kind': 'occupation', 'id': code, 'revision': link['revision']}
+def occupation_reference(code,salary_area=None):
+    link = occupation_link(code,salary_area)
+    return {'kind': 'occupation', 'id': code, 'revision': link['revision'],**({'salary_area':salary_area} if salary_area is not None else {})}
 
 def resolve(user, references):
     sources = []
@@ -40,7 +42,7 @@ def resolve(user, references):
             continue
         seen.add(key)
         if ref.kind == 'occupation':
-            data = occupation_snapshot(ref.id)
+            data = occupation_snapshot(ref.id,ref.salary_area)
             revision = digest(data)
             label = data['title'] + ' · occupation being explored, not a qualification'
             url = data['onet_url']
