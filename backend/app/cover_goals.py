@@ -72,7 +72,7 @@ def select(id: str, body: Selection, user=Depends(auth.current)):
                 'profile_category': 'project', 'status': 'pending', 'source_message_id': message_id,
                 'source_message_text': goal['text'], 'created_at': db.now(), 'profile_record_id': '',
                 'profile_expected_updated_at': '', 'profile_original': None,
-                'career_goal_source': {'id': gid, 'goals_revision': goals['revision'], 'snapshot': copy.deepcopy(goal)}})
+                'career_goal_source': {'id': gid, 'goals_revision': goals['revision'], 'snapshot': career_goals.for_guidance_goal(copy.deepcopy(goal))}})
         data['context_dirty'] = True
     letters.mutate(uid, id, body.expected_version, change)
     return letters.state(uid, id)

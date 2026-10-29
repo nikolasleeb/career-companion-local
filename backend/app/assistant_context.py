@@ -25,7 +25,7 @@ def sources(user,excluded=()):
   for at in range(0,min(len(value),96000 if report else 24000),1800):
    rows.append({**{k:record[k] for k in ('record_id','kind','label','revision','status')},'source_id':record['record_id']+':'+str(at),'label':clean(record['label']) or 'Saved professional source','text':value[at:at+1800],'index_version':VERSION})
  for record in coach_access.records(user,excluded):add(record)
- g=career_goals.context(user)
+ g=career_goals.guidance_context(user)
  if g['text']:add({'record_id':career_goals.identity(user),'kind':'aspiration','label':'Career Goals · aspirations, not qualifications','revision':str(g['revision']),'status':'shared','text':g['text']})
  w=work_preferences.context(user)
  if w['preferences']:add({'record_id':work_preferences.identity(user),'kind':'preference','label':'Approved Work Styles summary · not qualifications','revision':str(w['revision']),'status':'shared','text':'\n'.join(w['preferences'])})

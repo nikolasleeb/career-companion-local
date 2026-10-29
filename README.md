@@ -102,3 +102,7 @@ separately operated hosted server.
 ## Career Explorer
 
 Resources → **Career Explorer** offers occupation search, education links, skills, national pay/outlook comparisons and an account-owned shortlist. Browsing needs no AI key and works before Profile setup. See [Career Explorer](docs/CAREER-EXPLORER.md) for data sources, limitations and saving behavior.
+
+## Overall career direction
+
+Profile → Career Goals separates one optional overall statement from specific milestones. Use guided fields, skip education, or edit your statement directly. Empty fields or `[blank]` omit a part. Goals remain aspirations and automatic AI guidance stays opt-in. See [Career Goals](docs/CAREER-GOALS.md).
