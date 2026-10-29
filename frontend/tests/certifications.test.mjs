@@ -35,3 +35,14 @@ test('PDF expiration respects nonexpiration and existing date bounds',()=>{
  assert.deepEqual(fillCertificate({...base,earned_date:'2024-01-01'},source).conflicts,['expiration_date']);
  assert.deepEqual(fillCertificate({...base,expiration_date:'2023-01-01'},{document_id:'doc',fields:{earned_date:{value:'2024-01-01'}}}).conflicts,['earned_date']);
 });
+
+const {certificateDraftPatch,supportsCertificateExtraction}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('async certificate fill uses the current attachment and preserves concurrent draft fields',()=>{
+ let data={category:'skills',title:'Certifications',certification_items:[{name:'My chosen name'}],confirmed:true};
+ const attach=current=>certificateDraftPatch(current,rows=>rows.map(r=>({...r,document_id:'new-doc'})));
+ const fill=current=>certificateDraftPatch(current,rows=>rows.map(r=>fillCertificate(r,{document_id:'new-doc',fields:{name:{value:'Extracted name'},issuer:{value:'Example Institute'},earned_date:{value:'2024-05-15'}}}).row));
+ data={...data,...attach(data)};data={...data,...fill(data)};
+ assert.equal(data.certification_items[0].document_id,'new-doc');assert.equal(data.certification_items[0].issuer,'Example Institute');assert.equal(data.certification_items[0].name,'My chosen name');assert.equal(data.certification_items[0].earned_date,'2024-05-15');assert.equal(data.confirmed,false);
+ const switched={...data,certification_items:data.certification_items.map(r=>({...r,document_id:'replacement',issuer:'Typed issuer'}))};assert.deepEqual(fill(switched).certification_items,switched.certification_items);
+ for(const mime of ['application/pdf','image/png','image/jpeg'])assert(supportsCertificateExtraction(mime));assert(!supportsCertificateExtraction('text/html'));
+});

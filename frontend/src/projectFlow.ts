@@ -17,6 +17,13 @@ export async function analyzeProject(selection:Selection,io:IO){
  return {snapshot,...result};
 }
 
+// Editing must retain empty rows, partial URLs and cursor positions.
+export function projectLinkDrafts(data:any):string[]{
+ const rows:string[]=Array.isArray(data?.project_urls)?[...data.project_urls]:[];
+ const key=(v:string)=>v.trim().replace(/\/+$/,'');
+ if(data?.project_url&&!rows.some(v=>key(v)===key(data.project_url)))rows.unshift(data.project_url);
+ return rows;
+}
 export function projectLinks(data:any):string[]{const seen=new Set<string>();return [data?.project_url,...(data?.project_urls||[])].filter((v):v is string=>typeof v==='string'&&!!v.trim()).map(v=>v.trim()).filter(v=>{const key=v.replace(/\/+$/,'');if(seen.has(key))return false;seen.add(key);return true;});}
 export type ProfileProjectRequest={id:string;experienceId:string;url:string;urls?:string[];title:string};
 export function savedProjectForRecord(snapshots:any[],request:ProfileProjectRequest){const all=request.urls?.length?request.urls:[request.url],supported=all.filter(githubLink),links=(supported.length?supported:all).map(v=>v.replace(/\/+$/,'')).sort();return snapshots.find(row=>!row.data.archived&&row.data.experience_id===request.experienceId&&JSON.stringify((row.data.urls?.length?row.data.urls:[row.data.url||'']).map((v:string)=>v.replace(/\/+$/,'')).sort())===JSON.stringify(links));}

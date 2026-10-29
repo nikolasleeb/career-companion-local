@@ -99,3 +99,55 @@ def test_extract_is_authenticated_read_only_and_supports_existing_files(client,a
         assert other.post('/api/certificates/'+identity+'/extract').status_code==404
     path=db.config.DATA_DIR/'uploads'/account['id']/identity;path.write_bytes(b'changed')
     assert client.post('/api/certificates/'+identity+'/extract').status_code==409
+
+@pytest.mark.parametrize('mime',['image/png','image/jpeg'])
+def test_image_ocr_is_local_reviewable_and_read_only(client,account,monkeypatch,mime):
+    from PIL import Image
+    from app import certificate_ocr
+    output=io.BytesIO();Image.new('RGB',(600,400),'white').save(output,format='PNG' if mime=='image/png' else 'JPEG')
+    monkeypatch.setattr(certificate_ocr,'extract',lambda raw,kind,page_numbers=(1,):{'pages':[(1,LABELED.splitlines())],'warnings':[],'incomplete':False})
+    uploaded=client.post('/api/certificates',files={'file':('credential.png' if mime=='image/png' else 'credential.jpg',output.getvalue(),mime)}).json()
+    before=client.get('/api/workspace').json();response=client.post('/api/certificates/'+uploaded['id']+'/extract');assert response.status_code==200,response.text
+    result=response.json();assert values(result)['issuer']=='Example Training Institute';assert result['extraction_method']=='ocr' and result['ocr_pages']==[1]
+    assert all('OCR' in field['reason'] for field in result['fields'].values());assert any('misread' in w for w in result['warnings']);assert client.get('/api/workspace').json()==before
+
+
+def test_scanned_pdf_ocr_retains_conflicts_and_incomplete_status(monkeypatch):
+    from app import certificate_ocr
+    monkeypatch.setattr(certificate_ocr,'extract',lambda *args:{'pages':[(1,LABELED.splitlines()+['Issuer: Another Institute'])],'warnings':['Page processing incomplete.'],'incomplete':True})
+    result=parser.parse_pdf(pdf(''));assert 'issuer' not in values(result);assert values(result)['credential_id']=='EXAMPLE-123'
+    assert result['incomplete'] is True and 'Page processing incomplete.' in result['warnings']
+
+
+def test_ocr_failure_has_recoverable_manual_guidance(monkeypatch):
+    from app import certificate_ocr
+    monkeypatch.setattr(certificate_ocr.shutil,'which',lambda _:None)
+    result=parser.parse_certificate(b'fictional image','image/png');assert result['fields']=={} and result['incomplete']
+    assert any('unavailable' in w for w in result['warnings'])
+
+def test_ocr_timeout_is_bounded_releases_slot_and_removes_temporary_files(monkeypatch):
+    import subprocess,threading
+    from pathlib import Path
+    from PIL import Image
+    from app import certificate_ocr
+    stream=io.BytesIO();Image.new('RGB',(200,100),'white').save(stream,format='PNG');paths=[]
+    monkeypatch.setattr(certificate_ocr.shutil,'which',lambda _: '/usr/bin/fictional-tool')
+    monkeypatch.setattr(certificate_ocr,'_slots',threading.BoundedSemaphore(1))
+    def timeout(command,**kwargs):
+        assert kwargs['timeout']<=20 and kwargs['env']['OMP_THREAD_LIMIT']=='1' and not kwargs.get('shell')
+        paths.append(Path(kwargs['env']['HOME']));raise subprocess.TimeoutExpired('local OCR',20)
+    monkeypatch.setattr(certificate_ocr.subprocess,'run',timeout)
+    for _ in range(2):
+        result=certificate_ocr.extract(stream.getvalue(),'image/png');assert result['incomplete'] and not result['pages']
+    assert len(paths)==2 and all(not p.exists() for p in paths)
+
+
+def test_ocr_caps_extracted_text_and_marks_partial_results(monkeypatch):
+    from types import SimpleNamespace
+    from PIL import Image
+    from app import certificate_ocr
+    stream=io.BytesIO();Image.new('RGB',(200,100),'white').save(stream,format='PNG')
+    monkeypatch.setattr(certificate_ocr.shutil,'which',lambda _: '/usr/bin/fictional-tool')
+    monkeypatch.setattr(certificate_ocr.subprocess,'run',lambda *args,**kwargs:SimpleNamespace(stdout=b'X'*30000))
+    result=certificate_ocr.extract(stream.getvalue(),'image/png',range(1,31));assert result['incomplete'];assert len(result['pages'])==3
+    assert sum(len(line) for _,lines in result['pages'] for line in lines)==60000

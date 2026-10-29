@@ -77,3 +77,11 @@ test('analysis-only completion carries no answer draft and does not dispatch whe
  assert.deepEqual(projectMaterialsStatus(library,'project'),{label:'View analysis',status:'Materials analyzed'});
  assert.equal(calls,1);
 });
+
+const {projectLinkDrafts}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('project link drafts retain added empty rows, partial text and duplicates until save',()=>{
+ const first='https://github.com/example/original';const data={project_url:first,project_urls:[first,'','https://github.com/example/ext ' ,first]};
+ assert.deepEqual(projectLinkDrafts(data),data.project_urls);assert.deepEqual(projectLinks(data),[first,'https://github.com/example/ext']);
+ const rows=projectLinkDrafts(data);rows[0]='changed';assert.equal(data.project_urls[0],first);
+ assert.deepEqual(projectLinkDrafts({project_url:first,project_urls:[]}),[first]);assert.deepEqual(projectLinkDrafts({project_url:first,project_urls:['https://example.test/extra','']}),[first,'https://example.test/extra','']);assert.deepEqual(projectLinkDrafts({project_urls:['']}),['']);
+});

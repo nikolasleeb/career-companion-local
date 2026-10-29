@@ -38,6 +38,6 @@ export function editImportFields(data:Record<string,any>,patch:Record<string,any
   next.dates=[[next.start_date,next.end_date].filter(Boolean).join(' – '),next.category==='education'&&next.expected_graduation?'Expected graduation '+next.expected_graduation:''].filter(Boolean).join('; ');touched.add('dates');
  }
  if('project_urls' in patch){next.project_url=patch.project_urls.find((v:string)=>v.trim())||'';touched.add('project_url');}
- if('project_url' in patch){next.project_urls=patch.project_url?[patch.project_url]:[];touched.add('project_urls');}
+ else if('project_url' in patch){next.project_urls=patch.project_url?[patch.project_url]:[];touched.add('project_urls');}
  return {data:next,touched:[...touched]};
 }

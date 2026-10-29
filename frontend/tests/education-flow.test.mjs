@@ -66,3 +66,11 @@ test('draft subjects preserve whitespace and duplicates until payload normalizat
  assert.deepEqual(subjectDrafts(data,'major'),data.majors);assert.deepEqual(subjectDrafts(data,'minor'),['Applied Statistics ']);
  assert.deepEqual(educationPayload(data).majors,['Business Information Technology']);assert.equal(educationPayload(data).minor,'Applied Statistics');
 });
+
+test('updating both project-link fields preserves the entire editable list',()=>{
+ const urls=['https://github.com/example/first','https://github.com/example/second',''];
+ const result=editImportFields({category:'project'},{project_urls:urls,project_url:urls[0]});
+ assert.deepEqual(result.data.project_urls,urls);assert.equal(result.data.project_url,urls[0]);
+ const removed=editImportFields(result.data,{project_urls:[urls[1], ''],project_url:urls[1]});
+ assert.deepEqual(removed.data.project_urls,[urls[1],'']);assert.equal(removed.data.project_url,urls[1]);
+});

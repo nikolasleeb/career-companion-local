@@ -12,7 +12,7 @@ from pypdf import PdfReader
 from .models import validate_link
 from .network import ServiceError
 
-VERSION='certificate-text-v1'
+VERSION='certificate-local-v2'
 MONTH=r'(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)'
 DATE=re.compile(r'\b(?:\d{4}-\d{2}-\d{2}|'+MONTH+r'\.?\s+\d{1,2}(?:st|nd|rd|th)?[,]?\s+\d{4}|\d{1,2}\s+'+MONTH+r'\.?[,]?\s+\d{4}|\d{1,2}[/-]\d{1,2}[/-]\d{4})\b',re.I)
 LABELS={
@@ -55,6 +55,39 @@ def parse_pdf(raw):
             if total>=60000:
                 warnings.append('Text was limited to 60,000 characters; check any omitted pages.');break
     except Exception:raise ServiceError('The PDF could not be read. Use an unlocked, text-based PDF up to 30 pages.') from None
+    result=parse_pages(pages,len(reader.pages),warnings)
+    targets=[number for number,lines in pages if not result['fields'] or sum(map(len,lines))<40]
+    if targets:
+        from . import certificate_ocr
+        ocr=certificate_ocr.extract(raw,'application/pdf',targets)
+        if ocr['pages']:
+            by_number=dict(ocr['pages'])
+            combined=[(number,lines+by_number.get(number,[])) for number,lines in pages]
+            result=parse_pages(combined,len(reader.pages),warnings+ocr['warnings'])
+            for field in result['fields'].values():
+                if field['page'] in by_number:field['reason']='Text / local OCR · '+field['reason']
+        else:result['warnings'].extend(ocr['warnings'])
+        result.update(ocr_pages=[number for number,_ in ocr['pages']],incomplete=ocr['incomplete'])
+        result['extraction_method']='text_and_ocr' if any(lines for _,lines in pages) else 'ocr'
+        result['warnings'].append('Local OCR can misread names, dates and credential IDs. Check suggestions against the original certificate.')
+    else:result.update(extraction_method='text',ocr_pages=[],incomplete=False)
+    return result
+
+
+def parse_certificate(raw,mime):
+    if mime=='application/pdf':return parse_pdf(raw)
+    if mime not in ('image/png','image/jpeg') or not raw or len(raw)>10*1024*1024:raise ServiceError('Choose a PDF, PNG or JPEG certificate up to 10 MB.')
+    from . import certificate_ocr
+    ocr=certificate_ocr.extract(raw,mime)
+    result=parse_pages(ocr['pages'],1,ocr['warnings'])
+    for field in result['fields'].values():field['reason']='Local OCR · '+field['reason']
+    result.update(extraction_method='ocr',ocr_pages=[number for number,_ in ocr['pages']],incomplete=ocr['incomplete'])
+    result['warnings'].append('Local OCR can misread names, dates and credential IDs. Check suggestions against the original certificate.')
+    return result
+
+
+def parse_pages(pages,page_count,warnings):
+    warnings=list(warnings);total=sum(sum(map(len,lines)) for _,lines in pages)
     candidates={}
     def add(key,value,excerpt,page,reason='Labeled certificate text'):
         if not value or len(str(value))>({'name':200,'issuer':200,'credential_id':200,'credential_url':2000}.get(key,100)):return
@@ -89,7 +122,7 @@ def parse_pdf(raw):
         dates=[(m.group(),calendar(m.group())) for line in lines for m in DATE.finditer(line)]
         ids=[line for line in lines if re.fullmatch(r'[a-fA-F0-9]{28,40}',line)]
         url='https://aws.amazon.com/verification'
-        if len(reader.pages)==1 and len(names)==1 and len(dates)==2 and len(ids)==1 and url in lines and all(value for _,value in dates) and dates[0][1]<=dates[1][1]:
+        if page_count==1 and len(names)==1 and len(dates)==2 and len(ids)==1 and url in lines and all(value for _,value in dates) and dates[0][1]<=dates[1][1]:
             name=names[0]
             add('name',name,name,page,'Recognized AWS certificate heading')
             add('issuer','AWS',name,page,'AWS issuer shown in the credential heading')
@@ -104,6 +137,6 @@ def parse_pdf(raw):
         fields.pop('does_not_expire');fields.pop('expiration_date');warnings.append('Conflicting expiration information was left for manual review.')
     if fields.get('expiration_date') and fields['expiration_date']['value']<max(fields.get('earned_date',{}).get('value',''),fields.get('valid_from',{}).get('value','')):
         fields.pop('expiration_date');warnings.append('Expiration precedes another date; check it manually.')
-    if not total:warnings.append('No selectable text was found. Scanned PDFs and images need manual entry; OCR is not included.')
+    if not total:warnings.append('No selectable text or readable OCR text was found. Try a clearer file or enter the details manually.')
     elif not fields:warnings.append('No confidently labeled fields were recognized. Enter the details manually.')
-    return {'parser_version':VERSION,'pages':len(reader.pages),'fields':fields,'warnings':list(dict.fromkeys(warnings))}
+    return {'parser_version':VERSION,'pages':page_count,'fields':fields,'warnings':list(dict.fromkeys(warnings))}

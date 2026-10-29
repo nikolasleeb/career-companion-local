@@ -43,9 +43,23 @@ Try an all-caps or lowercase full name, including a hyphenated surname, apostrop
 
 ## Full forms in import review
 
-- Prepare a resume, LinkedIn PDF or combined review with a fictional account. Each selected record shows its full edit fields directly, without an Edit details dialog.
+- Prepare a resume, LinkedIn PDF or combined review with a fictional account. Prepared imports open Personal details and Resume content as unsaved drafts. Each selected record shows its full edit fields in the appropriate tab, without an Edit details dialog.
 - In education, choose a common degree/qualification or Other / type my own. An imported custom qualification must remain unchanged until you choose or edit it. Check majors/minors, attendance dates, GPA, scale, classes and notes.
 - Source alternatives sit beside the affected fields. Choosing a source or typing directly resolves that field; equivalent compatibility fields and generated education titles stay aligned. Confirm possible source matches explicitly. Unresolved selected conflicts still block approval.
 - Clear a required field or leave a date partly entered: importing must focus the invalid control without saving. An unchecked proposal must not block other selected information or be imported.
 - Edit fields, collapse source details, navigate internally or separate an unrelated match: existing draft recovery rules apply. Preparing, editing and closing review leave Profile unchanged. Only final accuracy confirmation plus Import selected changes saves information.
 - Check wide and narrow screens, keyboard controls and labels for multiple education/date/course fields. Test the same qualification choices in the ordinary Profile education editor and preserve custom values when editing existing records.
+
+## Multiple project links
+
+In Resume content’s imported drafts, add a second project link and type it character by character. New empty rows and partial URL text must remain visible; editing or removing one link must preserve the others. Check the five-row limit, duplicates/empty rows at save, invalid URL blocking, desktop/mobile layout, and saving/reopening multiple links. Repeat in the ordinary Profile project editor. Cancelling a review or editor must leave saved links unchanged. Adding a link never fetches its contents or starts AI analysis.
+
+## Certificate form filling
+
+Upload a fictional text PDF, scanned PDF, PNG and JPEG certificate in import review and in the ordinary credential editor. Local extraction should fill empty fields while preserving the selected attachment and existing values. Existing disagreements need explicit Use extracted choices. Check issuer, dates, credential ID/link, source excerpts and OCR warnings. OCR runs locally in English, with bounded concurrency, time, image dimensions and extracted text; incomplete processing stays visible and can be retried. Do not infer credential validity. Preparing, uploading and extracting do not save Profile or call AI. Confirm stale attachment results cannot fill a replacement certificate.
+
+Local source installs need Tesseract with English language data and Poppler for image/scanned-PDF extraction. Both Docker editions include these tools. Missing OCR tools produce a recoverable message; native PDF text extraction and manual entry remain available.
+
+## Imported drafts in Profile tabs
+
+Prepare a document in Upload / import. It should take you to Personal details when contact information exists, otherwise Resume content. Review and correct drafts in those actual tabs; Upload / import only retains document controls and links back to the drafts. Internal tab changes and browser Back/Forward retain entered fields, selections and blank link/subject rows. Next issue can move between the two tabs. Final import approval is in Resume content and checks selected fields in both tabs, taking you to a hidden invalid field if needed. No data reaches saved Profile, onboarding or evidence before approval. Discarding drafts leaves Profile unchanged. Saving imports returns the usual saved Profile workflow.

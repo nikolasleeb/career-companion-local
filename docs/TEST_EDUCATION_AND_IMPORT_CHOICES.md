@@ -2,7 +2,7 @@
 
 Use fictional documents and a disposable account first. These controls do not run AI.
 
-1. Open **Profile → Upload / import**, prepare two documents with a possible education/employment match, then review the education proposal’s full fields directly on the page.
+1. Open **Profile → Upload / import**, prepare two documents with a possible education/employment match, open **Resume content**, then review the education proposal’s full fields directly on the page.
 2. Enter a past attendance end year directly; it must remain editable and valid for a graduated record.
 3. End dates earlier than the start must show an error and cannot be saved. Unknown month/day may remain blank. **Expected graduation** keeps its separate future-date rules.
 4. GPA and GPA scale should share one row on desktop and mobile. No scale is inferred: fill it only when known. Edits change only the proposal; saved Profile information changes only after final import approval.

@@ -23,3 +23,9 @@ export function fillCertificate(row:Certification,result:CertificateExtraction){
  }
  return {row:next,filled,conflicts};
 }
+
+export function certificateDraftPatch(data:Record<string,any>,change:Certification[]|((rows:Certification[])=>Certification[])){
+ const before=certificationRows(data),next=typeof change==='function'?change(before):change;
+ return {certification_items:next,confirmed:JSON.stringify(before)===JSON.stringify(next)?data.confirmed:false,skill_items:[],tools:''};
+}
+export function supportsCertificateExtraction(mime:string){return ['application/pdf','image/png','image/jpeg'].includes(mime);}

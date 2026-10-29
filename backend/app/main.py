@@ -554,12 +554,12 @@ async def extract_certificate(entity_id:str,user=Depends(auth.current)):
     from . import certificate_parser
     record=require(user['id'],entity_id,'document')
     if record['data'].get('purpose')!='certificate': raise HTTPException(404,'Certificate not found.')
-    if record['data'].get('mime')!='application/pdf': raise ServiceError('Automatic extraction supports text-based PDFs. Enter image certificate details manually.')
+    if record['data'].get('mime') not in ('application/pdf','image/png','image/jpeg'): raise ServiceError('Choose a PDF, PNG or JPEG certificate.')
     path=config.DATA_DIR/'uploads'/user['id']/entity_id
     if not path.is_file(): raise HTTPException(404,'Certificate file unavailable.')
     raw=path.read_bytes()
     if hashlib.sha256(raw).hexdigest()!=record['data']['sha256']: raise HTTPException(409,'The saved certificate changed. Upload it again before extracting details.')
-    result=await asyncio.to_thread(certificate_parser.parse_pdf,raw)
+    result=await asyncio.to_thread(certificate_parser.parse_certificate,raw,record['data']['mime'])
     return {**result,'document_id':entity_id,'sha256':record['data']['sha256']}
 
 @app.get('/api/certificates/{entity_id}/download')
