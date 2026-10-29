@@ -28,6 +28,8 @@ def profile(user):
    if isinstance(v,(dict,list)):v=json.dumps(v,ensure_ascii=False)
    text=clean(v or '')
    if text:sources.append({'id':row['id']+':'+field,'record_id':row['id'],'field':field,'text':text[:2400]})
+  if row['data'].get('category')=='project' and row['data'].get('individual_project') is True:
+   sources.append({'id':row['id']+':individual_project','record_id':row['id'],'field':'individual_project','text':'Individual project'})
  revision=digest(sources);selected=[];used=0
  # Keep at least the title of each record; add longer passages within the context budget.
  for source in sorted(sources,key=lambda s:(s['field']!='title',s['field'] not in ('degree','description','tools'))):

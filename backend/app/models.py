@@ -67,6 +67,7 @@ class ExperienceItem(StrictModel):
     dates: str = Field(default='',max_length=120)
     description: str = Field(default='',max_length=12000)
     contribution: str = Field(default='',max_length=6000)
+    individual_project: bool = False
     tools: str = Field(default='',max_length=1000)
     confirmed: bool = False
     source_document_id: str = Field(default='',max_length=64)
