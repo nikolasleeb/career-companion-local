@@ -120,3 +120,28 @@ def test_refresh_comparison_stage_only_runs_when_profile_changed(env,monkeypatch
     asyncio.run(run_task(identity,user,work))
     result=get_task(identity,user={'id':user});assert result['status']=='failed' and result['progress']['code']=='comparison'
     assert not calls
+
+
+def test_project_analysis_provider_progress_uses_the_real_request_boundary(account,monkeypatch):
+    import httpx
+    from app import credentials
+    user=account['id'];identity=task(user,'project_analysis');calls=[]
+    monkeypatch.setattr(credentials,'effective',lambda _: 'fictional-not-a-real-key')
+    async def mock_post(self,url,**kwargs):
+        calls.append(url)
+        status=get_task(identity,user={'id':user})
+        assert status['progress']['code']=='provider' and status['progress']['kind']=='provider'
+        with pytest.raises(HTTPException):get_task(identity,user={'id':'foreign'})
+        return httpx.Response(200,json={'id':'fictional-response','status':'completed','output':[]},request=httpx.Request('POST',url))
+    monkeypatch.setattr(httpx.AsyncClient,'post',mock_post)
+    async def work():
+        assert get_task(identity,user={'id':user})['progress']['label']=='Preparing project analysis'
+        await ai.call_api({'model':'gpt-6.1-sol','input':'Fictional progress fixture','max_output_tokens':16})
+        assert get_task(identity,user={'id':user})['progress']['code']=='processing'
+        return {'fixture':True}
+    asyncio.run(run_task(identity,user,work))
+    value=get_task(identity,user={'id':user})
+    assert value['status']=='completed' and value['result']=={'fixture':True}
+    assert [v['code'] for v in value['progress']['history']]==['starting','provider']
+    assert value['progress']['finished_at']==value['updated_at']
+    assert calls==['https://api.openai.com/v1/responses']

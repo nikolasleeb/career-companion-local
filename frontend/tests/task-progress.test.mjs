@@ -25,3 +25,9 @@ test('completed and failed tasks stop clocks at server completion',()=>{
   assert.equal(v.running,false);assert.equal(v.total,'7:01');assert.equal(v.stage,'4:17');
  }
 });
+
+test('project file preparation explicitly precedes OpenAI processing',()=>{
+ const v=progressView({...task,progress:{...task.progress,kind:'source_preparation',label:'Preparing selected project files'}},Date.now());
+ assert.equal(v.label,'Preparing selected project files');assert.match(v.detail,/Downloading and reading selected files/);assert.match(v.detail,/No OpenAI request/);
+ assert.doesNotMatch(v.detail,/Waiting for AI response/);
+});

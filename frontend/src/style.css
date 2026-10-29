@@ -81,6 +81,8 @@
 .education-subjects legend{font-size:12px;font-weight:600;padding:0 5px}.subject-row{display:flex;align-items:center;gap:10px}.subject-row>label{flex:1;min-width:0;margin:0 0 10px}.subject-row .button{margin-bottom:10px}.education-subjects>.button{font-size:12px}
 .project-materials-dialog{width:min(1100px,94vw);max-height:90vh}.project-materials-dialog .modal-head{align-items:flex-start}.project-materials-dialog .modal-head h2{overflow-wrap:anywhere;line-height:1.4}.project-materials-dialog .project-sources{border:0;padding:0}.project-materials-dialog .project-sources>h3{font-size:20px}.project-materials-status{color:var(--navy);font-weight:600}.other-project-materials{margin-top:20px}
 .project-materials-dialog .modal-head{position:sticky;top:-28px;z-index:5;background:var(--paper);padding:14px 0;border-bottom:1px solid var(--line)}
+.project-materials-top{position:sticky;top:-28px;z-index:100;background:var(--paper);padding-top:14px}
+.project-materials-top .modal-head{position:static;margin-bottom:12px;padding:0 0 12px}
 .project-materials-dialog .modal-head .icon-button{min-width:44px;min-height:44px;flex-shrink:0}
 .project-materials-dialog .project-results,.project-materials-dialog [aria-label="Selected project files"]{scroll-margin-top:120px}
 

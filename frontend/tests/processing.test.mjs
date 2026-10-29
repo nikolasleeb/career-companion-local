@@ -63,3 +63,17 @@ test('a Stop POST does not create a second progress entry',async()=>{
  assert.equal(store.snapshot().length,1);stop.resolve({id:'one',status:'cancelling'});await pending;
  store.update({id:'one',status:'cancelling'});assert.equal(store.snapshot().length,1);store.update({id:'one',status:'cancelled'});assert.equal(store.snapshot().length,0);assert.equal(store.failure,'');
 });
+
+test('project file preparation transitions to one confirmed AI task without another dispatch',async()=>{
+ const store=new ProcessingStore(),selection=deferred();let posts=0;
+ const preparing=store.request('/project-sources/source/select','POST',()=>{posts++;return selection.promise;});
+ assert.equal(store.snapshot().length,1);assert.equal(store.snapshot()[0].progress.kind,'source_preparation');
+ assert.equal(store.snapshot()[0].progress.label,'Preparing selected project files');
+ selection.resolve({id:'snapshot'});await preparing;assert.equal(store.snapshot().length,0);
+ await store.request('/project-snapshots/snapshot/analyze','POST',async()=>{posts++;return {task_id:'analysis',status:'queued'};});
+ assert.equal(store.snapshot()[0].label,'Analyzing project materials');
+ await store.request('/tasks/analysis','GET',async()=>({...task('analysis'),kind:'project_analysis',progress:{code:'provider',kind:'provider',label:'Waiting for AI response'}}));
+ assert.equal(store.snapshot().length,1);assert.equal(store.snapshot()[0].progress.kind,'provider');
+ store.reconcile(store.snapshot(),store.serial);assert.equal(posts,2);
+ store.update({...task('analysis','completed')});assert.equal(store.snapshot().length,0);
+});
