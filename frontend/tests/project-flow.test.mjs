@@ -114,3 +114,19 @@ test('adding ZIPs or links preserves exclusions, including an entirely unchecked
  assert.deepEqual(selectedProjectFiles(['zip/a.py'],initial.map(f=>f.file_path),expanded),['zip/a.py']);
  assert.deepEqual(selectedProjectFiles([],initial.map(f=>f.file_path),expanded),[]);
 });
+
+test('a failed or interrupted attempt offers retry unless successful findings are saved',()=>{
+ const base={snapshots:[{id:'selected',data:{experience_id:'project',source_id:'source'}}],sources:[],analyses:[],drafts:[]};
+ for(const status of ['failed','interrupted']){
+  const library={...base,tasks:[{snapshot_id:'selected',status}]};
+  assert.deepEqual(projectMaterialsStatus(library,'project'),{label:'Retry analysis with OpenAI',status:'Previous attempt '+status});
+  assert.deepEqual(projectMaterialsStatus({...library,analyses:[{data:{snapshot_id:'selected'}}]},'project'),{label:'View analysis',status:'Materials analyzed'});
+ }
+ assert.deepEqual(projectMaterialsStatus({...base,tasks:[]},'project'),{label:'Analyze project with OpenAI',status:'Files saved'});
+});
+const {projectFailureMessage}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('historical output-limit errors refer to the previous attempt and current allowance',()=>{
+ const text=projectFailureMessage('The AI reached its output limit before finishing. Try a lower reasoning level.');
+ assert.match(text,/earlier response limit/);assert.match(text,/current response allowance/);assert.doesNotMatch(text,/lower reasoning/);
+ assert.equal(projectFailureMessage('Project analysis reached its 64,000-token response limit.'),'Project analysis reached its 64,000-token response limit.');
+});

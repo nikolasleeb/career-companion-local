@@ -49,9 +49,8 @@ export function projectMaterialsStatus(library:any,experienceId:string,urls:stri
  const draft=scoped.drafts.find((r:any)=>r.data.snapshot_id===snapshot?.id&&!r.data.manual_source),task=scoped.tasks.find((t:any)=>t.snapshot_id===snapshot?.id);
  if(pending)return {label:'View analysis',status:'Analysis running'};
  if(snapshot&&scoped.analyses.some((r:any)=>r.data.snapshot_id===snapshot.id))return {label:'View analysis',status:'Materials analyzed'};
- if(draft)return {label:'View analysis',status:draft.data.status==='reviewed'?'Analysis reviewed':'Findings rejected'};
- if(task&&['failed','interrupted'].includes(task.status))return {label:'View analysis',status:'Analysis '+task.status};
- if(snapshot&&scoped.analyses.some((r:any)=>r.data.snapshot_id===snapshot.id))return {label:'View analysis',status:'Analysis saved'};
+ if(draft&&draft.data.status==='reviewed')return {label:'View analysis',status:'Analysis reviewed'};
+ if(task&&['failed','interrupted'].includes(task.status))return {label:'Retry analysis with OpenAI',status:'Previous attempt '+task.status};
  return {label:'Analyze project with OpenAI',status:snapshot?'Files saved':''};
 }
 
@@ -67,4 +66,8 @@ export function projectUploadError(files:{name:string;size:number}[]){
  if(total>32*1024*1024)return `These uploads total ${(total/1024/1024).toFixed(1)} MB. The limit is 32 MB per upload. Create a smaller ZIP with code, notebooks and reports; leave out large datasets, environments and caches. Nothing was uploaded.`;
  const large=files.find(f=>!f.name.toLowerCase().endsWith('.zip')&&f.size>10*1024*1024);
  return large?`${large.name} exceeds the 10 MB individual-file limit. Nothing was uploaded.`:'';
+}
+
+export function projectFailureMessage(error:string=''){
+ return error.startsWith('The AI reached its output limit')?'That attempt stopped at its earlier response limit. The current response allowance is shown below. You can change it in Settings → AI setup before explicitly starting a new analysis.':error;
 }
