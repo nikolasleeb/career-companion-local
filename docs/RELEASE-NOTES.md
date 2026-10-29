@@ -1,21 +1,19 @@
-## Source update after 1.0.8 (no new release or tag)
+# Career Companion Local 1.0.9
 
-Adds a global read-only Career Coach, Career Plans, reviewed Work Styles preferences, structured goals, five-job discovery, broader Skills, saved interview conversations and optional visual responses. Extension packages are 1.0.4. See [implementation notes](BROADER-CAREER-SUPPORT.md).
+This release packages the current Career Companion features for localhost. It starts with an empty workspace and contains no hosted accounts, uploaded documents, private chats, cached jobs, API keys, notification credentials or vault keys.
 
-# Career Companion Local 1.0.8
+- Review resume and LinkedIn imports in the actual Profile tabs, with full editable forms, standardized personal names, explicit source choices, common degree options, typed years and reliable multiword majors and project links. Imported details remain proposals until approved.
+- Add project ZIPs, files and public GitHub links together. Preview and select materials before analysis. PowerPoint, Word, PDF, Excel and common image formats are supported alongside code and notebooks. Local text/OCR preparation makes no AI request; selected originals needing file or visual review are included only when you choose Analyze. Visual findings are labeled for review and originals stay in private account backups. Existing size and analysis limits apply.
+- Mark individual projects explicitly. Project observations describe materials without assuming authorship, personal contribution or proficiency. Reviewed application answers remain the source of personal evidence.
+- Certificate uploads support local PDF/image extraction with reviewable field suggestions. Project processing and AI work show a persistent progress banner; oversized uploads are rejected before transfer.
+- Career Explorer provides occupation research, saved careers and optional Profile-course context. Career Goals and Career Plans support editable, reviewed guidance and application discussions.
+- Career Coach supports private saved conversations, sourced guidance and optional explicitly shared Work Styles summaries. Work Styles summaries can be generated, revised and edited with separate save and sharing controls.
+- Interview Practice includes recorded answers and transcription, with account-owned AI usage. Usage charts show costs and tokens across continuous time periods.
+- Job Search adds broader employer/industry coverage and reliable listing windows. Settings provides API onboarding, selective cleanup, archive/delete review and explicit saved-key testing.
+- Browser extension packages are version 1.0.4. Safari downloads remain source packages, not signed Safari installations.
 
-This release brings the current Career Companion features to the localhost edition. It starts empty and includes no hosted accounts, documents, chats, cached jobs, API keys, notification credentials or private vault keys.
+AI remains optional and uses the account's own key. Uploading project materials alone never starts OpenAI analysis. Private AWS links remain references; export the files you want to analyze. No uploaded project code is executed. Non-PDF legacy Office file inputs provide text; export to PDF when visual charts are needed.
 
-- Profile now has Upload / import, Personal details, Resume content, Career Goals and Private application answers tabs. Unsaved values survive tab switches.
-- Import resumes and LinkedIn profile PDFs locally without an API key. Review exact duplicates, possible overlaps and field-by-field updates before committing. Originals, previous evidence and saved resumes remain available.
-- Personal details has separate website, GitHub and LinkedIn fields. An optional headline checkbox enables posting-specific, evidence-supported headlines within existing AI resume generation.
-- Career Coach opens on a landing page. Keep multiple private chats, research current questions when needed, save sourced roadmaps and delete chats deliberately. Career Goals remain separate from qualification evidence.
-- Stop AI actions from one shared progress banner. Previous saved work and editable drafts are preserved; incurred or unknown provider usage remains recorded.
-- Public employer feeds and community job listings support ordinary job search without API keys. Search result filtering, page sizes up to 100, optional AI matching and job examples are available.
-- Public feeds can reuse validated source coverage across local accounts. Disposable jobs default to 30-day retention, with configurable localhost retention and reliable earlier closing dates; saved/application evidence is preserved.
-- Settings groups AI setup, usage/costs, job sources, account/backups and App & storage. Update checks distinguish a published release from newer source code and never install or restart anything.
-- The workspace connection badge checks the authenticated app session. A saved AI key is not a provider verification.
+Before updating, finish active work and back up both Docker volumes. Verify the downloaded image archive against SHA256SUMS and follow LOCALHOST-QUICKSTART.md. The release workflow publishes only after both x64 and ARM64 images pass backend tests and clean-image smoke checks. Existing installations are never updated automatically.
 
-The localhost edition retains local-only access, local registration and account-owned AI keys. Its optional integrations require the installer's own settings. The hosted pilot's special Adzuna trial access, invitations, domain and delivery configuration are excluded. The extension remains 1.0.3; Safari downloads are source packages, not signed Safari installations.
-
-Back up both Docker volumes, finish active work, verify the archive checksum and follow LOCALHOST-QUICKSTART.md before updating. Both x64 and ARM64 images and downloadable archives are tested by the release workflow before publication. Existing installations are never updated automatically.
+Previous release: [1.0.8](https://github.com/nikolasleeb/career-companion-local/releases/tag/v1.0.8).
