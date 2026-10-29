@@ -25,3 +25,10 @@ test('deliberate navigation pushes once; canonical updates replace and guards pr
  const remove=route.routeGuard(()=>false);route.setRoute({view:'master'});assert.equal(route.routeNow().view,'settings');remove();
  route.setRoute({view:'master'});assert.equal(route.routeNow().view,'master');
 });
+
+test('legacy Work Styles links preserve attempt identities in canonical Profile workspace',()=>{
+ assert.deepEqual(route.parseRoute('#/work-styles?item=attempt-1'),{view:'master',tab:'workstyles',item:'attempt-1'});
+ assert.equal(route.routeHash({view:'interests',item:'attempt-1'}),'#/profile?tab=workstyles&item=attempt-1');
+ route.resetRoutes();location.hash='#/work-styles?item=attempt-2';route.initializeRoutes('legacy',true);
+ assert.deepEqual(route.routeNow(),{view:'master',tab:'workstyles',item:'attempt-2'});assert.equal(location.hash,'#/profile?tab=workstyles&item=attempt-2');
+});

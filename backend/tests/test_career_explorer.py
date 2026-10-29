@@ -25,7 +25,8 @@ def test_study_connections_and_sorting(client,account):
  empty=client.post(BASE+'/explore',json={'mode':'studies','major':'Unmatched fictional subject'}).json()
  assert empty['total']==0 and empty['notice']
  pay=client.post(BASE+'/explore',json={'sort':'pay','limit':24}).json()['results']
- assert [v['median_wage'] for v in pay]==sorted([v['median_wage'] for v in pay],reverse=True)
+ from app import career_wages
+ assert [career_wages.sort_key(v['code'],'US') for v in pay]==sorted(career_wages.sort_key(v['code'],'US') for v in pay)
  assert client.post(BASE+'/explore',json={'industry':'invented'}).status_code==422
  assert client.post(BASE+'/explore',json={'personality':'mbti'}).status_code==422
 
@@ -34,7 +35,7 @@ def test_full_details_missing_values_and_profile_skill_labels(client,account):
  db.save(account['id'],'experience',{'confirmed':False,'category':'skills','skill_items':[{'name':'Docker','level':'expert'}]})
  data=client.get(BASE+'/occupations/15-1252.00').json()
  python=next(v for v in data['technologies'] if v['name']=='Python');docker=next(v for v in data['technologies'] if v['name']=='Docker')
- assert python['profile_status']=='Recorded in Profile' and docker['profile_status']=='Not documented in Profile'
+ assert python['profile_status']=='Found in Profile' and docker['profile_status']=='No supporting reference found'
  assert len(data['description'])>400 and data['metadata']['growth_period']=='2025–35'
  assert 'h1b_rate' not in data and 'riasec' not in data and 'styles' not in data
  missing=client.get(BASE+'/occupations/11-1031.00').json()
@@ -121,3 +122,36 @@ def test_catalog_integrity_and_paging(client,account):
  b=client.post(BASE+'/explore',json={'preparation':'college','limit':12,'offset':12}).json()
  assert not {v['code'] for v in a['results']} & {v['code'] for v in b['results']}
  assert a['total']==378 and all(v['job_zone'] in (4,5) for v in a['results'])
+
+
+def test_multiple_industries_match_any_selection_and_preserve_legacy(client,account):
+ sectors=[row['naics'] for row in explorer.DATA['sectors']][:2]
+ expected={code for code,o in explorer.OCCUPATIONS.items() if any(o['sectors'].get(s,0)>=1 for s in sectors)}
+ body={'industries':sectors,'sort':'title','limit':24}
+ first=client.post(BASE+'/explore',json=body);assert first.status_code==200,first.text
+ assert first.json()['total']==len(expected)
+ ordered=sorted(expected,key=lambda code:explorer.OCCUPATIONS[code]['title'])
+ assert [r['code'] for r in first.json()['results']]==ordered[:24]
+ second=client.post(BASE+'/explore',json={**body,'offset':24}).json()
+ assert [r['code'] for r in second['results']]==ordered[24:48]
+ duplicate=client.post(BASE+'/explore',json={**body,'industries':sectors+[sectors[0]]}).json()
+ assert duplicate==first.json()
+ assert client.post(BASE+'/explore',json={**body,'industries':list(reversed(sectors))}).json()==first.json()
+ legacy=client.post(BASE+'/explore',json={'industry':sectors[0]}).json()
+ assert client.post(BASE+'/explore',json={'industries':[sectors[0]]}).json()==legacy
+ assert client.post(BASE+'/explore',json={'industry':sectors[0],'industries':[sectors[1]],'sort':'title','limit':24}).json()==first.json()
+ assert not db.list_entities(account['id'],'usage_event')
+
+
+def test_industry_selection_validation_and_composed_filters(client,account):
+ assert client.post(BASE+'/explore',json={'industries':['invented']}).status_code==422
+ assert client.post(BASE+'/explore',json={'industries':['']}).status_code==422
+ assert client.post(BASE+'/explore',json={'industries':['11']*(len(explorer.DATA['sectors'])+1)}).status_code==422
+ assert client.post(BASE+'/explore',json={'industries':[]}).json()==client.post(BASE+'/explore',json={}).json()
+ sectors=[row['naics'] for row in explorer.DATA['sectors']][:2]
+ body={'industries':sectors,'preparation':'college','query':'manager','sort':'pay','limit':24}
+ result=client.post(BASE+'/explore',json=body);assert result.status_code==200,result.text
+ for row in result.json()['results']:
+  assert row['job_zone'] in (4,5)
+  assert any(explorer.OCCUPATIONS[row['code']]['sectors'].get(s,0)>=1 for s in sectors)
+ assert result.json()['total']>0

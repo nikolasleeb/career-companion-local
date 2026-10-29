@@ -1,8 +1,8 @@
 # Career Explorer
 
-Resources → **Career Explorer** has **Explore careers** and **My saved careers**.
+Resources → **Career Explorer** has **Explore careers**, **My saved careers** and **Saved searches**.
 It is available to signed-in accounts before Profile setup is complete. The
-existing Career Plans, Skills, Work Styles and Interview Practice remain separate.
+existing Career Plans, Skills and Interview Practice remain separate. Work Styles lives under Profile.
 No AI, O*NET key, external request or questionnaire score is needed to browse.
 
 ## Public data and attribution
@@ -14,13 +14,7 @@ CIP crosswalk. Original source attribution and CC BY 4.0 links are retained in
 the data and displayed in the app. The dataset is a derivative, not an endorsed
 O*NET matching instrument.
 
-The teammate's BLS snapshot covers 378 occupations in preparation zones 4–5:
-361 have wage data and 377 have 2025–2035 projections. Wage years and broader
-occupation-group notes stay attached to each figure. Missing information remains
-null, never zero. National medians are not starting salaries, and projected
-annual openings are not live vacancies. This is one projection vintage, not a
-history of changing forecasts. Other preparation levels remain searchable but
-do not acquire invented pay or outlook figures.
+The original BLS snapshot supplies 2025–2035 projections for 377 college-preparation occupations. The new OEWS dataset supplies published pay distributions across preparation levels and salary areas, with source geography and year attached. Missing information remains null or its published suppression marker, never zero. Growth and annual openings remain projections rather than live vacancies.
 
 `scripts/build_career_explorer.py SOURCE_ZIP` deterministically rebuilds the
 snapshot from the reviewed public files in the supplied teammate archive. It
@@ -53,13 +47,7 @@ instead of silently using stale facts. The existing free-text course field remai
 compatible. Profile selection is independent of its 2,000-character limit. Course
 listings are not proof of completion.
 
-Users can edit
-these temporary fields without changing Profile. Skill labels compare exact
-normalized names against skill items in confirmed Profile records; absence means
-**Not documented in Profile**, not that the person lacks the skill. Personality
-ratings, raw questionnaire answers, inferred/template skills, private disclosures
-and sponsorship information are not inputs. Saved careers are not automatically
-added to AI context or resume evidence.
+Users can edit temporary search fields without changing Profile. Confirmed professional evidence is compared using established aliases and contextual passages. The evidence, AI-review and Work Styles consent boundaries are described below. Saved careers and review findings never become Profile evidence automatically.
 
 ## Saving and connections
 
@@ -92,3 +80,27 @@ Authenticated `/api/career-explorer` endpoints:
 The only new persistent entity kind is `saved_career`. No destructive migration,
 Career Journey workflow, personality matching, sponsorship ranking or new paid
 AI matching is included in this first integration.
+
+# Evidence, wages and rerunnable searches
+
+Exploration, local Profile reference matching and saved-search operations use no AI. A Profile connections review requires an explicit action and an account OpenAI key. It uses the existing task, cancellation, token-limit, cost and request-token mechanisms with paid retries disabled.
+
+Local references come from confirmed professional Profile records and Supporting Details. Coursework and credentials provide learning context. Established aliases identify mentions, not proficiency. Broad activities and contextual relationships are marked for review. Work Styles contributes only the reviewed summary when guidance sharing is enabled; raw answers and scores are excluded from Explorer reviews. Reviews remain separate from Profile and carry source snapshots and revision checks. A failed or cancelled review cannot replace the prior saved result.
+
+## Rebuilding wages
+
+The bundled `backend/app/career_wage_data.json.gz` contains BLS OEWS May 2025 national, state, metropolitan and nonmetropolitan wage distributions. Its metadata records official source URLs, SHA-256 checksums and reference year. BLS data is public domain.
+
+Download the national, state and metro ZIP files linked from <https://www.bls.gov/oes/tables.htm>, then run:
+
+```sh
+python3 scripts/build_career_wages.py oesm25nat.zip oesm25st.zip oesm25ma.zip
+```
+
+The importer reads cross-industry, all-ownership rows, preserves published suppression/top-code markers, orders keys and sets the gzip timestamp to zero. The same inputs produce the same output. The source ZIP checksums are stored inside the output; no user data is used.
+
+An O*NET specialty maps to its six-digit SOC wage occupation. No specialty-specific distribution is invented. Missing local rows retain a clearly labelled national comparison. The 10th–90th range describes the published wage distribution, not starting pay or years of experience. Annual and hourly distributions retain their units; pay sorting orders published annual figures, then hourly figures, with missing medians last. Published top-codes use their reporting floor for sorting and remain labelled “or more.” The May 2025 reporting thresholds are $239,200/year and $115/hour; see <https://www.bls.gov/oes/methods_25.pdf>.
+
+Saved searches store applied filters and selected course titles. Reopening reruns the current catalog. Unavailable courses or salary areas require review; nothing is silently substituted. Search and review entities are account-owned, included in account exports/imports, and listed under Career Explorer in selective cleanup. Restoration preserves current saved reviews and marks imported reviews outdated.
+
+Work Styles lives in Profile. Legacy `#/work-styles?item=…` links canonicalize to `#/profile?tab=workstyles&item=…`, retaining attempt IDs and the existing account-scoped draft buffers. Moving the workspace grants no additional sharing consent.

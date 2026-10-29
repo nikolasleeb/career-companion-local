@@ -1,0 +1,9 @@
+import React from 'react';
+export const wageValue=(v:any,unit='year',threshold?:number)=>typeof v==='number'?new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:unit==='hour'?2:0}).format(v):v==='#'?(threshold?new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:unit==='hour'?2:0}).format(threshold)+' or more':'At/above BLS reporting threshold'):v==='*'?'Not released':v==='**'?'Not available':'Not reported';
+export function CareerPay({salary,detail=false}:{salary:any;detail?:boolean}){
+ if(!salary)return <span>Pay not reported</span>;
+ const value=salary.values;
+ const display=(v:any,unit:string)=>wageValue(v,unit,salary.reporting_threshold?.[unit]);
+ const range=(v:any)=>v?<><strong>{display(v.p10,v.unit)} – {display(v.p90,v.unit)}</strong> / {v.unit}<small>10th–90th percentile · Median {display(v.median,v.unit)}</small></>:<span>No published estimate for this area.</span>;
+ return <div className="career-pay"><span>{salary.area.title} · {salary.reference}</span>{range(value)}{detail&&value&&<div className="career-pay-percentiles">{[['10th',value.p10],['25th',value.p25],['Median',value.median],['75th',value.p75],['90th',value.p90]].map(([label,v])=><span key={label}>{label}: <strong>{display(v,value.unit)}</strong></span>)}</div>}{salary.area.id!=='US'&&(detail||!value||[value.p10,value.p25,value.median,value.p75,value.p90].some(v=>typeof v!=='number'))&&<details><summary>National comparison · United States</summary>{range(salary.national)}</details>}{detail&&<><p className="small muted">Published wage distribution across workers, not starting pay or pay at a particular number of years. {salary.shared_specialty?'This specialty shares wages for the broader ':''}{salary.shared_specialty&&salary.occupation_title} {salary.shared_specialty&&'('+salary.soc+').'}</p><a className="small" href={salary.source_url} target="_blank" rel="noreferrer">BLS wage source ↗</a></>}</div>;
+}
