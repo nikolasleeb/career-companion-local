@@ -290,3 +290,58 @@ def pdf_preview(raw,page=1):
             subprocess.run([executable,'-f',str(page),'-singlefile','-scale-to','1500','-png',str(source),str(target)],capture_output=True,check=True,timeout=30)
             return target.with_suffix('.png').read_bytes()
         except (OSError,subprocess.SubprocessError): raise ServiceError('The saved PDF could not be rendered for preview. Download it to inspect the layout.') from None
+
+
+def linkedin_text(raw):
+    """Read known LinkedIn two-column exports without mixing the sidebar.
+
+    Geometry is used only when the main/sidebar structure is actually present.
+    This returns derived text; the stored original extraction is never replaced.
+    """
+    import re
+    from .linkedin_import import MAIN,SIDE
+    from .import_values import repair_wrapped_links
+    reader=PdfReader(io.BytesIO(raw))
+    if reader.is_encrypted or len(reader.pages)>30:return None
+    main=[];side=[];recognized=False;profile_links=[]
+    for page in reader.pages:
+        pieces=[]
+        def visit(text,cm,tm,font,size):
+            if not text.strip():return
+            x=tm[4]*cm[0]+tm[5]*cm[2]+cm[4];y=tm[4]*cm[1]+tm[5]*cm[3]+cm[5]
+            for n,line in enumerate(text.splitlines()):
+                if line.strip() and not re.fullmatch(r'\s*Page\s+\d+\s+(?:of|/)\s*\d+\s*',line,re.I):pieces.append((x,y-n*size*1.2,line.strip()))
+        page.extract_text(visitor_text=visit)
+        boundary=float(page.mediabox.width)*.33
+        left=[p for p in pieces if p[0]<boundary];right=[p for p in pieces if p[0]>=boundary]
+        if any(p[2]=='Contact' for p in left) and any(p[2] in ('Experience','Education','Summary') for p in right):recognized=True
+        def lines(items):
+            rows=[]
+            for x,y,text in sorted(items,key=lambda p:(-p[1],p[0])):
+                if rows and abs(rows[-1][0]-y)<2.5:rows[-1][1].append((x,text))
+                else:rows.append([y,[(x,text)]])
+            return [' '.join(t for x,t in sorted(parts)) for y,parts in rows]
+        main.extend(lines(right));side.extend(lines(left))
+        annotations=page.get('/Annots',[])
+        if hasattr(annotations,'get_object'):annotations=annotations.get_object()
+        for reference in annotations:
+            annotation=reference.get_object();action=annotation.get('/A',{})
+            if hasattr(action,'get_object'):action=action.get_object()
+            uri=str(action.get('/URI',''))
+            rect=annotation.get('/Rect',[])
+            if len(rect)==4 and float(rect[0])<boundary and re.fullmatch(r'https?://(?:www\.)?linkedin\.com/in/[A-Za-z0-9_%.-]+/?(?:\?[^\s]*)?',uri,re.I):profile_links.append(uri)
+    if not recognized:return None
+    value=repair_wrapped_links(MAIN+'\n'+'\n'.join(main)+'\n'+SIDE+'\n'+'\n'.join(side))
+    links=list(dict.fromkeys(profile_links))
+    if len(links)==1:
+        # An actual PDF hyperlink can establish the complete destination. A
+        # common string prefix alone, without the annotation, cannot.
+        from .import_values import url
+        target=url(links[0]);section=value.split(SIDE,1)[1]
+        def complete(match):
+            found=url(match.group())
+            return target if target.startswith(found) else match.group()
+        section=re.sub(r'(?:https?://|www\.)[^\s<>|)]+',complete,section)
+        if not re.search(r'(?:https?://|www\.)[^\s<>|)]+',section):section=section.replace('Contact','Contact\n'+target,1)
+        value=value.split(SIDE,1)[0]+SIDE+section
+    return value[:config.MAX_TEXT]

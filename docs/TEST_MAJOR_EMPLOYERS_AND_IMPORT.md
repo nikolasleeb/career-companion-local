@@ -16,14 +16,16 @@ Use fictional documents and a disposable account for import tests. Deployment do
 
 1. Open **Profile → Upload / import**, including on a new account with no education yet. Choose a resume (PDF/DOCX/TXT), a LinkedIn PDF, or both. Selecting files does not upload or change Profile until Prepare review.
 2. You may instead choose previously uploaded documents in the corresponding dropdowns. Choose at most one resume and one LinkedIn PDF. No re-upload is needed.
-3. Click Prepare review. Each file has its own status. Profile remains unchanged and every proposal starts unselected.
+3. Click Prepare review. Each file has its own status. Profile remains unchanged. Clean new information starts checked; saved duplicates are skipped and uncertain extraction remains unchecked.
 4. Review the single set of proposals grouped by Profile section. Exact duplicates appear once, labeled with both filenames. Similar records that differ require confirming they describe the same record; choose Keep these as separate records when they do not.
 5. Resolve conflicting fields by choosing a source, editing the value or omitting an optional field. No source wins automatically. For list edits, use Edit details and choose the reviewed edited value.
 6. Select only information you want to import. For an existing record, select the target and individually approve fields to update. Blank values cannot erase saved information.
 7. Confirm the review and Import selected changes. Check the saved records and their original uploads. Repeated submission of the same approval must not create duplicates. Existing saved resume versions remain unchanged.
-8. Correct text under View or correct source text. Reparse one document; this rebuilds the combined proposals and clears selections. Review them again before saving.
+8. Correct text under View or correct source text. Reparse one document; this rebuilds proposals with fresh defaults, clears conflict choices and resets final confirmation. Review them again before saving.
 9. Test Cancel/Close review: no Profile change. If one upload fails, the successful upload stays available; retry the failed file or choose Review available document. Each file retains the existing 10 MB/30-page limits.
 10. If Profile or source text changes in another browser during review, an affected approval must be rejected and require a fresh review. Deleted or foreign-account sources cannot be imported.
+
+For the detailed selection, normalization and discrepancy checks, see [Test the polished Profile import](TEST_PROFILE_IMPORT_POLISH.md).
 
 ## Verification and recovery
 

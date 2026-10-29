@@ -16,43 +16,65 @@ def preview(parsed,records):
   for record in records:
    old=record['data']
    if old.get('category')!=data.get('category'):continue
-   if old.get('source_entry_id')==entry['id'] or resume_parser.fingerprint(old)==resume_parser.fingerprint(data):exact.append(record['id']);continue
+   if old.get('source_entry_id')==entry['id'] or resume_parser.fingerprint(old)==resume_parser.fingerprint(data) or credential_already_saved(data,old):exact.append(record['id']);continue
    org=normal(data.get('organization'));title=degree(data.get('degree') or data.get('title'))
    if org and org==normal(old.get('organization')) and title and title==degree(old.get('degree') or old.get('title')):matches.append(record['id'])
   result[entry['id']]={'exact':exact,'matches':matches}
  return result
 
+def credential_already_saved(data,old):
+ # A newly separated credential may already be in an older grouped record.
+ # Match all supplied credential fields; never replace the existing group.
+ from . import import_values
+ proposed=data.get('certification_items',[])
+ if len(proposed)!=1:return False
+ item=proposed[0]
+ return any(all(not value or import_values.same(key,value,saved.get(key,'')) for key,value in item.items()) for saved in old.get('certification_items',[]))
+
 def parse(text,kind='resume'):
- if kind!='linkedin_pdf':return resume_parser.parse(text)
- # Normalize recognizable exported-PDF labels and footers only. Keep uncertain
- # material visible; never follow document instructions or fetch profile URLs.
- clean=re.sub(r'(?im)^\s*Page\s+\d+\s+(?:of|/)\s*\d+\s*$','',text)
- clean=re.sub(r'(?im)^\s*Top Skills\s*$','Skills',clean)
- clean=re.sub(r'(?im)^\s*Contact\s*$','',clean)
- parsed=resume_parser.parse(clean);parsed['text_hash']=hashlib.sha256(text.encode()).hexdigest();parsed['parser_version']=resume_parser.VERSION+'-linkedin1'
- # LinkedIn lists employer, role, dates. The ordinary resume parser expects role
- # then employer. Rebuild only blocks with an explicit, recognizable date range.
- lines=clean.splitlines();active=False;body=[]
- for line in lines:
-  kind=resume_parser.heading(line)
-  if kind=='employment':active=True;continue
-  if active and kind:break
-  if active and line.strip():body.append(line.strip())
- dated=[i for i,line in enumerate(body) if resume_parser.DATE_RANGE.search(line) and len(line)<180]
- entries=[];cursor=0
- for n,index in enumerate(dated):
-  prefix=body[cursor:index]
-  if len(prefix)<2:continue
-  employer,title=prefix[-2:]
-  if not resume_parser.short_title(employer) or not resume_parser.short_title(title):continue
-  next_index=dated[n+1] if n+1<len(dated) else len(body)
-  end=max(index+1,next_index-2) if n+1<len(dated) else len(body)
-  raw='\n'.join(body[cursor:end]);ordered=title+' | '+employer+' | '+body[index]+'\n'+'\n'.join(body[index+1:end])
-  one=resume_parser.parse('Experience\n'+ordered)
-  if len(one['entries'])!=1:continue
-  value=one['entries'][0];value['source_text']=raw;value['id']=hashlib.sha256(('linkedin-employment\n'+raw).encode()).hexdigest()[:24];entries.append(value);cursor=end
- if dated and len(entries)==len(dated):parsed['entries']=[e for e in parsed['entries'] if e['data']['category']!='employment']+entries
- parsed['warnings'].append('LinkedIn PDFs may omit details or mix columns. Review employer, role, dates and credentials; uncertain passages remain available in the source view.')
+ from . import import_values,linkedin_import
+ parsed=linkedin_import.parse(text) if kind=='linkedin_pdf' else resume_parser.parse(import_values.repair_wrapped_links(text))
+ parsed['text_hash']=hashlib.sha256(text.encode()).hexdigest()
+ parsed['parser_version']=version(kind)
+ # Retain every distinct address in the contact region, not just the first one.
+ contact=text.split('[[LinkedIn sidebar]]',1)[-1] if '[[LinkedIn sidebar]]' in text else text
+ if '[[LinkedIn sidebar]]' not in text:
+  header=[]
+  for line in contact.splitlines():
+   if heading_boundary(line):break
+   header.append(line)
+  contact='\n'.join(header)
+ explicit_phone=re.search(r'(?m)(?<!\w)(\+\d[\d ().-]{5,24}\d(?:[ \t]*(?:ext\.?|x)[ \t]*\d+)?)',contact,re.I)
+ if explicit_phone:parsed['profile']['phone']=explicit_phone.group(1).strip()
+ candidates=list(dict.fromkeys(import_values.EMAIL.findall(contact)))
+ if parsed.get('profile',{}).get('email') and parsed['profile']['email'] not in candidates:candidates.insert(0,parsed['profile']['email'])
+ parsed['profile_candidates']={'email':candidates} if candidates else {}
+ if candidates and 'email' not in parsed['profile']:parsed['profile']['email']=candidates[0]
+ for entry in parsed['entries']:
+  data=entry['data'];uncertain=any(('not confidently' in w or 'not separately' in w) for w in entry.get('warnings',[]))
+  if data['category']=='skills' and not (data.get('tools') or data.get('skill_items') or data.get('certification_items')):uncertain=True
+  entry['review_state']='needs_review' if uncertain else 'ready'
  return parsed
 
-def version(kind):return resume_parser.VERSION+('-linkedin1' if kind=='linkedin_pdf' else '')
+def heading_boundary(line):return bool(resume_parser.heading(line))
+
+def document_text(document):
+ """Use original PDF geometry unless the user has corrected its source text."""
+ from . import documents,config
+ data=document['data'];text=data['text']
+ if data.get('import_source_kind')=='linkedin_pdf' and data.get('format')=='pdf' and not data.get('source_text_corrected') and not (data.get('reviewed') and 'source_text_corrected' not in data):
+  path=config.DATA_DIR/'uploads'/document['user_id']/document['id']
+  if path.is_file():
+   try:
+    raw=path.read_bytes()
+    if data.get('sha256') and hashlib.sha256(raw).hexdigest()!=data['sha256']:return text
+    return documents.linkedin_text(raw) or text
+   except Exception:return text
+ return text
+
+def parse_document(document):
+ parsed=parse(document_text(document),document['data'].get('import_source_kind','resume'))
+ parsed['text_hash']=hashlib.sha256(document['data']['text'].encode()).hexdigest()
+ return parsed
+
+def version(kind):return resume_parser.VERSION+('-linkedin2' if kind=='linkedin_pdf' else '-polish1')

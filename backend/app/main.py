@@ -579,7 +579,7 @@ async def import_document(file:UploadFile=File(...),purpose:Literal['source','re
     parsed=profile_import.parse(extracted['text'],source_kind) if purpose=='resume' else None
     if parsed: parsed['profile_base']={k:db.settings(user['id']).get(k,'') for k in parsed['profile']}
     storage.ensure_capacity(len(raw)+len(json.dumps(extracted).encode())*4+65536)
-    entity=db.save(user['id'],'document',{'filename':filename,**extracted,'reviewed':False,'sha256':hashlib.sha256(raw).hexdigest(),'resume_parse':parsed,'import_source_kind':source_kind,'purpose':purpose})
+    entity=db.save(user['id'],'document',{'filename':filename,**extracted,'reviewed':False,'source_text_corrected':False,'sha256':hashlib.sha256(raw).hexdigest(),'resume_parse':parsed,'import_source_kind':source_kind,'purpose':purpose})
     folder=config.DATA_DIR/'uploads'/user['id'];folder.mkdir(parents=True,exist_ok=True)
     storage.write_bytes(folder/entity['id'],raw)
     return entity
@@ -591,7 +591,7 @@ class DocumentReview(StrictModel):
 def review_document(entity_id:str,body:DocumentReview,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'document')
     if record['data'].get('purpose') in ('application','interview_prep'):raise HTTPException(400,'Review application resume text within its application.')
-    return db.save(user['id'],'document',{**record['data'],'text':body.text,'reviewed':True},entity_id)
+    return db.save(user['id'],'document',{**record['data'],'text':body.text,'reviewed':True,'source_text_corrected':True},entity_id)
 
 @app.post('/api/documents/{entity_id}/parse')
 def parse_resume_document(entity_id:str,user=Depends(auth.current)):
@@ -604,11 +604,11 @@ def parse_resume_document(entity_id:str,user=Depends(auth.current)):
     signature=hashlib.sha256(text.encode()).hexdigest()
     cached=data.get('resume_parse') or {}
     base={k:db.settings(user['id']).get(k,'') for k in cached.get('profile',{})}
-    if cached.get('text_hash')==signature and cached.get('parser_version')==profile_import.version(data.get('import_source_kind','resume')):
+    if data.get('import_source_kind')!='linkedin_pdf' and cached.get('text_hash')==signature and cached.get('parser_version')==profile_import.version(data.get('import_source_kind','resume')):
         if cached.get('profile_base')==base: return record
         cached['profile_base']=base
         return db.save(user['id'],'document',{**data,'resume_parse':cached},entity_id)
-    parsed=profile_import.parse(text,data.get('import_source_kind','resume'))
+    parsed=profile_import.parse_document({**record,'data':{**data,'text':text}})
     parsed['profile_base']={k:db.settings(user['id']).get(k,'') for k in parsed['profile']}
     return db.save(user['id'],'document',{**data,'text':text,'resume_parse':parsed},entity_id)
 
