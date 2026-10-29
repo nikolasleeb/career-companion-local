@@ -104,3 +104,31 @@ An O*NET specialty maps to its six-digit SOC wage occupation. No specialty-speci
 Saved searches store applied filters and selected course titles. Reopening reruns the current catalog. Unavailable courses or salary areas require review; nothing is silently substituted. Search and review entities are account-owned, included in account exports/imports, and listed under Career Explorer in selective cleanup. Restoration preserves current saved reviews and marks imported reviews outdated.
 
 Work Styles lives in Profile. Legacy `#/work-styles?item=…` links canonicalize to `#/profile?tab=workstyles&item=…`, retaining attempt IDs and the existing account-scoped draft buffers. Moving the workspace grants no additional sharing consent.
+
+
+## Optional Profile selectors
+
+The course and skill selectors start collapsed and show selection counts. Expanding,
+collapsing, selecting all and clearing are local interactions; nothing is selected
+automatically. Course selection remains available on the studies route. Skills are
+available on either route and come only from explicit `skill_items` in confirmed
+Profile records, with source labels. Narrative mentions and self-reflection answers
+are not converted into selectable skills.
+
+Selected skills require at least one corresponding published occupational skill or
+technology name, using the same established aliases as Explorer evidence (for
+example, PowerBI and Microsoft Power BI). Studies and other filters still apply.
+Relevance orders title matches, then number of selected-skill connections, then
+study connections. Other explicit sort orders are unchanged. Unmatched skill names
+are reported, never assigned inferred proficiency. Skill connections appear on
+result cards and use no AI or external request.
+
+Saved searches include account-scoped skill IDs and portable title references.
+Loading remaps current confirmed choices (including aliases), reports unavailable
+skills for review, and does not silently rerun when selections are unavailable.
+Backup/import validation and deduplication include these references. Older searches
+retain their existing behavior with no skills selected.
+
+Career Plans saved chats expand inline into a compact, searchable list. Choosing a
+conversation keeps the existing route and conversation behavior; expanding the list
+never sends an AI request.
