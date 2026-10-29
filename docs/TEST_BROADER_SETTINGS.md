@@ -35,7 +35,7 @@ Use a disposable account for deletion tests. Deployment never runs account clean
 1. Use a disposable account and save unfinished work first. Cleanup refreshes browser views and clears recovery drafts to keep removed data from returning. Initially every category should be unchecked. Open a collapsed group to select its categories. Applications have a separate date-range card.
 2. Select one category and choose **Review selected deletion**. Review exact affected records, files, shared records kept, and historical-copy notices. Changing the selection closes the old preview. A preview expires after ten minutes; a changed account requires a fresh preview.
 3. Cancel first and confirm nothing changed. Previewing never deletes information.
-4. Preview again. Enter **DELETE** and the account password, then confirm. Wrong passwords fail without deleting anything. The operation can be checked again without applying deletion twice.
+4. Preview again. Click **Confirm deletion** after reviewing the listed information. No typed phrase or password is needed. Cancelling leaves information unchanged. The operation can be checked again without applying deletion twice.
 5. Login, API connections, model/source preferences, welcome dismissal and Usage & costs should remain. Clearing goals disables goal sharing; clearing Work Styles summary or assessments disables the corresponding sharing. Removing education re-enables the existing setup requirements for Job Search and Applications; Resources remain accessible.
 6. Unselected uploads, resumes and conversations can still contain historical copies. They are separate cleanup choices. Retained references to removed sources become unavailable references; old approved proposals and recovered task results must not silently recreate Profile evidence.
 7. Permanent application deletion also deletes its offer and exclusive uploaded attachments. Shared files and independently retained generated resume versions remain. The preview lists shared records kept.
@@ -57,6 +57,6 @@ Cleanup cannot erase backups already downloaded or held by the operator. Selecte
 
 ## Visual and keyboard checks
 
-Try desktop and a narrow mobile viewport. Backup buttons should match. Employer controls and cleanup previews should fit without horizontal overflow. Tab through controls, use Space to toggle checkboxes, and confirm password/typed-confirmation fields have labels. Navigation should continue to support browser Back/Forward.
+Try desktop and a narrow mobile viewport. Backup buttons should match. Employer controls and cleanup previews should fit without horizontal overflow. Tab through controls, use Space to toggle checkboxes, and confirm the preview and confirmation button are clearly labeled, with no password or typed-phrase fields. Navigation should continue to support browser Back/Forward.
 
 If you use the browser application assistant, the included Chrome/Safari packages are version 1.0.5. Update the extension and reload the Career Companion tab so it can send the account data revision after cleanup.

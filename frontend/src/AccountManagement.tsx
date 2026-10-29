@@ -13,22 +13,22 @@ const cleanupGroups=[
  {id:'jobs',title:'Job Search history',categories:['jobs']},
 ];
 export function AccountCleanup({call,download}:{call:any;download:()=>Promise<any>}){
- const [inventory,setInventory]=useState<any>(null),[categories,setCategories]=useState<string[]>([]),[opened,setOpened]=useState<Record<string,boolean>>({}),[start,setStart]=useState(''),[end,setEnd]=useState(''),[preview,setPreview]=useState<any>(null),[receipt,setReceipt]=useState<any>(null),[password,setPassword]=useState(''),[confirmation,setConfirmation]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [inventory,setInventory]=useState<any>(null),[categories,setCategories]=useState<string[]>([]),[opened,setOpened]=useState<Record<string,boolean>>({}),[start,setStart]=useState(''),[end,setEnd]=useState(''),[preview,setPreview]=useState<any>(null),[receipt,setReceipt]=useState<any>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const previewHeading=useRef<HTMLHeadingElement>(null);const datesValid=!!start&&!!end&&start<=end;
  async function load(){const value=await call('/account/cleanup');setInventory(value);if(value.last_operation_id)setReceipt(await call('/account/cleanup/'+value.last_operation_id));}
  useEffect(()=>{void load().catch(e=>setError(e.message));},[]);
  useEffect(()=>{if(!receipt?.files_pending)return;const timer=setTimeout(()=>void call('/account/cleanup/'+receipt.operation_id).then(setReceipt).catch((e:Error)=>setError(e.message)),3000);return()=>clearTimeout(timer);},[receipt]);
- function discardPreview(source?:string){if(!source||preview?.source===source)setPreview(null);setPassword('');setConfirmation('');setError('');}
+ function discardPreview(source?:string){if(!source||preview?.source===source)setPreview(null);setError('');}
  async function show(source:'information'|'applications',action:'archive'|'delete'){
   if(source==='applications'&&!datesValid)return;
-  setBusy(true);setError('');setPreview(null);setPassword('');setConfirmation('');
+  setBusy(true);setError('');setPreview(null);
   try{const body=source==='applications'?{action,categories:['applications'],application_scope:action==='delete'?'all':'current',start,end,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC'}:{action:'delete',categories};const result=await call('/account/cleanup/preview','POST',body);setPreview({...result,source});requestAnimationFrame(()=>previewHeading.current?.focus());}
   catch(e){setError((e as Error).message);}finally{setBusy(false);}
  }
  async function apply(){
   setBusy(true);setError('');
-  try{const result=await call('/account/cleanup/apply','POST',{preview_id:preview.preview_id,confirmation:preview.action==='delete'?confirmation:'CONFIRM',password:preview.action==='delete'?password:''});setReceipt(result);if(preview.source==='information')setCategories([]);setPreview(null);setPassword('');setConfirmation('');await load();}
-  catch(e){setError((e as Error).message);setPassword('');}finally{setBusy(false);}
+  try{const result=await call('/account/cleanup/apply','POST',{preview_id:preview.preview_id,confirmed:true});setReceipt(result);if(preview.source==='information')setCategories([]);setPreview(null);await load();}
+  catch(e){setError((e as Error).message);}finally{setBusy(false);}
  }
  function review(source:string){
   if(preview?.source!==source)return null;
@@ -45,8 +45,8 @@ export function AccountCleanup({call,download}:{call:any;download:()=>Promise<an
    {Object.values(preview.search_history_counts||{}).some(Boolean)&&<p className="small">Daily-check history and delivery/cache markers to remove: {Object.values(preview.search_history_counts).reduce((a:any,b:any)=>a+b,0) as number}</p>}
    {preview.personal_field_names?.length>0&&<p className="small">Personal fields: {preview.personal_field_names.join(', ')}</p>}
    {preview.preserved_records?.length>0&&<details><summary>Shared records kept</summary><ul>{preview.preserved_records.map((r:any)=><li key={r.id}>{r.title} ({r.kind})</li>)}</ul></details>}
-   {preview.action==='delete'&&!!affected&&<><button className="text-button" disabled={busy} onClick={()=>void download().catch((e:Error)=>setError(e.message))}>Download ordinary account backup first ↓</button><div className="form-grid"><label>Type DELETE to confirm<input value={confirmation} autoComplete="off" onChange={e=>setConfirmation(e.target.value)}/></label><label>Your account password<input type="password" value={password} autoComplete="current-password" onChange={e=>setPassword(e.target.value)}/></label></div></>}
-   <div className="cleanup-buttons"><button className="button primary" disabled={busy||!affected||applications&&!count||preview.blockers.length>0||preview.action==='delete'&&(confirmation!=='DELETE'||!password)} onClick={()=>void apply()}>{preview.action==='archive'?'Confirm archive':applications?'Permanently delete matching applications':'Permanently delete selected information'}</button><button className="button secondary" disabled={busy} onClick={()=>discardPreview()}>Cancel</button></div>
+   {preview.action==='delete'&&!!affected&&<><button className="text-button" disabled={busy} onClick={()=>void download().catch((e:Error)=>setError(e.message))}>Download ordinary account backup first ↓</button><p className="small">Confirm below to permanently delete only the information shown in this preview.</p></>}
+   <div className="cleanup-buttons"><button className="button primary" disabled={busy||!affected||applications&&!count||preview.blockers.length>0} onClick={()=>void apply()}>{preview.action==='archive'?'Confirm archive':applications?'Confirm application deletion':'Confirm deletion'}</button><button className="button secondary" disabled={busy} onClick={()=>discardPreview()}>Cancel</button></div>
   </div>;
  }
  return <>

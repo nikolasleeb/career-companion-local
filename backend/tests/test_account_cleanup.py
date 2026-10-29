@@ -6,7 +6,7 @@ from app import db,credentials,account_cleanup as cleanup,private_profile,career
 def preview(client,categories,**extra):
  r=client.post('/api/account/cleanup/preview',json={'categories':categories,**extra});assert r.status_code==200,r.text;return r.json()
 def apply(client,p,**extra):
- return client.post('/api/account/cleanup/apply',json={'preview_id':p['preview_id'],'confirmation':'DELETE' if p['action']=='delete' else 'CONFIRM','password':'correct horse battery staple',**extra})
+ return client.post('/api/account/cleanup/apply',json={'preview_id':p['preview_id'],'confirmed':True,**extra})
 def fix_password(client,user):
  from app import auth
  with db.connect() as c:c.execute('UPDATE users SET password=? WHERE id=?',(auth.hasher.hash('correct horse battery staple'),user))
@@ -34,8 +34,8 @@ def test_clear_education_relocks_apps_but_not_resources_and_keeps_historical_cop
  assert db.get(u,story['id'])['data']['status']=='archived'
  assert client.get('/api/account/cleanup').status_code==200
 
-def test_stale_expired_wrong_password_and_foreign_previews(client,account):
- u=account['id'];fix_password(client,u);db.update_settings(u,{'name':'Fictional'});p=preview(client,['personal']);assert apply(client,p,password='wrong').status_code==403
+def test_stale_expired_unconfirmed_and_foreign_previews(client,account):
+ u=account['id'];fix_password(client,u);db.update_settings(u,{'name':'Fictional'});p=preview(client,['personal']);assert apply(client,p,confirmed=False).status_code==422
  db.update_settings(u,{'name':'changed'});assert apply(client,p).status_code==409
  p=preview(client,['personal']);
  with db.connect() as c:c.execute('UPDATE cc_cleanup_operations SET expires_at=? WHERE id=?',(time.time()-1,p['preview_id']))
@@ -169,3 +169,32 @@ def test_application_timezone_invalid_reversed_empty_and_legacy(client,account):
  assert client.post('/api/account/cleanup/preview',json={'categories':['applications'],'start':'2026-07-02','end':'2026-07-01'}).status_code==422
  p=preview(client,['applications'],start='2000-01-01',end='2000-01-02');assert not p['records'] and p['application_count']==0
  p=preview(client,['applications'],action='restore',application_scope='archived');assert p['application_range']['timezone']=='UTC'
+
+
+def test_confirm_button_needs_no_password_and_never_verifies_one(client,account,monkeypatch):
+ from app import auth
+ u=account['id'];record=db.save(u,'document',{'filename':'fictional-upload.txt','text':'Fictional upload','purpose':'resume'})
+ p=preview(client,['uploads'])
+ def forbidden(*args):raise AssertionError('Cleanup must not verify an account password.')
+ monkeypatch.setattr(auth,'verify',forbidden)
+ for body in ({},{'confirmed':False},{'confirmed':'true'},{'confirmation':'wrong'}):
+  assert client.post('/api/account/cleanup/apply',json={'preview_id':p['preview_id'],**body}).status_code==422
+  assert db.get(u,record['id'])
+ r=client.post('/api/account/cleanup/apply',json={'preview_id':p['preview_id'],'confirmed':True})
+ assert r.status_code==200,r.text
+ assert db.get(u,record['id']) is None
+ assert client.post('/api/account/cleanup/apply',json={'preview_id':p['preview_id'],'confirmed':True}).json()==r.json()
+
+
+def test_old_confirmation_payload_remains_compatible_without_password(client,account):
+ u=account['id'];db.update_settings(u,{'name':'Fictional Person'});p=preview(client,['personal'])
+ r=client.post('/api/account/cleanup/apply',json={'preview_id':p['preview_id'],'confirmation':'DELETE'})
+ assert r.status_code==200,r.text
+ assert db.settings(u).get('name','')==''
+
+
+def test_confirmation_still_requires_session_and_csrf(client,account):
+ u=account['id'];db.update_settings(u,{'name':'Fictional Person'});p=preview(client,['personal'])
+ client.headers.pop('X-CSRF-Token',None)
+ assert client.post('/api/account/cleanup/apply',json={'preview_id':p['preview_id'],'confirmed':True}).status_code==403
+ assert db.settings(u)['name']=='Fictional Person'

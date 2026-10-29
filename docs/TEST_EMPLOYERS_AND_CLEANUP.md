@@ -15,14 +15,14 @@ This update adds verified employer feeds and reorganizes Settings. It does not r
 1. Open **Settings → Account & backups**. Manage saved information has five collapsed groups. Groups show saved-item counts; empty groups say Nothing saved and cannot be opened.
 2. Open Profile & Career Goals. Select one populated category, collapse it and reopen it. Its checkboxes stay selected, and the heading shows the selection count. Nothing starts selected.
 3. Choose Review selected deletion. Read the exact records, shared files retained, dependent files and retained historical-copy warnings. Cancel to leave everything unchanged.
-4. For a disposable account only, enter the password and DELETE to confirm. Login, API connections, preferences, welcome dismissal and usage history remain. Deleting education relocks application/job-search actions but leaves Resources open.
+4. For a disposable account only, review the preview and click **Confirm deletion**; no password or typed phrase is needed. Login, API connections, preferences, welcome dismissal and usage history remain. Deleting education relocks application/job-search actions but leaves Resources open.
 
 ## Applications: choose two dates, then an action
 
 1. In the separate **Manage applications** card, enter both From and Through. Missing dates or a Through date before From disable both actions. Both endpoints are included.
 2. Archive applications previews only current applications in that range. It shows company, role, status and effective date. Date applied takes precedence; otherwise Date added uses the browser's time zone. Confirm archive only after reviewing. Already archived applications stay unchanged.
 3. Restore an archived application in Applications when needed. Settings has no bulk-restoration control.
-4. Delete applications previews both current and archived applications in the range. It works independently of the saved-information checkboxes. It lists dependent offers/attachments and preserved shared files. It requires the account password and typed DELETE.
+4. Delete applications previews both current and archived applications in the range. It works independently of the saved-information checkboxes. It lists dependent offers/attachments and preserved shared files. Click **Confirm application deletion** after reviewing the matches; no password or typed phrase is needed.
 5. Change a date after previewing. The preview disappears and must be requested again. An empty range says no applications match and offers no enabled confirmation.
 6. Try this on a narrow mobile window. Dates should stack; the group headings and action controls should remain usable by keyboard.
 

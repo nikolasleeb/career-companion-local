@@ -51,6 +51,8 @@ class Preview(StrictModel):
   return v
 class Apply(StrictModel):
  preview_id:str=Field(min_length=1,max_length=64)
+ confirmed:bool=Field(default=False,strict=True)
+ # Accept the former client payload during rolling updates; passwords are ignored.
  confirmation:str=Field(default='',max_length=100)
  password:str=Field(default='',max_length=200)
 
@@ -148,11 +150,9 @@ def apply(body:Apply,user=Depends(auth.current)):
   if blocked(c,u):raise HTTPException(409,blocked(c,u)[0])
   if fingerprint(c,u)!=op['fingerprint']:raise HTTPException(409,'Saved information changed. Review a fresh preview before applying cleanup.')
   request=Preview.model_validate_json(op['request']);m=json.loads(op['manifest']);ids=set(m['record_ids']);chosen=set(request.categories);rows=records(c,u)
-  if body.confirmation!=('DELETE' if request.action=='delete' else 'CONFIRM'):raise HTTPException(422,'Enter the displayed confirmation to continue.')
+  if body.confirmed is not True and body.confirmation!=('DELETE' if request.action=='delete' else 'CONFIRM'):raise HTTPException(422,'Review the preview and click the confirmation button to continue.')
   if not (m['record_ids'] or m['personal_fields'] or m['private_sections'] or any(m['search_history_counts'].values())):raise HTTPException(422,'No saved information matches this selection. Nothing changed.')
   if request.action=='delete':
-   auth.throttle('cleanup:'+u);password=c.execute('SELECT password FROM users WHERE id=?',(u,)).fetchone()[0]
-   if not auth.verify(password,body.password):raise HTTPException(403,'Your account password did not match. No information was removed.')
    settings=json.loads(c.execute('SELECT settings FROM users WHERE id=?',(u,)).fetchone()[0])
    if 'personal' in chosen:
     for k in PERSONAL:settings.pop(k,None)
