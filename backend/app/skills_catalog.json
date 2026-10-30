@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-30.1",
+  "version": "2026-10-30.2",
   "reviewed_at": "2026-10-30",
   "groups": [
     {
@@ -164,8 +164,7 @@
       "group": "programming",
       "aliases": [],
       "related": [
-        "python",
-        "python-data-structures"
+        "python"
       ]
     },
     {
@@ -176,8 +175,6 @@
       "group": "programming",
       "aliases": [],
       "related": [
-        "python-control-flow",
-        "python-modules",
         "python"
       ]
     },
@@ -189,8 +186,6 @@
       "group": "programming",
       "aliases": [],
       "related": [
-        "python-data-structures",
-        "python-file-input-and-output",
         "python"
       ]
     },
@@ -202,8 +197,6 @@
       "group": "programming",
       "aliases": [],
       "related": [
-        "python-modules",
-        "python-exceptions",
         "python"
       ]
     },
@@ -215,8 +208,6 @@
       "group": "programming",
       "aliases": [],
       "related": [
-        "python-file-input-and-output",
-        "python-classes",
         "python"
       ]
     },
@@ -228,8 +219,6 @@
       "group": "programming",
       "aliases": [],
       "related": [
-        "python-exceptions",
-        "python-virtual-environments",
         "python"
       ]
     },
@@ -240,10 +229,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-classes",
-        "python-standard-library"
-      ]
+      "related": []
     },
     {
       "id": "python-standard-library",
@@ -252,10 +238,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-virtual-environments",
-        "python-text-processing"
-      ]
+      "related": []
     },
     {
       "id": "python-text-processing",
@@ -264,10 +247,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-standard-library",
-        "python-regular-expressions"
-      ]
+      "related": []
     },
     {
       "id": "python-regular-expressions",
@@ -276,10 +256,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-text-processing",
-        "python-date-and-time-handling"
-      ]
+      "related": []
     },
     {
       "id": "python-date-and-time-handling",
@@ -288,10 +265,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-regular-expressions",
-        "python-decimal-arithmetic"
-      ]
+      "related": []
     },
     {
       "id": "python-decimal-arithmetic",
@@ -300,10 +274,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-date-and-time-handling",
-        "python-collections"
-      ]
+      "related": []
     },
     {
       "id": "python-collections",
@@ -312,10 +283,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-decimal-arithmetic",
-        "python-iterators"
-      ]
+      "related": []
     },
     {
       "id": "python-iterators",
@@ -324,10 +292,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-collections",
-        "python-functional-programming-tools"
-      ]
+      "related": []
     },
     {
       "id": "python-functional-programming-tools",
@@ -336,10 +301,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-iterators",
-        "python-filesystem-paths"
-      ]
+      "related": []
     },
     {
       "id": "python-filesystem-paths",
@@ -348,10 +310,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-functional-programming-tools",
-        "python-file-operations"
-      ]
+      "related": []
     },
     {
       "id": "python-file-operations",
@@ -360,10 +319,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-filesystem-paths",
-        "python-csv-processing"
-      ]
+      "related": []
     },
     {
       "id": "python-csv-processing",
@@ -372,10 +328,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-file-operations",
-        "python-json-processing"
-      ]
+      "related": []
     },
     {
       "id": "python-json-processing",
@@ -384,10 +337,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-csv-processing",
-        "python-sqlite-access"
-      ]
+      "related": []
     },
     {
       "id": "python-sqlite-access",
@@ -396,10 +346,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-json-processing",
-        "python-logging"
-      ]
+      "related": []
     },
     {
       "id": "python-logging",
@@ -408,10 +355,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-sqlite-access",
-        "python-unit-testing"
-      ]
+      "related": []
     },
     {
       "id": "python-unit-testing",
@@ -421,8 +365,7 @@
       "group": "programming",
       "aliases": [],
       "related": [
-        "python-logging",
-        "python-command-line-arguments"
+        "data-validation"
       ]
     },
     {
@@ -432,10 +375,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-unit-testing",
-        "python-subprocess-management"
-      ]
+      "related": []
     },
     {
       "id": "python-subprocess-management",
@@ -444,10 +384,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-command-line-arguments",
-        "python-concurrency"
-      ]
+      "related": []
     },
     {
       "id": "python-concurrency",
@@ -456,10 +393,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-subprocess-management",
-        "python-asynchronous-programming"
-      ]
+      "related": []
     },
     {
       "id": "python-asynchronous-programming",
@@ -468,10 +402,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-concurrency",
-        "python-data-classes"
-      ]
+      "related": []
     },
     {
       "id": "python-data-classes",
@@ -480,10 +411,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-asynchronous-programming",
-        "python-type-annotations"
-      ]
+      "related": []
     },
     {
       "id": "python-type-annotations",
@@ -492,10 +420,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-data-classes",
-        "python-debugging"
-      ]
+      "related": []
     },
     {
       "id": "python-debugging",
@@ -504,10 +429,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-type-annotations",
-        "python-profiling"
-      ]
+      "related": []
     },
     {
       "id": "python-profiling",
@@ -516,10 +438,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-debugging",
-        "python-performance-measurement"
-      ]
+      "related": []
     },
     {
       "id": "python-performance-measurement",
@@ -528,10 +447,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-profiling",
-        "javascript"
-      ]
+      "related": []
     },
     {
       "id": "javascript",
@@ -540,10 +456,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "python-performance-measurement",
-        "javascript-expressions-and-operators"
-      ]
+      "related": []
     },
     {
       "id": "javascript-expressions-and-operators",
@@ -552,10 +465,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "javascript",
-        "javascript-functions"
-      ]
+      "related": []
     },
     {
       "id": "javascript-functions",
@@ -564,10 +474,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "javascript-expressions-and-operators",
-        "javascript-loops"
-      ]
+      "related": []
     },
     {
       "id": "javascript-loops",
@@ -576,10 +483,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "javascript-functions",
-        "javascript-arrays"
-      ]
+      "related": []
     },
     {
       "id": "javascript-arrays",
@@ -588,10 +492,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "javascript-loops",
-        "javascript-objects"
-      ]
+      "related": []
     },
     {
       "id": "javascript-objects",
@@ -600,10 +501,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "javascript-arrays",
-        "javascript-promises"
-      ]
+      "related": []
     },
     {
       "id": "javascript-promises",
@@ -612,10 +510,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "javascript-objects",
-        "javascript-modules"
-      ]
+      "related": []
     },
     {
       "id": "javascript-modules",
@@ -624,10 +519,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "javascript-promises",
-        "html"
-      ]
+      "related": []
     },
     {
       "id": "html",
@@ -638,10 +530,7 @@
       "aliases": [
         "Hypertext Markup Language"
       ],
-      "related": [
-        "javascript-modules",
-        "css"
-      ]
+      "related": []
     },
     {
       "id": "css",
@@ -652,10 +541,7 @@
       "aliases": [
         "Cascading Style Sheets"
       ],
-      "related": [
-        "html",
-        "web-accessibility"
-      ]
+      "related": []
     },
     {
       "id": "web-accessibility",
@@ -664,10 +550,7 @@
       "field": "Tech & Data",
       "group": "programming",
       "aliases": [],
-      "related": [
-        "css",
-        "data-validation"
-      ]
+      "related": []
     },
     {
       "id": "sql",
@@ -679,13 +562,13 @@
         "Structured Query Language"
       ],
       "related": [
-        "postgresql",
         "sql-select-queries",
         "sql-joins",
         "sql-aggregate-functions",
         "sql-window-functions",
         "sql-common-table-expressions",
-        "spark-sql"
+        "spark-sql",
+        "data-modeling"
       ]
     },
     {
@@ -695,10 +578,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql",
-        "relational-database-concepts"
-      ]
+      "related": []
     },
     {
       "id": "relational-database-concepts",
@@ -707,10 +587,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "postgresql",
-        "creating-database-tables"
-      ]
+      "related": []
     },
     {
       "id": "creating-database-tables",
@@ -719,10 +596,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "relational-database-concepts",
-        "inserting-database-records"
-      ]
+      "related": []
     },
     {
       "id": "inserting-database-records",
@@ -731,10 +605,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "creating-database-tables",
-        "sql-select-queries"
-      ]
+      "related": []
     },
     {
       "id": "sql-select-queries",
@@ -744,8 +615,6 @@
       "group": "databases",
       "aliases": [],
       "related": [
-        "inserting-database-records",
-        "sql-joins",
         "sql"
       ]
     },
@@ -757,8 +626,6 @@
       "group": "databases",
       "aliases": [],
       "related": [
-        "sql-select-queries",
-        "sql-aggregate-functions",
         "sql"
       ]
     },
@@ -770,8 +637,6 @@
       "group": "databases",
       "aliases": [],
       "related": [
-        "sql-joins",
-        "updating-database-records",
         "sql"
       ]
     },
@@ -782,10 +647,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-aggregate-functions",
-        "deleting-database-records"
-      ]
+      "related": []
     },
     {
       "id": "deleting-database-records",
@@ -794,10 +656,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "updating-database-records",
-        "sql-views"
-      ]
+      "related": []
     },
     {
       "id": "sql-views",
@@ -806,10 +665,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "deleting-database-records",
-        "sql-foreign-keys"
-      ]
+      "related": []
     },
     {
       "id": "sql-foreign-keys",
@@ -818,10 +674,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-views",
-        "database-transactions"
-      ]
+      "related": []
     },
     {
       "id": "database-transactions",
@@ -830,10 +683,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-foreign-keys",
-        "sql-window-functions"
-      ]
+      "related": []
     },
     {
       "id": "sql-window-functions",
@@ -843,8 +693,6 @@
       "group": "databases",
       "aliases": [],
       "related": [
-        "database-transactions",
-        "sql-table-inheritance",
         "sql"
       ]
     },
@@ -855,10 +703,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-window-functions",
-        "sql-table-constraints"
-      ]
+      "related": []
     },
     {
       "id": "sql-table-constraints",
@@ -868,8 +713,8 @@
       "group": "databases",
       "aliases": [],
       "related": [
-        "sql-table-inheritance",
-        "sql-schemas"
+        "data-modeling",
+        "data-validation"
       ]
     },
     {
@@ -880,8 +725,7 @@
       "group": "databases",
       "aliases": [],
       "related": [
-        "sql-table-constraints",
-        "database-privileges"
+        "data-modeling"
       ]
     },
     {
@@ -891,10 +735,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-schemas",
-        "sql-common-table-expressions"
-      ]
+      "related": []
     },
     {
       "id": "sql-common-table-expressions",
@@ -904,8 +745,6 @@
       "group": "databases",
       "aliases": [],
       "related": [
-        "database-privileges",
-        "sql-set-operations",
         "sql"
       ]
     },
@@ -916,10 +755,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-common-table-expressions",
-        "sql-sorting"
-      ]
+      "related": []
     },
     {
       "id": "sql-sorting",
@@ -928,10 +764,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-set-operations",
-        "sql-limit-and-offset"
-      ]
+      "related": []
     },
     {
       "id": "sql-limit-and-offset",
@@ -940,10 +773,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-sorting",
-        "sql-date-and-time-functions"
-      ]
+      "related": []
     },
     {
       "id": "sql-date-and-time-functions",
@@ -952,10 +782,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-limit-and-offset",
-        "sql-string-functions"
-      ]
+      "related": []
     },
     {
       "id": "sql-string-functions",
@@ -964,10 +791,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-date-and-time-functions",
-        "sql-json-functions"
-      ]
+      "related": []
     },
     {
       "id": "sql-json-functions",
@@ -976,10 +800,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-string-functions",
-        "database-indexes"
-      ]
+      "related": []
     },
     {
       "id": "database-indexes",
@@ -988,10 +809,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "sql-json-functions",
-        "database-query-plans"
-      ]
+      "related": []
     },
     {
       "id": "database-query-plans",
@@ -1000,10 +818,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "database-indexes",
-        "database-backup"
-      ]
+      "related": []
     },
     {
       "id": "database-backup",
@@ -1012,10 +827,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "database-query-plans",
-        "database-roles"
-      ]
+      "related": []
     },
     {
       "id": "database-roles",
@@ -1024,10 +836,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "database-backup",
-        "database-concurrency-control"
-      ]
+      "related": []
     },
     {
       "id": "database-concurrency-control",
@@ -1036,10 +845,7 @@
       "field": "Tech & Data",
       "group": "databases",
       "aliases": [],
-      "related": [
-        "database-roles",
-        "data-modeling"
-      ]
+      "related": []
     },
     {
       "id": "spark",
@@ -1053,7 +859,8 @@
       "related": [
         "pyspark",
         "spark-sql",
-        "structured-streaming"
+        "structured-streaming",
+        "etl"
       ]
     },
     {
@@ -1067,7 +874,6 @@
       ],
       "related": [
         "spark",
-        "pyspark-dataframes",
         "python"
       ]
     },
@@ -1078,10 +884,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "pyspark",
-        "spark-sql"
-      ]
+      "related": []
     },
     {
       "id": "spark-sql",
@@ -1091,8 +894,6 @@
       "group": "data-engineering",
       "aliases": [],
       "related": [
-        "pyspark-dataframes",
-        "structured-streaming",
         "spark",
         "sql"
       ]
@@ -1107,8 +908,6 @@
         "Spark Structured Streaming"
       ],
       "related": [
-        "spark-sql",
-        "spark-data-sources",
         "spark"
       ]
     },
@@ -1119,10 +918,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "structured-streaming",
-        "spark-csv-processing"
-      ]
+      "related": []
     },
     {
       "id": "spark-csv-processing",
@@ -1131,10 +927,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-data-sources",
-        "spark-json-processing"
-      ]
+      "related": []
     },
     {
       "id": "spark-json-processing",
@@ -1143,10 +936,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-csv-processing",
-        "spark-parquet-processing"
-      ]
+      "related": []
     },
     {
       "id": "spark-parquet-processing",
@@ -1155,10 +945,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-json-processing",
-        "spark-orc-processing"
-      ]
+      "related": []
     },
     {
       "id": "spark-orc-processing",
@@ -1167,10 +954,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-parquet-processing",
-        "spark-jdbc-integration"
-      ]
+      "related": []
     },
     {
       "id": "spark-jdbc-integration",
@@ -1179,10 +963,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-orc-processing",
-        "spark-text-data-sources"
-      ]
+      "related": []
     },
     {
       "id": "spark-text-data-sources",
@@ -1191,10 +972,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-jdbc-integration",
-        "spark-avro-processing"
-      ]
+      "related": []
     },
     {
       "id": "spark-avro-processing",
@@ -1203,10 +981,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-text-data-sources",
-        "spark-xml-processing"
-      ]
+      "related": []
     },
     {
       "id": "spark-xml-processing",
@@ -1215,10 +990,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-avro-processing",
-        "spark-data-source-options"
-      ]
+      "related": []
     },
     {
       "id": "spark-data-source-options",
@@ -1227,10 +999,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-xml-processing",
-        "spark-partitioning"
-      ]
+      "related": []
     },
     {
       "id": "spark-partitioning",
@@ -1239,10 +1008,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-data-source-options",
-        "spark-caching"
-      ]
+      "related": []
     },
     {
       "id": "spark-caching",
@@ -1251,10 +1017,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-partitioning",
-        "spark-query-hints"
-      ]
+      "related": []
     },
     {
       "id": "spark-query-hints",
@@ -1263,10 +1026,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-caching",
-        "spark-window-functions"
-      ]
+      "related": []
     },
     {
       "id": "spark-window-functions",
@@ -1275,10 +1035,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-query-hints",
-        "spark-aggregation"
-      ]
+      "related": []
     },
     {
       "id": "spark-aggregation",
@@ -1287,10 +1044,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-window-functions",
-        "spark-application-submission"
-      ]
+      "related": []
     },
     {
       "id": "spark-application-submission",
@@ -1299,10 +1053,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-aggregation",
-        "spark-cluster-configuration"
-      ]
+      "related": []
     },
     {
       "id": "spark-cluster-configuration",
@@ -1311,10 +1062,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-application-submission",
-        "spark-monitoring"
-      ]
+      "related": []
     },
     {
       "id": "spark-monitoring",
@@ -1323,10 +1071,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-cluster-configuration",
-        "spark-tuning"
-      ]
+      "related": []
     },
     {
       "id": "spark-tuning",
@@ -1335,10 +1080,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-monitoring",
-        "spark-job-scheduling"
-      ]
+      "related": []
     },
     {
       "id": "spark-job-scheduling",
@@ -1347,10 +1089,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-tuning",
-        "spark-security"
-      ]
+      "related": []
     },
     {
       "id": "spark-security",
@@ -1359,10 +1098,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-job-scheduling",
-        "spark-resilient-distributed-datasets"
-      ]
+      "related": []
     },
     {
       "id": "spark-resilient-distributed-datasets",
@@ -1371,10 +1107,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-security",
-        "spark-machine-learning-pipelines"
-      ]
+      "related": []
     },
     {
       "id": "spark-machine-learning-pipelines",
@@ -1383,10 +1116,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-resilient-distributed-datasets",
-        "spark-model-selection"
-      ]
+      "related": []
     },
     {
       "id": "spark-model-selection",
@@ -1395,10 +1125,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-machine-learning-pipelines",
-        "spark-feature-extraction"
-      ]
+      "related": []
     },
     {
       "id": "spark-feature-extraction",
@@ -1407,10 +1134,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-model-selection",
-        "spark-classification-and-regression"
-      ]
+      "related": []
     },
     {
       "id": "spark-classification-and-regression",
@@ -1419,10 +1143,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-feature-extraction",
-        "spark-clustering"
-      ]
+      "related": []
     },
     {
       "id": "spark-clustering",
@@ -1431,10 +1152,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-classification-and-regression",
-        "spark-collaborative-filtering"
-      ]
+      "related": []
     },
     {
       "id": "spark-collaborative-filtering",
@@ -1443,10 +1161,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-clustering",
-        "spark-frequent-pattern-mining"
-      ]
+      "related": []
     },
     {
       "id": "spark-frequent-pattern-mining",
@@ -1455,10 +1170,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-collaborative-filtering",
-        "spark-graph-processing"
-      ]
+      "related": []
     },
     {
       "id": "spark-graph-processing",
@@ -1467,10 +1179,7 @@
       "field": "Tech & Data",
       "group": "data-engineering",
       "aliases": [],
-      "related": [
-        "spark-frequent-pattern-mining",
-        "etl"
-      ]
+      "related": []
     },
     {
       "id": "pandas",
@@ -1479,9 +1188,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "reading-and-writing-tabular-data"
-      ]
+      "related": []
     },
     {
       "id": "reading-and-writing-tabular-data",
@@ -1490,10 +1197,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "pandas",
-        "dataframe-selection"
-      ]
+      "related": []
     },
     {
       "id": "dataframe-selection",
@@ -1502,10 +1206,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "reading-and-writing-tabular-data",
-        "plotting-tabular-data"
-      ]
+      "related": []
     },
     {
       "id": "plotting-tabular-data",
@@ -1514,10 +1215,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "dataframe-selection",
-        "deriving-data-columns"
-      ]
+      "related": []
     },
     {
       "id": "deriving-data-columns",
@@ -1526,10 +1224,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "plotting-tabular-data",
-        "summary-statistics"
-      ]
+      "related": []
     },
     {
       "id": "summary-statistics",
@@ -1538,10 +1233,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "deriving-data-columns",
-        "reshaping-tabular-data"
-      ]
+      "related": []
     },
     {
       "id": "reshaping-tabular-data",
@@ -1550,10 +1242,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "summary-statistics",
-        "combining-data-tables"
-      ]
+      "related": []
     },
     {
       "id": "combining-data-tables",
@@ -1562,10 +1251,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "reshaping-tabular-data",
-        "time-series-data-analysis"
-      ]
+      "related": []
     },
     {
       "id": "time-series-data-analysis",
@@ -1574,10 +1260,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "combining-data-tables",
-        "text-data-analysis"
-      ]
+      "related": []
     },
     {
       "id": "text-data-analysis",
@@ -1586,10 +1269,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "time-series-data-analysis",
-        "handling-missing-data"
-      ]
+      "related": []
     },
     {
       "id": "handling-missing-data",
@@ -1598,10 +1278,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "text-data-analysis",
-        "categorical-data-analysis"
-      ]
+      "related": []
     },
     {
       "id": "categorical-data-analysis",
@@ -1610,10 +1287,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "handling-missing-data",
-        "data-grouping"
-      ]
+      "related": []
     },
     {
       "id": "data-grouping",
@@ -1622,10 +1296,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "categorical-data-analysis",
-        "window-calculations"
-      ]
+      "related": []
     },
     {
       "id": "window-calculations",
@@ -1634,10 +1305,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "data-grouping",
-        "data-merging"
-      ]
+      "related": []
     },
     {
       "id": "data-merging",
@@ -1646,10 +1314,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "window-calculations",
-        "data-visualization"
-      ]
+      "related": []
     },
     {
       "id": "data-visualization",
@@ -1658,10 +1323,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "data-merging",
-        "excel-data-import"
-      ]
+      "related": []
     },
     {
       "id": "excel-data-import",
@@ -1670,10 +1332,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "data-visualization",
-        "dataframe-indexing"
-      ]
+      "related": []
     },
     {
       "id": "dataframe-indexing",
@@ -1682,10 +1341,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "excel-data-import",
-        "dataframe-styling"
-      ]
+      "related": []
     },
     {
       "id": "dataframe-styling",
@@ -1694,10 +1350,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "dataframe-indexing",
-        "time-deltas"
-      ]
+      "related": []
     },
     {
       "id": "time-deltas",
@@ -1706,10 +1359,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "dataframe-styling",
-        "statistical-visualization"
-      ]
+      "related": []
     },
     {
       "id": "statistical-visualization",
@@ -1718,10 +1368,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "time-deltas",
-        "data-distributions"
-      ]
+      "related": []
     },
     {
       "id": "data-distributions",
@@ -1730,10 +1377,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "statistical-visualization",
-        "categorical-visualization"
-      ]
+      "related": []
     },
     {
       "id": "categorical-visualization",
@@ -1742,10 +1386,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "data-distributions",
-        "regression-visualization"
-      ]
+      "related": []
     },
     {
       "id": "regression-visualization",
@@ -1754,10 +1395,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "categorical-visualization",
-        "multi-plot-grids"
-      ]
+      "related": []
     },
     {
       "id": "multi-plot-grids",
@@ -1766,10 +1404,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "regression-visualization",
-        "plot-styling"
-      ]
+      "related": []
     },
     {
       "id": "plot-styling",
@@ -1778,10 +1413,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "multi-plot-grids",
-        "color-palettes"
-      ]
+      "related": []
     },
     {
       "id": "color-palettes",
@@ -1790,10 +1422,7 @@
       "field": "Tech & Data",
       "group": "analytics",
       "aliases": [],
-      "related": [
-        "plot-styling",
-        "statistics"
-      ]
+      "related": []
     },
     {
       "id": "aws",
@@ -1807,9 +1436,9 @@
         "aws infrastructure"
       ],
       "related": [
-        "amazon-s3-object-storage",
         "iam-policies",
-        "aws-lambda"
+        "aws-lambda",
+        "amazon-s3-object-storage"
       ]
     },
     {
@@ -1820,8 +1449,7 @@
       "group": "cloud",
       "aliases": [],
       "related": [
-        "aws",
-        "s3-bucket-management"
+        "aws"
       ]
     },
     {
@@ -1831,10 +1459,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "amazon-s3-object-storage",
-        "s3-access-management"
-      ]
+      "related": []
     },
     {
       "id": "s3-access-management",
@@ -1843,10 +1468,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "s3-bucket-management",
-        "s3-versioning"
-      ]
+      "related": []
     },
     {
       "id": "s3-versioning",
@@ -1855,10 +1477,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "s3-access-management",
-        "s3-lifecycle-management"
-      ]
+      "related": []
     },
     {
       "id": "s3-lifecycle-management",
@@ -1867,10 +1486,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "s3-versioning",
-        "aws-lambda"
-      ]
+      "related": []
     },
     {
       "id": "aws-lambda",
@@ -1880,8 +1496,6 @@
       "group": "cloud",
       "aliases": [],
       "related": [
-        "s3-lifecycle-management",
-        "lambda-function-creation",
         "aws"
       ]
     },
@@ -1892,10 +1506,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "aws-lambda",
-        "lambda-python-handlers"
-      ]
+      "related": []
     },
     {
       "id": "lambda-python-handlers",
@@ -1904,10 +1515,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "lambda-function-creation",
-        "lambda-permissions"
-      ]
+      "related": []
     },
     {
       "id": "lambda-permissions",
@@ -1916,10 +1524,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "lambda-python-handlers",
-        "aws-iam"
-      ]
+      "related": []
     },
     {
       "id": "aws-iam",
@@ -1928,10 +1533,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "lambda-permissions",
-        "iam-policies"
-      ]
+      "related": []
     },
     {
       "id": "iam-policies",
@@ -1941,8 +1543,6 @@
       "group": "cloud",
       "aliases": [],
       "related": [
-        "aws-iam",
-        "iam-roles",
         "aws"
       ]
     },
@@ -1953,10 +1553,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "iam-policies",
-        "aws-ec2"
-      ]
+      "related": []
     },
     {
       "id": "aws-ec2",
@@ -1965,10 +1562,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "iam-roles",
-        "ec2-security-groups"
-      ]
+      "related": []
     },
     {
       "id": "ec2-security-groups",
@@ -1977,10 +1571,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "aws-ec2",
-        "aws-glue"
-      ]
+      "related": []
     },
     {
       "id": "aws-glue",
@@ -1989,10 +1580,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "ec2-security-groups",
-        "aws-glue-etl"
-      ]
+      "related": []
     },
     {
       "id": "aws-glue-etl",
@@ -2001,10 +1589,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "aws-glue",
-        "aws-athena"
-      ]
+      "related": []
     },
     {
       "id": "aws-athena",
@@ -2013,10 +1598,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "aws-glue-etl",
-        "amazon-redshift"
-      ]
+      "related": []
     },
     {
       "id": "amazon-redshift",
@@ -2025,10 +1607,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "aws-athena",
-        "amazon-rds"
-      ]
+      "related": []
     },
     {
       "id": "amazon-rds",
@@ -2037,10 +1616,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "amazon-redshift",
-        "amazon-dynamodb"
-      ]
+      "related": []
     },
     {
       "id": "amazon-dynamodb",
@@ -2049,10 +1625,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "amazon-rds",
-        "aws-step-functions"
-      ]
+      "related": []
     },
     {
       "id": "aws-step-functions",
@@ -2061,10 +1634,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "amazon-dynamodb",
-        "amazon-sqs"
-      ]
+      "related": []
     },
     {
       "id": "amazon-sqs",
@@ -2073,10 +1643,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "aws-step-functions",
-        "amazon-cloudwatch"
-      ]
+      "related": []
     },
     {
       "id": "amazon-cloudwatch",
@@ -2085,10 +1652,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "amazon-sqs",
-        "aws-cloudformation"
-      ]
+      "related": []
     },
     {
       "id": "aws-cloudformation",
@@ -2097,9 +1661,7 @@
       "field": "Tech & Data",
       "group": "cloud",
       "aliases": [],
-      "related": [
-        "amazon-cloudwatch"
-      ]
+      "related": []
     },
     {
       "id": "docker",
@@ -2108,9 +1670,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "container-images"
-      ]
+      "related": []
     },
     {
       "id": "container-images",
@@ -2119,10 +1679,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker",
-        "docker-build-context"
-      ]
+      "related": []
     },
     {
       "id": "docker-build-context",
@@ -2131,10 +1688,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "container-images",
-        "docker-multi-stage-builds"
-      ]
+      "related": []
     },
     {
       "id": "docker-multi-stage-builds",
@@ -2143,10 +1697,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-build-context",
-        "docker-build-cache"
-      ]
+      "related": []
     },
     {
       "id": "docker-build-cache",
@@ -2155,10 +1706,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-multi-stage-builds",
-        "docker-image-tags"
-      ]
+      "related": []
     },
     {
       "id": "docker-image-tags",
@@ -2167,10 +1715,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-build-cache",
-        "docker-volumes"
-      ]
+      "related": []
     },
     {
       "id": "docker-volumes",
@@ -2179,10 +1724,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-image-tags",
-        "docker-bind-mounts"
-      ]
+      "related": []
     },
     {
       "id": "docker-bind-mounts",
@@ -2191,10 +1733,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-volumes",
-        "docker-networking"
-      ]
+      "related": []
     },
     {
       "id": "docker-networking",
@@ -2203,10 +1742,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-bind-mounts",
-        "docker-compose"
-      ]
+      "related": []
     },
     {
       "id": "docker-compose",
@@ -2215,10 +1751,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-networking",
-        "docker-compose-environment-variables"
-      ]
+      "related": []
     },
     {
       "id": "docker-compose-environment-variables",
@@ -2227,10 +1760,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-compose",
-        "docker-secrets"
-      ]
+      "related": []
     },
     {
       "id": "docker-secrets",
@@ -2239,10 +1769,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-compose-environment-variables",
-        "docker-container-resource-limits"
-      ]
+      "related": []
     },
     {
       "id": "docker-container-resource-limits",
@@ -2251,10 +1778,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-secrets",
-        "docker-logging"
-      ]
+      "related": []
     },
     {
       "id": "docker-logging",
@@ -2263,10 +1787,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-container-resource-limits",
-        "kubernetes"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes",
@@ -2275,10 +1796,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "docker-logging",
-        "kubernetes-pods"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes-pods",
@@ -2287,10 +1805,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "kubernetes",
-        "kubernetes-deployments"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes-deployments",
@@ -2299,10 +1814,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "kubernetes-pods",
-        "kubernetes-services"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes-services",
@@ -2311,10 +1823,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "kubernetes-deployments",
-        "kubernetes-configmaps"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes-configmaps",
@@ -2323,10 +1832,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "kubernetes-services",
-        "kubernetes-secrets"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes-secrets",
@@ -2335,10 +1841,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "kubernetes-configmaps",
-        "kubernetes-persistent-volumes"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes-persistent-volumes",
@@ -2347,10 +1850,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "kubernetes-secrets",
-        "kubernetes-scheduling"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes-scheduling",
@@ -2359,10 +1859,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "kubernetes-persistent-volumes",
-        "kubernetes-probes"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes-probes",
@@ -2371,10 +1868,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "kubernetes-scheduling",
-        "kubernetes-resource-management"
-      ]
+      "related": []
     },
     {
       "id": "kubernetes-resource-management",
@@ -2383,10 +1877,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "kubernetes-probes",
-        "git"
-      ]
+      "related": []
     },
     {
       "id": "git",
@@ -2397,10 +1888,7 @@
       "aliases": [
         "version control"
       ],
-      "related": [
-        "kubernetes-resource-management",
-        "git-change-tracking"
-      ]
+      "related": []
     },
     {
       "id": "git-change-tracking",
@@ -2409,10 +1897,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "git",
-        "git-history-inspection"
-      ]
+      "related": []
     },
     {
       "id": "git-history-inspection",
@@ -2421,10 +1906,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "git-change-tracking",
-        "git-undo-operations"
-      ]
+      "related": []
     },
     {
       "id": "git-undo-operations",
@@ -2433,10 +1915,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "git-history-inspection",
-        "git-remotes"
-      ]
+      "related": []
     },
     {
       "id": "git-remotes",
@@ -2445,10 +1924,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "git-undo-operations",
-        "git-tags"
-      ]
+      "related": []
     },
     {
       "id": "git-tags",
@@ -2457,10 +1933,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "git-remotes",
-        "git-branching"
-      ]
+      "related": []
     },
     {
       "id": "git-branching",
@@ -2469,10 +1942,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "git-tags",
-        "git-merging"
-      ]
+      "related": []
     },
     {
       "id": "git-merging",
@@ -2481,10 +1951,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "git-branching",
-        "git-rebasing"
-      ]
+      "related": []
     },
     {
       "id": "git-rebasing",
@@ -2493,10 +1960,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "git-merging",
-        "git-stashing"
-      ]
+      "related": []
     },
     {
       "id": "git-stashing",
@@ -2505,9 +1969,7 @@
       "field": "Tech & Data",
       "group": "devops",
       "aliases": [],
-      "related": [
-        "git-rebasing"
-      ]
+      "related": []
     },
     {
       "id": "linux-directory-listing",
@@ -2516,9 +1978,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-file-copying"
-      ]
+      "related": []
     },
     {
       "id": "linux-file-copying",
@@ -2527,10 +1987,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-directory-listing",
-        "linux-file-movement"
-      ]
+      "related": []
     },
     {
       "id": "linux-file-movement",
@@ -2539,10 +1996,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-file-copying",
-        "linux-file-removal"
-      ]
+      "related": []
     },
     {
       "id": "linux-file-removal",
@@ -2551,10 +2005,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-file-movement",
-        "linux-directory-creation"
-      ]
+      "related": []
     },
     {
       "id": "linux-directory-creation",
@@ -2563,10 +2014,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-file-removal",
-        "linux-file-permissions"
-      ]
+      "related": []
     },
     {
       "id": "linux-file-permissions",
@@ -2575,10 +2023,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-directory-creation",
-        "linux-file-ownership"
-      ]
+      "related": []
     },
     {
       "id": "linux-file-ownership",
@@ -2587,10 +2032,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-file-permissions",
-        "linux-text-sorting"
-      ]
+      "related": []
     },
     {
       "id": "linux-text-sorting",
@@ -2599,10 +2041,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-file-ownership",
-        "linux-unique-records"
-      ]
+      "related": []
     },
     {
       "id": "linux-unique-records",
@@ -2611,10 +2050,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-text-sorting",
-        "linux-column-selection"
-      ]
+      "related": []
     },
     {
       "id": "linux-column-selection",
@@ -2623,10 +2059,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-unique-records",
-        "linux-text-joining"
-      ]
+      "related": []
     },
     {
       "id": "linux-text-joining",
@@ -2635,10 +2068,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-column-selection",
-        "linux-text-concatenation"
-      ]
+      "related": []
     },
     {
       "id": "linux-text-concatenation",
@@ -2647,10 +2077,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-text-joining",
-        "linux-tail"
-      ]
+      "related": []
     },
     {
       "id": "linux-tail",
@@ -2659,10 +2086,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-text-concatenation",
-        "linux-checksums"
-      ]
+      "related": []
     },
     {
       "id": "linux-checksums",
@@ -2671,10 +2095,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-tail",
-        "linux-file-comparison"
-      ]
+      "related": []
     },
     {
       "id": "linux-file-comparison",
@@ -2683,10 +2104,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-checksums",
-        "linux-disk-usage"
-      ]
+      "related": []
     },
     {
       "id": "linux-disk-usage",
@@ -2695,10 +2113,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-file-comparison",
-        "linux-filesystem-capacity"
-      ]
+      "related": []
     },
     {
       "id": "linux-filesystem-capacity",
@@ -2707,10 +2122,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-disk-usage",
-        "linux-environment-variables"
-      ]
+      "related": []
     },
     {
       "id": "linux-environment-variables",
@@ -2719,10 +2131,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-filesystem-capacity",
-        "linux-symbolic-links"
-      ]
+      "related": []
     },
     {
       "id": "linux-symbolic-links",
@@ -2731,10 +2140,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-environment-variables",
-        "linux-command-execution"
-      ]
+      "related": []
     },
     {
       "id": "linux-command-execution",
@@ -2743,10 +2149,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux-symbolic-links",
-        "linux"
-      ]
+      "related": []
     },
     {
       "id": "authentication-security",
@@ -2755,9 +2158,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "authorization-security"
-      ]
+      "related": []
     },
     {
       "id": "authorization-security",
@@ -2766,10 +2167,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "authentication-security",
-        "password-storage"
-      ]
+      "related": []
     },
     {
       "id": "password-storage",
@@ -2778,10 +2176,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "authorization-security",
-        "session-management"
-      ]
+      "related": []
     },
     {
       "id": "session-management",
@@ -2790,10 +2185,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "password-storage",
-        "sql-injection-prevention"
-      ]
+      "related": []
     },
     {
       "id": "sql-injection-prevention",
@@ -2802,10 +2194,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "session-management",
-        "cross-site-scripting-prevention"
-      ]
+      "related": []
     },
     {
       "id": "cross-site-scripting-prevention",
@@ -2814,10 +2203,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "sql-injection-prevention",
-        "cross-site-request-forgery-prevention"
-      ]
+      "related": []
     },
     {
       "id": "cross-site-request-forgery-prevention",
@@ -2826,10 +2212,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "cross-site-scripting-prevention",
-        "input-validation"
-      ]
+      "related": []
     },
     {
       "id": "input-validation",
@@ -2838,10 +2221,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "cross-site-request-forgery-prevention",
-        "api-security"
-      ]
+      "related": []
     },
     {
       "id": "api-security",
@@ -2850,10 +2230,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "input-validation",
-        "secure-file-uploads"
-      ]
+      "related": []
     },
     {
       "id": "secure-file-uploads",
@@ -2862,10 +2239,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "api-security",
-        "transport-layer-security"
-      ]
+      "related": []
     },
     {
       "id": "transport-layer-security",
@@ -2874,10 +2248,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "secure-file-uploads",
-        "secrets-management"
-      ]
+      "related": []
     },
     {
       "id": "secrets-management",
@@ -2886,10 +2257,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "transport-layer-security",
-        "cryptographic-storage"
-      ]
+      "related": []
     },
     {
       "id": "cryptographic-storage",
@@ -2898,10 +2266,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "secrets-management",
-        "security-logging"
-      ]
+      "related": []
     },
     {
       "id": "security-logging",
@@ -2910,10 +2275,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "cryptographic-storage",
-        "threat-modeling"
-      ]
+      "related": []
     },
     {
       "id": "threat-modeling",
@@ -2922,10 +2284,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "security-logging",
-        "secure-docker-configuration"
-      ]
+      "related": []
     },
     {
       "id": "secure-docker-configuration",
@@ -2934,10 +2293,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "threat-modeling",
-        "secure-kubernetes-configuration"
-      ]
+      "related": []
     },
     {
       "id": "secure-kubernetes-configuration",
@@ -2946,10 +2302,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "secure-docker-configuration",
-        "software-supply-chain-security"
-      ]
+      "related": []
     },
     {
       "id": "software-supply-chain-security",
@@ -2958,10 +2311,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "secure-kubernetes-configuration",
-        "web-content-security-policy"
-      ]
+      "related": []
     },
     {
       "id": "web-content-security-policy",
@@ -2970,9 +2320,7 @@
       "field": "Tech & Data",
       "group": "cybersecurity",
       "aliases": [],
-      "related": [
-        "software-supply-chain-security"
-      ]
+      "related": []
     },
     {
       "id": "linear-regression",
@@ -2981,9 +2329,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "support-vector-machines"
-      ]
+      "related": []
     },
     {
       "id": "support-vector-machines",
@@ -2992,10 +2338,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "linear-regression",
-        "nearest-neighbor-methods"
-      ]
+      "related": []
     },
     {
       "id": "nearest-neighbor-methods",
@@ -3004,10 +2347,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "support-vector-machines",
-        "gaussian-processes"
-      ]
+      "related": []
     },
     {
       "id": "gaussian-processes",
@@ -3016,10 +2356,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "nearest-neighbor-methods",
-        "naive-bayes"
-      ]
+      "related": []
     },
     {
       "id": "naive-bayes",
@@ -3028,10 +2365,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "gaussian-processes",
-        "decision-trees"
-      ]
+      "related": []
     },
     {
       "id": "decision-trees",
@@ -3040,10 +2374,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "naive-bayes",
-        "ensemble-learning"
-      ]
+      "related": []
     },
     {
       "id": "ensemble-learning",
@@ -3052,10 +2383,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "decision-trees",
-        "multiclass-classification"
-      ]
+      "related": []
     },
     {
       "id": "multiclass-classification",
@@ -3064,10 +2392,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "ensemble-learning",
-        "feature-selection"
-      ]
+      "related": []
     },
     {
       "id": "feature-selection",
@@ -3076,10 +2401,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "multiclass-classification",
-        "semi-supervised-learning"
-      ]
+      "related": []
     },
     {
       "id": "semi-supervised-learning",
@@ -3088,10 +2410,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "feature-selection",
-        "clustering"
-      ]
+      "related": []
     },
     {
       "id": "clustering",
@@ -3100,10 +2419,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "semi-supervised-learning",
-        "dimensionality-reduction"
-      ]
+      "related": []
     },
     {
       "id": "dimensionality-reduction",
@@ -3112,10 +2428,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "clustering",
-        "manifold-learning"
-      ]
+      "related": []
     },
     {
       "id": "manifold-learning",
@@ -3124,10 +2437,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "dimensionality-reduction",
-        "density-estimation"
-      ]
+      "related": []
     },
     {
       "id": "density-estimation",
@@ -3136,10 +2446,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "manifold-learning",
-        "outlier-detection"
-      ]
+      "related": []
     },
     {
       "id": "outlier-detection",
@@ -3148,10 +2455,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "density-estimation",
-        "model-cross-validation"
-      ]
+      "related": []
     },
     {
       "id": "model-cross-validation",
@@ -3160,10 +2464,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "outlier-detection",
-        "hyperparameter-tuning"
-      ]
+      "related": []
     },
     {
       "id": "hyperparameter-tuning",
@@ -3172,10 +2473,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "model-cross-validation",
-        "model-evaluation"
-      ]
+      "related": []
     },
     {
       "id": "model-evaluation",
@@ -3184,10 +2482,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "hyperparameter-tuning",
-        "classification-thresholds"
-      ]
+      "related": []
     },
     {
       "id": "classification-thresholds",
@@ -3196,10 +2491,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "model-evaluation",
-        "learning-curves"
-      ]
+      "related": []
     },
     {
       "id": "learning-curves",
@@ -3208,10 +2500,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "classification-thresholds",
-        "data-preprocessing"
-      ]
+      "related": []
     },
     {
       "id": "data-preprocessing",
@@ -3220,10 +2509,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "learning-curves",
-        "missing-value-imputation"
-      ]
+      "related": []
     },
     {
       "id": "missing-value-imputation",
@@ -3232,10 +2518,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "data-preprocessing",
-        "feature-extraction"
-      ]
+      "related": []
     },
     {
       "id": "feature-extraction",
@@ -3244,10 +2527,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "missing-value-imputation",
-        "model-pipelines"
-      ]
+      "related": []
     },
     {
       "id": "model-pipelines",
@@ -3256,9 +2536,7 @@
       "field": "Tech & Data",
       "group": "ai-ml",
       "aliases": [],
-      "related": [
-        "feature-extraction"
-      ]
+      "related": []
     },
     {
       "id": "pain-assessment",
@@ -3267,9 +2545,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "vital-signs-measurement"
-      ]
+      "related": []
     },
     {
       "id": "vital-signs-measurement",
@@ -3278,10 +2554,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "pain-assessment",
-        "health-history-taking"
-      ]
+      "related": []
     },
     {
       "id": "health-history-taking",
@@ -3290,10 +2563,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "vital-signs-measurement",
-        "head-to-toe-assessment"
-      ]
+      "related": []
     },
     {
       "id": "head-to-toe-assessment",
@@ -3302,10 +2572,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "health-history-taking",
-        "emergency-patient-assessment"
-      ]
+      "related": []
     },
     {
       "id": "emergency-patient-assessment",
@@ -3314,10 +2581,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "head-to-toe-assessment",
-        "focused-patient-assessment"
-      ]
+      "related": []
     },
     {
       "id": "focused-patient-assessment",
@@ -3326,10 +2590,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "emergency-patient-assessment",
-        "patient-risk-assessment"
-      ]
+      "related": []
     },
     {
       "id": "patient-risk-assessment",
@@ -3339,8 +2600,7 @@
       "group": "patient-assessment",
       "aliases": [],
       "related": [
-        "focused-patient-assessment",
-        "pulse-oximetry"
+        "fall-prevention"
       ]
     },
     {
@@ -3350,10 +2610,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "patient-risk-assessment",
-        "recognizing-hypoxia"
-      ]
+      "related": []
     },
     {
       "id": "recognizing-hypoxia",
@@ -3362,10 +2619,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "pulse-oximetry",
-        "blood-glucose-measurement"
-      ]
+      "related": []
     },
     {
       "id": "blood-glucose-measurement",
@@ -3374,10 +2628,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "recognizing-hypoxia",
-        "recognizing-glucose-emergencies"
-      ]
+      "related": []
     },
     {
       "id": "recognizing-glucose-emergencies",
@@ -3386,9 +2637,7 @@
       "field": "Health & Medical",
       "group": "patient-assessment",
       "aliases": [],
-      "related": [
-        "blood-glucose-measurement"
-      ]
+      "related": []
     },
     {
       "id": "infection-prevention",
@@ -3397,9 +2646,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "hand-hygiene"
-      ]
+      "related": []
     },
     {
       "id": "hand-hygiene",
@@ -3408,10 +2655,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "infection-prevention",
-        "personal-protective-equipment"
-      ]
+      "related": []
     },
     {
       "id": "personal-protective-equipment",
@@ -3420,10 +2664,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "hand-hygiene",
-        "surgical-asepsis"
-      ]
+      "related": []
     },
     {
       "id": "surgical-asepsis",
@@ -3432,10 +2673,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "personal-protective-equipment",
-        "operating-room-safety"
-      ]
+      "related": []
     },
     {
       "id": "operating-room-safety",
@@ -3444,10 +2682,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "surgical-asepsis",
-        "sterile-technique"
-      ]
+      "related": []
     },
     {
       "id": "sterile-technique",
@@ -3456,10 +2691,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "operating-room-safety",
-        "patient-handling-ergonomics"
-      ]
+      "related": []
     },
     {
       "id": "patient-handling-ergonomics",
@@ -3468,10 +2700,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "sterile-technique",
-        "supporting-patient-mobility"
-      ]
+      "related": []
     },
     {
       "id": "supporting-patient-mobility",
@@ -3480,10 +2709,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "patient-handling-ergonomics",
-        "patient-positioning"
-      ]
+      "related": []
     },
     {
       "id": "patient-positioning",
@@ -3492,10 +2718,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "supporting-patient-mobility",
-        "assisted-ambulation"
-      ]
+      "related": []
     },
     {
       "id": "assisted-ambulation",
@@ -3504,10 +2727,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "patient-positioning",
-        "patient-transfer-techniques"
-      ]
+      "related": []
     },
     {
       "id": "patient-transfer-techniques",
@@ -3516,10 +2736,7 @@
       "field": "Health & Medical",
       "group": "patient-safety",
       "aliases": [],
-      "related": [
-        "assisted-ambulation",
-        "fall-prevention"
-      ]
+      "related": []
     },
     {
       "id": "fall-prevention",
@@ -3529,7 +2746,7 @@
       "group": "patient-safety",
       "aliases": [],
       "related": [
-        "patient-transfer-techniques"
+        "patient-risk-assessment"
       ]
     },
     {
@@ -3539,9 +2756,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "wound-dressing-fundamentals"
-      ]
+      "related": []
     },
     {
       "id": "wound-dressing-fundamentals",
@@ -3550,10 +2765,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "wound-assessment",
-        "suture-removal-principles"
-      ]
+      "related": []
     },
     {
       "id": "suture-removal-principles",
@@ -3562,10 +2774,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "wound-dressing-fundamentals",
-        "staple-removal-principles"
-      ]
+      "related": []
     },
     {
       "id": "staple-removal-principles",
@@ -3574,10 +2783,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "suture-removal-principles",
-        "wound-irrigation-principles"
-      ]
+      "related": []
     },
     {
       "id": "wound-irrigation-principles",
@@ -3586,10 +2792,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "staple-removal-principles",
-        "drain-care-principles"
-      ]
+      "related": []
     },
     {
       "id": "drain-care-principles",
@@ -3598,10 +2801,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "wound-irrigation-principles",
-        "oxygen-delivery-systems"
-      ]
+      "related": []
     },
     {
       "id": "oxygen-delivery-systems",
@@ -3610,10 +2810,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "drain-care-principles",
-        "hypoxia-management-principles"
-      ]
+      "related": []
     },
     {
       "id": "hypoxia-management-principles",
@@ -3622,10 +2819,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "oxygen-delivery-systems",
-        "oxygen-safety"
-      ]
+      "related": []
     },
     {
       "id": "oxygen-safety",
@@ -3634,10 +2828,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "hypoxia-management-principles",
-        "oral-suctioning-principles"
-      ]
+      "related": []
     },
     {
       "id": "oral-suctioning-principles",
@@ -3646,10 +2837,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "oxygen-safety",
-        "medication-administration-safety"
-      ]
+      "related": []
     },
     {
       "id": "medication-administration-safety",
@@ -3658,9 +2846,7 @@
       "field": "Health & Medical",
       "group": "clinical-foundations",
       "aliases": [],
-      "related": [
-        "oral-suctioning-principles"
-      ]
+      "related": []
     },
     {
       "id": "learning-theories",
@@ -3669,9 +2855,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "behaviorist-teaching-design"
-      ]
+      "related": []
     },
     {
       "id": "behaviorist-teaching-design",
@@ -3680,10 +2864,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "learning-theories",
-        "cognitive-learning-design"
-      ]
+      "related": []
     },
     {
       "id": "cognitive-learning-design",
@@ -3692,10 +2873,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "behaviorist-teaching-design",
-        "constructivist-teaching-design"
-      ]
+      "related": []
     },
     {
       "id": "constructivist-teaching-design",
@@ -3704,10 +2882,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "cognitive-learning-design",
-        "connectivist-learning-design"
-      ]
+      "related": []
     },
     {
       "id": "connectivist-learning-design",
@@ -3716,10 +2891,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "constructivist-teaching-design",
-        "teaching-perspectives"
-      ]
+      "related": []
     },
     {
       "id": "teaching-perspectives",
@@ -3728,10 +2900,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "connectivist-learning-design",
-        "lecture-design"
-      ]
+      "related": []
     },
     {
       "id": "lecture-design",
@@ -3740,10 +2909,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "teaching-perspectives",
-        "interactive-seminar-facilitation"
-      ]
+      "related": []
     },
     {
       "id": "interactive-seminar-facilitation",
@@ -3752,10 +2918,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "lecture-design",
-        "apprenticeship-learning-design"
-      ]
+      "related": []
     },
     {
       "id": "apprenticeship-learning-design",
@@ -3764,10 +2927,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "interactive-seminar-facilitation",
-        "experiential-learning-design"
-      ]
+      "related": []
     },
     {
       "id": "experiential-learning-design",
@@ -3776,10 +2936,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "apprenticeship-learning-design",
-        "nurturing-teaching-approaches"
-      ]
+      "related": []
     },
     {
       "id": "nurturing-teaching-approaches",
@@ -3788,10 +2945,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "experiential-learning-design",
-        "addie-instructional-design"
-      ]
+      "related": []
     },
     {
       "id": "addie-instructional-design",
@@ -3800,10 +2954,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "nurturing-teaching-approaches",
-        "online-collaborative-learning"
-      ]
+      "related": []
     },
     {
       "id": "online-collaborative-learning",
@@ -3812,10 +2963,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "addie-instructional-design",
-        "competency-based-learning"
-      ]
+      "related": []
     },
     {
       "id": "competency-based-learning",
@@ -3824,10 +2972,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "online-collaborative-learning",
-        "communities-of-practice"
-      ]
+      "related": []
     },
     {
       "id": "communities-of-practice",
@@ -3836,10 +2981,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "competency-based-learning",
-        "agile-instructional-design"
-      ]
+      "related": []
     },
     {
       "id": "agile-instructional-design",
@@ -3848,10 +2990,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "communities-of-practice",
-        "teaching-method-selection"
-      ]
+      "related": []
     },
     {
       "id": "teaching-method-selection",
@@ -3860,9 +2999,7 @@
       "field": "Education & Public Service",
       "group": "learning-design",
       "aliases": [],
-      "related": [
-        "agile-instructional-design"
-      ]
+      "related": []
     },
     {
       "id": "online-teaching",
@@ -3871,9 +3008,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "mooc-design"
-      ]
+      "related": []
     },
     {
       "id": "mooc-design",
@@ -3882,10 +3017,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "online-teaching",
-        "evaluating-moocs"
-      ]
+      "related": []
     },
     {
       "id": "evaluating-moocs",
@@ -3894,10 +3026,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "mooc-design",
-        "broadcast-and-communicative-media"
-      ]
+      "related": []
     },
     {
       "id": "broadcast-and-communicative-media",
@@ -3906,10 +3035,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "evaluating-moocs",
-        "synchronous-and-asynchronous-media"
-      ]
+      "related": []
     },
     {
       "id": "synchronous-and-asynchronous-media",
@@ -3918,10 +3044,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "broadcast-and-communicative-media",
-        "media-richness-analysis"
-      ]
+      "related": []
     },
     {
       "id": "media-richness-analysis",
@@ -3930,10 +3053,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "synchronous-and-asynchronous-media",
-        "teaching-with-text"
-      ]
+      "related": []
     },
     {
       "id": "teaching-with-text",
@@ -3942,10 +3062,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "media-richness-analysis",
-        "teaching-with-audio"
-      ]
+      "related": []
     },
     {
       "id": "teaching-with-audio",
@@ -3954,10 +3071,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "teaching-with-text",
-        "teaching-with-video"
-      ]
+      "related": []
     },
     {
       "id": "teaching-with-video",
@@ -3966,10 +3080,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "teaching-with-audio",
-        "teaching-with-computing"
-      ]
+      "related": []
     },
     {
       "id": "teaching-with-computing",
@@ -3978,10 +3089,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "teaching-with-video",
-        "teaching-with-social-media"
-      ]
+      "related": []
     },
     {
       "id": "teaching-with-social-media",
@@ -3990,10 +3098,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "teaching-with-computing",
-        "educational-media-selection"
-      ]
+      "related": []
     },
     {
       "id": "educational-media-selection",
@@ -4002,10 +3107,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "teaching-with-social-media",
-        "education-privacy-and-security"
-      ]
+      "related": []
     },
     {
       "id": "education-privacy-and-security",
@@ -4014,10 +3116,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "educational-media-selection",
-        "comparing-learning-delivery-methods"
-      ]
+      "related": []
     },
     {
       "id": "comparing-learning-delivery-methods",
@@ -4026,9 +3125,7 @@
       "field": "Education & Public Service",
       "group": "educational-technology",
       "aliases": [],
-      "related": [
-        "education-privacy-and-security"
-      ]
+      "related": []
     },
     {
       "id": "open-educational-resources",
@@ -4037,9 +3134,7 @@
       "field": "Education & Public Service",
       "group": "assessment-and-support",
       "aliases": [],
-      "related": [
-        "writing-learning-objectives"
-      ]
+      "related": []
     },
     {
       "id": "writing-learning-objectives",
@@ -4049,8 +3144,7 @@
       "group": "assessment-and-support",
       "aliases": [],
       "related": [
-        "open-educational-resources",
-        "learning-activity-design"
+        "lesson-planning"
       ]
     },
     {
@@ -4061,7 +3155,6 @@
       "group": "assessment-and-support",
       "aliases": [],
       "related": [
-        "writing-learning-objectives",
         "lesson-planning"
       ]
     },
@@ -4072,9 +3165,7 @@
       "field": "Science & Research",
       "group": "biology-and-ecology",
       "aliases": [],
-      "related": [
-        "the-process-of-science"
-      ]
+      "related": []
     },
     {
       "id": "the-process-of-science",
@@ -4083,10 +3174,7 @@
       "field": "Science & Research",
       "group": "biology-and-ecology",
       "aliases": [],
-      "related": [
-        "themes-and-concepts-of-biology",
-        "the-building-blocks-of-molecules"
-      ]
+      "related": []
     },
     {
       "id": "the-building-blocks-of-molecules",
@@ -4095,10 +3183,7 @@
       "field": "Science & Research",
       "group": "biology-and-ecology",
       "aliases": [],
-      "related": [
-        "the-process-of-science",
-        "water"
-      ]
+      "related": []
     },
     {
       "id": "water",
@@ -4107,10 +3192,7 @@
       "field": "Science & Research",
       "group": "biology-and-ecology",
       "aliases": [],
-      "related": [
-        "the-building-blocks-of-molecules",
-        "biological-molecules"
-      ]
+      "related": []
     },
     {
       "id": "biological-molecules",
@@ -4119,10 +3201,7 @@
       "field": "Science & Research",
       "group": "biology-and-ecology",
       "aliases": [],
-      "related": [
-        "water",
-        "sexual-reproduction"
-      ]
+      "related": []
     },
     {
       "id": "how-cells-are-studied",
@@ -4131,9 +3210,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "comparing-prokaryotic-and-eukaryotic-cells"
-      ]
+      "related": []
     },
     {
       "id": "comparing-prokaryotic-and-eukaryotic-cells",
@@ -4142,10 +3219,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "how-cells-are-studied",
-        "eukaryotic-cells"
-      ]
+      "related": []
     },
     {
       "id": "eukaryotic-cells",
@@ -4154,10 +3228,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "comparing-prokaryotic-and-eukaryotic-cells",
-        "the-cell-membrane"
-      ]
+      "related": []
     },
     {
       "id": "the-cell-membrane",
@@ -4166,10 +3237,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "eukaryotic-cells",
-        "passive-transport"
-      ]
+      "related": []
     },
     {
       "id": "passive-transport",
@@ -4178,10 +3246,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "the-cell-membrane",
-        "active-transport"
-      ]
+      "related": []
     },
     {
       "id": "active-transport",
@@ -4190,10 +3255,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "passive-transport",
-        "energy-and-metabolism"
-      ]
+      "related": []
     },
     {
       "id": "energy-and-metabolism",
@@ -4202,10 +3264,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "active-transport",
-        "glycolysis"
-      ]
+      "related": []
     },
     {
       "id": "glycolysis",
@@ -4214,10 +3273,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "energy-and-metabolism",
-        "citric-acid-cycle-and-oxidative-phosphorylation"
-      ]
+      "related": []
     },
     {
       "id": "citric-acid-cycle-and-oxidative-phosphorylation",
@@ -4226,10 +3282,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "glycolysis",
-        "fermentation"
-      ]
+      "related": []
     },
     {
       "id": "fermentation",
@@ -4238,10 +3291,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "citric-acid-cycle-and-oxidative-phosphorylation",
-        "connections-to-other-metabolic-pathways"
-      ]
+      "related": []
     },
     {
       "id": "connections-to-other-metabolic-pathways",
@@ -4250,46 +3300,34 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "fermentation",
-        "overview-of-photosynthesis"
-      ]
+      "related": []
     },
     {
       "id": "overview-of-photosynthesis",
-      "label": ": Overview of Photosynthesis",
-      "description": "Explain cellular structures, energy and transport processes; focus on : Overview of Photosynthesis.",
+      "label": "Overview of Photosynthesis",
+      "description": "Explain cellular structures, energy and transport processes; focus on Overview of Photosynthesis.",
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "connections-to-other-metabolic-pathways",
-        "the-light-dependent-reactions-of-photosynthesis"
-      ]
+      "related": []
     },
     {
       "id": "the-light-dependent-reactions-of-photosynthesis",
-      "label": ": The Light-Dependent Reactions of Photosynthesis",
-      "description": "Explain cellular structures, energy and transport processes; focus on : The Light-Dependent Reactions of Photosynthesis.",
+      "label": "The Light-Dependent Reactions of Photosynthesis",
+      "description": "Explain cellular structures, energy and transport processes; focus on The Light-Dependent Reactions of Photosynthesis.",
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "overview-of-photosynthesis",
-        "the-calvin-cycle"
-      ]
+      "related": []
     },
     {
       "id": "the-calvin-cycle",
-      "label": ": The Calvin Cycle",
-      "description": "Explain cellular structures, energy and transport processes; focus on : The Calvin Cycle.",
+      "label": "The Calvin Cycle",
+      "description": "Explain cellular structures, energy and transport processes; focus on The Calvin Cycle.",
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "the-light-dependent-reactions-of-photosynthesis",
-        "the-cell-cycle"
-      ]
+      "related": []
     },
     {
       "id": "the-genome",
@@ -4298,9 +3336,7 @@
       "field": "Science & Research",
       "group": "genetics",
       "aliases": [],
-      "related": [
-        "meiosis"
-      ]
+      "related": []
     },
     {
       "id": "the-cell-cycle",
@@ -4309,10 +3345,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "the-calvin-cycle",
-        "cancer-and-the-cell-cycle"
-      ]
+      "related": []
     },
     {
       "id": "cancer-and-the-cell-cycle",
@@ -4321,10 +3354,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "the-cell-cycle",
-        "prokaryotic-cell-division"
-      ]
+      "related": []
     },
     {
       "id": "prokaryotic-cell-division",
@@ -4333,9 +3363,7 @@
       "field": "Science & Research",
       "group": "cell-biology",
       "aliases": [],
-      "related": [
-        "cancer-and-the-cell-cycle"
-      ]
+      "related": []
     },
     {
       "id": "sexual-reproduction",
@@ -4344,10 +3372,7 @@
       "field": "Science & Research",
       "group": "biology-and-ecology",
       "aliases": [],
-      "related": [
-        "biological-molecules",
-        "mendels-experiments"
-      ]
+      "related": []
     },
     {
       "id": "meiosis",
@@ -4356,10 +3381,7 @@
       "field": "Science & Research",
       "group": "genetics",
       "aliases": [],
-      "related": [
-        "the-genome",
-        "errors-in-meiosis"
-      ]
+      "related": []
     },
     {
       "id": "errors-in-meiosis",
@@ -4368,10 +3390,7 @@
       "field": "Science & Research",
       "group": "genetics",
       "aliases": [],
-      "related": [
-        "meiosis",
-        "laws-of-inheritance"
-      ]
+      "related": []
     },
     {
       "id": "mendels-experiments",
@@ -4380,10 +3399,7 @@
       "field": "Science & Research",
       "group": "biology-and-ecology",
       "aliases": [],
-      "related": [
-        "sexual-reproduction",
-        "transcription"
-      ]
+      "related": []
     },
     {
       "id": "laws-of-inheritance",
@@ -4392,10 +3408,7 @@
       "field": "Science & Research",
       "group": "genetics",
       "aliases": [],
-      "related": [
-        "errors-in-meiosis",
-        "extensions-of-the-laws-of-inheritance"
-      ]
+      "related": []
     },
     {
       "id": "extensions-of-the-laws-of-inheritance",
@@ -4404,10 +3417,7 @@
       "field": "Science & Research",
       "group": "genetics",
       "aliases": [],
-      "related": [
-        "laws-of-inheritance",
-        "the-structure-of-dna"
-      ]
+      "related": []
     },
     {
       "id": "the-structure-of-dna",
@@ -4416,10 +3426,7 @@
       "field": "Science & Research",
       "group": "genetics",
       "aliases": [],
-      "related": [
-        "extensions-of-the-laws-of-inheritance",
-        "dna-replication"
-      ]
+      "related": []
     },
     {
       "id": "dna-replication",
@@ -4428,10 +3435,7 @@
       "field": "Science & Research",
       "group": "genetics",
       "aliases": [],
-      "related": [
-        "the-structure-of-dna",
-        "how-genes-are-regulated"
-      ]
+      "related": []
     },
     {
       "id": "transcription",
@@ -4440,10 +3444,7 @@
       "field": "Science & Research",
       "group": "biology-and-ecology",
       "aliases": [],
-      "related": [
-        "mendels-experiments",
-        "translation"
-      ]
+      "related": []
     },
     {
       "id": "translation",
@@ -4452,10 +3453,7 @@
       "field": "Science & Research",
       "group": "biology-and-ecology",
       "aliases": [],
-      "related": [
-        "transcription",
-        "research-methods"
-      ]
+      "related": []
     },
     {
       "id": "how-genes-are-regulated",
@@ -4464,9 +3462,7 @@
       "field": "Science & Research",
       "group": "genetics",
       "aliases": [],
-      "related": [
-        "dna-replication"
-      ]
+      "related": []
     },
     {
       "id": "management-planning-and-control",
@@ -4475,9 +3471,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "triple-bottom-line-analysis"
-      ]
+      "related": []
     },
     {
       "id": "triple-bottom-line-analysis",
@@ -4486,10 +3480,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "management-planning-and-control",
-        "individual-and-group-performance"
-      ]
+      "related": []
     },
     {
       "id": "individual-and-group-performance",
@@ -4498,10 +3489,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "triple-bottom-line-analysis",
-        "mission-and-vision-alignment"
-      ]
+      "related": []
     },
     {
       "id": "mission-and-vision-alignment",
@@ -4510,10 +3498,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "individual-and-group-performance",
-        "stakeholder-analysis"
-      ]
+      "related": []
     },
     {
       "id": "stakeholder-analysis",
@@ -4523,8 +3508,7 @@
       "group": "strategy-and-operations",
       "aliases": [],
       "related": [
-        "mission-and-vision-alignment",
-        "mission-statement-development"
+        "strategic-management"
       ]
     },
     {
@@ -4534,10 +3518,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "stakeholder-analysis",
-        "strategic-management"
-      ]
+      "related": []
     },
     {
       "id": "strategic-management",
@@ -4547,8 +3528,7 @@
       "group": "strategy-and-operations",
       "aliases": [],
       "related": [
-        "mission-statement-development",
-        "emergent-strategy"
+        "stakeholder-analysis"
       ]
     },
     {
@@ -4558,10 +3538,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "strategic-management",
-        "strategic-trade-offs"
-      ]
+      "related": []
     },
     {
       "id": "strategic-trade-offs",
@@ -4570,10 +3547,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "emergent-strategy",
-        "internal-strategic-analysis"
-      ]
+      "related": []
     },
     {
       "id": "internal-strategic-analysis",
@@ -4582,10 +3556,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "strategic-trade-offs",
-        "external-strategic-analysis"
-      ]
+      "related": []
     },
     {
       "id": "external-strategic-analysis",
@@ -4594,10 +3565,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "internal-strategic-analysis",
-        "strategy-diamond-analysis"
-      ]
+      "related": []
     },
     {
       "id": "strategy-diamond-analysis",
@@ -4606,10 +3574,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "external-strategic-analysis",
-        "balanced-scorecard"
-      ]
+      "related": []
     },
     {
       "id": "balanced-scorecard",
@@ -4618,10 +3583,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "strategy-diamond-analysis",
-        "business-goal-setting"
-      ]
+      "related": []
     },
     {
       "id": "business-goal-setting",
@@ -4630,10 +3592,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "balanced-scorecard",
-        "organizational-control"
-      ]
+      "related": []
     },
     {
       "id": "organizational-control",
@@ -4642,10 +3601,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "business-goal-setting",
-        "financial-controls"
-      ]
+      "related": []
     },
     {
       "id": "financial-controls",
@@ -4654,10 +3610,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "organizational-control",
-        "nonfinancial-controls"
-      ]
+      "related": []
     },
     {
       "id": "nonfinancial-controls",
@@ -4666,10 +3619,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "financial-controls",
-        "lean-management"
-      ]
+      "related": []
     },
     {
       "id": "lean-management",
@@ -4678,9 +3628,7 @@
       "field": "Business & Consulting",
       "group": "strategy-and-operations",
       "aliases": [],
-      "related": [
-        "nonfinancial-controls"
-      ]
+      "related": []
     },
     {
       "id": "values-based-leadership",
@@ -4689,9 +3637,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "organizational-structure-design"
-      ]
+      "related": []
     },
     {
       "id": "organizational-structure-design",
@@ -4700,10 +3646,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "values-based-leadership",
-        "contemporary-organizational-structures"
-      ]
+      "related": []
     },
     {
       "id": "contemporary-organizational-structures",
@@ -4712,10 +3655,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "organizational-structure-design",
-        "organizational-change"
-      ]
+      "related": []
     },
     {
       "id": "organizational-change",
@@ -4724,10 +3664,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "contemporary-organizational-structures",
-        "change-implementation"
-      ]
+      "related": []
     },
     {
       "id": "change-implementation",
@@ -4736,10 +3673,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "organizational-change",
-        "change-management"
-      ]
+      "related": []
     },
     {
       "id": "change-management",
@@ -4748,10 +3682,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "change-implementation",
-        "organizational-culture-analysis"
-      ]
+      "related": []
     },
     {
       "id": "organizational-culture-analysis",
@@ -4760,10 +3691,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "change-management",
-        "measuring-organizational-culture"
-      ]
+      "related": []
     },
     {
       "id": "measuring-organizational-culture",
@@ -4772,10 +3700,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "organizational-culture-analysis",
-        "sustaining-organizational-culture"
-      ]
+      "related": []
     },
     {
       "id": "sustaining-organizational-culture",
@@ -4784,10 +3709,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "measuring-organizational-culture",
-        "culture-change"
-      ]
+      "related": []
     },
     {
       "id": "culture-change",
@@ -4796,10 +3718,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "sustaining-organizational-culture",
-        "leadership-trait-analysis"
-      ]
+      "related": []
     },
     {
       "id": "leadership-trait-analysis",
@@ -4808,10 +3727,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "culture-change",
-        "behavioral-leadership"
-      ]
+      "related": []
     },
     {
       "id": "behavioral-leadership",
@@ -4820,10 +3736,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "leadership-trait-analysis",
-        "situational-leadership"
-      ]
+      "related": []
     },
     {
       "id": "situational-leadership",
@@ -4832,10 +3745,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "behavioral-leadership",
-        "contemporary-leadership"
-      ]
+      "related": []
     },
     {
       "id": "contemporary-leadership",
@@ -4844,10 +3754,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "situational-leadership",
-        "leadership-development"
-      ]
+      "related": []
     },
     {
       "id": "leadership-development",
@@ -4856,10 +3763,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "contemporary-leadership",
-        "business-decision-making"
-      ]
+      "related": []
     },
     {
       "id": "business-decision-making",
@@ -4868,10 +3772,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "leadership-development",
-        "decision-bias-analysis"
-      ]
+      "related": []
     },
     {
       "id": "decision-bias-analysis",
@@ -4880,10 +3781,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "business-decision-making",
-        "group-decision-making"
-      ]
+      "related": []
     },
     {
       "id": "group-decision-making",
@@ -4892,9 +3790,7 @@
       "field": "Business & Consulting",
       "group": "organization-and-leadership",
       "aliases": [],
-      "related": [
-        "decision-bias-analysis"
-      ]
+      "related": []
     },
     {
       "id": "group-dynamics",
@@ -4903,9 +3799,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "team-design"
-      ]
+      "related": []
     },
     {
       "id": "team-design",
@@ -4914,10 +3808,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "group-dynamics",
-        "team-organization"
-      ]
+      "related": []
     },
     {
       "id": "team-organization",
@@ -4926,10 +3817,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "team-design",
-        "team-effectiveness"
-      ]
+      "related": []
     },
     {
       "id": "team-effectiveness",
@@ -4938,10 +3826,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "team-organization",
-        "needs-based-motivation"
-      ]
+      "related": []
     },
     {
       "id": "needs-based-motivation",
@@ -4950,10 +3835,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "team-effectiveness",
-        "process-based-motivation"
-      ]
+      "related": []
     },
     {
       "id": "process-based-motivation",
@@ -4962,10 +3844,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "needs-based-motivation",
-        "strategic-human-resource-management"
-      ]
+      "related": []
     },
     {
       "id": "strategic-human-resource-management",
@@ -4974,10 +3853,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "process-based-motivation",
-        "employee-selection"
-      ]
+      "related": []
     },
     {
       "id": "employee-selection",
@@ -4986,10 +3862,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "strategic-human-resource-management",
-        "compensation-design"
-      ]
+      "related": []
     },
     {
       "id": "compensation-design",
@@ -4998,10 +3871,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "employee-selection",
-        "high-performance-work-systems"
-      ]
+      "related": []
     },
     {
       "id": "high-performance-work-systems",
@@ -5010,9 +3880,7 @@
       "field": "Business & Consulting",
       "group": "people-and-teams",
       "aliases": [],
-      "related": [
-        "compensation-design"
-      ]
+      "related": []
     },
     {
       "id": "writing-style",
@@ -5021,9 +3889,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "written-communication"
-      ]
+      "related": []
     },
     {
       "id": "written-communication",
@@ -5032,10 +3898,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "writing-style",
-        "writing-preparation"
-      ]
+      "related": []
     },
     {
       "id": "writing-preparation",
@@ -5044,10 +3907,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "written-communication",
-        "business-message-planning"
-      ]
+      "related": []
     },
     {
       "id": "business-message-planning",
@@ -5056,10 +3916,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "writing-preparation",
-        "source-research"
-      ]
+      "related": []
     },
     {
       "id": "source-research",
@@ -5068,10 +3925,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "business-message-planning",
-        "source-ethics-and-attribution"
-      ]
+      "related": []
     },
     {
       "id": "source-ethics-and-attribution",
@@ -5080,10 +3934,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "source-research",
-        "analytical-reading"
-      ]
+      "related": []
     },
     {
       "id": "analytical-reading",
@@ -5092,10 +3943,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "source-ethics-and-attribution",
-        "writing-organization"
-      ]
+      "related": []
     },
     {
       "id": "writing-organization",
@@ -5105,8 +3953,7 @@
       "group": "writing-and-editing",
       "aliases": [],
       "related": [
-        "analytical-reading",
-        "style-adaptation"
+        "writing"
       ]
     },
     {
@@ -5116,10 +3963,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "writing-organization",
-        "argument-writing"
-      ]
+      "related": []
     },
     {
       "id": "argument-writing",
@@ -5128,10 +3972,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "style-adaptation",
-        "paraphrasing-and-summarizing"
-      ]
+      "related": []
     },
     {
       "id": "paraphrasing-and-summarizing",
@@ -5140,10 +3981,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "argument-writing",
-        "developmental-revision"
-      ]
+      "related": []
     },
     {
       "id": "developmental-revision",
@@ -5152,10 +3990,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "paraphrasing-and-summarizing",
-        "copyediting"
-      ]
+      "related": []
     },
     {
       "id": "copyediting",
@@ -5164,10 +3999,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "developmental-revision",
-        "style-revision"
-      ]
+      "related": []
     },
     {
       "id": "style-revision",
@@ -5176,10 +4008,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "copyediting",
-        "peer-review"
-      ]
+      "related": []
     },
     {
       "id": "peer-review",
@@ -5188,10 +4017,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "style-revision",
-        "proofreading"
-      ]
+      "related": []
     },
     {
       "id": "proofreading",
@@ -5201,8 +4027,7 @@
       "group": "writing-and-editing",
       "aliases": [],
       "related": [
-        "peer-review",
-        "email-etiquette"
+        "writing"
       ]
     },
     {
@@ -5212,10 +4037,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "proofreading",
-        "memo-and-letter-writing"
-      ]
+      "related": []
     },
     {
       "id": "memo-and-letter-writing",
@@ -5224,10 +4046,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "email-etiquette",
-        "proposal-writing"
-      ]
+      "related": []
     },
     {
       "id": "proposal-writing",
@@ -5236,10 +4055,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "memo-and-letter-writing",
-        "report-writing"
-      ]
+      "related": []
     },
     {
       "id": "report-writing",
@@ -5248,10 +4064,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "proposal-writing",
-        "communication"
-      ]
+      "related": []
     },
     {
       "id": "verbal-emphasis",
@@ -5260,9 +4073,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "verbal-communication"
-      ]
+      "related": []
     },
     {
       "id": "verbal-communication",
@@ -5271,10 +4082,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "verbal-emphasis",
-        "audience-analysis"
-      ]
+      "related": []
     },
     {
       "id": "audience-analysis",
@@ -5283,10 +4091,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "verbal-communication",
-        "active-listening"
-      ]
+      "related": []
     },
     {
       "id": "active-listening",
@@ -5295,10 +4100,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "audience-analysis",
-        "public-speaking"
-      ]
+      "related": []
     },
     {
       "id": "public-speaking",
@@ -5307,10 +4109,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "active-listening",
-        "managing-presentation-anxiety"
-      ]
+      "related": []
     },
     {
       "id": "managing-presentation-anxiety",
@@ -5319,10 +4118,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "public-speaking",
-        "nonverbal-communication"
-      ]
+      "related": []
     },
     {
       "id": "nonverbal-communication",
@@ -5331,10 +4127,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "managing-presentation-anxiety",
-        "presentation-movement"
-      ]
+      "related": []
     },
     {
       "id": "presentation-movement",
@@ -5343,10 +4136,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "nonverbal-communication",
-        "visual-aids"
-      ]
+      "related": []
     },
     {
       "id": "visual-aids",
@@ -5355,10 +4145,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "presentation-movement",
-        "speech-outlining"
-      ]
+      "related": []
     },
     {
       "id": "speech-outlining",
@@ -5367,10 +4154,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "visual-aids",
-        "speech-organization"
-      ]
+      "related": []
     },
     {
       "id": "speech-organization",
@@ -5379,10 +4163,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "speech-outlining",
-        "speech-transitions"
-      ]
+      "related": []
     },
     {
       "id": "speech-transitions",
@@ -5391,10 +4172,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "speech-organization",
-        "informative-presentations"
-      ]
+      "related": []
     },
     {
       "id": "informative-presentations",
@@ -5403,10 +4181,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "speech-transitions",
-        "persuasion"
-      ]
+      "related": []
     },
     {
       "id": "persuasion",
@@ -5415,10 +4190,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "informative-presentations",
-        "ethical-speaking"
-      ]
+      "related": []
     },
     {
       "id": "ethical-speaking",
@@ -5427,10 +4199,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "persuasion",
-        "elevator-pitches"
-      ]
+      "related": []
     },
     {
       "id": "elevator-pitches",
@@ -5439,9 +4208,7 @@
       "field": "Arts & Communication",
       "group": "presentations-and-speaking",
       "aliases": [],
-      "related": [
-        "ethical-speaking"
-      ]
+      "related": []
     },
     {
       "id": "media-interviews",
@@ -5450,9 +4217,7 @@
       "field": "Arts & Communication",
       "group": "communication-practice",
       "aliases": [],
-      "related": [
-        "conflict-communication"
-      ]
+      "related": []
     },
     {
       "id": "conflict-communication",
@@ -5461,10 +4226,7 @@
       "field": "Arts & Communication",
       "group": "communication-practice",
       "aliases": [],
-      "related": [
-        "media-interviews",
-        "delivering-negative-news"
-      ]
+      "related": []
     },
     {
       "id": "delivering-negative-news",
@@ -5473,10 +4235,7 @@
       "field": "Arts & Communication",
       "group": "communication-practice",
       "aliases": [],
-      "related": [
-        "conflict-communication",
-        "crisis-communication"
-      ]
+      "related": []
     },
     {
       "id": "crisis-communication",
@@ -5485,10 +4244,7 @@
       "field": "Arts & Communication",
       "group": "communication-practice",
       "aliases": [],
-      "related": [
-        "delivering-negative-news",
-        "press-conferences"
-      ]
+      "related": []
     },
     {
       "id": "press-conferences",
@@ -5497,10 +4253,7 @@
       "field": "Arts & Communication",
       "group": "communication-practice",
       "aliases": [],
-      "related": [
-        "crisis-communication",
-        "intercultural-communication"
-      ]
+      "related": []
     },
     {
       "id": "intercultural-communication",
@@ -5509,10 +4262,7 @@
       "field": "Arts & Communication",
       "group": "communication-practice",
       "aliases": [],
-      "related": [
-        "press-conferences",
-        "collaborative-problem-solving"
-      ]
+      "related": []
     },
     {
       "id": "collaborative-problem-solving",
@@ -5521,10 +4271,7 @@
       "field": "Arts & Communication",
       "group": "communication-practice",
       "aliases": [],
-      "related": [
-        "intercultural-communication",
-        "meeting-facilitation"
-      ]
+      "related": []
     },
     {
       "id": "meeting-facilitation",
@@ -5533,9 +4280,7 @@
       "field": "Arts & Communication",
       "group": "communication-practice",
       "aliases": [],
-      "related": [
-        "collaborative-problem-solving"
-      ]
+      "related": []
     },
     {
       "id": "newtonian-mechanics",
@@ -5544,9 +4289,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "engineering-unit-conversion"
-      ]
+      "related": []
     },
     {
       "id": "engineering-unit-conversion",
@@ -5555,10 +4298,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "newtonian-mechanics",
-        "force-analysis"
-      ]
+      "related": []
     },
     {
       "id": "force-analysis",
@@ -5567,10 +4307,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "engineering-unit-conversion",
-        "engineering-problem-solving"
-      ]
+      "related": []
     },
     {
       "id": "engineering-problem-solving",
@@ -5579,10 +4316,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "force-analysis",
-        "engineering-vectors"
-      ]
+      "related": []
     },
     {
       "id": "engineering-vectors",
@@ -5591,10 +4325,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "engineering-problem-solving",
-        "two-dimensional-vector-analysis"
-      ]
+      "related": []
     },
     {
       "id": "two-dimensional-vector-analysis",
@@ -5603,10 +4334,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "engineering-vectors",
-        "three-dimensional-vector-analysis"
-      ]
+      "related": []
     },
     {
       "id": "three-dimensional-vector-analysis",
@@ -5615,10 +4343,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "two-dimensional-vector-analysis",
-        "unit-vectors"
-      ]
+      "related": []
     },
     {
       "id": "unit-vectors",
@@ -5627,10 +4352,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "three-dimensional-vector-analysis",
-        "vector-addition"
-      ]
+      "related": []
     },
     {
       "id": "vector-addition",
@@ -5639,10 +4361,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "unit-vectors",
-        "vector-dot-products"
-      ]
+      "related": []
     },
     {
       "id": "vector-dot-products",
@@ -5651,10 +4370,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "vector-addition",
-        "vector-cross-products"
-      ]
+      "related": []
     },
     {
       "id": "vector-cross-products",
@@ -5663,10 +4379,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "vector-dot-products",
-        "one-dimensional-particle-equilibrium"
-      ]
+      "related": []
     },
     {
       "id": "one-dimensional-particle-equilibrium",
@@ -5675,10 +4388,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "vector-cross-products",
-        "two-dimensional-particle-equilibrium"
-      ]
+      "related": []
     },
     {
       "id": "two-dimensional-particle-equilibrium",
@@ -5687,10 +4397,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "one-dimensional-particle-equilibrium",
-        "three-dimensional-particle-equilibrium"
-      ]
+      "related": []
     },
     {
       "id": "three-dimensional-particle-equilibrium",
@@ -5699,10 +4406,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "two-dimensional-particle-equilibrium",
-        "force-moments"
-      ]
+      "related": []
     },
     {
       "id": "force-moments",
@@ -5711,10 +4415,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "three-dimensional-particle-equilibrium",
-        "moment-summation"
-      ]
+      "related": []
     },
     {
       "id": "moment-summation",
@@ -5723,10 +4424,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "force-moments",
-        "varignon-theorem"
-      ]
+      "related": []
     },
     {
       "id": "varignon-theorem",
@@ -5735,10 +4433,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "moment-summation",
-        "three-dimensional-moments"
-      ]
+      "related": []
     },
     {
       "id": "three-dimensional-moments",
@@ -5747,10 +4442,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "varignon-theorem",
-        "force-couples"
-      ]
+      "related": []
     },
     {
       "id": "force-couples",
@@ -5759,10 +4451,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "three-dimensional-moments",
-        "force-system-transformations"
-      ]
+      "related": []
     },
     {
       "id": "force-system-transformations",
@@ -5771,10 +4460,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "force-couples",
-        "static-equivalence"
-      ]
+      "related": []
     },
     {
       "id": "static-equivalence",
@@ -5783,9 +4469,7 @@
       "field": "Engineering",
       "group": "engineering-mechanics",
       "aliases": [],
-      "related": [
-        "force-system-transformations"
-      ]
+      "related": []
     },
     {
       "id": "mechanical-degrees-of-freedom",
@@ -5794,9 +4478,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "free-body-diagrams"
-      ]
+      "related": []
     },
     {
       "id": "free-body-diagrams",
@@ -5806,7 +4488,6 @@
       "group": "structures-and-statics",
       "aliases": [],
       "related": [
-        "mechanical-degrees-of-freedom",
         "equilibrium-equations"
       ]
     },
@@ -5818,8 +4499,7 @@
       "group": "structures-and-statics",
       "aliases": [],
       "related": [
-        "free-body-diagrams",
-        "planar-rigid-body-equilibrium"
+        "free-body-diagrams"
       ]
     },
     {
@@ -5829,10 +4509,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "equilibrium-equations",
-        "spatial-rigid-body-equilibrium"
-      ]
+      "related": []
     },
     {
       "id": "spatial-rigid-body-equilibrium",
@@ -5841,10 +4518,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "planar-rigid-body-equilibrium",
-        "structural-determinacy"
-      ]
+      "related": []
     },
     {
       "id": "structural-determinacy",
@@ -5853,10 +4527,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "spatial-rigid-body-equilibrium",
-        "truss-analysis"
-      ]
+      "related": []
     },
     {
       "id": "truss-analysis",
@@ -5865,10 +4536,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "structural-determinacy",
-        "method-of-joints"
-      ]
+      "related": []
     },
     {
       "id": "method-of-joints",
@@ -5877,10 +4545,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "truss-analysis",
-        "method-of-sections"
-      ]
+      "related": []
     },
     {
       "id": "method-of-sections",
@@ -5889,10 +4554,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "method-of-joints",
-        "frames-and-machines"
-      ]
+      "related": []
     },
     {
       "id": "frames-and-machines",
@@ -5901,10 +4563,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "method-of-sections",
-        "center-of-gravity"
-      ]
+      "related": []
     },
     {
       "id": "center-of-gravity",
@@ -5913,10 +4572,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "frames-and-machines",
-        "center-of-mass"
-      ]
+      "related": []
     },
     {
       "id": "center-of-mass",
@@ -5925,10 +4581,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "center-of-gravity",
-        "centroid-analysis"
-      ]
+      "related": []
     },
     {
       "id": "centroid-analysis",
@@ -5937,10 +4590,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "center-of-mass",
-        "composite-centroids"
-      ]
+      "related": []
     },
     {
       "id": "composite-centroids",
@@ -5949,10 +4599,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "centroid-analysis",
-        "centroid-integration"
-      ]
+      "related": []
     },
     {
       "id": "centroid-integration",
@@ -5961,10 +4608,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "composite-centroids",
-        "distributed-loads"
-      ]
+      "related": []
     },
     {
       "id": "distributed-loads",
@@ -5973,10 +4617,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "centroid-integration",
-        "fluid-statics"
-      ]
+      "related": []
     },
     {
       "id": "fluid-statics",
@@ -5985,10 +4626,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "distributed-loads",
-        "internal-force-analysis"
-      ]
+      "related": []
     },
     {
       "id": "internal-force-analysis",
@@ -5997,10 +4635,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "fluid-statics",
-        "shear-and-bending-diagrams"
-      ]
+      "related": []
     },
     {
       "id": "shear-and-bending-diagrams",
@@ -6009,10 +4644,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "internal-force-analysis",
-        "load-shear-moment-relationships"
-      ]
+      "related": []
     },
     {
       "id": "load-shear-moment-relationships",
@@ -6021,10 +4653,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "shear-and-bending-diagrams",
-        "section-cut-analysis"
-      ]
+      "related": []
     },
     {
       "id": "section-cut-analysis",
@@ -6033,9 +4662,7 @@
       "field": "Engineering",
       "group": "structures-and-statics",
       "aliases": [],
-      "related": [
-        "load-shear-moment-relationships"
-      ]
+      "related": []
     },
     {
       "id": "dry-friction",
@@ -6044,9 +4671,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "slipping-and-tipping"
-      ]
+      "related": []
     },
     {
       "id": "slipping-and-tipping",
@@ -6055,10 +4680,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "dry-friction",
-        "wedge-friction"
-      ]
+      "related": []
     },
     {
       "id": "wedge-friction",
@@ -6067,10 +4689,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "slipping-and-tipping",
-        "screw-thread-mechanics"
-      ]
+      "related": []
     },
     {
       "id": "screw-thread-mechanics",
@@ -6079,10 +4698,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "wedge-friction",
-        "belt-friction"
-      ]
+      "related": []
     },
     {
       "id": "belt-friction",
@@ -6091,10 +4707,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "screw-thread-mechanics",
-        "journal-bearings"
-      ]
+      "related": []
     },
     {
       "id": "journal-bearings",
@@ -6103,10 +4716,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "belt-friction",
-        "area-moments-of-inertia"
-      ]
+      "related": []
     },
     {
       "id": "area-moments-of-inertia",
@@ -6115,10 +4725,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "journal-bearings",
-        "parallel-axis-theorem"
-      ]
+      "related": []
     },
     {
       "id": "parallel-axis-theorem",
@@ -6127,10 +4734,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "area-moments-of-inertia",
-        "composite-shape-inertia"
-      ]
+      "related": []
     },
     {
       "id": "composite-shape-inertia",
@@ -6139,10 +4743,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "parallel-axis-theorem",
-        "polar-moment-of-inertia"
-      ]
+      "related": []
     },
     {
       "id": "polar-moment-of-inertia",
@@ -6151,10 +4752,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "composite-shape-inertia",
-        "radius-of-gyration"
-      ]
+      "related": []
     },
     {
       "id": "radius-of-gyration",
@@ -6163,10 +4761,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "polar-moment-of-inertia",
-        "products-of-inertia"
-      ]
+      "related": []
     },
     {
       "id": "products-of-inertia",
@@ -6175,10 +4770,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "radius-of-gyration",
-        "mass-moment-of-inertia"
-      ]
+      "related": []
     },
     {
       "id": "mass-moment-of-inertia",
@@ -6187,9 +4779,7 @@
       "field": "Engineering",
       "group": "friction-and-inertia",
       "aliases": [],
-      "related": [
-        "products-of-inertia"
-      ]
+      "related": []
     },
     {
       "id": "statistics",
@@ -6201,10 +4791,7 @@
         "stats",
         "statistical analysis"
       ],
-      "related": [
-        "color-palettes",
-        "power-bi"
-      ]
+      "related": []
     },
     {
       "id": "power-bi",
@@ -6217,9 +4804,7 @@
         "Microsoft Power BI",
         "dashboards"
       ],
-      "related": [
-        "statistics"
-      ]
+      "related": []
     },
     {
       "id": "linux",
@@ -6230,10 +4815,7 @@
       "aliases": [
         "command line"
       ],
-      "related": [
-        "linux-command-execution",
-        "troubleshooting"
-      ]
+      "related": []
     },
     {
       "id": "troubleshooting",
@@ -6242,9 +4824,7 @@
       "field": "Tech & Data",
       "group": "systems",
       "aliases": [],
-      "related": [
-        "linux"
-      ]
+      "related": []
     },
     {
       "id": "data-modeling",
@@ -6254,7 +4834,9 @@
       "group": "databases",
       "aliases": [],
       "related": [
-        "database-concurrency-control"
+        "sql",
+        "sql-schemas",
+        "sql-table-constraints"
       ]
     },
     {
@@ -6265,7 +4847,8 @@
       "group": "programming",
       "aliases": [],
       "related": [
-        "web-accessibility"
+        "python-unit-testing",
+        "sql-table-constraints"
       ]
     },
     {
@@ -6278,7 +4861,7 @@
         "extract transform load"
       ],
       "related": [
-        "spark-graph-processing"
+        "spark"
       ]
     },
     {
@@ -6288,10 +4871,7 @@
       "field": "Arts & Communication",
       "group": "writing-and-editing",
       "aliases": [],
-      "related": [
-        "report-writing",
-        "writing"
-      ]
+      "related": []
     },
     {
       "id": "writing",
@@ -6303,7 +4883,8 @@
         "written expression"
       ],
       "related": [
-        "communication"
+        "proofreading",
+        "writing-organization"
       ]
     },
     {
@@ -6314,6 +4895,7 @@
       "group": "assessment-and-support",
       "aliases": [],
       "related": [
+        "writing-learning-objectives",
         "learning-activity-design"
       ]
     },
@@ -6328,7 +4910,6 @@
         "literature review"
       ],
       "related": [
-        "translation",
         "experimental-design"
       ]
     },
@@ -12819,10 +11400,10 @@
       "title": "BCcampus — Concepts of Biology — 5.1: Overview of Photosynthesis",
       "provider": "BCcampus — Concepts of Biology",
       "url": "https://opentextbc.ca/biology/chapter/5-1-overview-of-photosynthesis",
-      "description": "Educational chapter on : Overview of Photosynthesis.",
+      "description": "Educational chapter on Overview of Photosynthesis.",
       "field": "Science & Research",
       "learning_topics": [
-        ": Overview of Photosynthesis"
+        "Overview of Photosynthesis"
       ],
       "resource_type": "learning",
       "format": "tutorial",
@@ -12838,10 +11419,10 @@
       "title": "BCcampus — Concepts of Biology — 5.2: The Light-Dependent Reactions of Photosynthesis",
       "provider": "BCcampus — Concepts of Biology",
       "url": "https://opentextbc.ca/biology/chapter/5-2-the-light-dependent-reactions-of-photosynthesis",
-      "description": "Educational chapter on : The Light-Dependent Reactions of Photosynthesis.",
+      "description": "Educational chapter on The Light-Dependent Reactions of Photosynthesis.",
       "field": "Science & Research",
       "learning_topics": [
-        ": The Light-Dependent Reactions of Photosynthesis"
+        "The Light-Dependent Reactions of Photosynthesis"
       ],
       "resource_type": "learning",
       "format": "tutorial",
@@ -12857,10 +11438,10 @@
       "title": "BCcampus — Concepts of Biology — 5.3: The Calvin Cycle",
       "provider": "BCcampus — Concepts of Biology",
       "url": "https://opentextbc.ca/biology/chapter/5-3-the-calvin-cycle",
-      "description": "Educational chapter on : The Calvin Cycle.",
+      "description": "Educational chapter on The Calvin Cycle.",
       "field": "Science & Research",
       "learning_topics": [
-        ": The Calvin Cycle"
+        "The Calvin Cycle"
       ],
       "resource_type": "learning",
       "format": "tutorial",

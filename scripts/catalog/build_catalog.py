@@ -29,7 +29,7 @@ skills={};resources={};groups={}
 for row in rows:
  check=checks.get(row['url'])
  if not check:continue
- label=row['label'];id=row.get('topic_id',slug(label));group=row['group'];field=row['field']
+ label=row['label'].lstrip(' :');id=row.get('topic_id',slug(label));group=row['group'];field=row['field']
  groups.setdefault(group,{'id':group,'label':group.replace('-',' ').title().replace('Ai Ml','AI / ML').replace('Devops','DevOps'),'field':field})
  skills.setdefault(id,{'id':id,'label':label,'description':('Study '+label.lower()+' through educational reference material.' if field=='Health & Medical' else 'Learn and practice '+label+' using the resources below.'),'field':field,'group':group,'aliases':aliases.get(label,[]),'related':[]})
  url=check.get('final_url',row['url']).split('#')[0].rstrip('/')
@@ -47,11 +47,7 @@ if 'git-repository-creation' in skills:
  source=skills['git-repository-creation'];skills['git']={**source,'id':'git','label':'Git','aliases':['version control'],'related':[]}
  for r in resources.values():
   if 'Git repository creation' in r['learning_topics']:r['learning_topics'].append('Git')
-# Associate a small reviewed family of adjacent skills; direct results still require explicit tags.
-for id,s in skills.items():
- peers=[v for v in skills.values() if v['group']==s['group']]
- pos=peers.index(s)
- s['related']=[p['id'] for p in peers[max(0,pos-1):pos+2] if p['id']!=id]
+# Related skills are explicit curriculum relationships, never catalog neighbors.
 for parent,children in roots.items():
  if slug(parent) not in skills:continue
  for child in children:
@@ -59,7 +55,7 @@ for parent,children in roots.items():
   for a,b in ((slug(parent),slug(child)),(slug(child),slug(parent))):
    if b not in skills[a]['related']:skills[a]['related'].append(b)
 # Shared SQL/Python foundations connect Spark dialects and APIs without conflating their identities.
-for a,b in [('Spark SQL','SQL'),('PySpark','Python'),('Structured Streaming','Spark')]:
+for a,b in [('Spark SQL','SQL'),('PySpark','Python'),('Structured Streaming','Spark'),('Data modeling','SQL'),('Data modeling','SQL schemas'),('Data modeling','SQL table constraints'),('Data validation','Python unit testing'),('Data validation','SQL table constraints'),('ETL','Spark'),('Writing','Proofreading'),('Writing','Writing organization'),('Lesson planning','Writing learning objectives'),('Lesson planning','Learning activity design'),('Research methods','Experimental design'),('Learning assessment','Course evaluation'),('Patient risk assessment','Fall prevention'),('Free-body diagrams','Equilibrium equations'),('Stakeholder analysis','Strategic management')]:
  if slug(a) in skills and slug(b) in skills:
   for x,y in [(a,b),(b,a)]:
    if slug(y) not in skills[slug(x)]['related']:skills[slug(x)]['related'].append(slug(y))
@@ -68,7 +64,7 @@ descriptions={
 for s in skills.values():s['description']=descriptions.get(s['group'],'Develop practical understanding')+'; focus on '+s['label']+'.'
 for label,description in {'Spark':'Process large datasets using Apache Spark’s distributed execution and DataFrame APIs.','PySpark':'Use the Python API for Apache Spark to build distributed data transformations.','Spark SQL':'Query structured datasets with Spark SQL and understand DataFrame execution.','Structured Streaming':'Build incremental streaming queries with Spark’s structured-data engine.','SQL':'Read, combine and summarize relational data with Structured Query Language.','Python':'Write and test Python programs using core language features and libraries.'}.items():
  if slug(label) in skills:skills[slug(label)]['description']=description
-catalog={'version':'2026-10-30.1','reviewed_at':'2026-10-30','groups':list(groups.values()),'skills':list(skills.values()),'resources':list(resources.values())}
+catalog={'version':'2026-10-30.2','reviewed_at':'2026-10-30','groups':list(groups.values()),'skills':list(skills.values()),'resources':list(resources.values())}
 (ROOT/'backend/app/skills_catalog.json').write_text(json.dumps(catalog,ensure_ascii=False,indent=2)+'\n')
 print('skills',len(skills),dict(collections.Counter(s['field'] for s in skills.values())))
 print('resources',len(resources),dict(collections.Counter(s['field'] for s in resources.values())))
