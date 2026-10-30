@@ -70,3 +70,24 @@ def test_legacy_provider_names_and_all_field_support_remain_compatible(client,ac
  for field in skills.FIELDS:
   rows=client.get('/api/skills/resources',params={'kind':'support','field':field,'limit':24}).json()['resources']
   assert any(r['id']=='practice' for r in rows)
+
+
+def test_clean_card_titles_drop_document_structure_and_anchor_glyphs_only():
+ cases={
+  'Chapter 2. The SQL Language':'The SQL Language',
+  'Chapter 21. Database Roles':'Database Roles',
+  'Section IV: Processing data':'Processing data',
+  '1.1. Linear Models #':'Linear Models',
+  'An Informal Introduction to Python ¶':'An Informal Introduction to Python',
+  'Chart visualization #':'Chart visualization',
+  'Getting Started #':'Python — Getting Started',
+  'C#':'C#', 'F#':'F#','3D Coordinate Systems & Vectors':'3D Coordinate Systems & Vectors',
+ }
+ for title,expected in cases.items():
+  original={'id':'stable','url':'https://example.edu/reference','provider':'Example','title':title,'source_title':title,'learning_topics':['Python']}
+  shown=skills.display_resource(original)
+  assert shown['display_title']==expected
+  assert all(shown[k]==original[k] for k in ('id','url','title','source_title'))
+ for original in skills.library():
+  title=skills.display_resource(original)['display_title']
+  assert not __import__('re').search(r'[¶🔗]|\s#\s*$|^chapter\s+\d',title,__import__('re').I),title
