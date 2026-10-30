@@ -161,7 +161,12 @@ def display_resource(row):
   if title.casefold().startswith(prefix.casefold()):title=title[len(prefix):]
  title=re.sub(r'^PostgreSQL:\s*Documentation:\s*[\d.]+:\s*(?:[\d.]+\.?\s*)?', '',title,flags=re.I)
  title=re.sub(r'\s*[—–-]\s*Python [\d.]+ documentation$', '',title,flags=re.I)
+ title=re.sub(r'^(?:chapter|section|part)\s+(?:\d+(?:\.\d+)*|[IVXLCDM]+)\s*[.:—–-]?\s+', '',title,flags=re.I)
  title=re.sub(r'^\d+(?:\.\d+)*[.:]?\s+','',title).lstrip(' :')
+ title=re.sub(r'(?:\s+[¶#§🔗]+|[¶🔗])+$','',title).strip()
+ if title.casefold() in {'getting started','quick start','introduction','overview','tutorial','user guide','welcome'}:
+  topic=next(iter(row.get('learning_topics',[])), '')
+  if topic and topic.casefold() not in title.casefold():title=topic+' — '+title
  row['display_title']=title or row['title']
  return row
 

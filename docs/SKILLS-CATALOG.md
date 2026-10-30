@@ -38,7 +38,7 @@ New practice records retain canonical topic references and catalog version. AI r
 
 The page uses one resource-card grid directly below its compact topic picker and filter toolbar. There is no separate skill browser, category accordion or selected-skill page section. Topic autocomplete reuses `/skills/topics` behind the toolbar. Matching saved practice appears after the grid when available; searchable practice history and career-support directories stay collapsed below it.
 
-**Find skills for me · Free** refreshes at most ten deterministic suggestions. Confirmed Profile skills, Career Goals and the selected posting supply direct matches. Up to three one-hop related topics can follow direct matches, drawn only from explicit reviewed relationships. Catalog neighbors never imply a relationship. Suggestions explain their source and do not change filters until selected. No API key, provider request or usage event is needed. AI remains an explicit action for short practice ideas; at most 24 relevant resource candidates are sent.
+**Find skills for me** refreshes at most ten deterministic suggestions. Confirmed Profile skills, Career Goals and the selected posting supply direct matches. Up to three one-hop related topics can follow direct matches, drawn only from explicit reviewed relationships. Catalog neighbors never imply a relationship. Suggestions explain their source and do not change filters until selected. No API key, provider request or usage event is needed. AI remains an explicit action for short practice ideas; at most 24 relevant resource candidates are sent.
 
 Resource filters support repeated `fields`, `groups`, `providers`, `formats`, `accesses`, `levels`, `sources` and `topic_ids` query parameters. Values within a filter combine with OR; different filters combine with AND. The previous singular parameters and pipe-separated `topics` remain compatible. Responses add disjunctive `facets`, per-card `recommendation_reasons` and `display_title`; source titles, IDs and URLs are preserved. `job_id` scopes recommendations to an owned posting. `sort=recommended` (also legacy `relevance`), `title` and `provider` are deterministic. Recommended sorts direct selected-topic matches first, then personal source relevance and alphabetical ties. Without personal context the fallback is alphabetical.
 
@@ -47,7 +47,7 @@ Search covers titles, descriptions, providers, canonical topics and reviewed ali
 ## Desktop acceptance checks
 
 1. Open Skills. Resource cards should immediately follow the compact controls. Confirm Browse skills, category accordions and Selected skill are absent.
-2. Click **Find skills for me · Free** without an API key. Check suggestion reasons and that no topics are selected automatically or usage recorded.
+2. Click **Find skills for me** without an API key. Check suggestion reasons and that no topics are selected automatically or usage recorded.
 3. Select Python and SQL, Codecademy and DataCamp, Course, and Freemium. Verify matches combine correctly. Search for a nonexistent phrase, check selections remain, then remove just the search chip.
 4. Try Title A–Z, Provider A–Z, numbered pages and keyboard topic selection. Check Resource details for full metadata and the original source title.
 5. Follow a saved milestone's learning link, reload and return. Verify the exact originating plan version and progress survive.
@@ -55,3 +55,9 @@ Search covers titles, descriptions, providers, canonical topics and reviewed ali
 7. Use **Plan these suggestions in Action Plans**. Verify an unsent draft opens with no provider request. Optional AI practice requests remain separate; failures retain all previous suggestions.
 
 Automated checks use simulated AI and fictional desktop accounts. Installed localhost and mobile layouts are outside this delivery.
+
+## Skills presentation polish
+
+The milestone context banner has a keyboard-accessible × next to the return button. Dismissing it removes its plan, milestone and seed topic from the URL; current topic/filter selections remain for the current view. It makes no API write and never deletes or changes a saved plan or progress. Reloading after dismissal does not restore the banner.
+
+Target opportunity and Find skills for me use equal-height aligned control boxes. Page jump dropdowns reserve room for both the page number and native arrow. Card display titles remove chapter/section numbering and documentation heading anchors (¶, spaced # and link glyphs). Generic titles receive the existing topic label. Original titles, IDs, URLs and historical saved content stay intact.
