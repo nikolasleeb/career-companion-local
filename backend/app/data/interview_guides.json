@@ -1,0 +1,935 @@
+{
+  "version": "2026-10-30.1",
+  "reviewed_at": "2026-10-30",
+  "note": "Career Companion editorial guidance. The questions are original practice prompts, not a proprietary bank, a prediction of employer questions or a frequency ranking. Source links support the methods and formats; they do not endorse these exercises.",
+  "sources": [
+    {
+      "id": "mit-primer",
+      "publisher": "MIT Career Advising & Professional Development",
+      "title": "Interview primer",
+      "url": "https://capd.mit.edu/resources/interview-primer/",
+      "supports": "Behavioral question formats, relevant introductions and the STAR framework."
+    },
+    {
+      "id": "arizona-interviews",
+      "publisher": "University of Arizona Center for Career Readiness",
+      "title": "Interview Skills",
+      "url": "https://career.arizona.edu/channels/interview-skills/",
+      "supports": "Learning interview formats, preparation and deliberate answer practice."
+    },
+    {
+      "id": "mckinsey-interviews",
+      "publisher": "McKinsey & Company",
+      "title": "Interviewing at McKinsey",
+      "url": "https://www.mckinsey.com/careers/interviewing",
+      "supports": "Making reasoning visible during a business case. The exercises here are original, not McKinsey cases."
+    },
+    {
+      "id": "oxford-types",
+      "publisher": "University of Oxford Careers Service",
+      "title": "Types of interview",
+      "url": "https://www.ox.ac.uk/careers/careers-guidance/job-search-and-applications/interviewing/types-of-interview",
+      "supports": "Interview formats, technical reasoning, presentations and acknowledging uncertainty."
+    },
+    {
+      "id": "oxford-portfolios",
+      "publisher": "University of Oxford Careers Service",
+      "title": "Creative portfolios, CVs, and applications",
+      "url": "https://www.ox.ac.uk/careers/careers-guidance/job-search-and-applications/writing-applications/creative-portfolios-cvs-and-applications",
+      "supports": "Selecting relevant artifacts and explaining individual contribution and process."
+    },
+    {
+      "id": "nspe-ethics",
+      "publisher": "National Society of Professional Engineers",
+      "title": "Code of Ethics for Engineers",
+      "url": "https://www.nspe.org/career-growth/nspe-code-ethics-engineers",
+      "supports": "Engineering competence and professional responsibility; consult the original code for practice requirements."
+    }
+  ],
+  "guides": [
+    {
+      "id": "behavioral",
+      "title": "Behavioral",
+      "intro": "Prepare to explain real experiences and introduce yourself clearly. Questions about past behavior ask what you actually did; broader questions explore your interests and direction.",
+      "blocks": [
+        {
+          "title": "Choose a real example",
+          "text": "Use work, coursework, projects or volunteering that you can discuss honestly. Briefly establish the context, then focus on your own decisions. An imperfect outcome can still show learning."
+        },
+        {
+          "title": "Use STAR for a past experience",
+          "text": "Situation: set the scene. Task: explain your responsibility. Action: describe your contribution and reasoning. Result: explain the outcome, evidence and learning. The practice workspace has optional STAR fields."
+        },
+        {
+          "title": "Use a different structure for introductions",
+          "text": "For an introduction, connect your current focus, one relevant experience and what you want to do next. For motivation or strengths, state your point, support it and connect it to the role. You do not need to force every answer into STAR."
+        }
+      ],
+      "source_ids": [
+        "mit-primer",
+        "arizona-interviews"
+      ],
+      "questions": [
+        {
+          "id": "behavioral-introduction",
+          "title": "Introduce yourself",
+          "prompt": "Give a brief introduction connecting your current focus, a relevant experience and the kind of contribution you want to make next.",
+          "theme": "Introduction",
+          "field": "",
+          "structure": [
+            "Current focus: what are you working on or learning?",
+            "Relevant experience: what demonstrates that interest?",
+            "Next step: why does this opportunity fit?"
+          ],
+          "look_for": [
+            "A clear thread between experience and direction.",
+            "One concrete detail, with room for follow-up."
+          ],
+          "mistakes": [
+            "Reciting your entire resume.",
+            "Inventing a polished achievement to fill a gap."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        },
+        {
+          "id": "behavioral-motivation",
+          "title": "Explain your interest",
+          "prompt": "What interests you about this role or field, and which part of your experience helped you decide?",
+          "theme": "Motivation",
+          "field": "",
+          "structure": [
+            "Name a specific aspect of the work.",
+            "Connect it to a real experience or interest.",
+            "Explain what you want to contribute or learn."
+          ],
+          "look_for": [
+            "A reason tied to actual tasks.",
+            "An honest distinction between experience and aspiration."
+          ],
+          "mistakes": [
+            "Only praising the company.",
+            "Claiming to know an employer you have not researched."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        },
+        {
+          "id": "behavioral-strength",
+          "title": "Support a strength",
+          "prompt": "Choose a strength relevant to your target work. What is a specific example of you using it, and where are its limits?",
+          "theme": "Strengths",
+          "field": "",
+          "structure": [
+            "Name a relevant strength.",
+            "Give a brief supporting example.",
+            "Explain its application and limitations."
+          ],
+          "look_for": [
+            "Observable actions rather than personality labels.",
+            "Realistic self-awareness."
+          ],
+          "mistakes": [
+            "Listing unsupported adjectives.",
+            "Presenting a preference as proof of ability."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        },
+        {
+          "id": "behavioral-development",
+          "title": "Discuss an area to develop",
+          "prompt": "Describe something you are actively improving, the steps you are taking and how you will know you are making progress.",
+          "theme": "Development",
+          "field": "",
+          "structure": [
+            "Identify a specific development target.",
+            "Explain your practice or feedback process.",
+            "Describe progress and a next check."
+          ],
+          "look_for": [
+            "Ownership and concrete effort.",
+            "Evidence appropriate to your current stage."
+          ],
+          "mistakes": [
+            "Disguising a strength as a weakness.",
+            "Claiming the issue is solved without evidence."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        },
+        {
+          "id": "behavioral-teamwork",
+          "title": "Work with a team",
+          "prompt": "Describe a time your team needed to coordinate different contributions. How did you help the work come together?",
+          "theme": "Teamwork",
+          "field": "",
+          "structure": [
+            "Set the situation and responsibility briefly.",
+            "Describe your own actions and why you chose them.",
+            "Explain the result you can support and what you learned."
+          ],
+          "look_for": [
+            "Your responsibilities and coordination choices.",
+            "How you handled dependencies or misunderstandings."
+          ],
+          "mistakes": [
+            "Saying only what we did.",
+            "Taking credit for the whole team."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        },
+        {
+          "id": "behavioral-disagreement",
+          "title": "Handle a disagreement",
+          "prompt": "Think of a disagreement about how to do a task. What did you do to understand the other view and move the work forward?",
+          "theme": "Conflict",
+          "field": "",
+          "structure": [
+            "Set the situation and responsibility briefly.",
+            "Describe your own actions and why you chose them.",
+            "Explain the result you can support and what you learned."
+          ],
+          "look_for": [
+            "How you listened and explained your reasoning.",
+            "What changed or remained unresolved."
+          ],
+          "mistakes": [
+            "Blaming the other person.",
+            "Inventing an effortless resolution."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        },
+        {
+          "id": "behavioral-initiative",
+          "title": "Take initiative",
+          "prompt": "Describe a time you noticed a problem or opportunity and took a useful first step without being asked.",
+          "theme": "Initiative",
+          "field": "",
+          "structure": [
+            "Set the situation and responsibility briefly.",
+            "Describe your own actions and why you chose them.",
+            "Explain the result you can support and what you learned."
+          ],
+          "look_for": [
+            "Why the step was useful and appropriate.",
+            "Who you involved and what you checked."
+          ],
+          "mistakes": [
+            "Equating initiative with ignoring constraints.",
+            "Claiming an impact you did not measure."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        },
+        {
+          "id": "behavioral-setback",
+          "title": "Learn from a setback",
+          "prompt": "Choose a task that did not go as you expected. How did you respond, and what would you change next time?",
+          "theme": "Learning",
+          "field": "",
+          "structure": [
+            "Set the situation and responsibility briefly.",
+            "Describe your own actions and why you chose them.",
+            "Explain the result you can support and what you learned."
+          ],
+          "look_for": [
+            "Your response and follow-through.",
+            "A specific lesson applied or planned."
+          ],
+          "mistakes": [
+            "Hiding your part in the problem.",
+            "Replacing the outcome with a made-up success."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        },
+        {
+          "id": "behavioral-priorities",
+          "title": "Manage competing priorities",
+          "prompt": "Describe a time two responsibilities competed for your time. How did you decide what to do and communicate the tradeoff?",
+          "theme": "Prioritization",
+          "field": "",
+          "structure": [
+            "Set the situation and responsibility briefly.",
+            "Describe your own actions and why you chose them.",
+            "Explain the result you can support and what you learned."
+          ],
+          "look_for": [
+            "Decision criteria and communication.",
+            "The consequences of your choice."
+          ],
+          "mistakes": [
+            "Claiming you completed everything perfectly.",
+            "Skipping the actual tradeoff."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        },
+        {
+          "id": "behavioral-feedback",
+          "title": "Use feedback",
+          "prompt": "Describe feedback that led you to change your approach. What did you change and how did you check whether it helped?",
+          "theme": "Feedback",
+          "field": "",
+          "structure": [
+            "Set the situation and responsibility briefly.",
+            "Describe your own actions and why you chose them.",
+            "Explain the result you can support and what you learned."
+          ],
+          "look_for": [
+            "Your interpretation and concrete revision.",
+            "How you evaluated the change."
+          ],
+          "mistakes": [
+            "Treating feedback as a personal attack.",
+            "Reporting agreement without a change in behavior."
+          ],
+          "source_ids": [
+            "mit-primer",
+            "arizona-interviews"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "case",
+      "title": "Case / business",
+      "intro": "Work through an unfamiliar business problem aloud. These are original fictional exercises; the goal is to explain a useful line of reasoning, not memorize a firm’s case answers.",
+      "blocks": [
+        {
+          "title": "Frame the decision",
+          "text": "Clarify the objective, the decision-maker and the constraints before calculating. State what you know, what you assume and what you would ask next."
+        },
+        {
+          "title": "Make the reasoning visible",
+          "text": "Break the problem into a few relevant parts, use units consistently and explain what each finding changes. Revise your approach when new information arrives."
+        },
+        {
+          "title": "Finish with a recommendation",
+          "text": "Give a decision, its strongest reasons, risks and a next test. Acknowledge information that could change your answer."
+        }
+      ],
+      "source_ids": [
+        "mckinsey-interviews"
+      ],
+      "questions": [
+        {
+          "id": "case-profit",
+          "title": "Investigate falling profit",
+          "prompt": "A fictional campus cafe reports steady weekly sales but a 20% fall in profit. What would you clarify and investigate before recommending action?",
+          "theme": "Profitability",
+          "field": "",
+          "structure": [
+            "Clarify how profit and sales are measured.",
+            "Separate price, volume and cost drivers.",
+            "Prioritize evidence and a reversible next step."
+          ],
+          "look_for": [
+            "A testable explanation rather than a guess.",
+            "Distinguishing correlation from cause."
+          ],
+          "mistakes": [
+            "Assuming revenue equals profit.",
+            "Cutting staff before understanding the cause."
+          ],
+          "source_ids": [
+            "mckinsey-interviews"
+          ]
+        },
+        {
+          "id": "case-demand",
+          "title": "Estimate demand",
+          "prompt": "A fictional bicycle repair service is considering weekend appointments in a university district. How would you estimate demand and test whether the service is worth offering?",
+          "theme": "Estimation",
+          "field": "",
+          "structure": [
+            "Define the area, time period and potential customers.",
+            "Build an estimate with explicit assumptions and units.",
+            "Check sensitivity and propose a small pilot."
+          ],
+          "look_for": [
+            "A transparent estimation method.",
+            "A useful way to validate uncertain inputs."
+          ],
+          "mistakes": [
+            "Inventing population statistics as facts.",
+            "Presenting a single estimate with no uncertainty."
+          ],
+          "source_ids": [
+            "mckinsey-interviews"
+          ]
+        },
+        {
+          "id": "case-capacity",
+          "title": "Reduce waiting time",
+          "prompt": "A fictional community workshop has a growing appointment queue. Adding staff is one option, but the bottleneck is unknown. How would you diagnose it?",
+          "theme": "Operations",
+          "field": "",
+          "structure": [
+            "Map the steps and arrival patterns.",
+            "Identify where work waits and what to measure.",
+            "Compare changes and monitor outcomes."
+          ],
+          "look_for": [
+            "Attention to capacity and variation.",
+            "A measure that reflects the customer experience."
+          ],
+          "mistakes": [
+            "Optimizing a step that is not the bottleneck.",
+            "Assuming averages describe every busy period."
+          ],
+          "source_ids": [
+            "mckinsey-interviews"
+          ]
+        },
+        {
+          "id": "case-launch",
+          "title": "Assess a new offering",
+          "prompt": "A fictional stationery business can launch either a low-cost refill pack or a premium gift set with the same small budget. How would you compare the options?",
+          "theme": "Strategy",
+          "field": "",
+          "structure": [
+            "Clarify the goal and target customer.",
+            "Compare demand, contribution and operational risk.",
+            "Recommend a test with decision criteria."
+          ],
+          "look_for": [
+            "Explicit comparison criteria.",
+            "What evidence would reverse the recommendation."
+          ],
+          "mistakes": [
+            "Choosing solely from personal taste.",
+            "Ignoring the cost of acquiring customers."
+          ],
+          "source_ids": [
+            "mckinsey-interviews"
+          ]
+        },
+        {
+          "id": "case-experiment",
+          "title": "Design a useful experiment",
+          "prompt": "A fictional online course sees many registrations but few completions. The team proposes reminder messages. How would you test the idea?",
+          "theme": "Experiment design",
+          "field": "",
+          "structure": [
+            "Define completion and the population.",
+            "Compare an appropriate test group and baseline.",
+            "Choose outcome, guardrail and follow-up measures."
+          ],
+          "look_for": [
+            "Potential confounders and consent considerations.",
+            "How results would inform a decision."
+          ],
+          "mistakes": [
+            "Assuming every dropout needs a reminder.",
+            "Calling an observed difference causal without a design."
+          ],
+          "source_ids": [
+            "mckinsey-interviews"
+          ]
+        },
+        {
+          "id": "case-recommend",
+          "title": "Make a constrained recommendation",
+          "prompt": "A fictional nonprofit must choose between extending opening hours and improving remote access. Funds support only one pilot. How would you make and explain the choice?",
+          "theme": "Tradeoffs",
+          "field": "",
+          "structure": [
+            "Identify users, needs and constraints.",
+            "Compare benefits, costs and accessibility.",
+            "Recommend a pilot, risks and a review point."
+          ],
+          "look_for": [
+            "Stakeholder needs and evidence gaps.",
+            "A practical evaluation plan."
+          ],
+          "mistakes": [
+            "Treating all users as identical.",
+            "Ignoring people excluded by the preferred option."
+          ],
+          "source_ids": [
+            "mckinsey-interviews"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "domain",
+      "title": "Domain / scenario",
+      "intro": "Practice explaining professional reasoning in a field. Each example below is fictional and can be adapted to your level; it does not establish credentials or permission to perform regulated work.",
+      "blocks": [
+        {
+          "title": "Set the boundaries",
+          "text": "Name the role you are answering from, the objective and the missing facts. Distinguish a hypothetical response from work you have actually done."
+        },
+        {
+          "title": "Reason, check and communicate",
+          "text": "Explain a first step, alternatives, checks and what you would communicate. State what needs supervision, verification or escalation rather than bluffing."
+        },
+        {
+          "title": "Choose a relevant field",
+          "text": "Use the field on each card to choose an example. For personalized practice, add your role and focus in setup, or supply a question from your own preparation materials."
+        }
+      ],
+      "source_ids": [
+        "oxford-types"
+      ],
+      "questions": [
+        {
+          "id": "domain-tech",
+          "title": "Investigate inconsistent data",
+          "prompt": "Fictional scenario: two dashboards disagree about the same weekly total. As a junior analyst, explain how you would investigate and communicate the discrepancy.",
+          "theme": "Fictional scenario",
+          "field": "Tech & Data",
+          "structure": [
+            "Confirm definitions, time windows and source versions.",
+            "Trace a small sample through the transformations.",
+            "Report findings, uncertainty and the next check."
+          ],
+          "look_for": [
+            "Reproducible checks and careful communication.",
+            "When you would ask a data owner for help."
+          ],
+          "mistakes": [
+            "Choosing the larger total without investigation.",
+            "Changing production data before checking authority."
+          ],
+          "source_ids": [
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "domain-business",
+          "title": "Check a supplier recommendation",
+          "prompt": "Fictional scenario: a team wants to change suppliers based on a cheaper quote that excludes delivery costs. How would you support a sound comparison?",
+          "theme": "Fictional scenario",
+          "field": "Business & Consulting",
+          "structure": [
+            "Clarify requirements and compare like-for-like costs.",
+            "Identify quality, timing and contract questions.",
+            "Communicate the tradeoff and seek missing evidence."
+          ],
+          "look_for": [
+            "A transparent comparison.",
+            "Decision ownership and escalation."
+          ],
+          "mistakes": [
+            "Treating the quoted price as total cost.",
+            "Making commitments outside your authority."
+          ],
+          "source_ids": [
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "domain-engineering",
+          "title": "Respond to an unexpected test result",
+          "prompt": "Fictional scenario: a prototype test returns a result outside the expected range shortly before a review. As an engineering team member, what would you check and communicate?",
+          "theme": "Fictional scenario",
+          "field": "Engineering",
+          "structure": [
+            "Record the anomaly and test conditions.",
+            "Check assumptions and measurement reliability within your role.",
+            "Raise safety or competence concerns with the responsible lead."
+          ],
+          "look_for": [
+            "Traceable evidence and appropriate supervision.",
+            "A clear separation between investigation and approval."
+          ],
+          "mistakes": [
+            "Discarding an inconvenient result.",
+            "Claiming design approval or expertise you do not hold."
+          ],
+          "source_ids": [
+            "oxford-types",
+            "nspe-ethics"
+          ]
+        },
+        {
+          "id": "domain-health",
+          "title": "Handle a privacy concern",
+          "prompt": "Fictional scenario: while helping with appointment administration, you notice a patient list on a shared screen visible to visitors. What would you do within an administrative role?",
+          "theme": "Fictional scenario",
+          "field": "Health & Medical",
+          "structure": [
+            "Describe the immediate privacy concern without repeating personal data.",
+            "Follow the organization’s process and notify an appropriate supervisor.",
+            "Explain what you would document and verify."
+          ],
+          "look_for": [
+            "Respectful communication and role boundaries.",
+            "Recognition that clinical decisions require qualified staff."
+          ],
+          "mistakes": [
+            "Sharing patient details in the interview.",
+            "Offering medical advice or inventing local policy."
+          ],
+          "source_ids": [
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "domain-education",
+          "title": "Adapt an explanation",
+          "prompt": "Fictional scenario: in a supervised learning activity, several learners misunderstand the same instruction. How would you adjust the explanation and check understanding?",
+          "theme": "Fictional scenario",
+          "field": "Education & Public Service",
+          "structure": [
+            "Clarify the learning goal and observed misunderstanding.",
+            "Offer an accessible alternative within your role.",
+            "Check understanding and seek guidance if needed."
+          ],
+          "look_for": [
+            "Evidence of learning rather than assumptions.",
+            "Attention to inclusion and supervision."
+          ],
+          "mistakes": [
+            "Labelling learners from one interaction.",
+            "Assuming repetition alone proves understanding."
+          ],
+          "source_ids": [
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "domain-arts",
+          "title": "Resolve an unclear creative brief",
+          "prompt": "Fictional scenario: a client asks for a design that is both minimal and packed with detail. How would you clarify the brief and move toward a reviewable proposal?",
+          "theme": "Fictional scenario",
+          "field": "Arts & Communication",
+          "structure": [
+            "Ask about audience, purpose and constraints.",
+            "Show a small set of alternatives and explain tradeoffs.",
+            "Agree on feedback and revision criteria."
+          ],
+          "look_for": [
+            "A clear interpretation of the brief.",
+            "Your contribution and permission to share work."
+          ],
+          "mistakes": [
+            "Dismissing the client’s concern.",
+            "Presenting another person’s work as your own."
+          ],
+          "source_ids": [
+            "oxford-types",
+            "oxford-portfolios"
+          ]
+        },
+        {
+          "id": "domain-science",
+          "title": "Examine a result that will not reproduce",
+          "prompt": "Fictional scenario: a public-data analysis gives a different result when a colleague reruns it. How would you investigate before drawing a conclusion?",
+          "theme": "Fictional scenario",
+          "field": "Science & Research",
+          "structure": [
+            "Compare data versions, methods and environments.",
+            "Reproduce a small example and record deviations.",
+            "Communicate limits and agree on further checks."
+          ],
+          "look_for": [
+            "Transparent methods and uncertainty.",
+            "When specialist review is needed."
+          ],
+          "mistakes": [
+            "Changing the method just to recover a desired result.",
+            "Claiming an unverified scientific finding."
+          ],
+          "source_ids": [
+            "oxford-types"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "presentation",
+      "title": "Presentation / portfolio",
+      "intro": "Explain a real artifact, project or presentation so someone can understand the purpose, your contribution and the evidence behind your choices.",
+      "blocks": [
+        {
+          "title": "Select rather than catalogue",
+          "text": "Choose work you are allowed to share that fits the audience and role. Explain the brief, show a useful detail and identify your individual contribution."
+        },
+        {
+          "title": "Build a clear story",
+          "text": "Use a purpose → decisions → evidence → reflection structure. For a short presentation, lead with the key point and use supporting material selectively."
+        },
+        {
+          "title": "Prepare for discussion",
+          "text": "Anticipate questions about alternatives, limitations and revisions. Separate completed work from proposed next steps and acknowledge collaborators."
+        }
+      ],
+      "source_ids": [
+        "oxford-portfolios",
+        "oxford-types"
+      ],
+      "questions": [
+        {
+          "id": "presentation-purpose",
+          "title": "Explain the purpose",
+          "prompt": "Choose a real artifact you can share. What problem or need did it address, and who was it for?",
+          "theme": "Purpose",
+          "field": "",
+          "structure": [
+            "State the need and audience.",
+            "Show the relevant part of the artifact.",
+            "Explain what success meant."
+          ],
+          "look_for": [
+            "A specific purpose and selection rationale."
+          ],
+          "mistakes": [
+            "Starting with every implementation detail."
+          ],
+          "source_ids": [
+            "oxford-portfolios",
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "presentation-contribution",
+          "title": "Make your contribution clear",
+          "prompt": "Walk through a collaborative project and explain which decisions and deliverables were yours.",
+          "theme": "Contribution",
+          "field": "",
+          "structure": [
+            "Set the project context.",
+            "Distinguish your work from collaborators’ work.",
+            "Show evidence of one contribution."
+          ],
+          "look_for": [
+            "Clear ownership and credit."
+          ],
+          "mistakes": [
+            "Claiming the entire project as individual work."
+          ],
+          "source_ids": [
+            "oxford-portfolios",
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "presentation-decision",
+          "title": "Defend a decision",
+          "prompt": "Pick one important decision in your work. Which alternatives did you consider, and why did you choose this approach?",
+          "theme": "Decisions",
+          "field": "",
+          "structure": [
+            "Describe the constraint or decision.",
+            "Compare plausible alternatives.",
+            "Explain your choice and its limitations."
+          ],
+          "look_for": [
+            "Reasoning grounded in the brief."
+          ],
+          "mistakes": [
+            "Claiming the chosen approach had no tradeoffs."
+          ],
+          "source_ids": [
+            "oxford-portfolios",
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "presentation-evidence",
+          "title": "Explain what you checked",
+          "prompt": "How did you evaluate whether an artifact, analysis or presentation achieved its purpose?",
+          "theme": "Evidence",
+          "field": "",
+          "structure": [
+            "Define the intended outcome.",
+            "Explain the checks or feedback you used.",
+            "Distinguish findings from remaining uncertainty."
+          ],
+          "look_for": [
+            "Checks that relate to the stated purpose."
+          ],
+          "mistakes": [
+            "Treating a polished appearance as proof of success."
+          ],
+          "source_ids": [
+            "oxford-portfolios",
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "presentation-audience",
+          "title": "Adapt to an audience",
+          "prompt": "Give a short explanation of your work for someone outside your field. What would you emphasize or leave out?",
+          "theme": "Audience",
+          "field": "",
+          "structure": [
+            "Lead with the key point.",
+            "Explain one useful example in familiar language.",
+            "Check whether the listener needs more detail."
+          ],
+          "look_for": [
+            "A clear message and accessible language."
+          ],
+          "mistakes": [
+            "Replacing explanation with unexplained jargon."
+          ],
+          "source_ids": [
+            "oxford-portfolios",
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "presentation-reflection",
+          "title": "Reflect on a revision",
+          "prompt": "Show a change you made after feedback or testing. Why did you revise it, and what would you do next?",
+          "theme": "Reflection",
+          "field": "",
+          "structure": [
+            "Explain the original choice and feedback.",
+            "Describe the revision and what you checked.",
+            "Name a realistic next improvement."
+          ],
+          "look_for": [
+            "A traceable learning process."
+          ],
+          "mistakes": [
+            "Presenting a planned change as already completed."
+          ],
+          "source_ids": [
+            "oxford-portfolios",
+            "oxford-types"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "other",
+      "title": "Other interview formats",
+      "intro": "Use this guide when your preparation does not fit the named formats. Describe the actual format, field, audience and instructions before choosing how to practice.",
+      "blocks": [
+        {
+          "title": "Define what you are preparing for",
+          "text": "Identify whether you need a panel discussion, an unfamiliar task, a role-specific conversation or another format. Add the instructions in setup; do not assume a company name tells us the format."
+        },
+        {
+          "title": "Match the answer to the task",
+          "text": "A past-experience question needs a real example. A hypothetical problem needs assumptions and reasoning. A presentation needs an audience and purpose. Ask for clarification when the task is ambiguous."
+        },
+        {
+          "title": "Choose your next step",
+          "text": "Use an adaptable prompt below, start without a question, or enter a question you already have. Follow-up discussion and personalized AI questions remain available inside the session."
+        }
+      ],
+      "source_ids": [
+        "arizona-interviews",
+        "oxford-types"
+      ],
+      "questions": [
+        {
+          "id": "other-brief",
+          "title": "Clarify an unfamiliar brief",
+          "prompt": "Imagine an interviewer gives you an unfamiliar task with little detail. How would you clarify the objective, expected output and constraints before starting?",
+          "theme": "Clarification",
+          "field": "",
+          "structure": [
+            "Restate what is understood.",
+            "Ask the most consequential questions.",
+            "State a reasonable first step and remaining assumptions."
+          ],
+          "look_for": [
+            "A focused clarification process."
+          ],
+          "mistakes": [
+            "Pretending the instructions are clear when they are not."
+          ],
+          "source_ids": [
+            "arizona-interviews",
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "other-panel",
+          "title": "Address different perspectives",
+          "prompt": "How would you explain one piece of your real work to a panel whose members have different levels of subject knowledge?",
+          "theme": "Panel discussion",
+          "field": "",
+          "structure": [
+            "Find a shared purpose.",
+            "Give a concise explanation and concrete example.",
+            "Invite and address questions at the right level."
+          ],
+          "look_for": [
+            "Audience awareness and clarity."
+          ],
+          "mistakes": [
+            "Assuming all panel members need the same technical detail."
+          ],
+          "source_ids": [
+            "arizona-interviews",
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "other-unknown",
+          "title": "Respond when you do not know",
+          "prompt": "If an interviewer asks about an unfamiliar concept, how would you respond honestly while showing a useful way to reason or learn?",
+          "theme": "Uncertainty",
+          "field": "",
+          "structure": [
+            "State what you know and what you do not.",
+            "Ask a clarifying question or reason from a known principle.",
+            "Explain how you would verify your answer."
+          ],
+          "look_for": [
+            "Honesty and a practical verification path."
+          ],
+          "mistakes": [
+            "Making up a definition or claiming expertise."
+          ],
+          "source_ids": [
+            "arizona-interviews",
+            "oxford-types"
+          ]
+        },
+        {
+          "id": "other-closing",
+          "title": "Ask a useful closing question",
+          "prompt": "Choose two questions you would ask an interviewer to understand the work, expectations or team. Explain why each matters to you.",
+          "theme": "Closing conversation",
+          "field": "",
+          "structure": [
+            "Identify information you still need.",
+            "Ask focused questions that cannot be answered by a quick page scan.",
+            "Connect the answer to an informed decision."
+          ],
+          "look_for": [
+            "Curiosity tied to the actual work."
+          ],
+          "mistakes": [
+            "Inventing facts about the employer."
+          ],
+          "source_ids": [
+            "arizona-interviews",
+            "oxford-types"
+          ]
+        }
+      ]
+    }
+  ]
+}

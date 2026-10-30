@@ -5,7 +5,7 @@ from typing import Literal
 from fastapi import APIRouter,Depends,HTTPException,UploadFile,File
 from fastapi.responses import FileResponse
 from pydantic import Field
-from . import auth,db,onboarding,config,documents,storage,ai,career_coach,task_progress,application_documents,chat_visuals,work_preferences,profile_answers
+from . import auth,db,onboarding,config,documents,storage,ai,career_coach,task_progress,application_documents,chat_visuals,work_preferences,profile_answers,interview_guides
 from .models import StrictModel
 from .network import ServiceError
 router=APIRouter(prefix='/api/interview-practice')
@@ -33,6 +33,7 @@ class Setup(StrictModel):
  language:Literal['Python','JavaScript','TypeScript','Java','C++','C#','SQL']='Python'
  use_work_styles:bool=False
  difficulty:Literal['introductory','intermediate','advanced']='introductory'
+ guide_question_id:str=Field(default='',max_length=100)
 class Reference(StrictModel):
  source_id:str=Field(max_length=150)
  quote:str=Field(min_length=1,max_length=700)
@@ -101,6 +102,10 @@ def detail(user,id):
  research=[r for r in db.list_entities(user,'interview_research') if r['data'].get('chat_id')==id]
  messages=list(reversed([r for r in db.list_entities(user,'interview_message') if r['data']['session_id']==id]))
  return {'work_styles_available':bool(work_preferences.context(user)['preferences']),'materials':[r for r in db.list_entities(user,'interview_material') if r['data']['session_id']==id],'voice':[r for r in db.list_entities(user,'interview_voice') if r['data']['session_id']==id],'messages':messages,'session':s,'questions':list(reversed(qs)),'attempts':list(reversed(attempts)),'research':research[0] if research else None,'profile_revision':career_coach.profile(user)['revision']}
+@router.get('/guides')
+def guides(user=Depends(owner)):
+ return interview_guides.catalog()
+
 @router.get('/sessions')
 def sessions(user=Depends(owner)):
  return {'sessions':db.list_entities(user,'interview_session'),'legacy':db.list_entities(user,'interview')}
@@ -108,7 +113,8 @@ def sessions(user=Depends(owner)):
 def session(id:str,user=Depends(owner)):return detail(user,id)
 @router.post('/sessions')
 def create(body:Setup,user=Depends(owner)):
- data=body.model_dump();posting={}
+ data=body.model_dump(exclude={'guide_question_id'});posting={}
+ starter=interview_guides.starter(body.kind,body.guide_question_id) if body.guide_question_id else None
  if body.use_work_styles and not work_preferences.context(user)['preferences']:raise HTTPException(422,'Enable and save your approved Work Styles summary in Profile first.')
  if body.application_id:
   app=owned(user,body.application_id,'application')['data'];posting=app.get('posting_snapshot',{});data['company']=body.company or app.get('company','');data['role']=body.role or app.get('title','');data['job_id']=app.get('job_id','')
@@ -116,7 +122,17 @@ def create(body:Setup,user=Depends(owner)):
   job=owned(user,data['job_id'],'job')['data'];posting=posting or job;data['company']=data['company'] or job.get('company','');data['role']=data['role'] or job.get('title','')
  for id in body.document_ids:material(user,id)
  data.update(title=body.title or ((data['company']+' · ' if data['company'] else '')+{'behavioral':'Behavioral practice','star':'STAR practice','coding':'Coding practice','case':'Case / business practice','domain':'Domain / scenario practice','presentation':'Presentation / portfolio practice','other':'Interview practice'}[body.kind]),posting_snapshot=posting,code_execution=False)
- return db.save(user,'interview_session',data)
+ # A guide starter and its session are one commit. Recheck ownership under the
+ # same write lock so a concurrent deletion cannot leave dangling context.
+ session_id=db.uid();stamp=db.now()
+ with db.connect() as c:
+  c.execute('BEGIN IMMEDIATE')
+  for id,kind in [(body.application_id,'application'),(data['job_id'],'job')]+[(id,'document') for id in body.document_ids]:
+   if id and not c.execute('SELECT 1 FROM entities WHERE id=? AND user_id=? AND kind=?',(id,user,kind)).fetchone():raise HTTPException(404,'Interview practice context is unavailable.')
+  c.execute('INSERT INTO entities VALUES(?,?,?,?,?,?)',(session_id,user,'interview_session',json.dumps(data),stamp,stamp))
+  if starter:
+   c.execute('INSERT INTO entities VALUES(?,?,?,?,?,?)',(db.uid(),user,'interview_question',json.dumps({**starter,'session_id':session_id}),stamp,stamp))
+ return db.get(user,session_id,'interview_session')
 
 def material(user,id):
  r=owned(user,id,'document')
