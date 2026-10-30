@@ -1,0 +1,920 @@
+[
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-1-1-focused-pain-assessment/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/2-1-1-focused-pain-assessment/",
+    "title": "2.2 Pain Assessment – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/vital-signs/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/vital-signs/",
+    "title": "2.3 Vital Signs – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-4-health-history-subjective-assessment/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/2-4-health-history-subjective-assessment/",
+    "title": "2.4 Health History – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-2-head-to-toe-assessment-checklist/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/2-2-head-to-toe-assessment-checklist/",
+    "title": "2.5 Head-to-Toe Assessment – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-2-emergency-assessment-checklist/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/2-2-emergency-assessment-checklist/",
+    "title": "2.6 Initial and Emergency Assessment – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-5-focussed-respiratory-assessment/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/2-5-focussed-respiratory-assessment/",
+    "title": "2.7 Focused Assessments – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/positioning-a-patient-in-bed/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/positioning-a-patient-in-bed/",
+    "title": "3.3 Patient Risk Assessment – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-2-pulse-oximetry-2/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/5-2-pulse-oximetry-2/",
+    "title": "5.3 Pulse Oximetry – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-3-causes-of-hypoxemia-2/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/5-3-causes-of-hypoxemia-2/",
+    "title": "5.4 Signs and Symptoms of Hypoxia – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/8-2-glucometer-use/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/8-2-glucometer-use/",
+    "title": "9.2 Glucometer Use – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/hypoglycemia-protocol/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/hypoglycemia-protocol/",
+    "title": "9.3 Hypoglycemia and Hyperglycemia – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/medical-asepsis/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/medical-asepsis/",
+    "title": "1.2 Infection Prevention and Control Practices – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/1-6-hand-hygiene/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/1-6-hand-hygiene/",
+    "title": "1.3 Hand Hygiene and Non-Sterile Gloves – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/1-8-masks/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/1-8-masks/",
+    "title": "1.4 Additional Precautions and Personal Protective Equipment (PPE) – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/surgical-asepsis/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/surgical-asepsis/",
+    "title": "1.5 Surgical Asepsis and the Principles of Sterile Technique – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/entering-the-operating-room/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/entering-the-operating-room/",
+    "title": "1.6 The Operating Room Environment – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/sterile-gloving/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/sterile-gloving/",
+    "title": "1.7 Sterile Procedures and Sterile Attire – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-2-body-mechanics/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/3-2-body-mechanics/",
+    "title": "3.2 Body Mechanics – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-6-transferring-and-ambulation/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/3-6-transferring-and-ambulation/",
+    "title": "3.4 Immobility and Assisting Patients – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-4-positioning-a-patient-in-bed/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/3-4-positioning-a-patient-in-bed/",
+    "title": "3.5 Positioning Patients in Bed – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-5-positioning-a-patient-on-the-side-of-a-bed/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/3-5-positioning-a-patient-on-the-side-of-a-bed/",
+    "title": "3.6 Assisting a Patient to a Sitting Position and Ambulation – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-7-transfers-and-ambulation/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/3-7-transfers-and-ambulation/",
+    "title": "3.7 Patient Transfers – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-7-fall-prevention/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/3-7-fall-prevention/",
+    "title": "3.8 Fall Prevention – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/wound-assessment/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/wound-assessment/",
+    "title": "4.2 Wound Healing and Assessment – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-2-simple-dressing-change/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/4-2-simple-dressing-change/",
+    "title": "4.3 Simple Dressing Change – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-3-suture-care-and-removal/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/4-3-suture-care-and-removal/",
+    "title": "4.4 Suture Removal – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-4-suture-care-and-removal/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/4-4-suture-care-and-removal/",
+    "title": "4.5 Staple Removal – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-5-complex-dressing-change/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/4-5-complex-dressing-change/",
+    "title": "4.6 Moist to Dry Dressing, and Wound Irrigation and Packing – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-8-drain-management-and-removal/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/4-8-drain-management-and-removal/",
+    "title": "4.7 Drain Management and Removal – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-5-oxygen-therapy-systems/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/5-5-oxygen-therapy-systems/",
+    "title": "5.5 Oxygen Therapy Systems – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-5-management-of-hypoxemia/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/5-5-management-of-hypoxemia/",
+    "title": "5.6 Management of Hypoxia – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-6-complications-of-oxygen-therapy/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/5-6-complications-of-oxygen-therapy/",
+    "title": "5.7 Cautions with Oxygen Therapy – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-7-oral-suctioning/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/5-7-oral-suctioning/",
+    "title": "5.8 Oral Suctioning – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/6-1-safe-medication-adminstration/",
+    "final_url": "https://opentextbc.ca/clinicalskills/chapter/6-1-safe-medication-adminstration/",
+    "title": "6.2 Safe Medication Administration – Clinical Procedures for Safer Patient Care",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-2-2-epistemology-and-why-its-important/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-2-2-epistemology-and-why-its-important/",
+    "title": "2.2 Epistemology and theories of learning – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-3-2-behaviourism/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-3-2-behaviourism/",
+    "title": "2.3 Objectivism and behaviourism – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/3-3-cognitivism/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/3-3-cognitivism/",
+    "title": "2.4 Cognitivism – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-3-4-constructivism/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-3-4-constructivism/",
+    "title": "2.5 Constructivism – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/3-6-connectivism/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/3-6-connectivism/",
+    "title": "2.6 Connectivism – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-4-1-five-perspectives-on-teaching/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-4-1-five-perspectives-on-teaching/",
+    "title": "3.1 Five perspectives on teaching – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-2-transmissive-lectures/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-2-transmissive-lectures/",
+    "title": "3.3 Transmissive lectures: learning by listening – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-3-interactive-lectures-seminars-tutorials-and-moocs/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-3-interactive-lectures-seminars-tutorials-and-moocs/",
+    "title": "3.4 Interactive lectures, seminars, and tutorials: learning by talking – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/3-5-apprenticeship-learning-by-doing-1/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/3-5-apprenticeship-learning-by-doing-1/",
+    "title": "3.5 Apprenticeship: learning by doing (1) – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-4-models-for-teaching-by-doing/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-4-models-for-teaching-by-doing/",
+    "title": "3.6 Experiential learning: learning by doing (2) – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-5-the-nurturing-and-social-reform-models-of-teaching/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-5-the-nurturing-and-social-reform-models-of-teaching/",
+    "title": "3.7 The nurturing and social reform models of teaching: learning by feeling – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-5-the-addie-model/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-5-the-addie-model/",
+    "title": "4.3 The ADDIE model – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-5-online-collaborative-learning/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-5-online-collaborative-learning/",
+    "title": "4.4 Online collaborative learning – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-6-competency-based-learning/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-6-competency-based-learning/",
+    "title": "4.5 Competency-based learning – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-7-experiential-learning/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-7-experiential-learning/",
+    "title": "4.6 Communities of practice – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-10-agile-design-flexible-designs-for-learning/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-10-agile-design-flexible-designs-for-learning/",
+    "title": "4.7 ‘Agile’ Design: flexible designs for learning – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/conclusions/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/conclusions/",
+    "title": "4.8 Making decisions about teaching methods – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-1-online-learning-and-teaching-methods/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-1-online-learning-and-teaching-methods/",
+    "title": "4.1 Online learning and teaching methods – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-7-4-design-models-for-moocs/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-7-4-design-models-for-moocs/",
+    "title": "5.3 Variations in MOOC designs – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-7-5-strengths-and-weaknesses-of-moocs/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-7-5-strengths-and-weaknesses-of-moocs/",
+    "title": "5.4 Strengths and weaknesses of MOOCs – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-3-broadcast-vs-communicative-technologies/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-3-broadcast-vs-communicative-technologies/",
+    "title": "6.4 Broadcast vs communicative media – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-4-synchronous-vs-asynchronous/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-4-synchronous-vs-asynchronous/",
+    "title": "6.5 The time and space dimensions of media – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-7-media-richness/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-7-media-richness/",
+    "title": "6.6 Media richness – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-8-pedagogical-differences-between-media/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-8-pedagogical-differences-between-media/",
+    "title": "7.2 Text – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-5-2-audio/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-5-2-audio/",
+    "title": "7.3 Audio – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-5-3-video/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-5-3-video/",
+    "title": "7.4 Video – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/computers-and-learning/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/computers-and-learning/",
+    "title": "7.5 Computing – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-5-5-social-media/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-5-5-social-media/",
+    "title": "7.6 Social media – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-1-models-for-media-selection/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-1-models-for-media-selection/",
+    "title": "8.1 Models for media selection – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-9-the-sections-model-speed-and-security/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-9-the-sections-model-speed-and-security/",
+    "title": "8.9 Security and privacy – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/10-3-comparing-delivery-methods/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/10-3-comparing-delivery-methods/",
+    "title": "9.2 Comparing delivery methods – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/oer/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/oer/",
+    "title": "10.2 Open educational resources (OER) – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/11-8-step-six-set-appropriate-learning-goals/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/11-8-step-six-set-appropriate-learning-goals/",
+    "title": "11.8 Step six: set appropriate learning goals – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/11-9-step-seven/",
+    "final_url": "https://opentextbc.ca/teachinginadigitalage/chapter/11-9-step-seven/",
+    "title": "11.9 Step seven: design course structure and learning activities – Teaching in a Digital Age",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/1-1-themes-and-concepts-of-biology/",
+    "final_url": "https://opentextbc.ca/biology/chapter/1-1-themes-and-concepts-of-biology/",
+    "title": "1.1 Themes and Concepts of Biology – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/1-2-the-process-of-science/",
+    "final_url": "https://opentextbc.ca/biology/chapter/1-2-the-process-of-science/",
+    "title": "1.2 The Process of Science – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/2-1-the-building-blocks-of-molecules/",
+    "final_url": "https://opentextbc.ca/biology/chapter/2-1-the-building-blocks-of-molecules/",
+    "title": "2.1 The Building Blocks of Molecules – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/2-2-water/",
+    "final_url": "https://opentextbc.ca/biology/chapter/2-2-water/",
+    "title": "2.2 Water – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/2-3-biological-molecules/",
+    "final_url": "https://opentextbc.ca/biology/chapter/2-3-biological-molecules/",
+    "title": "2.3 Biological Molecules – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-1-how-cells-are-studied/",
+    "final_url": "https://opentextbc.ca/biology/chapter/3-1-how-cells-are-studied/",
+    "title": "3.1 How Cells Are Studied – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-2-comparing-prokaryotic-and-eukaryotic-cells/",
+    "final_url": "https://opentextbc.ca/biology/chapter/3-2-comparing-prokaryotic-and-eukaryotic-cells/",
+    "title": "3.2 Comparing Prokaryotic and Eukaryotic Cells – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-3-eukaryotic-cells/",
+    "final_url": "https://opentextbc.ca/biology/chapter/3-3-eukaryotic-cells/",
+    "title": "3.3 Eukaryotic Cells – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-4-the-cell-membrane/",
+    "final_url": "https://opentextbc.ca/biology/chapter/3-4-the-cell-membrane/",
+    "title": "3.4 The Cell Membrane – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-5-passive-transport/",
+    "final_url": "https://opentextbc.ca/biology/chapter/3-5-passive-transport/",
+    "title": "3.5 Passive Transport – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-6-active-transport/",
+    "final_url": "https://opentextbc.ca/biology/chapter/3-6-active-transport/",
+    "title": "3.6 Active Transport – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-1-energy-and-metabolism/",
+    "final_url": "https://opentextbc.ca/biology/chapter/4-1-energy-and-metabolism/",
+    "title": "4.1 Energy and Metabolism – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-2-glycolysis/",
+    "final_url": "https://opentextbc.ca/biology/chapter/4-2-glycolysis/",
+    "title": "4.2 Glycolysis – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-3-citric-acid-cycle-and-oxidative-phosphorylation/",
+    "final_url": "https://opentextbc.ca/biology/chapter/4-3-citric-acid-cycle-and-oxidative-phosphorylation/",
+    "title": "4.3 Citric Acid Cycle and Oxidative Phosphorylation – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-4-fermentation/",
+    "final_url": "https://opentextbc.ca/biology/chapter/4-4-fermentation/",
+    "title": "4.4 Fermentation – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-5-connections-to-other-metabolic-pathways/",
+    "final_url": "https://opentextbc.ca/biology/chapter/4-5-connections-to-other-metabolic-pathways/",
+    "title": "4.5 Connections to Other Metabolic Pathways – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/5-1-overview-of-photosynthesis/",
+    "final_url": "https://opentextbc.ca/biology/chapter/5-1-overview-of-photosynthesis/",
+    "title": "5.1: Overview of Photosynthesis – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/5-2-the-light-dependent-reactions-of-photosynthesis/",
+    "final_url": "https://opentextbc.ca/biology/chapter/5-2-the-light-dependent-reactions-of-photosynthesis/",
+    "title": "5.2: The Light-Dependent Reactions of Photosynthesis – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/5-3-the-calvin-cycle/",
+    "final_url": "https://opentextbc.ca/biology/chapter/5-3-the-calvin-cycle/",
+    "title": "5.3: The Calvin Cycle – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/6-1-the-genome/",
+    "final_url": "https://opentextbc.ca/biology/chapter/6-1-the-genome/",
+    "title": "6.1 The Genome – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/6-2-the-cell-cycle/",
+    "final_url": "https://opentextbc.ca/biology/chapter/6-2-the-cell-cycle/",
+    "title": "6.2 The Cell Cycle – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/6-3-cancer-and-the-cell-cycle/",
+    "final_url": "https://opentextbc.ca/biology/chapter/6-3-cancer-and-the-cell-cycle/",
+    "title": "6.3 Cancer and the Cell Cycle – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/6-4-prokaryotic-cell-division/",
+    "final_url": "https://opentextbc.ca/biology/chapter/6-4-prokaryotic-cell-division/",
+    "title": "6.4 Prokaryotic Cell Division – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/7-1-sexual-reproduction/",
+    "final_url": "https://opentextbc.ca/biology/chapter/7-1-sexual-reproduction/",
+    "title": "7.1 Sexual Reproduction – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/7-2-meiosis/",
+    "final_url": "https://opentextbc.ca/biology/chapter/7-2-meiosis/",
+    "title": "7.2 Meiosis – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/7-3-errors-in-meiosis/",
+    "final_url": "https://opentextbc.ca/biology/chapter/7-3-errors-in-meiosis/",
+    "title": "7.3 Errors in Meiosis – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/8-1-mendels-experiments/",
+    "final_url": "https://opentextbc.ca/biology/chapter/8-1-mendels-experiments/",
+    "title": "8.1 Mendel’s Experiments – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/8-2-laws-of-inheritance/",
+    "final_url": "https://opentextbc.ca/biology/chapter/8-2-laws-of-inheritance/",
+    "title": "8.2 Laws of Inheritance – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/8-3-extensions-of-the-laws-of-inheritance/",
+    "final_url": "https://opentextbc.ca/biology/chapter/8-3-extensions-of-the-laws-of-inheritance/",
+    "title": "8.3 Extensions of the Laws of Inheritance – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-1-the-structure-of-dna/",
+    "final_url": "https://opentextbc.ca/biology/chapter/9-1-the-structure-of-dna/",
+    "title": "9.1 The Structure of DNA – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-2-dna-replication/",
+    "final_url": "https://opentextbc.ca/biology/chapter/9-2-dna-replication/",
+    "title": "9.2 DNA Replication – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-3-transcription/",
+    "final_url": "https://opentextbc.ca/biology/chapter/9-3-transcription/",
+    "title": "9.3 Transcription – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-4-translation/",
+    "final_url": "https://opentextbc.ca/biology/chapter/9-4-translation/",
+    "title": "9.4 Translation – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-5-how-genes-are-regulated/",
+    "final_url": "https://opentextbc.ca/biology/chapter/9-5-how-genes-are-regulated/",
+    "title": "9.5 How Genes Are Regulated – Concepts of Biology – 1st Canadian Edition",
+    "valid": true,
+    "status": 200,
+    "review_method": "web retrieval",
+    "checked_at": "2026-10-30"
+  }
+]

@@ -1,7 +1,7 @@
 """Concrete learning vocabulary shared by resource discovery and saved milestones."""
 import re
 from functools import lru_cache
-from . import career_evidence
+from . import career_evidence,skill_catalog
 GENERIC={'education','projects','project','certification','certifications','credentials','training','engineering','science','research','career exploration','occupations','it and systems','data engineering','software engineering','public service','nursing','healthcare administration','management consulting','marketing','finance','accounting','design','journalism'}
 # Broad disciplines remain filters; these labels describe things a person can practice.
 CURATED={
@@ -13,7 +13,7 @@ RESOURCE_TOPICS={
  'explore':[], 'practice':['Portfolio development','Communication'], 'cert-choice':[], 'sql':['SQL'], 'cloud':['AWS'], 'microsoft':['Azure','Power BI','Excel'], 'it':['Networking','Troubleshooting'], 'software':['HTML','CSS','JavaScript'], 'consulting':['Business analysis'], 'marketing':['Market research'], 'accounting':['Bookkeeping'], 'finance':['Financial analysis'], 'operations':['Project management'], 'engineering':[], 'engineering-license':[], 'cad':['CAD'], 'nursing':['Patient communication'], 'public-health':['Public health methods'], 'clinical':['Clinical research methods','Research methods'], 'health-admin':['Operations analysis'], 'teaching':['Lesson planning'], 'public-service':[], 'writing':['Writing'], 'design':['Interface design'], 'journalism':['Reporting and interviewing','Writing'], 'science':['Experimental design'], 'research-methods':['Research methods'], 'environment':['Environmental data analysis'], 'networking':['Communication'], 'data-engineering':['PostgreSQL','SQL','Data modeling'], 'cfa':['Financial analysis'], 'cpa':['Bookkeeping'], 'marketing-cert':['Market research'], 'nursing-cert':[], 'lab-cert':[], 'quality-cert':['Quality control analysis'], 'hr-cert':['Human resources practices'], 'google-cert':['Project management'],
  'codecademy-python':['Python'],'codecademy-sql':['SQL'],'datacamp-python':['Python'],'datacamp-sql':['SQL'],
 }
-def key(label):return career_evidence.canonical(label)
+def key(label):return skill_catalog.resolve(label) or career_evidence.canonical(label)
 def clean(values,limit=30):
  result=[];seen=set()
  for value in values:
@@ -31,6 +31,8 @@ def vocabulary():
   for item in occupation['skills']:
    k=key(item['name'])
    if k not in GENERIC:rows.setdefault(k,{'label':item['name'],'aliases':{item['name']}})
+ for skill in skill_catalog.data()['skills']:
+  rows[skill['id']]={'label':skill['label'],'aliases':set([skill['label'],*skill.get('aliases',[])])}
  return rows
 
 def mentions(text):
