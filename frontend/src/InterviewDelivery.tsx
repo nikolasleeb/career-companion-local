@@ -1,0 +1,11 @@
+import React from 'react';
+export function DeliveryFeedback({delivery,metrics}:{delivery:any;metrics:any}){
+ const fillers=delivery?.fillers,count=fillers?.count,hasEstimate=Number.isInteger(count)&&count>=0;
+ return <section className="interview-delivery"><h3>Delivery feedback</h3>
+ {metrics&&<><p>{metrics.estimated_wpm!=null&&<><strong>Estimated pace:</strong> {metrics.estimated_wpm} words/min · </>}{metrics.duration_seconds}s recorded · {metrics.long_pauses} pauses of at least 1s</p><p className="small muted">Pace uses the original transcript and total recording duration. Quiet intervals are approximate and can include thinking time or background noise. Editing text does not change these measurements.</p></>}
+ <p><strong>Filler sounds · audio estimate:</strong> {hasEstimate?`${count} detected${fillers.sounds?.length?' ('+fillers.sounds.join(' / ')+')':''}`:'Unavailable for this recording.'}</p>
+ <p className="small muted">{hasEstimate?'Estimated from the recording, including prolonged filler sounds. One continuous sound counts once. AI may miss or misclassify sounds.':'A transcript count cannot establish how many filler sounds were spoken; transcription may omit them. Saved audio is not retained, so older recordings cannot be recounted.'}{fillers?.note&&<> {fillers.note}</>}</p>
+ {metrics?.audible_fillers_in_transcript!=null&&<details className="interview-filler-method"><summary>Transcript count and measurement limits</summary><p className="small muted">{metrics.audible_fillers_in_transcript} filler tokens in the original transcript. This text-only count can miss sounds omitted by transcription and is separate from the audio estimate. Transcript edits do not change the saved measurements.</p></details>}
+ {delivery?<><p><strong>Audibility:</strong> {delivery.audibility}</p><p><strong>Pacing:</strong> {delivery.pacing}</p><p><strong>Vocal delivery:</strong> {delivery.vocal_delivery}</p><ul>{delivery.suggestions.map((v:string,i:number)=><li key={i}>{v}</li>)}</ul><p className="small muted">Qualitative AI observations, not a personality assessment or hiring score.</p></>:<p>Delivery observations are unavailable. A completed transcript can still be used for answer feedback.</p>}
+ </section>;
+}

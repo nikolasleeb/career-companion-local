@@ -23,8 +23,16 @@ unknown charge is not recorded as zero. Check saved audio status after a lost
 connection. Recovery never resends a recording automatically; after a server
 restart, audio cannot be recovered, but completed text remains available.
 
-Pace, approximate pauses and transcript filler counts describe the original
-recording. AI delivery comments are qualitative observations, not personality,
+Pace and approximate pauses describe the original recording. The existing audio
+delivery request also estimates audible um/uh/erm/er/hmm occurrences, including
+prolonged sounds; one continuous sound counts once. This is an AI estimate, not
+an exact acoustic measurement. Missing or invalid estimates remain unavailable,
+never zero. The original transcript's filler-token count is separate: transcription
+can omit fillers, even when they are audible. Longer spellings such as ummm and
+uhhh are recognized when present in text. Transcription prompts explicitly request
+verbatim fillers, as supported by the [OpenAI transcription guidance](https://developers.openai.com/api/docs/guides/speech-to-text#prompting).
+Older saved recordings retain their results without fabricated estimates or paid
+reprocessing; their temporary audio is no longer available. AI delivery comments are qualitative observations, not personality,
 emotion, health, honesty, accent-quality or hiring assessments. Transcript edits
 do not change the original measurements. Reviewed Profile examples carry source
 snapshots and dates. Optional Work Styles context requires both account consent
