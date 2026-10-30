@@ -19,23 +19,9 @@ def digest(v):return hashlib.sha256(json.dumps(v,sort_keys=True,ensure_ascii=Fal
 def clean(text):
  value=re.sub(r'https?://\S+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|(?:\+?\d[\d ().-]{8,}\d)','',str(text))
  return '\n'.join(line for line in value.splitlines() if not PRIVATE.search(line)).strip()
-def profile(user):
- rows=[r for r in db.list_entities(user,'experience') if r['data'].get('confirmed')]
- sources=[]
- for row in rows:
-  for field in FIELDS:
-   v=row['data'].get(field)
-   if isinstance(v,(dict,list)):v=json.dumps(v,ensure_ascii=False)
-   text=clean(v or '')
-   if text:sources.append({'id':row['id']+':'+field,'record_id':row['id'],'field':field,'text':text[:2400]})
-  if row['data'].get('category')=='project' and row['data'].get('individual_project') is True:
-   sources.append({'id':row['id']+':individual_project','record_id':row['id'],'field':'individual_project','text':'Individual project'})
- revision=digest(sources);selected=[];used=0
- # Keep at least the title of each record; add longer passages within the context budget.
- for source in sorted(sources,key=lambda s:(s['field']!='title',s['field'] not in ('degree','description','tools'))):
-  if used+len(source['text'])>32000:continue
-  selected.append(source);used+=len(source['text'])
- return {'revision':revision,'sources':selected,'context_limited':len(selected)<len(sources),'record_count':len(rows)}
+def profile(user,query='',budget=18000):
+ from . import profile_context
+ return profile_context.profile(user,query,budget)
 
 class Brief(StrictModel):
  roles:list[str]=Field(min_length=1,max_length=12)
@@ -112,7 +98,8 @@ async def find(user,body):
   r=example(user,id)
   if not r['data'].get('text'):raise ServiceError('Paste readable text for '+r['data']['filename']+' or remove it before finding jobs.')
   refs.append({'id':id,'filename':r['data']['filename'],'sha256':r['data']['sha256'],'text':r['data']['text'][:24000]})
- hints=role_catalog.suggestions(user) if body.use_profile else []
+ from . import personalization
+ hints=role_catalog.suggestions(user) if personalization.allowed(user) and (body.use_profile or personalization.read(user).get('explicit')) else []
  if not body.prompt.strip() and not refs and not hints and not prefs.get('interests'):raise ServiceError('Describe the jobs you want or add an example PDF.')
  brief,meta=await ai.structured(Brief,{'task':'Create a search brief. Explicit user requirements override reference PDFs. Examples describe desired jobs, never applicant qualifications; example employers, salaries and locations are not hard constraints unless requested. Use defaults for omitted location/date/level; no salary floor unless requested. If pay units, geography or intent cannot be resolved, put a concise question in clarification. Only US locations are supported. Do not include personal names, contact details, schools or applicant history in search terms.','request':body.prompt,'reference_excerpts':refs,'defaults':prefs,'local_role_suggestions':hints},body.mode,instructions=INSTRUCTIONS)
  if brief['clarification']:
@@ -124,6 +111,8 @@ async def find(user,body):
  saved=job_results.save_search(user,result);saved['data'].pop('jobs',None);return saved
 
 def estimate(user,body):
+ from . import personalization
+ if personalization.read(user).get('explicit'):body=body.model_copy(update={'use_profile':personalization.allowed(user)})
  rows=[r for r in job_results.all_rows(user,body.search_id) if r['data'].get('interest_state')!='dismissed'];p=profile(user) if body.use_profile else {'revision':'not-used','sources':[],'record_count':0}
  if body.use_profile and not p['sources']:raise ServiceError('Add reviewed professional Profile information before matching.')
  context=json.dumps(p['sources']);n=len(rows);detailed=min(25,n) if body.depth=='quick' else n
@@ -195,7 +184,7 @@ def validate(output,batch,p,scope):
   evidence=[]
   for e in value['evidence']:
    source=sources.get(e['profile_source_id'])
-   if not source or not ai.valid_quote(e['profile_quote'],source['text']) or not ai.valid_quote(e['posting_quote'],text):raise ServiceError('AI cited unsupported Profile or posting evidence. No batch was applied.')
+   if not source or source.get('context_only') or not ai.valid_quote(e['profile_quote'],source['text']) or not ai.valid_quote(e['posting_quote'],text):raise ServiceError('AI cited unsupported Profile or posting evidence. No batch was applied.')
    evidence.append({**e,'record_id':source['record_id']})
   if any(not ai.valid_quote(gap,text) for gap in value['gaps']):raise ServiceError('AI gap evidence was not in the posting. No batch was applied.')
   if not evidence and value['fit'] in ('strong','possible'):value={**value,'fit':'insufficient_information'}
@@ -205,6 +194,8 @@ def validate(output,batch,p,scope):
  return out
 
 async def assess(user,id):
+ from . import personalization
+ request_version=personalization.request_version(user)
  row=job_results.owned(user,id,'ai_job_match');d=row['data'];p=d['profile_snapshot'];rows=[r for r in job_results.all_rows(user,d['search_id']) if r['data'].get('interest_state')!='dismissed']
  if d.get('profile_revision')!=(profile(user)['revision'] if d['use_profile'] else 'not-used'):raise ServiceError('Your Profile changed. Start a new review to use the latest evidence.')
  d.update(state='running',cancel_requested=False,error='');checkpoint(user,id,d)
@@ -229,7 +220,8 @@ async def assess(user,id):
      else:r['data']={**r['data'],'description':r['data'].get('description','')[:2400]}
     if not checkpoint(user,id,d):d['state']='cancelled';checkpoint(user,id,d);return public_run(user,job_results.owned(user,id,'ai_job_match'))
     d['in_flight']={'scope':scope,'job_ids':[r['id'] for r in batch],'started_at':db.now()};checkpoint(user,id,d)
-    output,meta=await ai.structured(Assessments,{'task':'Assess every supplied job exactly once against reviewed professional evidence. Use a consistent rubric: relevant duties, supported skills, required education and documented experience. Strong requires substantial evidence for core duties and qualifications, not merely a matching degree or job title. Possible means some support with gaps/unknowns; stretch means explicit unsupported requirements; insufficient_information means too little evidence. Missing detail is unknown, not failure. Each gap must be a literal posting quote. Every evidence item must quote both a provided Profile source and the posting. Do not assess private eligibility or give hiring probabilities. For screened scope assess only these excerpts and do not claim full review; keep each summary under 50 words and provide at most two evidence pairs with quotes under 160 characters each.','scope':scope,'criteria':d['criteria_snapshot'],'profile_sources':p['sources'],'jobs':[{'id':r['id'],**{k:r['data'].get(k,'') for k in ('title','company','description','location','salary','description_incomplete')}} for r in batch]},d['mode'],instructions=INSTRUCTIONS)
+    output,meta=await ai.structured(Assessments,{'task':'Assess every supplied job exactly once against reviewed professional evidence. Use a consistent rubric: relevant duties, supported skills, required education and documented experience. Strong requires substantial evidence for core duties and qualifications, not merely a matching degree or job title. Possible means some support with gaps/unknowns; stretch means explicit unsupported requirements; insufficient_information means too little evidence. Missing detail is unknown, not failure. Each gap must be a literal posting quote. Every evidence item must quote both a provided Profile source and the posting. Do not assess private eligibility or give hiring probabilities. For screened scope assess only these excerpts and do not claim full review; keep each summary under 50 words and provide at most two evidence pairs with quotes under 160 characters each.','scope':scope,'criteria':d['criteria_snapshot'],'profile_sources':__import__('app.profile_context',fromlist=['select']).select(p,' '.join(str(r['data'].get('title',''))+' '+str(r['data'].get('description','')) for r in batch))['sources'],'reviewed_work_style_summary_not_evidence':__import__('app.work_preferences',fromlist=['context']).context(user),'jobs':[{'id':r['id'],**{k:r['data'].get(k,'') for k in ('title','company','description','location','salary','description_incomplete')}} for r in batch]},d['mode'],instructions=INSTRUCTIONS)
+    personalization.check_request(user,request_version)
     d['assessments'].update(validate(output,batch,p,scope));d['ai_calls'].append(meta);d['in_flight']=None
     d['screened_count']=sum(v['scope'] in ('screened','detailed','limited') for v in d['assessments'].values());d['detailed_count']=sum(v['scope'] in ('detailed','limited') for v in d['assessments'].values());checkpoint(user,id,d)
   d['state']='completed';checkpoint(user,id,d)
@@ -250,7 +242,10 @@ def install(app,start_task,require_ai):
  async def match(body:Match,user=Depends(owner)):
   require_ai(user)
   if not credentials.get(user):raise ServiceError('Add your own OpenAI key in Settings to use Ask AI.')
-  search=job_results.owned(user,body.search_id,'search');p=profile(user) if body.use_profile else {'revision':'not-used','sources':[],'context_limited':False}
+  from . import personalization
+  if personalization.read(user).get('explicit'):body=body.model_copy(update={'use_profile':personalization.allowed(user)})
+  # Keep the complete eligible snapshot locally; select passages for each posting batch.
+  search=job_results.owned(user,body.search_id,'search');p=profile(user,budget=10000000) if body.use_profile else {'revision':'not-used','sources':[],'context_limited':False}
   if not body.use_profile:raise ServiceError('Enable reviewed Profile matching to assess professional fit.')
   if not p['sources']:raise ServiceError('Add reviewed Profile information before matching.')
   id=hashlib.sha256((user+':job-match:'+body.request_token).encode()).hexdigest()[:32]

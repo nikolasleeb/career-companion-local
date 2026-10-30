@@ -271,7 +271,14 @@ async def draft(user,workspace,token,body,feedback=None,chat_meta=None):
         affected=[i for i,p in enumerate(previous.get('evidence',[])) if any(e['source_id']!='posting' and (e['source_id'] not in allowed or not ai.valid_quote(e['quote'],allowed[e['source_id']])) for e in p['evidence'])]
         feedback=copy.deepcopy(feedback);feedback['paragraph_indices']=list(dict.fromkeys(feedback.get('paragraph_indices',[])+affected))
         if affected:payload['requested_refinement']+=' Use the current reviewed sources to correct paragraphs whose prior facts changed or were archived; do not retain outdated source claims.'
+    from . import work_preferences,career_goals
+    from . import personalization
+    request_version=personalization.request_version(user)
+    payload['reviewed_work_style_summary_not_evidence']=work_preferences.resume_context(user)
+    payload['career_direction_for_questions_only']=career_goals.guidance_context(user)
+    payload['personalization_rules']='Work Styles is wording guidance only. Career Goals may guide questions; do not invent or insert motivation without reviewed letter context. Relationships are context, never additional accomplishments.'
     output,meta=await ai.structured(CoverLetterOutput,payload,body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+    personalization.check_request(user,request_version)
     if feedback and not feedback['revise_all']:
         indices=set(feedback['paragraph_indices'])
         if any(i<0 or i>=len(body.content.paragraphs) for i in indices):raise ServiceError('The chat referred to an unavailable paragraph. Your previous letter is preserved.')

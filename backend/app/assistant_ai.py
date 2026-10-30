@@ -7,7 +7,7 @@ from datetime import datetime,timezone
 from fastapi import Depends, HTTPException
 from pydantic import Field
 from typing import Literal
-from . import ai,auth,credentials,db,career_goals,profile_answers
+from . import ai,auth,credentials,db,career_goals,profile_answers,personalization
 from .models import StrictModel
 from .application_agent import router,load,PRIVATE,BOUNDARY,owned,TERMINAL
 
@@ -53,9 +53,10 @@ def build_payload(user,run,body):
         if not text:raise HTTPException(422,'Selected professional answer has no reviewed text.')
         evidence.append({'id':id,'text':text})
     if body.action=='polish' and not evidence:raise HTTPException(422,'Select approved professional evidence to polish.')
-    goals=career_goals.read(user) if body.action=='draft_short_answer' and body.use_career_goals else {'text':'','revision':0}
+    use_goals=body.use_career_goals or personalization.allowed(user,'goals')
+    goals=(career_goals.context(user) if personalization.read(user).get('explicit') else career_goals.read(user)) if body.action=='draft_short_answer' and use_goals else {'text':'','revision':0}
     if CREDENTIAL_PATTERN.search(goals['text']) or PRIVATE.search(goals['text']):raise HTTPException(422,'Remove private disclosures or credentials from Career Goals before optional application use.')
-    if body.action=='draft_short_answer' and not goals['text'] and not evidence:raise HTTPException(422,'Select Career Goals or reviewed professional evidence for this draft.')
+    if body.action=='draft_short_answer' and not goals['text'] and not evidence:raise HTTPException(422,'Select reviewed professional evidence or enable Career Goals through Profile personalization for this draft.')
     payload={'action':body.action,'question':sanitized_question(q['label']),'definition':sanitized_question(q.get('description','')),'context':sanitized_question(q.get('context','')),'options':[sanitized_question(x) for x in q['options']],'professional_evidence':evidence,'question_id':q['id']}
     if body.action=='draft_short_answer':
         payload['career_goals_as_aspirations']=goals
@@ -108,13 +109,17 @@ def validate(result,payload):
     # Extractive polishing cannot establish new applicant facts.
     return {'explanation':'Review these excerpts from your approved professional answers.','proposed_answer':'\n\n'.join(quotes),'evidence_ids':ids}
 
-async def dispatch(user,id,run_id,payload,wire):
+async def dispatch(user,id,run_id,payload,wire,context_version=None):
+    context_version=context_version or personalization.request_version(user)
     token=ai.set_user_context(user,task_id='assistant:'+id,process='application_agent',operation=payload['action'])
     try:
         response=await asyncio.wait_for(ai.call_api(wire,retry_allowed=False),timeout=90)
         usage=response.get('usage',{})
         actual=(usage.get('input_tokens',0)*RATE_INPUT+usage.get('output_tokens',0)*RATE_OUTPUT) if 'input_tokens' in usage and 'output_tokens' in usage else None
-        try:result=validate(json.loads(ai.output_text(response)),payload);state='completed';error=None
+        try:
+            personalization.check_request(user,context_version)
+            result=validate(json.loads(ai.output_text(response)),payload);state='completed';error=None
+        except HTTPException as changed:result=None;state='rejected';error=changed.detail
         except (ValueError,TypeError,KeyError):result=None;state='rejected';error='AI wording did not pass evidence validation. Nothing was applied.'
         with db.connect() as c:c.execute("UPDATE cc_ai_requests SET state=?,actual=?,payload=? WHERE id=? AND user_id=? AND state='dispatching'",(state,actual,json.dumps({'result':result,'error':error,'question_id':payload['question_id'],'action':payload['action']}),id,user))
     except BaseException as error:
@@ -133,6 +138,7 @@ async def assistance(id:str,body:Assistance,user=Depends(auth.current)):
     run=load(user['id'],id)
     if run['state'] in TERMINAL or run['state']=='paused':raise HTTPException(409,'This run is not accepting assistance.')
     if not credentials.get(user['id']):raise HTTPException(503,'Add your own API key in Settings for optional assistance.')
+    context_version=personalization.request_version(user['id'])
     payload=build_payload(user['id'],run,body);wire=provider_body(payload)
     fingerprint=hashlib.sha256(json.dumps({'run':id,'payload':payload,'consent':body.approved_cost_usd},sort_keys=True).encode()).hexdigest()
     # UTF-8 bytes upper-bound text token counts conservatively; output includes reasoning.
@@ -154,7 +160,7 @@ async def assistance(id:str,body:Assistance,user=Depends(auth.current)):
     # Only the reservation winner dispatches. Repeated tokens only return status.
     task_id='assistant:'+body.request_token
     async def work():
-        try:await dispatch(user['id'],body.request_token,id,payload,wire)
+        try:await dispatch(user['id'],body.request_token,id,payload,wire,context_version)
         finally:workers.pop(task_id,None)
     workers[task_id]=asyncio.create_task(work())
     with db.connect() as c:return public(c.execute('SELECT * FROM cc_ai_requests WHERE id=?',(body.request_token,)).fetchone())

@@ -200,14 +200,17 @@ def manual(id:str,body:ManualQuestion,user=Depends(owner)):
  return detail(user,id)
 
 def context(user,s,focus=''):
- p=career_coach.profile(user);catalog=[{'source_id':v['id'],'record_id':v['record_id'],'kind':'profile','label':'Reviewed Profile · '+v['field'].replace('_',' '),'text':v['text']} for v in p['sources']]
+ p=career_coach.profile(user,focus+' '+s['data']['role']+' '+s['data']['kind']);catalog=[{'source_id':v['id'],'record_id':v['record_id'],'kind':'profile','label':'Reviewed Profile · '+v['field'].replace('_',' '),'text':v['text']} for v in p['sources']]
  records={r['id']:r for kind in ('experience','profile_answer') for r in db.list_entities(user,kind)}
  for source in catalog:
   source['updated_at']=records.get(source['record_id'],{}).get('updated_at','')
  d=s['data']
- if d['kind']!='coding' and d.get('use_work_styles'):
+ if d['kind']!='coding' and (__import__('app.personalization',fromlist=['read']).read(user).get('explicit') or d.get('use_work_styles')):
   w=work_preferences.context(user)
   if w['preferences']:catalog.append({'source_id':'work-summary:'+str(w['revision']),'record_id':work_preferences.identity(user),'kind':'work_summary','label':'Approved Work Styles summary · self-description, not qualifications','text':' '.join(w['preferences'])[:6000]})
+ from . import career_goals
+ goals=career_goals.guidance_context(user,query=focus+' '+d['role'])
+ if goals['text']:catalog.append({'source_id':'career-goals:'+str(goals['revision']),'record_id':career_goals.identity(user),'kind':'aspiration','label':'Career Goals · aspirations, not qualifications','text':goals['text']})
  posting=d.get('posting_snapshot',{});text='\n'.join(str(posting.get(k) or '') for k in ('title','company','description'))
  if text.strip():catalog.extend(passages('posting:'+s['id'],s['id'],'posting','Saved job description',text,8))
  for id in d['document_ids']:
@@ -289,6 +292,8 @@ def question_task(kind):
  return 'Generate ONE original practice question suited to this session. '+task+' Use reviewed Profile evidence to choose relevant context, not to assume mastery or invent accomplishments. Never claim this is an actual company question. Previous questions come from this account in this interview type, across sessions. Choose a DIFFERENT competency, topic and situation where possible, not a paraphrase. Vary which relevant Profile experience you draw on; do not repeatedly choose the most detailed project. Keep the saved role and job requirements relevant.'
 
 async def execute(user,id,body):
+ from . import personalization
+ request_version=personalization.request_version(user)
  s=owned(user,id,'interview_session');d=s['data']
  if s['updated_at']!=body.expected_updated_at:raise HTTPException(409,'This session changed. Reload it before starting another action.')
  if body.operation=='examples' and (d['kind'] not in ('behavioral','star') or body.answer.strip() or body.star or body.voice_id):raise HTTPException(422,'Examples use Behavioral or STAR questions and reviewed Profile context, without an answer draft or recording.')
@@ -323,6 +328,7 @@ async def execute(user,id,body):
   questions=detail(user,id)['questions'][-3:]
   attempts=detail(user,id)['attempts']
   output,meta=await ai.structured(Discussion,{**payload,'task':'Continue this saved interview conversation. Help the user reason, improve their answer or practice a follow-up. Use the session type and domain; case/scenario/presentation practice is not limited to technology or personal STAR stories. Do not fabricate their experience. Preparation guidance and illustrative_examples are teaching material, never user statements or evidence of accomplishments. Only recent_feedback evaluates submitted answers. Suggest at most one next question.','message':body.text,'conversation':[{'role':r['data']['role'],'text':r['data']['content']} for r in history],'recent_questions':[r['data']['question'] for r in questions],'recent_feedback':[r['data']['feedback'] for r in attempts if r['data'].get('operation')=='review'][-3:],'preparation_guidance':[r['data']['feedback'] for r in attempts if r['data'].get('operation')=='guide'][-1:],'illustrative_examples':[{'label':'Generated teaching text and Profile draft; not submitted answers or personal evidence','examples':r['data']['feedback'].get('example_answers')} for r in attempts if r['data'].get('operation')=='examples'][-1:]},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+  personalization.check_request(user,request_version)
   output=Discussion.model_validate(output).model_dump();output['references']=references(output['references'],catalog);output['visuals']=chat_visuals.validate(output['visuals'],catalog)
   db.save(user,'interview_message',{'session_id':id,'role':'user','content':body.text})
   db.save(user,'interview_message',{'session_id':id,'role':'assistant','content':output['answer'],'reply':output,'source_snapshot':catalog,'profile_revision':p['revision'],'ai':meta,'code_execution':False})
@@ -333,6 +339,7 @@ async def execute(user,id,body):
   if q['data']['session_id']!=id:raise HTTPException(404,'Question not found in this session.')
   task_progress.stage('preparing')
   value,meta=await ai.structured(ExampleGeneration,{**payload,'question':{k:q['data'].get(k) for k in ('question','topic','evaluation_focus')},'task':"Create two clearly separated preparation examples for this question, never an evaluation of an answer. First, a complete FICTIONAL teaching answer for an imagined person/scenario, with a structure_label and why_it_works. Its invented actions/outcomes must not use the applicant's real project/company names or be attributed to the applicant. Second, a profile_draft using ONLY supported personal facts from source_catalog entries whose kind is profile. Job descriptions, PDFs and notes guide relevance but cannot establish personal accomplishments. Cite literal profile source IDs and quotes for every personal fact used. Do not invent personal actions, decisions, dates, metrics or outcomes. Mark every missing fact with a conspicuous [placeholder], list missing_details and ask short follow_up_questions. With no reviewed Profile evidence, provide only a fill-in template for the Profile draft. Match the actual question: STAR for a past experience; use an appropriate introduction, motivation or strength structure otherwise. Do not force every Behavioral question into STAR. Both examples remain read-only teaching material, never personal evidence or Supporting Details."},body.mode,instructions=INSTRUCTIONS+" For this explicitly requested examples action ONLY, the fictional_answer may invent a clearly fictional scenario. This exception never applies to profile_draft or to facts about the applicant. Do not assess the applicant or predict a hiring decision.",retry_allowed=False)
+  personalization.check_request(user,request_version)
   value=ExampleGeneration.model_validate(value).model_dump();profile_sources=[r for r in catalog if r['kind']=='profile']
   refs=references(value.pop('references'),profile_sources)
   if not refs:
@@ -347,12 +354,14 @@ async def execute(user,id,body):
   q=owned(user,body.question_id,'interview_question')
   if q['data']['session_id']!=id:raise HTTPException(404,'Question not found.')
   value,meta=await ai.structured(PracticeMaterial,{**payload,'question':q['data']['question'],'task':'Create ONE original, illustrative practice aid for this question: a concise slide, code sample to discuss, or fictional case. Label hypothetical assumptions. Do not answer the question or invent personal accomplishments. Code is read-only, never executed.'},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+  personalization.check_request(user,request_version)
   value=PracticeMaterial.model_validate(value).model_dump();value['references']=references(value['references'],catalog);value['visuals']=chat_visuals.validate(value['visuals'],catalog)
   db.save(user,'interview_material',{'session_id':id,'question_id':q['id'],'material':value,'source_snapshot':catalog,'profile_revision':p['revision'],'ai':meta,'code_execution':False})
  elif body.operation=='question':
   history=question_history(user,s)
   previous=[r['data']['question'][:700] for r in history]
   task_progress.stage('drafting');output,meta=await ai.structured(Question,{**payload,'task':question_task(d['kind']),'previous_questions':previous,'previous_topics':[r['data'].get('topic','') for r in history]},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+  personalization.check_request(user,request_version)
   output=Question.model_validate(output).model_dump();output['references']=references(output['references'],catalog)
   normalize=lambda text:re.sub(r'[^\w]+',' ',text.casefold()).strip()
   if any(normalize(output['question'])==normalize(r['data']['question']) for r in history):raise ServiceError('The AI repeated an earlier question. Your existing question and work are unchanged. Request another question to try again; no automatic retry was made.')
@@ -368,6 +377,7 @@ async def execute(user,id,body):
   if body.operation=='review' and len(answer)<5:raise HTTPException(422,'Enter your answer or code before requesting feedback.')
   approach=interview_guides.approach(d['kind'],q['data'])
   task_progress.stage('preparing' if body.operation=='guide' else 'reviewing');output,meta=await ai.structured(Coaching,{**payload,'answer_structure_guidance':approach,'question':{k:q['data'].get(k) for k in ('question','topic','evaluation_focus','constraints','examples','hints')},'answer':answer,'details_source':voice['data']['reviewed_transcript'] if voice else answer,'star_draft':body.star,'task':('Help the user prepare their own answer using answer_structure_guidance and the question type. Use all four STAR parts only when use_star is true; otherwise keep star empty and explain the suitable structure in summary and improvements. Introductions, motivation, cases, scenarios and presentations must not be forced into STAR. Coding: guide the approach, assumptions, edge cases and proposed tests without revealing a complete solution or claiming execution. Give prompts and memory cues, not a fabricated personal story. This is preparation, not evaluation: keep reviewer_takeaway empty, strengths empty, useful_details empty and example_answers null. Put useful Profile connections in profile_connections and details to add in improvements/claims_to_clarify. Suggest reviewed experiences with references and ask for missing facts.' if body.operation=='guide' else 'Review the answer against this specific question. Keep example_answers null; this action evaluates only the submitted answer. Evaluate relevance, structure, specificity, individual contribution, supported outcomes and clarity regardless of whether STAR fields were used. Follow answer_structure_guidance; do not force introductions or other formats into STAR. In reviewer_takeaway, explain what a reviewer may reasonably understand from this response and what is unclear, grounding every observation in the actual words or code. Do not infer personality, honesty, protected traits, hiring suitability or predict a hiring decision. Behavioral: provide STAR guidance when useful. Coding: review correctness, reasoning, time/space complexity, edge cases and explain proposed tests; do not claim execution. Provide concrete profile connections with source references. List claims that need clarification; never automatically add them to Profile. End with one useful follow-up question. Optionally propose useful_details: ONE coherent factual paragraph per distinct experience/story, at most four only for genuinely unrelated experiences. Keep stakeholder feedback, personal response, implementation, constraints and supported outcome of the same project together in ONE detail. text must be a reusable factual summary in the applicant voice, never coaching instructions, evaluation or questions. Do not imply adoption, success or metrics absent from details_source. Include one exact user_quote and optional additional exact user_quotes from details_source supporting the summary. For hypothetical cases, scenarios or coding exercises, propose no personal detail unless the user explicitly describes a real personal experience. A practice solution is not evidence of deployed work. Keep these tentative self-reports. Flag conflicts with older Profile evidence for clarification; never infer a new fact or automatically save it.')},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+  personalization.check_request(user,request_version)
   output=Coaching.model_validate(output).model_dump();output['references']=references(output['references'],catalog)
   if body.operation=='guide' and approach['use_star'] and {r['part'] for r in output['star']}!=set(PARTS):raise ServiceError('STAR guidance omitted a section. Previous feedback remains available.')
   if len({r['part'] for r in output['star']})!=len(output['star']):raise ServiceError('The feedback repeated a STAR section. Previous feedback remains available.')

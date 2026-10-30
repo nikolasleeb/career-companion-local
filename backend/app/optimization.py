@@ -8,7 +8,7 @@ from .models import OptimizationOutput, DraftAudit
 from .network import ServiceError
 
 def fingerprint(snapshot,ids=None):
-    rows=[{'title':e['title'],'details':e['details'],'bullets':e.get('source_original_bullets',[i['original'] for i in e['content_items']])} for s in snapshot['sections'] for e in s['entries'] if ids is None or e['source_id'] in ids]
+    rows=[{'title':e['title'],'details':e['details'],'relationship_context':e.get('relationship_context',[]),'bullets':e.get('source_original_bullets',[i['original'] for i in e['content_items']])} for s in snapshot['sections'] for e in s['entries'] if ids is None or e['source_id'] in ids]
     return hashlib.sha256(json.dumps(sorted(rows,key=lambda e:json.dumps(e,sort_keys=True)),sort_keys=True).encode()).hexdigest()
 
 def estimate(snapshot,mode,profile):
@@ -89,6 +89,8 @@ def validate(output,snapshot,records):
     return output
 
 async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=None):
+    from . import personalization
+    request_version=personalization.request_version(user)
     snapshot=copy.deepcopy(snapshot);writing_guidance=guidance.selected('resume');snapshot['writing_guidance']=writing_guidance
     rows=resume_builder.catalog(snapshot,analysis)
     records=evidence_sources(snapshot)
@@ -107,6 +109,7 @@ async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=
     payload['headline_policy']='Write a job-specific professional-focus headline supported by reviewed Profile evidence.' if snapshot.get('use_professional_headline',True) else 'Headlines are disabled: return an empty headline and no headline_evidence.'
     task_progress.stage('drafting')
     output,meta=await ai.structured(OptimizationOutput,payload,mode)
+    personalization.check_request(user,request_version)
     if 'prepared_headline' in (feedback or {}):output['headline']=feedback['prepared_headline']
     if current:output=constrain(output,snapshot,current,feedback or {})
     if not snapshot.get('use_professional_headline',True):output['headline']='';output['headline_evidence']=[]

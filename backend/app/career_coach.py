@@ -30,30 +30,9 @@ def owner(user=Depends(auth.current)):
  return user['id']
 
 def ident(user,value):return hashlib.sha256((user+':coach:'+value).encode()).hexdigest()[:32]
-def profile(user):
- p=job_ai.profile(user)
- # Coach needs credential names, not attachment/credential identifiers.
- p['sources']=[s for s in p['sources'] if s['field'] not in ('certification_items','gpa')]
- for row in db.list_entities(user,'experience'):
-  d=row['data']
-  if not d.get('confirmed'):continue
-  for field in ('majors','minors','certification_items'):
-   value=d.get(field)
-   if field=='certification_items' and isinstance(value,list):value=[{k:v[k] for k in ('name','issuer','earned_date','expiration_date','does_not_expire') if k in v} for v in value]
-   text=job_ai.clean(json.dumps(value,ensure_ascii=False) if value else '')
-   if text:p['sources'].append({'id':row['id']+':'+field,'record_id':row['id'],'field':field,'text':text[:2400]})
- # Reviewed reusable professional stories, including those not yet in a resume.
- for row in profile_answers.confirmed(user):
-  d=row['data']
-  if d.get('answer_kind')!='experience':continue
-  text=job_ai.clean(d.get('answer') or d.get('text') or '')
-  if text:p['sources'].append({'id':row['id']+':answer','record_id':row['id'],'field':'answer','text':text[:2400]})
- selected=[];used=0
- for source in p['sources']:
-  if used+len(source['text'])>36000:continue
-  selected.append(source);used+=len(source['text'])
- p['context_limited']=p['context_limited'] or len(selected)<len(p['sources']);p['sources']=selected
- p['revision']=knowledge.digest(p['sources']);return p
+def profile(user,query='',budget=18000):
+ from . import profile_context
+ return profile_context.profile(user,query,budget)
 
 def learning_projection(record):
  from . import learning_topics
@@ -373,7 +352,9 @@ async def execute(user,chat_id,body):
  occupation_chunks=explicit_context.plan_chunks(shared)
  if chat_id=='new':
   chat_id=create(ChatInput(title=action_title(body)),user)['id']
- chat=owned(user,chat_id,'coach_chat');p=profile(user);token=body.request_token
+ from . import personalization
+ request_version=personalization.request_version(user)
+ chat=owned(user,chat_id,'coach_chat');p=profile(user,body.text+' '+chat['data']['goal']);token=body.request_token
  existing=db.get(user,ident(user,chat_id+':reply:'+token),'coach_message')
  if existing:return existing
  text=body.text.strip() or ('Refresh current research and revise my roadmap.' if body.operation=='research' else 'Use my reviewed Profile and goals to create a practical career-development roadmap.')
@@ -394,12 +375,15 @@ async def execute(user,chat_id,body):
  history=sorted([r for r in db.list_entities(user,'coach_message') if r['data'].get('chat_id')==chat_id and r['id']!=user_message_id],key=lambda r:r['created_at'])
  if selected_plan:
   history=[r for r in history if not r['data'].get('plan_context_snapshot') or r['data']['plan_context_snapshot'].get('plan_id')==selected_plan['plan_id'] or r['id']==owned(user,selected_plan['plan_id'],'coach_plan')['data']['message_id']]
+ from . import coach_access
+ history=[r for r in history if r['data'].get('role')=='user' or coach_access.source_allowed(user,{'kind':'reviewed_profile',**{k:r['data'][k] for k in ('profile_snapshot','goal_snapshot','work_style_summary') if k in r['data']}})]
  words=set(re.findall(r'\w{3,}',text.casefold()));older=sorted(history[:-12],key=lambda r:-sum(t in r['data'].get('content','').casefold() for t in words))[:4]
  chosen=sorted({r['id']:r for r in [*older,*history[-12:]]}.values(),key=lambda r:r['created_at'])
  context=[{'role':r['data']['role'],'text':r['data'].get('content','')[:1800]} for r in chosen]
  task_progress.stage('coach_generation')
- payload={'planning_inputs':plan_inputs,'explicitly_selected_context':shared,'task':body.operation,'question':text,'goal':chat['data']['goal'],'time_preference':chat['data']['time_preference'] or 'Unspecified','budget_preference':chat['data']['budget_preference'] or 'Unspecified; prioritize free practice','profile':p,'approved_work_preferences_not_qualifications':work_preferences.context(user),'career_goals_as_aspirations':career_goals.guidance_context(user,chat['data'].get('profile_goals_snapshot',{'text':''})),'retrieved_chunks':chunks,'research_status':research_data.get('status','not_requested'),'research_warnings':research_data.get('warnings',[]),'conversation':context,'conversation_context_limited':len(chosen)<len(history),'selected_plan_context':selected_plan,'current_roadmap':selected_plan or (current_plan or {}).get('data',{}),'today':db.now()[:10]}
+ payload={'planning_inputs':plan_inputs,'explicitly_selected_context':shared,'task':body.operation,'question':text,'goal':chat['data']['goal'],'time_preference':chat['data']['time_preference'] or 'Unspecified','budget_preference':chat['data']['budget_preference'] or 'Unspecified; prioritize free practice','profile':p,'approved_work_preferences_not_qualifications':work_preferences.context(user),'career_goals_as_aspirations':career_goals.guidance_context(user,None if __import__('app.personalization',fromlist=['read']).read(user).get('explicit') else chat['data'].get('profile_goals_snapshot',{'text':''}),query=text+' '+chat['data']['goal']),'retrieved_chunks':chunks,'research_status':research_data.get('status','not_requested'),'research_warnings':research_data.get('warnings',[]),'conversation':context,'conversation_context_limited':len(chosen)<len(history),'selected_plan_context':selected_plan,'current_roadmap':selected_plan or (current_plan or {}).get('data',{}),'today':db.now()[:10]}
  output,meta=await ai.structured(Reply,payload,body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+ personalization.check_request(user,request_version)
  metas=[meta]
  if (output.get('needs_fresh_research') or needs_current(text) and not career_goals.explicit_save(text)) and not initial_research:
   public_topics=research_topics(body.text,user,p,output.get('research_topics',[]))
@@ -412,6 +396,7 @@ async def execute(user,chat_id,body):
   output,meta=await ai.structured(Reply,payload,body.mode,instructions=INSTRUCTIONS,retry_allowed=False);metas.append(meta)
  if (len(metas)>1 or initial_research and config.ENABLE_WEB_SEARCH) and research_data.get('status')!='checked':
   raise research_failure(research_data)
+ personalization.check_request(user,request_version)
  saved_goals=None
  if output.get('profile_goal_update'):
   quote=output.get('profile_goal_save_quote','')

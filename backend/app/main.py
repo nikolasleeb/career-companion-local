@@ -366,6 +366,8 @@ from . import cover_goals,application_offers
 app.include_router(cover_goals.router)
 app.include_router(application_offers.router)
 app.include_router(work_preferences.router)
+from . import personalization
+app.include_router(personalization.router)
 work_style_summary.install(app,start_task,require_ai)
 openai_connection_test.install(app,start_task)
 app.include_router(skills.router)
@@ -1280,7 +1282,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'coach_plan_progress','career_explorer_search','career_explorer_review','application_offer','saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS={'profile_personalization','coach_plan_progress','career_explorer_search','career_explorer_review','application_offer','saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1316,6 +1318,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         by_id={r['id']:r for r in records};ids={r['id']:db.uid() for r in records};kinds={r['id']:r['kind'] for r in records}
         for record in records:
             if record['kind']=='work_preferences':ids[record['id']]=work_preferences.identity(user['id'])
+            if record['kind']=='profile_personalization':ids[record['id']]=personalization.identity(user['id'])
         if len(ids)!=len(records): raise ValueError()
         decoded={}
         setup_records=[r for r in records if r.get('kind')=='onboarding']
@@ -1324,6 +1327,10 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if record['kind'] not in BACKUP_KINDS or not isinstance(record['data'],dict): raise ValueError()
             career_explorer.validate_backup(record)
             if record['kind']=='onboarding':onboarding.validate_backup(record['data'])
+            if record['kind']=='profile_personalization':
+                d=record['data']
+                if set(d)!={'revision','enabled','explicit'} or type(d['revision']) is not int or d['revision']<1 or type(d['enabled']) is not bool or d['explicit'] is not True:raise ValueError()
+                if sum(r['kind']=='profile_personalization' for r in records)>1:raise ValueError()
             if record['kind']=='usage_event':cost_history.UsageEvent.model_validate(record['data'])
             project_routes.validate_nested_references(record['data'],kinds,by_id)
             application_documents.validate_backup(record,kinds,by_id,payload.get('files',{}))
@@ -1487,6 +1494,10 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         elif record['kind']=='career_goals':
             current_goals=career_goals.read(user['id'])
             if not current_goals['text']:career_goals.save(user['id'],career_goals.Change(text=record['data'].get('note',record['data']['text']),items=record['data'].get('items'),use_for_ai=record['data'].get('use_for_ai',False),expected_revision=current_goals['revision']),restoring=True)
+        elif record['kind']=='profile_personalization':
+            # Restoring data must not enable sharing or replace a current account's choice.
+            if not db.get(user['id'],personalization.identity(user['id']),personalization.KIND):
+                db.save(user['id'],personalization.KIND,{'revision':1,'enabled':False,'explicit':True},personalization.identity(user['id']))
         elif record['kind']=='work_preferences':
             current_work=work_preferences.read(user['id'])
             restored_work=current_work if current_work.get('summary') or current_work['preferences'] else remap(record['data'])

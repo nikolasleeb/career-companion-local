@@ -137,8 +137,11 @@ def test_material_all_modes_and_approved_summary_revocation(client,account,monke
  work_preferences.put(work_preferences.Change(expected_revision=0,summary='I like time to prepare before discussing an idea.',reviewed=True,use_for_ai=True),{'id':u})
  s=create(client,kind=kind);d=question(client,s);q=d['questions'][0];s=d['session']
  assert not any(v['kind']=='work_summary' for v in practice.context(u,s)[1])
- change=client.patch('/api/interview-practice/sessions/'+s['id']+'/context',json={'expected_updated_at':s['updated_at'],'use_work_styles':True});assert change.status_code==200
- s=change.json()['session'];sources=practice.context(u,s)[1];assert [v for v in sources if v['kind']=='work_summary'][0]['text'].startswith('I like time')
+ change=client.patch('/api/interview-practice/sessions/'+s['id']+'/context',json={'expected_updated_at':s['updated_at'],'use_work_styles':True})
+ if kind=='coding':assert change.status_code==422
+ else:
+  assert change.status_code==200
+  s=change.json()['session'];sources=practice.context(u,s)[1];assert [v for v in sources if v['kind']=='work_summary'][0]['text'].startswith('I like time')
  async def model(schema,payload,*a,**k):
   assert schema==practice.PracticeMaterial
   assert not any('scores' in v for v in payload['source_catalog'])
