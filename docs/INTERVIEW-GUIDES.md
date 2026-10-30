@@ -40,7 +40,7 @@ Request progress/cancellation uses the global progress area when present; local 
 
 Saved questions, attempts, transcripts, materials, illustrations and source snapshots remain in history and account backups. Older material/image results are read-only. Previously submitted illustration/audio tasks retain status recovery and cancellation without new generation controls. Narration recovery can expose only an already-created temporary playback buffer; it does not start narration again.
 
-Work Styles consent remains off for new sessions. Only the approved paragraph is shared when explicitly enabled; raw scores and private application answers remain excluded. New answer claims remain practice drafts until individually reviewed and approved as Supporting Details. Coding submissions are reviewed conceptually and are never executed.
+Work Styles is unavailable in Coding setup and sessions, and is excluded from new coding AI context even when an older saved session has its switch enabled. Existing saved results and consent records are preserved. Other interview types keep optional Work Styles consent, off for new sessions. Only the approved paragraph is shared when explicitly enabled; raw scores and private application answers remain excluded. New answer claims remain practice drafts until individually reviewed and approved as Supporting Details. Coding submissions are reviewed conceptually and are never executed.
 
 Behavioral's ordered `further_reading_ids` reference three visible public links below its questions. They open in a new tab and are omitted from the collapsed source list to avoid duplicates. The U of A access note distinguishes the public guide from NetID access to Big Interview. Other source lists remain unchanged.
 
