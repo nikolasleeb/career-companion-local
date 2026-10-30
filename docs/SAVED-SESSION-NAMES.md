@@ -1,0 +1,11 @@
+# Saved session names
+
+New interviews are named on the server as `<interview type> <number>`: Behavioral 1, Coding 1, Case / business 1, Domain / scenario 1, Presentation / portfolio 1 and Other 1. Legacy STAR creation uses STAR 1 and retains its type. Each account and type has its own sequence. The session and optional starter question are inserted under the same write lock as number assignment. Deleting a session does not reuse its number. A stale or older API `title` field is accepted but no longer overrides automatic interview naming.
+
+Interview history shows the updated date and time in the browser's local timezone, with a machine-readable timestamp. Existing names, IDs, timestamps, questions, answers and materials remain untouched. In particular, historical duplicate or misspelled titles are not rewritten.
+
+Action Plans and Career Coach (including writing-guide conversations) reject a duplicate name within that account and saved-chat list. Comparison ignores case, repeated whitespace and compatibility Unicode variants. A rejected creation/rename leaves existing content untouched; the optional Conversation name disclosure opens on a name conflict so the user can supply another name. Initial AI action requests check names before starting a task; transaction publication also checks for concurrent conflicts. Recovering the original request token never creates another chat or provider request. Unchanged historical names remain writable for ordinary conversation updates. Different workflows/accounts may use the same name. Plan/document versions remain versions, rather than being renamed as independent sessions.
+
+New Skills suggestion sets use Skills practice 1, Skills practice 2, etc. Topics remain visible and searchable separately. The saved name persists, including when newer sets are deleted.
+
+Backups preserve old records and links. Importing a colliding interview assigns its imported copy the next interview number; colliding conversation copies receive an `(imported N)` suffix. Imported Skills sets get a new number. Original records are never renamed, merged or deleted. Sequence high-water marks are internal account settings; restored saved interview names also seed the next number. No schema migration, automatic AI request or change to paid-action consent.

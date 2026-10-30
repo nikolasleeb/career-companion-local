@@ -24,6 +24,7 @@ class Reply(StrictModel):
  visuals:list[chat_visuals.Visual]=Field(default_factory=list,max_length=3)
 class Create(StrictModel):title:str=Field(default='Career conversation',max_length=100)
 class Action(StrictModel):
+ title:str=Field(default='',max_length=100)
  text:str=Field(min_length=1,max_length=8000)
  mode:Literal['economy','deep','custom']='economy'
  shared_context:list[explicit_context.Reference]=Field(default_factory=list,max_length=3)
@@ -80,7 +81,7 @@ def validate_reply(reply,sources):
  return v
 async def execute(user,id,body):
  shared=explicit_context.resolve(user,body.shared_context)
- if id=='new':id=create(Create(title=body.text[:80]),user)['id']
+ if id=='new':id=create(Create(title=body.title.strip() or body.text[:80]),user)['id']
  chat=owned(user,id);sources=assistant_context.retrieve(user,body.text,body.pinned_ids,body.excluded_ids)+shared
  history=[r for r in detail(id,user)['messages'][-12:] if coach_access.source_allowed(user,r['data'].get('source_snapshot',[]),excluded=body.excluded_ids)]
  previous=[r for r in db.list_entities(user,'assistant_research') if r['data']['chat_id']==id]
@@ -130,12 +131,15 @@ def install(app,start_task,require_ai):
  @router.post('/chats/{id}/messages')
  async def send(id:str,body:Action,user=Depends(owner)):
   if not body.text.strip():raise HTTPException(422,'Enter a question.')
+  if id=='new':
+   from . import saved_names
+   saved_names.preflight(user,'assistant_chat',body.title.strip() or body.text[:80],'knowledge_coach',body.request_token)
   if id!='new':owned(user,id)
   explicit_context.resolve(user,body.shared_context)
   require_ai(user)
   if not credentials.get(user):raise ServiceError('Add your own OpenAI key in Settings.')
   if active(user,id):raise HTTPException(409,'A reply is still running. Check its saved status first.')
-  return start_task(user,'knowledge_coach',lambda:execute(user,id,body),{**body.model_dump(),'chat_id':id})
+  return start_task(user,'knowledge_coach',lambda:execute(user,id,body),{**body.model_dump(exclude={'title'} if not body.title else set()),'chat_id':id})
  app.include_router(router)
 def validate_backup(record,kinds):
  d=record['data'];kind=record['kind']
