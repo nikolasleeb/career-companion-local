@@ -1,27 +1,47 @@
 # Interview guides and saved practice
 
-The Interview Practice landing page offers six formats and saved sessions. Behavioral includes STAR as an answer structure. Coding retains its existing setup. Other formats open bundled editorial guides without creating records or requesting AI.
+Interview Practice offers six formats and saved sessions. Behavioral includes STAR as an optional answer structure. Five bundled guides contain 33 original questions: Behavioral 10, Case/business 6, Domain/scenario 7 (one per broad career field), Presentation/portfolio 6 and Other 4. The sources support methods and formats, not a claim about question frequency or employer-specific questions.
 
-The first catalog contains 33 original questions: Behavioral 10, Case/business 6, Domain/scenario 7 (one per broad career field), Presentation/portfolio 6 and Other 4. General structures remain visible; individual approaches expand on each card. The sources support methods and formats, not the fictional cases or a claim about question frequency. No proprietary question bank is reproduced.
+## Guide and setup navigation
 
-`GET /api/interview-practice/guides` requires an authenticated account and returns the versioned catalog, source links and review date. It does not require an AI key. The versioned JSON lives under `backend/app/data/interview_guides.json`; IDs are stable when wording is maintained. Changes require manual source review.
+`GET /api/interview-practice/guides` is authenticated, read-only and requires no AI key. The versioned catalog and stable IDs live in `backend/app/data/interview_guides.json`. Source changes require manual review.
 
-`POST /api/interview-practice/sessions` additionally accepts optional `guide_question_id`. Unknown IDs and type mismatches return 422 without saving anything. The session and guide question are committed in one transaction, with ownership of context records rechecked under the write lock. The response remains the saved session; its question is retrieved through the existing session detail API. Source prompt and provenance are snapshots, with `origin: guide`. Editorial provenance is not a Profile evidence citation or automatically supplied answer.
+Guide routes use `tab=behavioral|case|domain|presentation|other`. Their `-setup` routes render a dedicated setup page without the guide beneath it. `tab=coding` retains Coding setup. The optional `topic` route value identifies a guide question; no private text enters the URL. Setup title, targeting, notes and PDFs stay in account-scoped drafts across navigation and reload.
 
-Routes reuse `tab` (`behavioral`, `case`, `domain`, `presentation`, `other`, or `coding`); the suffix `-setup` opens non-coding setup. `topic` contains only a stable starter question ID. Existing `item` and `question` session routes are unchanged. Unknown starters require choosing a different question or explicitly starting without one. Setup drafts stay in account-scoped browser storage. No private text enters URLs.
+New non-coding sessions require explicit guide-question selection in the UI. A question card preselects its ID, and general Start practice opens an unselected question choice. The prompt and approach guidance remain visible before the final Start practice session action. New Coding sessions retain the initial, explicit Generate question AI action. Saved-session workspaces expose no manual-entry, subsequent question-generation, narration, illustration-generation or practice-material-generation controls.
 
-A guide question is immediately available for Typed, Voice or Mixed answers. Guide browsing, setup and saving the starter make no AI calls. Generation, feedback, follow-up, audio processing and narration remain separate explicit AI actions. Work Styles consent is still off for new sessions. Existing STAR sessions retain `kind: star`, their structured-answer default and original content.
+## Compatible session and question APIs
 
-Verification uses fictional desktop accounts and simulated AI, including account isolation, atomic rollback, older STAR sessions, guide navigation, setup preservation, backup/restore and deletion. No paid user-account requests or mobile checks are needed.
+`POST /api/interview-practice/sessions` accepts optional `guide_question_id`; existing requests remain compatible. The starter and session save atomically with account ownership rechecked under the write lock. The response remains the saved session. Prompt, source IDs, catalog version and review date are snapshots under `origin: guide` and `guide_provenance`, separate from personal Profile evidence.
 
-Behavioral additionally supplies ordered `further_reading_ids` referencing the shared source catalog. Its three public links are visible below the questions, open in a new tab, and are omitted from the collapsed source list to avoid repetition. Source `access_note` is optional and shown with further reading; the U of A note distinguishes its public guide from NetID access to Big Interview. Other formats retain their existing source lists. The reading catalog changes no saved question IDs, destinations or original provenance snapshots.
+`POST /api/interview-practice/sessions/{id}/questions` accepts either a `guide_question_id` or the legacy `question` string, plus `expected_updated_at`. Exactly one source is required. Invalid IDs/type combinations create nothing. Guide selection repairs an older empty session in place. Legacy `star` maps to the Behavioral guide without changing the saved session kind. Active requests and stale versions prevent additions. The existing manual API remains available for compatibility, though its controls are removed from the workspace.
 
-## Saved session workspace
+Existing generated/custom questions and legacy STAR sessions remain answerable. A selector appears for multiple saved questions. No schema migration or automatic AI action is introduced.
 
-All saved session types, including Coding and legacy STAR, use `tab=practice` or `tab=feedback` with the existing `item` and optional `question` identifiers. Links without a tab open Practice. Guide and setup route values retain their original meaning.
+## Preparation and answer modes
 
-Practice puts the current question, answer mode, answer editor and review action first. A session without a question presents generation and manual entry; otherwise these remain under Question options. Answer options contains reviewed Profile examples, optional STAR and AI guidance. Active typed STAR drafts display all four fields in the main editor. Mixed keeps its notes separately from the stored STAR draft.
+All saved types use `tab=practice|feedback` with existing `item` and optional `question` identities. Links without a tab open Practice. Both view panels and the voice controller remain mounted while changing tabs.
 
-Session options contains Work Styles consent, preparation context and research. More tools contains narration, materials and illustrations. Costs and transcript confirmation remain beside their respective paid actions. Both view panels and the voice controller remain mounted while changing tabs or disclosures. Active microphone recording blocks navigation away from Practice; stopping leaves an unsent in-memory buffer. Raw recordings and narration remain temporary and are not persisted across page reloads. Reviewed transcripts and browser answer drafts retain their existing persistence.
+Preparation precedes the editor/recorder. Behavioral past-experience questions and legacy STAR show a compact STAR reminder and optional four-field draft. Introduction, motivation, strengths and development guide questions use their own structures. Other formats use their relevant guide structure. Profile example selection and AI preparation guidance remain optional. Guidance uses editorial structure as advice, never as evidence of the user's accomplishments.
 
-Successful answer review and guidance open Feedback and focus its heading. The selected question’s latest feedback appears first, followed by conversation controls. Complete session history remains collapsed. Revise answer returns to the editor without clearing it. Request errors, pending-status recovery, cancellation and audio status stay outside disclosures. Checking a pending result does not send another model request. No schema, endpoint, consent default or automatic AI action changes.
+Typed STAR mode submits the four fields. Voice submits only the confirmed spoken transcript. Mixed submits that transcript with explicitly labelled typed notes/code. STAR planning notes remain preserved across modes and are not added to spoken content. Recording blocks navigation away from Practice. Stopping leaves an unsent in-memory buffer; raw recordings are not retained through page reloads.
+
+## Transcripts and feedback
+
+A raw generated transcript is displayed when an empty, unapproved `reviewed_transcript` exists. Approved nonempty text takes precedence only after `reviewed_at`; an edited browser draft, including deliberate empty text, is kept. Stale drafts remain unconfirmed and offer Restore generated transcript or an explicit choice to keep edits against the latest saved version. Neither action calls AI.
+
+The flow is Record, Process recording, Check transcript, Review my answer. Processing makes transcription and delivery requests only after the explicit paid action. Processing, partial results, unusable transcription and delivery-only success have distinct states. No usable transcript means no spoken-content review. The transcript checkbox is required; Review my answer saves the confirmed transcript before sending the content-review request. Failed confirmation makes no content AI request. There is no separate Use reviewed transcript button.
+
+Feedback shows the selected question's latest content review, followed by separate delivery observations for the latest saved recording, conversation controls and collapsed complete history. Content review evaluates relevance, structure, specificity, individual contribution, supported outcomes and clarity regardless of STAR use. Optional `reviewer_takeaway` defaults empty for older coaching snapshots and appears as What your answer communicates; it must be grounded in the response and must not predict hiring outcomes or infer personality/protected traits. Revise answer returns to the intact draft.
+
+Request progress/cancellation uses the global progress area when present; local status/recovery remains visible otherwise. No disclosure hides essential recovery or errors. Checking saved results never retries a paid provider request.
+
+## Retained history and boundaries
+
+Saved questions, attempts, transcripts, materials, illustrations and source snapshots remain in history and account backups. Older material/image results are read-only. Previously submitted illustration/audio tasks retain status recovery and cancellation without new generation controls. Narration recovery can expose only an already-created temporary playback buffer; it does not start narration again.
+
+Work Styles consent remains off for new sessions. Only the approved paragraph is shared when explicitly enabled; raw scores and private application answers remain excluded. New answer claims remain practice drafts until individually reviewed and approved as Supporting Details. Coding submissions are reviewed conceptually and are never executed.
+
+Behavioral's ordered `further_reading_ids` reference three visible public links below its questions. They open in a new tab and are omitted from the collapsed source list to avoid duplicates. The U of A access note distinguishes the public guide from NetID access to Big Interview. Other source lists remain unchanged.
+
+Verification uses fictional desktop accounts and simulated providers, with raw transcript assertions before any text editing, partial failures, stale drafts, all session types, navigation, recording buffers, confirmation order, request recovery, cancellation, history, backup/restore and account isolation. No paid user-account requests or mobile checks are required.

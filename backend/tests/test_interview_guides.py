@@ -42,7 +42,7 @@ def test_every_guide_question_creates_one_ready_session_without_ai(client,accoun
  assert db.list_entities(account['id'],'usage_event')==[]
  assert db.list_entities(account['id'],'experience')==profile
 
-@pytest.mark.parametrize('kind,id',[('behavioral','missing-question'),('coding','behavioral-teamwork'),('star','behavioral-teamwork'),('case','behavioral-teamwork')])
+@pytest.mark.parametrize('kind,id',[('behavioral','missing-question'),('coding','behavioral-teamwork'),('case','behavioral-teamwork')])
 def test_invalid_starter_creates_nothing(client,account,kind,id):
  before=db.list_entities(account['id'],'interview_session');questions=db.list_entities(account['id'],'interview_question')
  r=client.post('/api/interview-practice/sessions',json={'kind':kind,'guide_question_id':id});assert r.status_code==422
