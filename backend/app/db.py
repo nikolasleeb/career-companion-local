@@ -86,13 +86,23 @@ def decode(row):
     result['data'] = json.loads(result.pop('payload'))
     return result
 
-def save(user, kind, data, entity_id=None):
+def save(user, kind, data, entity_id=None, *, restoring=False):
     entity_id = entity_id or uid()
     timestamp = now()
     with connect() as c:
-        existing = c.execute('SELECT user_id,kind FROM entities WHERE id=?', (entity_id,)).fetchone()
+        from . import saved_names
+        if kind in saved_names.CHAT_KINDS or kind=='prep' or restoring and kind=='interview_session':c.execute('BEGIN IMMEDIATE')
+        existing = c.execute('SELECT user_id,kind,payload FROM entities WHERE id=?', (entity_id,)).fetchone()
         if existing and (existing['user_id'] != user or existing['kind'] != kind):
             raise ValueError('Record not found')
+        if kind in saved_names.CHAT_KINDS and (not existing or data.get('title')!=json.loads(existing['payload']).get('title')):
+            data={**data,'title':saved_names.clean(data.get('title'))}
+            if restoring:data['title']=saved_names.imported_title(c,user,kind,data['title'])
+            saved_names.require_available(c,user,kind,data['title'],entity_id)
+        if kind=='prep' and not existing:
+            data={**data,'title':saved_names.next_practice(c,user)}
+        if restoring and kind=='interview_session' and not saved_names.available(c,user,kind,data.get('title',''),entity_id):
+            data={**data,'title':saved_names.next_interview(c,user,data['kind'])}
         if existing:
             c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?', (json.dumps(data), timestamp, entity_id))
         else:

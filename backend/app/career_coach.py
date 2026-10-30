@@ -79,6 +79,7 @@ class ChatEdit(ChatInput):
  expected_updated_at:str=Field(default='',max_length=100)
  use_current_profile_goals:bool=False
 class Action(StrictModel):
+ title:str=Field(default='',max_length=100)
  plan_ref:plan_progress.Reference|None=None
  plan_input:career_plan_inputs.PlanInput|None=None
  shared_context:list[explicit_context.Reference]=Field(default_factory=list,max_length=3)
@@ -188,6 +189,9 @@ def edit(id:str,body:ChatEdit,user=Depends(owner)):
   if running(c,user,id):raise HTTPException(409,'Wait for the current coaching action before changing this goal.')
   if body.expected_updated_at and body.expected_updated_at!=r['updated_at']:raise HTTPException(409,'This chat changed in another tab. Reload its latest goals before saving.')
   value={**r['data'],**body.model_dump(exclude={'expected_updated_at','use_current_profile_goals'}),'title':body.title.strip() or 'Career conversation'}
+  from . import saved_names
+  value['title']=saved_names.clean(value['title'])
+  if value['title']!=r['data']['title']:saved_names.require_available(c,user,'coach_chat',value['title'],id)
   if body.use_current_profile_goals:value['profile_goals_snapshot']=career_goals.context(user)
   write(c,user,'coach_chat',value,id)
  return chat_public(user,owned(user,id,'coach_chat'),True)
@@ -368,9 +372,7 @@ async def execute(user,chat_id,body):
  selected_plan=plan_progress.context(user,body.plan_ref,chat_id)
  occupation_chunks=explicit_context.plan_chunks(shared)
  if chat_id=='new':
-  title=body.text.strip().split('\n')[0]
-  if len(title)>64:title=title[:64].rsplit(' ',1)[0]+'…'
-  chat_id=create(ChatInput(title=title),user)['id']
+  chat_id=create(ChatInput(title=action_title(body)),user)['id']
  chat=owned(user,chat_id,'coach_chat');p=profile(user);token=body.request_token
  existing=db.get(user,ident(user,chat_id+':reply:'+token),'coach_message')
  if existing:return existing
@@ -437,10 +439,18 @@ def action_status(token:str,user=Depends(owner)):
    if inputs.get('request_token')==token:return {'task_id':row['id'],'status':row['status']}
  raise HTTPException(404,'No saved coaching request was found. Nothing was dispatched by this lookup.')
 
+def action_title(body):
+ title=body.text.strip().split('\n')[0]
+ if len(title)>64:title=title[:64].rsplit(' ',1)[0]+'…'
+ return body.title.strip() or title or 'Career conversation'
+
 def install(app,start_task,require_ai):
  @router.post('/chats/{id}/actions')
  async def action(id:str,body:Action,user=Depends(owner)):
   if id!='new':owned(user,id,'coach_chat')
+  else:
+   from . import saved_names
+   saved_names.preflight(user,'coach_chat',action_title(body),'career_coach',body.request_token)
   plan_progress.context(user,body.plan_ref,id)
   career_plan_inputs.context(user,body.plan_input)
   explicit_context.plan_chunks(explicit_context.resolve(user,body.shared_context))
@@ -453,7 +463,7 @@ def install(app,start_task,require_ai):
    if active:
     row=c.execute('SELECT result FROM tasks WHERE id=?',(active,)).fetchone();old=json.loads(row[0] or '{}').get('inputs',{})
     if old.get('request_token')!=body.request_token:raise HTTPException(409,'This chat already has a coaching action running. Check its saved status.')
-  return start_task(user,'career_coach',lambda:execute(user,id,body),{**body.model_dump(),'chat_id':id})
+  return start_task(user,'career_coach',lambda:execute(user,id,body),{**body.model_dump(exclude={'title'} if not body.title else set()),'chat_id':id})
  app.include_router(router)
 
 

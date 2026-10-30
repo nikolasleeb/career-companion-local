@@ -232,7 +232,7 @@ def practice_history(topics:str=Query('',max_length=5000),job_id:str='',q:str=Qu
  matching=next((r for r in rows if (r['data'].get('job_id') or '')==job_id and ids.issubset(practice_topics(r))),None)
  history=[practice_public(user['id'],r) for r in rows if not matching or r['id']!=matching['id']]
  if target=='current':history=[r for r in history if (r['data'].get('job_id') or '')==job_id]
- if q:history=[r for r in history if all(t in (' '.join(v['label'] for v in r['topic_refs'])+' '+r['target_label']+' '+r['created_at']).casefold() for t in q.casefold().split())]
+ if q:history=[r for r in history if all(t in (r['data'].get('title','')+' '+' '.join(v['label'] for v in r['topic_refs'])+' '+r['target_label']+' '+r['created_at']).casefold() for t in q.casefold().split())]
  with db.connect() as c:active=c.execute("SELECT 1 FROM tasks WHERE user_id=? AND kind='preparation' AND status IN ('queued','running','cancelling')",(user['id'],)).fetchone() is not None
  return {'matching':practice_public(user['id'],matching) if matching else None,'history':history[offset:offset+limit],'total':len(history),'offset':offset,'limit':limit,'generation_active':active,'retention':'Saved until you delete them. No automatic expiry.'}
 

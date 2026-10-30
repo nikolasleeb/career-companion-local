@@ -93,6 +93,11 @@ def publish(c,user,task):
   # epoch REAL values otherwise differ after JSON's decimal round trip.
   actual=json.loads(c.execute('SELECT '+obj(list(old.keys()))+' FROM "'+table+'" WHERE '+where,ids).fetchone()[0]) if old else None
   if actual!=before:raise HTTPException(409,'The saved record changed during this action. Nothing from the AI run was applied; your newer edits are preserved.')
+  if table=='entities' and after:
+   from . import saved_names
+   value=json.loads(after['payload'])
+   if after['kind'] in saved_names.CHAT_KINDS and (not before or value.get('title')!=json.loads(before['payload']).get('title')):
+    saved_names.require_available(c,user,after['kind'],value.get('title'),after['id'])
   if table=='entities' and before and before['updated_at']>row['created_at']:raise HTTPException(409,'This record changed after the action started. No AI changes were applied.')
  for change in changes:
   table=change['table_name'];keys=TABLES[table];ids=json.loads(change['row_key']);after=json.loads(change['after_row']) if change['after_row'] else None

@@ -137,7 +137,7 @@ def create(body:Setup,user=Depends(owner)):
  if data['job_id']:
   job=owned(user,data['job_id'],'job')['data'];posting=posting or job;data['company']=data['company'] or job.get('company','');data['role']=data['role'] or job.get('title','')
  for id in body.document_ids:material(user,id)
- data.update(title=body.title or ((data['company']+' · ' if data['company'] else '')+{'behavioral':'Behavioral practice','star':'STAR practice','coding':'Coding practice','case':'Case / business practice','domain':'Domain / scenario practice','presentation':'Presentation / portfolio practice','other':'Interview practice'}[body.kind]),posting_snapshot=posting,code_execution=False)
+ data.update(posting_snapshot=posting,code_execution=False)
  # A guide starter and its session are one commit. Recheck ownership under the
  # same write lock so a concurrent deletion cannot leave dangling context.
  session_id=db.uid();stamp=db.now()
@@ -145,6 +145,8 @@ def create(body:Setup,user=Depends(owner)):
   c.execute('BEGIN IMMEDIATE')
   for id,kind in [(body.application_id,'application'),(data['job_id'],'job')]+[(id,'document') for id in body.document_ids]:
    if id and not c.execute('SELECT 1 FROM entities WHERE id=? AND user_id=? AND kind=?',(id,user,kind)).fetchone():raise HTTPException(404,'Interview practice context is unavailable.')
+  from . import saved_names
+  data['title']=saved_names.next_interview(c,user,body.kind)
   c.execute('INSERT INTO entities VALUES(?,?,?,?,?,?)',(session_id,user,'interview_session',json.dumps(data),stamp,stamp))
   if starter:
    c.execute('INSERT INTO entities VALUES(?,?,?,?,?,?)',(db.uid(),user,'interview_question',json.dumps({**starter,'session_id':session_id}),stamp,stamp))

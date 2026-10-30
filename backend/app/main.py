@@ -1464,7 +1464,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         elif record['kind'] in ('job_search_preferences','job_alert'):job_alerts.restore_record(user['id'],record['kind'],record['data'])
         elif record['kind'] in ('job','job_snapshot'):
             restored=remap(record['data']);restored['_cache_scope']='account';restored.setdefault('last_verified_at',job_cache.iso(job_cache.epoch(restored.get('_last_verified_epoch'))) or record.get('created_at',''));restored.pop('_last_verified_epoch',None)
-            saved=db.save(user['id'],record['kind'],restored,ids[record['id']])
+            saved=db.save(user['id'],record['kind'],restored,ids[record['id']],restoring=True)
             if record['kind']=='job':
                 with db.connect() as c:job_cache.bind(c,user['id'],saved)
         elif record['kind']=='saved_career':career_explorer.restore(user['id'],record['data'])
@@ -1483,7 +1483,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         elif record['kind'] in career_coach.KINDS or record['kind'] in interview_practice.KINDS or record['kind'] in knowledge_assistant.KINDS or record['kind'] in ('personalized_search','chat_image'):
             restored=remap(record['data'])
             if record['kind']=='interview_session':restored['use_work_styles']=False
-            saved=db.save(user['id'],record['kind'],restored,ids[record['id']])
+            saved=db.save(user['id'],record['kind'],restored,ids[record['id']],restoring=True)
             stamp=integrations.parse_date(record.get('created_at'))
             if stamp:
                 with db.connect() as c:c.execute('UPDATE entities SET created_at=? WHERE user_id=? AND id=?',(stamp.isoformat(),user['id'],saved['id']))
