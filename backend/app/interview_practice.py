@@ -119,7 +119,7 @@ def detail(user,id):
  s=owned(user,id,'interview_session');qs=[q for q in db.list_entities(user,'interview_question') if q['data']['session_id']==id];attempts=[a for a in db.list_entities(user,'interview_attempt') if a['data']['session_id']==id]
  research=[r for r in db.list_entities(user,'interview_research') if r['data'].get('chat_id')==id]
  messages=list(reversed([r for r in db.list_entities(user,'interview_message') if r['data']['session_id']==id]))
- return {'work_styles_available':bool(work_preferences.context(user)['preferences']),'materials':[r for r in db.list_entities(user,'interview_material') if r['data']['session_id']==id],'voice':[r for r in db.list_entities(user,'interview_voice') if r['data']['session_id']==id],'messages':messages,'session':s,'questions':list(reversed(qs)),'attempts':list(reversed(attempts)),'research':research[0] if research else None,'profile_revision':career_coach.profile(user)['revision']}
+ return {'work_styles_available':s['data']['kind']!='coding' and bool(work_preferences.context(user)['preferences']),'materials':[r for r in db.list_entities(user,'interview_material') if r['data']['session_id']==id],'voice':[r for r in db.list_entities(user,'interview_voice') if r['data']['session_id']==id],'messages':messages,'session':s,'questions':list(reversed(qs)),'attempts':list(reversed(attempts)),'research':research[0] if research else None,'profile_revision':career_coach.profile(user)['revision']}
 @router.get('/guides')
 def guides(user=Depends(owner)):
  return interview_guides.catalog()
@@ -133,6 +133,7 @@ def session(id:str,user=Depends(owner)):return detail(user,id)
 def create(body:Setup,user=Depends(owner)):
  data=body.model_dump(exclude={'guide_question_id'});posting={}
  starter=interview_guides.starter(body.kind,body.guide_question_id) if body.guide_question_id else None
+ if body.kind=='coding' and body.use_work_styles:raise HTTPException(422,'Work Styles is not used in coding practice.')
  if body.use_work_styles and not work_preferences.context(user)['preferences']:raise HTTPException(422,'Enable and save your approved Work Styles summary in Profile first.')
  if body.application_id:
   app=owned(user,body.application_id,'application')['data'];posting=app.get('posting_snapshot',{});data['company']=body.company or app.get('company','');data['role']=body.role or app.get('title','');data['job_id']=app.get('job_id','')
@@ -204,7 +205,7 @@ def context(user,s,focus=''):
  for source in catalog:
   source['updated_at']=records.get(source['record_id'],{}).get('updated_at','')
  d=s['data']
- if d.get('use_work_styles'):
+ if d['kind']!='coding' and d.get('use_work_styles'):
   w=work_preferences.context(user)
   if w['preferences']:catalog.append({'source_id':'work-summary:'+str(w['revision']),'record_id':work_preferences.identity(user),'kind':'work_summary','label':'Approved Work Styles summary · self-description, not qualifications','text':' '.join(w['preferences'])[:6000]})
  posting=d.get('posting_snapshot',{});text='\n'.join(str(posting.get(k) or '') for k in ('title','company','description'))
@@ -482,6 +483,7 @@ class ContextChange(StrictModel):
  use_work_styles:bool=False
 @router.patch('/sessions/{id}/context')
 def change_context(id:str,body:ContextChange,user=Depends(owner)):
+ if body.use_work_styles and owned(user,id,'interview_session')['data']['kind']=='coding':raise HTTPException(422,'Work Styles is not used in coding practice.')
  if body.use_work_styles and not work_preferences.context(user)['preferences']:raise HTTPException(422,'Enable and save a reviewed Work Styles summary in Profile first.')
  from .resume_conversation import write
  with db.connect() as c:
