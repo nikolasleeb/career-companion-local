@@ -106,7 +106,9 @@ def save(user, kind, data, entity_id=None, *, restoring=False):
         if kind=='experience':
             from . import project_relations
             old=json.loads(existing['payload']) if existing else {}
-            if existing and 'linked_employment_ids' not in data:data={**data,'linked_employment_ids':old.get('linked_employment_ids',[])}
+            if existing:
+                for field in project_relations.FIELDS:
+                    if field not in data:data={**data,field:old.get(field,[])}
             project_relations.validate(c,user,data,old,restoring=restoring)
         if existing:
             c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?', (json.dumps(data), timestamp, entity_id))

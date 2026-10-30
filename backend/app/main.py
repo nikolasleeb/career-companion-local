@@ -497,7 +497,8 @@ def add_experience(body:ExperienceItem,user=Depends(auth.current)):
 @app.put('/api/experience/{entity_id}')
 def edit_experience(entity_id:str,body:ExperienceItem,user=Depends(auth.current)):
     old=require(user['id'],entity_id,'experience')['data']
-    if 'linked_employment_ids' not in body.model_fields_set:body=body.model_copy(update={'linked_employment_ids':old.get('linked_employment_ids',[])})
+    from . import project_relations
+    body=ExperienceItem.model_validate({**body.model_dump(),**{field:old.get(field,[]) for field in project_relations.FIELDS if field not in body.model_fields_set}})
     certifications.validate_documents(user['id'],body.model_dump())
     return db.save(user['id'],'experience',{**body.model_dump(),'source_references':combined_import.edited_references(old,body.model_dump()),'unavailable_source_ids':old.get('unavailable_source_ids',[])},entity_id)
 
@@ -1327,12 +1328,9 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             project_routes.validate_nested_references(record['data'],kinds,by_id)
             application_documents.validate_backup(record,kinds,by_id,payload.get('files',{}))
             if record['kind']=='experience':
-                ExperienceItem.model_validate({k:v for k,v in record['data'].items() if k!='unavailable_employment_ids'})
-                links=record['data'].get('linked_employment_ids',[])
-                if links and record['data'].get('category')!='project' or len(links)!=len(set(links)):raise ValueError()
-                for link in links:
-                    if link not in kinds and link not in record['data'].get('unavailable_employment_ids',[]):raise ValueError()
-                    if link in kinds and (kinds[link]!='experience' or by_id[link]['data'].get('category')!='employment'):raise ValueError()
+                from . import project_relations
+                ExperienceItem.model_validate({k:v for k,v in record['data'].items() if k not in ('unavailable_employment_ids','unavailable_education_ids')})
+                project_relations.validate_backup(record['data'],kinds,by_id)
                 for reference in record['data'].get('source_references',[]):
                     if kinds.get(reference['document_id'])!='document' and reference['document_id'] not in record['data'].get('unavailable_source_ids',[]):raise ValueError()
                 for credential in record['data'].get('certification_items',[]):
@@ -1460,7 +1458,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         if isinstance(value,str) and ':' in value and value.split(':',1)[0] in ids:return ids[value.split(':',1)[0]]+':'+value.split(':',1)[1]
         if isinstance(value,str): return 'library:'+ids[value[8:]] if value.startswith('library:') and value[8:] in ids else ids.get(value,value)
         if isinstance(value,list): return [remap(x) for x in value]
-        if isinstance(value,dict): return {ids.get(k,k):remap(v) for k,v in value.items() if k not in ('password','token','csrf','api_key','path','user_id','unavailable_experience_ids','unavailable_employment_ids')}
+        if isinstance(value,dict): return {ids.get(k,k):remap(v) for k,v in value.items() if k not in ('password','token','csrf','api_key','path','user_id','unavailable_experience_ids','unavailable_employment_ids','unavailable_education_ids')}
         return value
     storage.ensure_capacity(sum(len(value) for value in decoded.values())+len(json.dumps(payload).encode())*4+65536)
     existing_usage={r['data']['event_key']:r['id'] for r in db.list_entities(user['id'],'usage_event')}

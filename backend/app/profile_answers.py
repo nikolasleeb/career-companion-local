@@ -32,7 +32,7 @@ def validate_links(c,user,ids):
         target=owned_experience(c,user,id)
         if not target['data'].get('confirmed') or target['data'].get('category') not in ('employment','project','education','volunteering','skills','coursework'):raise HTTPException(400,'Choose confirmed roles, projects, education or volunteering records.')
         from . import project_relations
-        if project_relations.unresolved(c,user,target['data']):raise HTTPException(422,'Resolve the project’s unavailable related jobs before linking this detail.')
+        if project_relations.unresolved(c,user,target['data']):raise HTTPException(422,'Resolve the project’s unavailable related education or jobs before linking this detail.')
     return ids
 
 def require_links(links):
@@ -182,6 +182,9 @@ def records(user):
         record['data'].setdefault('answer_sources',[]).append({'id':answer['id'],'version':a['version'],'experience_ids':links,'linked_experiences':[{'id':id,'title':records[id]['data']['title']} for id in links if id in records],'association_note':'Use this fact once in its main context. Additional links indicate related work, not separate accomplishments.','text':a['text'],'title':a['title'],'questions':[q['text'] for source in a['sources'] for q in source.get('questions',[])],'provenance':[{k:copy.deepcopy(v) for k,v in source.items() if k in ('builder','draft_id','snapshot_id','analysis_id','commit','excerpts','reviewed_at','proposal_id','conversation_id','job_id','resume_id','project_refs')} for source in a['sources']]})
     for record in records.values():
         if record['data'].get('category')=='project':record['data']['related_jobs']=[{'id':id,'title':records[id]['data']['title'],'organization':records[id]['data'].get('organization','')} for id in record['data'].get('linked_employment_ids',[]) if id in records and records[id]['data'].get('category')=='employment']
+    for record in records.values():
+        if record['data'].get('category') in ('project','employment'):
+            record['data']['related_education']=[{'id':id,'title':records[id]['data']['title'],'organization':records[id]['data'].get('organization',''),'course':course} for kind,id,course in project_relations.targets(record['data']) if kind!='employment' and id in records]
     return list(records.values())
 
 def reusable(user,job_id,selected=()):

@@ -14,7 +14,7 @@ def test_numbering_per_type_account_concurrency_and_deletion(client,account):
   rows=list(pool.map(lambda _:interviews.create(interviews.Setup(kind='behavioral'),user),range(5)))
  assert sorted(int(r['data']['title'].split()[-1]) for r in rows)==list(range(2,7))
  assert client.delete('/api/interview-practice/sessions/'+next(r['id'] for r in rows if r['data']['title']=='Behavioral 6')).status_code==200
- assert interviews.create(interviews.Setup(),user)['data']['title']=='Behavioral 7'
+ assert interviews.create(interviews.Setup(),user)['data']['title']=='Behavioral 6'
  for kind,label in saved_names.INTERVIEW_LABELS.items():
   if kind!='behavioral':assert interviews.create(interviews.Setup(kind=kind),user)['data']['title']==label+' 1'
  client.post('/api/auth/logout');client.headers.pop('X-CSRF-Token')
@@ -82,3 +82,23 @@ def test_backup_import_avoids_name_collisions_and_preserves_content(client,accou
  assert db.get(user,a['id'])==a and db.get(user,plan['id'])['data']==plan['data'] and db.get(user,prep['id'])==prep
  assert db.get(user,s['id'])==s
  assert len(db.list_entities(user,'interview_question'))==2
+
+
+@pytest.mark.parametrize('kind,label',list(saved_names.INTERVIEW_LABELS.items()))
+def test_interview_numbers_follow_remaining_sessions_ignore_old_counters_and_preserve_settings(client,account,kind,label):
+ user=account['id']
+ with db.connect() as c:
+  settings=json.loads(c.execute('SELECT settings FROM users WHERE id=?',(user,)).fetchone()['settings']);settings['_interview_sequences']={kind:900}
+  c.execute('UPDATE users SET settings=? WHERE id=?',(json.dumps(settings),user))
+ first=interviews.create(interviews.Setup(kind=kind),user)
+ second=interviews.create(interviews.Setup(kind=kind),user)
+ third=interviews.create(interviews.Setup(kind=kind),user)
+ assert [r['data']['title'] for r in (first,second,third)]==[label+' 1',label+' 2',label+' 3']
+ # A gap below the highest title is not a collision-free count+1 allocation.
+ assert client.delete('/api/interview-practice/sessions/'+second['id']).status_code==200
+ fourth=interviews.create(interviews.Setup(kind=kind),user);assert fourth['data']['title']==label+' 4'
+ for r in (third,fourth):assert client.delete('/api/interview-practice/sessions/'+r['id']).status_code==200
+ assert interviews.create(interviews.Setup(kind=kind),user)['data']['title']==label+' 2'
+ for r in db.list_entities(user,'interview_session'):assert client.delete('/api/interview-practice/sessions/'+r['id']).status_code==200
+ assert interviews.create(interviews.Setup(kind=kind),user)['data']['title']==label+' 1'
+ with db.connect() as c:assert json.loads(c.execute('SELECT settings FROM users WHERE id=?',(user,)).fetchone()['settings'])==settings
