@@ -227,20 +227,24 @@ async def analyze(user, job, mode):
     return {**output,'writing_guidance':writing_guidance,'ai':meta,'retrieved':retrieved,'posting_snapshot':job,'authorization_snapshot':profile}
 
 async def prepare(user, job, gaps, mode):
-    from . import skills,career_coach,career_goals
+    from . import skills,career_coach,career_goals,personalization
+    request_version=personalization.request_version(user)
     gaps=list(dict.fromkeys(v.strip() for v in gaps if skills.learnable(v) and len(v.strip())<=150))
     if not gaps:raise ServiceError('Choose a concrete skill or practice topic first.')
     library = skills.candidates(gaps,24)
-    output, meta = await structured(PrepOutput, {'task':'Suggest up to 3 focused, standalone practice activities for the selected topics and at most 5 relevant resource IDs from the provided catalog. Do not create a roadmap, timeline, milestones, deadlines or checklist; those belong in Action Plans. Selected topics are interests, never confirmed weaknesses. Return an empty questions list. Do not invent URLs or imply course completion demonstrates competence.', 'posting':job,'selected_topics':gaps,'reviewed_professional_profile':career_coach.profile(user),'career_goals_as_aspirations':career_goals.guidance_context(user),'resource_catalog':library},mode,retry_allowed=False)
+    output, meta = await structured(PrepOutput, {'task':'Suggest up to 3 focused, standalone practice activities for the selected topics and at most 5 relevant resource IDs from the provided catalog. Do not create a roadmap, timeline, milestones, deadlines or checklist; those belong in Action Plans. Selected topics are interests, never confirmed weaknesses. Return an empty questions list. Do not invent URLs or imply course completion demonstrates competence.', 'posting':job,'selected_topics':gaps,'reviewed_professional_profile':career_coach.profile(user,' '.join(gaps)),'career_goals_as_aspirations':career_goals.guidance_context(user,query=' '.join(gaps)),'resource_catalog':library},mode,retry_allowed=False)
+    personalization.check_request(user,request_version)
     allowed = {r['id'] for r in library}
     if len(output['priorities'])>3 or len(output['resource_ids'])>5 or any(i not in allowed for i in output['resource_ids']):
         raise ServiceError('The AI selected an unknown learning resource. Retry the action.')
     return {**output,'resources':[r for r in library if r['id'] in output['resource_ids']],'selected_topics':gaps,'topic_refs':skills.skill_catalog.refs(gaps),'catalog_version':skills.skill_catalog.data()['version'],'target_label':job.get('title','My Profile and Career Goals'),'ai':meta}
 
 async def interview(user, job, question, answer, mode):
-    from . import profile_answers
-    retrieved = profile_answers.records(user)
+    from . import profile_context,personalization
+    request_version=personalization.request_version(user)
+    retrieved = profile_context.records(user)
     output, meta = await structured(InterviewOutput, {'task':'Review the answer for clarity, individual contribution, evidence, and limitations. Do not treat new answer claims as confirmed master-resume facts. Give concise strengths, improvements, and one follow-up question. Evidence entries must quote confirmed master experience.', 'posting':job,'question':question,'answer':answer,'experience':retrieved},mode)
+    personalization.check_request(user,request_version)
     records = {r['id']:experience_text(r['data']) for r in retrieved if r['kind']=='experience'}
     if any(e['record_id'] not in records or not valid_quote(e['quote'],records[e['record_id']]) for e in output['evidence']):
         raise ServiceError('Interview feedback included an invalid experience reference. Retry the action.')

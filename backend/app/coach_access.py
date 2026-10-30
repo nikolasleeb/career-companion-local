@@ -29,20 +29,21 @@ def source_allowed(user,value,permissions=None,excluded=()):
   if not isinstance(v,dict):return True
   kind=str(v.get('kind',''))
   if v.get('record_id') in excluded:return False
-  if kind in ('private','private_profile','private_answer','eligibility','explicit_offer'):return False
+  if kind in ('private','private_profile','private_answer','eligibility','explicit_offer','work_style_report','work_style'):return False
+  if kind in ('profile','reviewed_profile') and not __import__('app.personalization',fromlist=['allowed']).allowed(user):return False
   if kind in ('work_style_report','work_style') and not report:return False
   if kind in ('preference','work_summary','work_preferences') and not style:return False
   if kind in ('aspiration','career_goals') and not goals:return False
   for k,child in v.items():
    if k in ('private_answers','private_profile','raw_answers','assessment_answers','offer_details') and child:return False
    if k in ('work_style_summary','reviewed_work_style_summary','work_style_considerations','work_style_guidance') and child and not style:return False
-   if k in ('work_style_report','assessment_report','scores') and child and not report:return False
+   if k in ('work_style_report','assessment_report','scores') and child:return False
    if k in ('profile_goals_snapshot','profile_career_goals','career_goal_selection','selected_goals_as_aspirations') and child and not goals and (not isinstance(child,dict) or any(child.get(f) for f in ('text','note','items','goal_ids'))):return False
    if k=='record_id' and isinstance(child,str) and re.fullmatch(r'[a-f0-9]{32}',child):
     row=db.get(user,child)
     if not row:return False
     rk=row['kind'];data=row['data']
-    if rk=='experience' and (not data.get('confirmed') or not project_relations.available(user,data)):return False
+    if rk=='experience' and (not __import__('app.personalization',fromlist=['allowed']).allowed(user) or not data.get('confirmed') or not project_relations.available(user,data)):return False
     if rk=='profile_answer' and (data.get('status')!='confirmed' or data.get('answer_kind')!='experience' or profile_answers.needs_link(user,data)):return False
     if rk=='work_preferences' and not style:return False
     if rk=='career_goals' and not goals:return False
@@ -107,16 +108,13 @@ def project(user,r,permissions=None):
 
 def records(user,excluded=()):
  permissions=consent(user)
- for r in db.list_entities(user,'experience'):
-  d=r['data']
-  if not d.get('confirmed'):continue
-  value=pick(d,('category','title','organization','location','description','contribution','tools','accomplishments','dates','start_date','end_date','expected_graduation','degree','major','minor','majors','minors','concentration','gpa','gpa_scale','honors','relevant_courses','work_arrangement','skill_items','individual_project'))
-  if d.get('certification_items'):value['certifications']=[pick(c,('name','issuer','earned_date','expiration_date','does_not_expire')) for c in d['certification_items']]
-  yield {'record_id':r['id'],'kind':'reviewed_profile','label':'Reviewed Profile · '+str(d.get('title') or d.get('organization') or d.get('category','record')),'revision':r['updated_at'],'status':'confirmed','text':text(value)}
- for r in profile_answers.confirmed(user):
-  if r['data'].get('answer_kind')=='experience':yield {'record_id':r['id'],'kind':'reviewed_profile','label':'Reviewed Supporting Details · '+r['data'].get('title','Professional experience'),'revision':r['updated_at'],'status':'confirmed','text':r['data'].get('text') or r['data'].get('answer','')}
+ from . import profile_context
+ sources,_=profile_context.sources(user)
+ for source in sources:
+  yield {'source_key':source['id'],'record_id':source['record_id'],'kind':'reviewed_profile','label':'Confirmed Profile · '+source['field'].replace('_',' '),'revision':profile_context.digest(source),'status':'confirmed','text':text(source),'relationship_context_only':source.get('context_only',False)}
  with db.connect() as c:rows=[db.decode(r) for r in c.execute('SELECT * FROM entities WHERE user_id=? AND kind IN ('+','.join('?' for _ in REGISTRY)+') ORDER BY updated_at DESC',(user,*REGISTRY))]
  for r in rows:
+  if not __import__('app.personalization',fromlist=['allowed']).allowed(user) and r['kind']!='job':continue
   provenance=pick(r['data'],PROVENANCE)
   if r['id'] in excluded or not source_allowed(user,provenance,permissions,excluded):continue
   value=project(user,r,permissions)

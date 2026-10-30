@@ -1,7 +1,7 @@
 """Rebuilt, versioned account-only SQLite FTS retrieval. No stale private index."""
 import json,re,sqlite3,hashlib
 from . import db,career_coach,career_goals,work_preferences,job_ai
-VERSION='account-context-v4'
+VERSION='account-context-v5-summary-only'
 PRIVATE=re.compile(r'citizenship|visa|sponsor|work authori|vaccin|disabil|veteran|religio|politic|sexual|marital|date of birth|social security|api.?key|password',re.I)
 def clean(value):
  # Keep valid ISO tracking dates; the generic phone scrubber also matches them.
@@ -23,14 +23,12 @@ def sources(user,excluded=()):
   value=job_ai.clean(record['text']) if report else clean(record['text'])
   if not value.strip():return
   for at in range(0,min(len(value),96000 if report else 24000),1800):
-   rows.append({**{k:record[k] for k in ('record_id','kind','label','revision','status')},'source_id':record['record_id']+':'+str(at),'label':clean(record['label']) or 'Saved professional source','text':value[at:at+1800],'index_version':VERSION})
+   rows.append({**{k:record[k] for k in ('record_id','kind','label','revision','status')},'source_id':record.get('source_key',record['record_id'])+':'+str(at),'label':clean(record['label']) or 'Saved professional source','text':value[at:at+1800],'index_version':VERSION})
  for record in coach_access.records(user,excluded):add(record)
  g=career_goals.guidance_context(user)
  if g['text']:add({'record_id':career_goals.identity(user),'kind':'aspiration','label':'Career Goals · aspirations, not qualifications','revision':str(g['revision']),'status':'shared','text':g['text']})
  w=work_preferences.context(user)
  if w['preferences']:add({'record_id':work_preferences.identity(user),'kind':'preference','label':'Approved Work Styles summary · not qualifications','revision':str(w['revision']),'status':'shared','text':'\n'.join(w['preferences'])})
- report=work_preferences.coach_context(user)
- if report:add({'record_id':report['record_id'],'kind':'work_style_report','label':'Work Styles report and scores · self-reflection, not qualifications','revision':report['revision'],'status':'shared','text':json.dumps(report['report'],ensure_ascii=False,indent=2)},True)
  for record in coach_bls.public_sources():add(record)
  return rows
 

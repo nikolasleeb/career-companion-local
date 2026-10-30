@@ -32,6 +32,8 @@ def identity(user,code):return hashlib.sha256((user+':explorer-review:'+code).en
 def prepare(user,code,body):
  from .career_explorer import occupation
  o=occupation(code);rows=evidence.sources(user);style=evidence.style(user)
+ from . import personalization
+ if personalization.read(user).get('explicit'):body=body.model_copy(update={'include_work_styles':True})
  if evidence.revision(rows)!=body.profile_revision:raise HTTPException(409,'Your Profile changed. Reload career details before starting a review.')
  if body.include_work_styles and style['revision']!=body.work_style_revision:raise HTTPException(409,'Work Styles sharing changed. Reload career details before starting a review.')
  if not rows:raise HTTPException(422,'Add reviewed professional Profile information first.')

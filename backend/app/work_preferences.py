@@ -27,24 +27,17 @@ def context(user):
  from .work_style_summary import safe
  d=read(user);values=[d['summary']] if d.get('summary') else d['preferences']
  values=[v for v in values if safe(v)]
- return {'revision':d['revision'],'preferences':values,'kind':'approved self-described Work Styles summary; not qualifications'} if d.get('use_for_ai') and d.get('reviewed') else {'revision':d['revision'],'preferences':[],'kind':'not enabled'}
+ return {'revision':d['revision'],'preferences':values,'kind':'approved self-described Work Styles summary; not qualifications'} if __import__('app.personalization',fromlist=['allowed']).allowed(user,'work_styles') and d.get('reviewed') else {'revision':d['revision'],'preferences':[],'kind':'not enabled'}
 
 def resume_context(user):
- # New resume use requires the expanded scope to have been explicitly saved.
- d=read(user)
- return context(user) if d['coach_report_access'] else {'revision':d['revision'],'preferences':[],'kind':'not enabled'}
+ from . import personalization
+ if not personalization.read(user).get('explicit') and not read(user)['coach_report_access']:
+  return {'revision':read(user)['revision'],'preferences':[],'kind':'legacy resume sharing not enabled'}
+ return context(user)
 
 def coach_context(user):
- """Only an explicitly shared account-owned report, never questionnaire answers."""
- d=read(user)
- if not (d.get('use_for_ai') and d.get('reviewed') and d['coach_report_access']):return None
- row=db.get(user,d.get('assessment_id',''),'work_style')
- if not row or row['data'].get('status')!='completed':return None
- report=row['data'].get('report') or {'domains':row['data'].get('scores',[])}
- fields=('dimension_id','facet_id','name','total','minimum','maximum','mean','description','pattern','suggestion','lower_end','upper_end','potential','friction','environment')
- def scores(key,limit):return [{k:v[k] for k in fields if k in v and isinstance(v[k],(str,int,float))} for v in report.get(key,[])[:limit] if isinstance(v,dict)]
- choices=[{k:v[k] for k in ('theme','left','right','choice','selected') if isinstance(v.get(k),str)} for v in report.get('preferences',[])[:12] if isinstance(v,dict)]
- return {'record_id':row['id'],'revision':str(d['revision'])+':'+row['updated_at'],'report':{'version':str(report.get('version','legacy')),'explanation':str(report.get('explanation','Self-reflection, not qualifications or a hiring prediction.')),'domains':scores('domains',5),'facets':scores('facets',30),'work_choices':choices}}
+ """Ordinary guidance never receives assessment reports, scores or questionnaire answers."""
+ return None
 def assessment(user):
  rows=db.list_entities(user,'work_style');complete=next((v for v in rows if v['data'].get('status')=='completed'),None)
  # Only explicit paired work choices are eligible, never personality scores/facets.
@@ -54,7 +47,7 @@ def assessment(user):
  groups=[name for name,roles in role_catalog.GROUPS.items() if any(v in roles for v in suggestions)]
  return {'completed':bool(complete),'assessment_id':complete['id'] if complete else '', 'completed_at':(complete or {}).get('data',{}).get('completed_at'),'summary':summary[:5],'suggested_preferences':choices[:12],'roles':suggestions[:4],'fields':groups[:3]}
 @router.get('')
-def get(user=Depends(auth.current)):return {**read(user['id']),'assessment':assessment(user['id']),'account_id':user['id'],'ai_available':bool(credentials.get(user['id'])),'setup_required':False,'mode':db.settings(user['id']).get('mode','economy')}
+def get(user=Depends(auth.current)):return {**read(user['id']),'assessment':assessment(user['id']),'sharing_enabled':bool(context(user['id'])['preferences']),'account_id':user['id'],'ai_available':bool(credentials.get(user['id'])),'setup_required':False,'mode':db.settings(user['id']).get('mode','economy')}
 @router.put('')
 def put(body:Change,user=Depends(auth.current)):
  from .resume_conversation import write

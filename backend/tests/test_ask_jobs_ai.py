@@ -102,7 +102,8 @@ def test_private_pdf_examples_no_profile_import_and_backup(client,account,monkey
 def test_professional_snapshot_no_drafts_or_private_fields(client,account):
  db.save(account['id'],'experience',{'confirmed':False,'title':'DraftSecret'})
  db.save(account['id'],'experience',{'confirmed':True,'category':'skills','title':'Skills','tools':'SQL, Python','description':'SQL dashboards\nCitizenship: PRIVATE_VALUE','location':'PrivateHome','organization':'PRIVATE_ORG'})
- value=json.dumps(job_ai.profile(account['id']));assert 'DraftSecret' not in value and 'PRIVATE_VALUE' not in value and 'PrivateHome' not in value and 'PRIVATE_ORG' not in value
+ value=json.dumps(job_ai.profile(account['id']));assert 'DraftSecret' not in value and 'PRIVATE_VALUE' not in value and 'PrivateHome' not in value
+ assert 'PRIVATE_ORG' in value # Professional organizations now distinguish linked experiences.
 
 def output(payload):
  return {'assessments':[{'job_id':j['id'],'fit':'possible','summary':'Some relevant evidence; verify requirements.','evidence':[{'profile_source_id':payload['profile_sources'][0]['id'],'profile_quote':payload['profile_sources'][0]['text'],'posting_quote':'SQL'}],'gaps':[],'unknowns':['Detailed duties need review.']} for j in payload['jobs']]}

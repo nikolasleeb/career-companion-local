@@ -61,7 +61,7 @@ def test_general_interview_categories_need_key_not_education(client,fresh,monkey
     calls=[]
     async def model(schema,payload,*args,**kwargs):
         calls.append(payload)
-        return {'question':'Explain how you would learn a new topic and check your understanding.','topic':'General learning exercise','evaluation_focus':['Reasoning'],'constraints':[],'examples':[],'hints':[],'references':[]},{'model':'fictional-interview'}
+        return {'question':f'Exercise {len(calls)}: Explain how you would learn a new topic and check your understanding.','topic':'General learning exercise','evaluation_focus':['Reasoning'],'constraints':[],'examples':[],'hints':[],'references':[]},{'model':'fictional-interview'}
     monkeypatch.setattr(ai,'structured',model)
     for kind in ('behavioral','star','coding','case','domain','presentation','other'):
         response=client.post('/api/interview-practice/sessions',json={'kind':kind,'title':'General practice','language':'Python'});assert response.status_code==200,response.text

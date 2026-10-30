@@ -19,7 +19,7 @@ def catalog(snapshot,analysis=None):
     for section in snapshot['sections']:
         for entry in section['entries']:
             # Header facts are applicant evidence too; dates are not content items.
-            header={key:entry.get(key,'') for key in ('details','dates','start_date','end_date','expected_graduation')}
+            header={key:entry.get(key,'') for key in ('details','dates','start_date','end_date','expected_graduation','relationship_context')}
             rows.append({**header,'reviewed_answer_sources':copy.deepcopy(entry.get('reviewed_answer_sources',[])),'id':entry['source_id'],'title':entry['title'],'category':entry['category'],'organization':entry.get('organization',''),'bullets':entry['bullets'],'items':entry.get('content_items',[]),'priority':entry.get('priority',rank(entry['title']+' '+' '.join(entry['bullets']),job)+(30 if entry['source_id'] in recommended else 0)+(10 if entry['category']=='education' else 0)),'reason':entry.get('selection_reason',recommended.get(entry['source_id'],'Manual content from your confirmed Profile.'))})
     return rows
 

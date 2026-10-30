@@ -96,7 +96,7 @@ def read(user):
 def context(user,snapshot=None):
  """Opt-in automatic context; historical snapshots remain unchanged in storage."""
  current=read(user)
- if not current['use_for_ai']:return {'text':'','note':'','items':[],'revision':current['revision'],'use_for_ai':False}
+ if not __import__('app.personalization',fromlist=['allowed']).allowed(user,'goals'):return {'text':'','note':'','items':[],'revision':current['revision'],'use_for_ai':False}
  value=snapshot if snapshot is not None else current
  return {**value,'items':[for_guidance_goal(g) for g in canonical_items(value)],'use_for_ai':True}
 
@@ -118,8 +118,20 @@ def guidance_text(value):
 def model_context(value):
  return {'text':guidance_text(value),'revision':value.get('revision',0),'use_for_ai':value.get('use_for_ai',False),'guidance':GUIDANCE}
 
-def guidance_context(user,snapshot=None):
- return model_context(context(user,snapshot))
+def guidance_context(user,snapshot=None,query=''):
+ value=context(user,snapshot);items=canonical_items(value)
+ terms=set(re.findall(r'\w{3,}',query.casefold()))
+ if terms:
+  ranked=sorted(items,key=lambda g:-len(terms&set(re.findall(r'\w{3,}',g['text'].casefold()))))
+  matched=[g for g in ranked if terms&set(re.findall(r'\w{3,}',g['text'].casefold()))]
+  items=matched or ranked[:3]
+ selected=[];size=0
+ for goal in items:
+  if size+len(goal['text'])>6000:continue
+  selected.append(goal);size+=len(goal['text'])
+ result=model_context({**value,'text':'','note':'','items':selected})
+ return {**result,'context_limited':len(selected)<len(canonical_items(value))}
+
 
 def save(user,body,*,restoring=False):
  from .resume_conversation import write

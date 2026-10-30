@@ -28,12 +28,12 @@ def canonical(label):
  return norm(label)
 def sources(user):
  rows=[]
- for record in db.list_entities(user,'experience'):
+ for record in __import__('app.profile_context',fromlist=['records']).records(user):
   d=record['data']
   if not d.get('confirmed'):continue
   title=d.get('title') or d.get('organization') or 'Profile record'
   for field in ('title','tools','description','contribution','accomplishments','majors','minors','major','minor','concentration','relevant_courses','skill_items','certification_items'):
-   raw=d.get(field)
+   raw=((db.get(user,record['id'],'experience') or record)['data']).get(field)
    if not raw:continue
    if field=='skill_items':texts=[v.get('name','') for v in raw if isinstance(v,dict)]
    elif field=='certification_items':texts=[v.get('name','') for v in raw if isinstance(v,dict)]
@@ -47,12 +47,12 @@ def sources(user):
      for offset in range(0,len(part),1200):
       chunk=part[offset:offset+1200]
       learning=d.get('category') in ('education','coursework') or field=='relevant_courses' or bool(re.search(r'\bfundamentals\b|\bcourse(?:work)?\b|\bstudied\b',chunk,re.I))
-      rows.append({'id':f"{record['id']}:{field}:{index}:{n}:{offset}",'record_id':record['id'],'title':title,'field':field,'text':chunk,'learning':learning,'updated_at':record['updated_at']})
- for r in profile_answers.confirmed(user):
+      rows.append({'id':f"{record['id']}:{field}:{index}:{n}:{offset}",'record_id':record['id'],'title':title,'field':field,'text':chunk,'learning':learning,'updated_at':record['updated_at'],'relationships':d.get('relationship_context',[]),'personalization_revision':__import__('app.personalization',fromlist=['read']).read(user)['revision']})
+ for r in profile_answers.confirmed(user) if __import__('app.personalization',fromlist=['allowed']).allowed(user) else []:
   d=r['data']
   if d.get('answer_kind')!='experience':continue
   text=job_ai.clean(d.get('text') or d.get('answer') or '')
-  for i in range(0,len(text),1200):rows.append({'id':r['id']+':answer:'+str(i),'record_id':r['id'],'title':d.get('title') or 'Supporting Details','field':'answer','text':text[i:i+1200],'learning':False,'updated_at':r['updated_at']})
+  for i in range(0,len(text),1200):rows.append({'id':r['id']+':answer:'+str(i),'record_id':r['id'],'title':d.get('title') or 'Supporting Details','field':'answer','text':text[i:i+1200],'learning':False,'updated_at':r['updated_at'],'experience_ids':profile_answers.experience_ids(d),'provenance':[{k:v for k,v in source.items() if k in ('builder','draft_id','snapshot_id','analysis_id','attempt_id','voice_id','excerpts','user_quotes','reviewed_at','proposal_id','conversation_id','project_refs')} for source in d.get('sources',[])]})
  return rows
 def revision(rows):return hashlib.sha256(json.dumps(rows,sort_keys=True).encode()).hexdigest()
 def matches(item,rows):

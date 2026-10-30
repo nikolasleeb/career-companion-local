@@ -20,19 +20,16 @@ def test_legacy_summary_consent_does_not_grant_report_access(client,shared_repor
  assert not work_preferences.resume_context(u)['preferences']
  assert not any(s['kind']=='work_style_report' for s in assistant_context.sources(u))
 
-def test_explicit_scope_exposes_report_scores_and_choices_but_never_raw_answers(client,shared_report):
+def test_legacy_expanded_scope_now_exposes_summary_only(client,shared_report):
  u,record=shared_report;r=save(client,record,coach_report_access=True);assert r.status_code==200,r.text
- report=work_preferences.coach_context(u)
- assert len(report['report']['domains'])==5 and len(report['report']['facets'])==30
- assert report['report']['domains'][0]['mean']==3 and report['report']['work_choices'][0]['selected']
- assert 'SECRET' not in json.dumps(report)
- sources=[s for s in assistant_context.sources(u) if s['kind']=='work_style_report']
- assert sources and all(s['record_id']==record['id'] for s in sources)
- assert 'SECRET' not in json.dumps(sources)
- assert any(s['kind']=='work_style_report' for s in assistant_context.retrieve(u,'Explain my Conscientiousness report scores'))
+ assert work_preferences.coach_context(u) is None
+ assert not any(s['kind']=='work_style_report' for s in assistant_context.sources(u))
+ assert not any(s['kind']=='work_style_report' for s in assistant_context.retrieve(u,'Explain my Conscientiousness report scores'))
  summary=work_preferences.context(u)
  assert summary['preferences']==['I like focused preparation and planned collaboration.']
  assert 'domains' not in json.dumps(summary) and 'facets' not in json.dumps(summary)
+ # The assessment remains intact in its private results view.
+ assert len(db.get(u,record['id'],'work_style')['data']['report']['domains'])==5
 
 
 def test_revocation_and_report_deletion_remove_new_retrieval(client,shared_report):
@@ -70,6 +67,6 @@ def test_backup_restore_requires_fresh_sharing_consent(client,account):
 def test_legacy_report_descriptions_remain_available_without_raw_answers(client,account):
  u=account['id'];row=db.save(u,'work_style',{'status':'completed','scores':[{'dimension_id':'E','name':'Extraversion','total':30,'minimum':10,'maximum':50,'description':'Original saved response-scale description.'}],'answers':{'private':'SECRET_LEGACY_ANSWER'}})
  assert save(client,row,coach_report_access=True).status_code==200
- report=work_preferences.coach_context(u)
- assert report['report']['domains'][0]['description']=='Original saved response-scale description.'
- assert 'SECRET' not in json.dumps(report)
+ assert work_preferences.coach_context(u) is None
+ assert db.get(u,row['id'],'work_style')['data']['scores'][0]['description']=='Original saved response-scale description.'
+ assert not any(s['kind']=='work_style_report' for s in assistant_context.sources(u))

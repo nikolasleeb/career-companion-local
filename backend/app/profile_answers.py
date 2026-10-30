@@ -174,17 +174,21 @@ def records(user):
     records={r['id']:copy.deepcopy(r) for r in db.list_entities(user,'experience') if r['data'].get('confirmed') and project_relations.available(user,r['data'])}
     for answer in confirmed(user):
         a=answer['data']
-        if a['answer_kind']!='experience':continue
+        if a.get('answer_kind')!='experience':continue
         links=experience_ids(a);rid=links[0] if links else '';record=records.get(rid)
         if not record:continue
         full='\n'.join(str(v) for v in record['data'].values())
-        if norm(a['text']) not in norm(full):record['data']['contribution']='\n'.join(filter(None,[record['data'].get('contribution',''),a['text']]))
-        record['data'].setdefault('answer_sources',[]).append({'id':answer['id'],'version':a['version'],'experience_ids':links,'linked_experiences':[{'id':id,'title':records[id]['data']['title']} for id in links if id in records],'association_note':'Use this fact once in its main context. Additional links indicate related work, not separate accomplishments.','text':a['text'],'title':a['title'],'questions':[q['text'] for source in a['sources'] for q in source.get('questions',[])],'provenance':[{k:copy.deepcopy(v) for k,v in source.items() if k in ('builder','draft_id','snapshot_id','analysis_id','commit','excerpts','reviewed_at','proposal_id','conversation_id','job_id','resume_id','project_refs')} for source in a['sources']]})
+        text=a.get('text','');sources=a.get('sources',[])
+        if text and norm(text) not in norm(full):record['data']['contribution']='\n'.join(filter(None,[record['data'].get('contribution',''),text]))
+        record['data'].setdefault('answer_sources',[]).append({'id':answer['id'],'version':a.get('version',1),'experience_ids':links,'linked_experiences':[{'id':id,'title':records[id]['data']['title']} for id in links if id in records],'association_note':'Use this fact once in its main context. Additional links indicate related work, not separate accomplishments.','text':text,'title':a.get('title','Supporting Detail'),'questions':[q.get('text','') for source in sources for q in source.get('questions',[])],'provenance':[{k:copy.deepcopy(v) for k,v in source.items() if k in ('builder','draft_id','snapshot_id','analysis_id','attempt_id','voice_id','commit','excerpts','user_quotes','reviewed_at','proposal_id','conversation_id','job_id','resume_id','project_refs')} for source in sources]})
     for record in records.values():
         if record['data'].get('category')=='project':record['data']['related_jobs']=[{'id':id,'title':records[id]['data']['title'],'organization':records[id]['data'].get('organization','')} for id in record['data'].get('linked_employment_ids',[]) if id in records and records[id]['data'].get('category')=='employment']
     for record in records.values():
         if record['data'].get('category') in ('project','employment'):
             record['data']['related_education']=[{'id':id,'title':records[id]['data']['title'],'organization':records[id]['data'].get('organization',''),'course':course} for kind,id,course in project_relations.targets(record['data']) if kind!='employment' and id in records]
+    from .profile_context import relationships
+    links=relationships(list(records.values()))
+    for record in records.values():record['data']['relationship_context']=links[record['id']]
     return list(records.values())
 
 def reusable(user,job_id,selected=()):
