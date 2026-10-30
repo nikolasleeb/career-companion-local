@@ -34,12 +34,16 @@ def library():
   row.setdefault('provider',__import__('urllib.parse',fromlist=['urlsplit']).urlsplit(row['url']).hostname)
   row.setdefault('format','catalog' if row['resource_type']!='learning' else 'documentation')
   row.setdefault('access_kind','unknown');row.setdefault('level','unspecified');row.setdefault('reviewed_at','')
+  # Existing platform courses have explicit access descriptions, even when a bulk checker was blocked.
+  if row['id'] in ('codecademy-python','codecademy-sql','datacamp-python','datacamp-sql'):
+   row.update(provider='DataCamp' if row['id'].startswith('datacamp') else 'Codecademy',format='course',access_kind='freemium')
+  if row['id']=='sql_lemur':row.update(provider='DataLemur',format='practice',access_kind='freemium')
  return rows
 @router.get('/options')
-def options(job_id:str='',field:str='All',include_resources:bool=True,user=Depends(auth.current)):
- return _options(job_id,field,include_resources,user)
+def options(job_id:str='',field:str='All',include_resources:bool=True,include_related:bool=False,user=Depends(auth.current)):
+ return _options(job_id,field,include_resources,user,include_related=include_related)
 
-def _options(job_id,field,include_resources,user,all_suggestions=False):
+def _options(job_id,field,include_resources,user,all_suggestions=False,include_related=False):
  from . import career_explorer
  if field!='All' and field not in FIELDS:raise HTTPException(422,'Choose a field from the list.')
  job=db.get(user['id'],job_id,'job') if job_id else None
@@ -78,9 +82,25 @@ def _options(job_id,field,include_resources,user,all_suggestions=False):
   for item in record['data'].get('skill_items',[]):
    label=job_ai.clean(item.get('name',''))
    if label:add(label,{'kind':'profile','label':'In your Profile','record_id':record['id']},2)
- suggestions=sorted(found.values(),key=lambda v:v['rank'])
- if not all_suggestions:suggestions=suggestions[:10]
- for value in suggestions:value.pop('rank')
+ direct=sorted(found.values(),key=lambda v:v['rank']);near=[]
+ if include_related:
+  learning={id for r in rows if r['resource_type']=='learning' for id in r['topic_ids']}
+  direct=[v for v in direct if v['id'] in learning]
+  related={}
+  for item in direct:
+   for id in skill_catalog.index().get(item['id'],{}).get('related',[]):
+    topic=skill_catalog.index()[id]
+    if id in found or id not in learning or field!='All' and topic['field']!=field:continue
+    entry=related.setdefault(id,{'id':id,'label':topic['label'],'sources':[],'rank':(3,*item['rank'],topic['label'].casefold())})
+    for source in item['sources']:
+     reason={'kind':'related','origin_kind':source['kind'],'label':'Related to '+item['label'],'topic_id':item['id'],'record_id':source.get('record_id','')}
+     if reason not in entry['sources']:entry['sources'].append(reason)
+  near=sorted(related.values(),key=lambda v:v['rank'])
+ suggestions=direct+near
+ if not all_suggestions:
+  chosen=direct[:7]+near[:3] if near else direct[:10]
+  suggestions=chosen+direct[len(direct[:7]):len(direct[:7])+max(0,10-len(chosen))] if near else chosen
+ for value in suggestions:value.pop('rank',None)
  return {'resources':rows if include_resources else [],'groups':skill_catalog.data()['groups'],'catalog_version':skill_catalog.data()['version'],'fields':list(FIELDS),'suggested_topics':suggestions,'suggestions':[v['label'] for v in suggestions],'basis':'Choose skills to practice or explore. Sources explain why a topic is shown; none is a confirmed weakness.','topic_catalog':[{'id':k,'label':v['label'],'aliases':sorted(v['aliases'])} for k,v in learning_topics.vocabulary().items()]}
 
 @router.get('/plan-link')
@@ -93,8 +113,8 @@ def plan_link(plan_id:str,milestone_id:str,user=Depends(auth.current)):
 
 
 def selected_ids(values):return list(dict.fromkeys(skill_catalog.resolve(v) or learning_topics.key(v) for v in values if v.strip()))
-def topic_sources(user,job_id=''):
- return {row['id']:row for row in _options(job_id,'All',False,user,True)['suggested_topics']}
+def topic_sources(user,job_id='',include_related=False):
+ return {row['id']:row for row in _options(job_id,'All',False,user,True,include_related)['suggested_topics']}
 
 def candidates(topics,limit=24):
  """Round-robin relevant metadata only; the full library never goes to the provider."""
@@ -134,23 +154,63 @@ def browse_topics(q:str=Query('',max_length=150),field:str='All',group:str='',so
  groups=[{**g,'count':sum(g['id']==r['group'] for r in rows)} for g in skill_catalog.data()['groups']]
  return {'topics':rows[offset:offset+limit],'total':len(rows),'groups':groups,'offset':offset,'limit':limit,'version':skill_catalog.data()['version']}
 
+def display_resource(row):
+ """Presentation metadata only; published titles, IDs, URLs and snapshots stay intact."""
+ row=dict(row);title=row['title'];provider=row['provider']
+ for prefix in (provider+' — ',provider+' - '):
+  if title.casefold().startswith(prefix.casefold()):title=title[len(prefix):]
+ title=re.sub(r'^PostgreSQL:\s*Documentation:\s*[\d.]+:\s*(?:[\d.]+\.?\s*)?', '',title,flags=re.I)
+ title=re.sub(r'\s*[—–-]\s*Python [\d.]+ documentation$', '',title,flags=re.I)
+ title=re.sub(r'^\d+(?:\.\d+)*[.:]?\s+','',title).lstrip(' :')
+ row['display_title']=title or row['title']
+ return row
+
 @router.get('/resources')
-def browse_resources(topics:str=Query('',max_length=5000),q:str=Query('',max_length=150),field:str='All',provider:str='',format:str='',access:str='',level:str='',sort:str='relevance',kind:str='learning',offset:int=Query(0,ge=0,le=10000),limit:int=Query(12,ge=1,le=24),user=Depends(auth.current)):
- if field!='All' and field not in FIELDS or format not in ('','documentation','tutorial','course','practice','project','catalog') or access not in ('','free','freemium','paid','unknown') or level not in ('','beginner','intermediate','advanced','all','unspecified') or sort not in ('relevance','title','provider') or kind not in ('learning','support'):raise HTTPException(422,'Choose valid resource filters.')
- ids=set(selected_ids(topics.split('|')));related={v for id in ids for v in skill_catalog.index().get(id,{}).get('related',[])}-ids
- rows=[]
+def browse_resources(topics:str=Query('',max_length=5000),q:str=Query('',max_length=150),field:str='All',provider:str='',format:str='',access:str='',level:str='',sort:str='relevance',kind:str='learning',offset:int=Query(0,ge=0,le=10000),limit:int=Query(12,ge=1,le=24),job_id:str='',group:str='',source:str='',
+ fields:list[str]|None=Query(None),groups:list[str]|None=Query(None),providers:list[str]|None=Query(None),formats:list[str]|None=Query(None),accesses:list[str]|None=Query(None),levels:list[str]|None=Query(None),sources:list[str]|None=Query(None),topic_ids:list[str]|None=Query(None),user=Depends(auth.current)):
+ def values(multiple,single=''):
+  result=list(dict.fromkeys([*(multiple or []),*([single] if single and single!='All' else [])]))
+  if len(result)>50 or any(len(v)>300 for v in result):raise HTTPException(422,'Too many filter selections.')
+  return set(result)
+ chosen={'fields':values(fields,field),'groups':values(groups,group),'providers':values(providers,provider),'formats':values(formats,format),'accesses':values(accesses,access),'levels':values(levels,level),'sources':values(sources,source)}
+ provider_aliases={'www.datacamp.com':'DataCamp','datacamp.com':'DataCamp','www.codecademy.com':'Codecademy','codecademy.com':'Codecademy','datalemur.com':'DataLemur'}
+ chosen['providers']={provider_aliases.get(v.casefold(),v) for v in chosen['providers']}
+ allowed={'fields':set(FIELDS),'groups':{g['id'] for g in skill_catalog.data()['groups']},'formats':{'documentation','tutorial','course','practice','project','catalog'},'accesses':{'free','freemium','paid','unknown'},'levels':{'beginner','intermediate','advanced','all','unspecified'},'sources':{'profile','goal','posting'}}
+ if any(chosen[k]-v for k,v in allowed.items()) or sort not in ('relevance','recommended','title','provider') or kind not in ('learning','support'):raise HTTPException(422,'Choose valid resource filters.')
+ ids=set(selected_ids([*topics.split('|'),*(topic_ids or [])]));related={v for id in ids for v in skill_catalog.index().get(id,{}).get('related',[])}-ids
+ personal=topic_sources(user,job_id,True);index=skill_catalog.index();rows=[]
+ priority={'posting':0,'goal':1,'occupation':1,'profile':2,'related':3}
  for raw in library():
   if (raw['resource_type']=='learning')!=(kind=='learning'):continue
-  if field!='All' and raw['field'] not in (field,'All fields') and field not in raw.get('secondary_fields',[]):continue
   direct=ids.intersection(raw['topic_ids']);near=related.intersection(raw['topic_ids'])
   if ids and not (direct or near):continue
-  row={**raw,'match_kind':'direct' if not ids or direct else 'related','match_count':len(direct)};rows.append(row)
- providers=sorted({r['provider'] for r in rows})
- rows=[r for r in rows if (not provider or r['provider']==provider) and (not format or r['format']==format) and (not access or r['access_kind']==access) and (not level or r['level']==level) and all(t in (r['title']+' '+r['description']+' '+r['provider']).casefold() for t in q.casefold().split())]
- if sort=='provider':rows.sort(key=lambda r:(r['provider'].casefold(),r['title'].casefold(),r['id']))
- elif sort=='title':rows.sort(key=lambda r:(r['title'].casefold(),r['id']))
- else:rows.sort(key=lambda r:(r['match_kind']!='direct',-r['match_count'],r['title'].casefold(),r['id']))
- return {'resources':rows[offset:offset+limit],'total':len(rows),'offset':offset,'limit':limit,'providers':providers,'direct_count':sum(r['match_kind']=='direct' for r in rows),'related_count':sum(r['match_kind']=='related' for r in rows),'version':skill_catalog.data()['version']}
+  row=display_resource(raw);reasons=[]
+  for id in row['topic_ids']:
+   for reason in personal.get(id,{}).get('sources',[]):
+    item={'skill_id':id,**reason}
+    if item not in reasons:reasons.append(item)
+  reasons.sort(key=lambda v:(priority.get(v['kind'],4),v['label'].casefold(),v['skill_id']))
+  row.update(match_kind='direct' if not ids or direct else 'related',match_count=len(direct),recommendation_reasons=reasons)
+  row['_groups']={g for id in row['topic_ids'] for g in [index.get(id,{}).get('group'),*index.get(id,{}).get('secondary_groups',[])] if g}
+  row['_fields']={row['field'],*row.get('secondary_fields',[])}
+  if row['field']=='All fields':row['_fields'].update(FIELDS)
+  row['_sources']={('goal' if s.get('origin_kind',s['kind'])=='occupation' else s.get('origin_kind',s['kind'])) for s in reasons}
+  aliases=[a for id in row['topic_ids'] for a in index.get(id,{}).get('aliases',[])]
+  haystack=skill_catalog.normalize(' '.join([row['title'],row['display_title'],row['description'],row['provider'],*row['learning_topics'],*aliases]))
+  if not all(t in haystack for t in skill_catalog.normalize(q).split()):continue
+  rows.append(row)
+ def members(row,name):
+  return row['_'+name] if name in ('groups','fields','sources') else {row[{'providers':'provider','formats':'format','accesses':'access_kind','levels':'level'}[name]]}
+ def matches(row,skip=''):
+  return all(not selected or name==skip or selected.intersection(members(row,name)) for name,selected in chosen.items())
+ facets={name:sorted(chosen[name]|{v for row in rows if matches(row,name) for v in members(row,name) if v in allowed.get(name,{v})}) for name in chosen}
+ rows=[r for r in rows if matches(r)]
+ if sort=='provider':rows.sort(key=lambda r:(r['provider'].casefold(),r['display_title'].casefold(),r['id']))
+ elif sort=='title':rows.sort(key=lambda r:(r['display_title'].casefold(),r['id']))
+ else:rows.sort(key=lambda r:(r['match_kind']!='direct',-r['match_count'],min((priority.get(s['kind'],4) for s in r['recommendation_reasons']),default=4),r['display_title'].casefold(),r['id']))
+ total=len(rows);direct_count=sum(r['match_kind']=='direct' for r in rows)
+ public=[{k:v for k,v in r.items() if not k.startswith('_')} for r in rows[offset:offset+limit]]
+ return {'resources':public,'total':total,'offset':offset,'limit':limit,'providers':facets['providers'],'facets':facets,'direct_count':direct_count,'related_count':total-direct_count,'version':skill_catalog.data()['version']}
 
 
 def practice_topics(record):return selected_ids(record['data'].get('selected_topics',record['data'].get('confirmed_gaps',[])))
