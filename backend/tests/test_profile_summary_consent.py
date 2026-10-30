@@ -37,7 +37,7 @@ def test_plan_payload_honors_revocation_without_rewriting_history(client,account
  assert result['status']=='completed',result
  assert seen and not seen[0]['career_goals_as_aspirations']['text']
  assert client.get('/api/career-coach/chats/'+chat['id']).json()['chat']['data']['profile_goals_snapshot']['text']=='Research leadership'
- new=client.post('/api/career-coach/chats',json={}).json();assert not new['data']['profile_goals_snapshot']['text']
+ new=client.post('/api/career-coach/chats',json={'title':'New conversation after revocation'}).json();assert not new['data']['profile_goals_snapshot']['text']
 
 def test_goal_backup_restores_consent_and_structured_items(client,account):
  u=account['id'];career_goals.save(u,career_goals.Change(text='Explore research',expected_revision=0,use_for_ai=True,items=[career_goals.Goal(id='future-skill',category='skill',text='Learn research methods')]))

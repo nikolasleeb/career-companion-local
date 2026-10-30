@@ -44,6 +44,9 @@ def answer(env,state,text='I wrote a QA guide used by three classmates to review
 
 def review(env,state,build=True,**extra):
     p=next(p for p in state['data']['context_proposals'] if p['status']=='pending')
+    if p['kind']=='experience' and not extra.get('save_to_profile') and 'experience_ids' not in extra:
+        target=next((r for r in db.list_entities(env[0],'experience') if r['data'].get('title')=='Fictional report project'),None) or db.save(env[0],'experience',{'title':'Fictional report project','category':'project','confirmed':True})
+        extra['experience_ids']=[target['id']]
     return asyncio.run(context.review(env[0],state['id'],CoverContextReview(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),build=build,decisions=[CoverReviewDecision(proposal_id=p['id'],text=p['text'],action='approve',**extra)])))
 
 def test_questions_first_no_draft_and_dedup(guided):
@@ -64,7 +67,7 @@ def test_answer_review_directly_supports_letter_without_new_resume(guided):
     assert current['approved_context'][0]['text'].startswith('I wrote a QA guide')
     assert current['content']['paragraphs'][1].startswith('I wrote a QA guide')
     assert db.get(user,resume['id'],'resume')['data']==original and len(db.list_entities(user,'resume'))==1
-    assert not without_setup(db.list_entities(user,'experience')) # Letter-only approval does not create Profile records.
+    assert [r['data']['title'] for r in without_setup(db.list_entities(user,'experience'))]==['Fictional report project'] # Approval links the existing fixture rather than creating another record.
     assert any(e['source_id'].startswith('answer:') for e in current['evidence'][1]['evidence'])
     pdf=base64.b64decode(db.get(user,state['current']['id'],'cover_revision')['data']['artifacts']['pdf'])
     assert 'QA guide' in PdfReader(io.BytesIO(pdf)).pages[0].extract_text()
@@ -73,7 +76,7 @@ def test_answer_review_directly_supports_letter_without_new_resume(guided):
 
 def test_correction_rejection_skip_and_build_with_existing(guided):
     state=answer(guided,prepare(guided));p=state['data']['context_proposals'][0]
-    state=asyncio.run(context.review(guided[0],state['id'],CoverContextReview(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),build=False,decisions=[CoverReviewDecision(proposal_id=p['id'],action='approve',text='I wrote a QA guide used by two classmates.')])) )
+    state=asyncio.run(context.review(guided[0],state['id'],CoverContextReview(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),build=False,decisions=[CoverReviewDecision(proposal_id=p['id'],action='approve',text='I wrote a QA guide used by two classmates.',experience_ids=[db.save(guided[0],'experience',{'title':'Fictional report project','category':'project','confirmed':True})['id']])])) )
     assert context.approved(state['data'])[0]['text'].endswith('two classmates.')
     state=answer(guided,state,'I am interested in learning how analysis supports planning.')
     p=next(p for p in state['data']['context_proposals'] if p['status']=='pending')

@@ -21,7 +21,7 @@ def test_checklist_revision_scopes_and_ai_snapshot(client,workspace):
  assert calls[-1]['selected_plan_context']['progress']['completed']==1
  assert calls[-1]['selected_plan_context']['selected_step_id']==sid
  assert client.get(path).json()==p # AI did not change progress.
- another=make(client);assert client.post('/api/career-coach/chats/'+another['id']+'/actions',json={'operation':'message','text':'Foreign chat','plan_ref':{'plan_id':id},'request_token':'wrong-chat-check'}).status_code==404
+ another=make(client,title='Separate fictional plan conversation');assert client.post('/api/career-coach/chats/'+another['id']+'/actions',json={'operation':'message','text':'Foreign chat','plan_ref':{'plan_id':id},'request_token':'wrong-chat-check'}).status_code==404
  r=client.patch(path,json={'expected_revision':1,'milestone_id':mid,'completed':True}).json();assert r['percent']==100 and r['milestones'][mid]['completed_at']
  assert client.patch(path,json={'expected_revision':2,'milestone_id':mid,'completed':False}).json()['completed']==0
  assert not db.list_entities(u,'usage_event') # All model calls in this test are simulated.

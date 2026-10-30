@@ -68,6 +68,7 @@ class ExperienceItem(StrictModel):
     description: str = Field(default='',max_length=12000)
     contribution: str = Field(default='',max_length=6000)
     individual_project: bool = False
+    linked_employment_ids: list[str] = Field(default_factory=list,max_length=10)
     tools: str = Field(default='',max_length=1000)
     confirmed: bool = False
     source_document_id: str = Field(default='',max_length=64)
@@ -601,6 +602,7 @@ class FactApproval(StrictModel):
     title: str | None = Field(default=None,max_length=200)
     update_draft: bool = True
     mode: Literal['economy','deep','custom'] = 'economy'
+    experience_ids:list[str]|None=Field(default=None,max_length=10)
     evidence_experience_id: str = Field(default='',max_length=64)
     evidence_expected_updated_at: str = Field(default='',max_length=100)
     keep_standalone: bool = False

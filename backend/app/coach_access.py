@@ -5,7 +5,7 @@ vaults, settings/secrets, raw assessment answers, drafts and conversation-only
 offers have no automatic adapter. Read permissions are rechecked every request.
 """
 import json,re
-from . import db,profile_answers,work_preferences,career_goals
+from . import db,profile_answers,work_preferences,career_goals,project_relations
 REGISTRY={
  'resume':'Finalized generated resume','resume_revision':'Finalized resume revision',
  'cover_letter':'Finalized generated cover letter','application':'Application tracking',
@@ -42,8 +42,8 @@ def source_allowed(user,value,permissions=None,excluded=()):
     row=db.get(user,child)
     if not row:return False
     rk=row['kind'];data=row['data']
-    if rk=='experience' and not data.get('confirmed'):return False
-    if rk=='profile_answer' and (data.get('status')!='confirmed' or data.get('answer_kind')!='experience'):return False
+    if rk=='experience' and (not data.get('confirmed') or not project_relations.available(user,data)):return False
+    if rk=='profile_answer' and (data.get('status')!='confirmed' or data.get('answer_kind')!='experience' or profile_answers.needs_link(user,data)):return False
     if rk=='work_preferences' and not style:return False
     if rk=='career_goals' and not goals:return False
     if rk=='work_style' and (not report or kind!='work_style_report'):return False

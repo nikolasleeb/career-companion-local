@@ -22,6 +22,8 @@ def save(user,id,body):
         if old['status']!='draft':raise HTTPException(409,'This answer was already reviewed. Edit the reviewed answer in Profile.')
         if any(len(value)>2000 for value in body.question_answers.values()) or set(body.question_answers)-{q['id'] for q in old.get('questions',[])}:raise HTTPException(400,'Answer only this draft’s questions, with up to 2,000 characters each.')
         if body.experience_id:library.owned_experience(c,user,body.experience_id)
+        links=library.validate_links(c,user,body.experience_ids) if body.experience_ids is not None else [body.experience_id] if body.experience_id else []
+        old['experience_ids']=links
         old.update(version=old['version']+1,title=body.title,text=body.text,contribution=body.contribution,experience_id=body.experience_id,question_answers=body.question_answers)
         if not record:
             if body.prompt_id:
@@ -69,6 +71,9 @@ def review(user,id,body):
             value=copy.deepcopy(target['data'])
             if library.norm(text) not in library.norm('\n'.join(str(v) for v in value.values())):value['contribution']='\n'.join(filter(None,[value.get('contribution',''),text]))
             write(c,user,'experience',ExperienceItem.model_validate(value).model_dump(),rid)
+        links=library.validate_links(c,user,body.experience_ids if body.experience_ids is not None else [rid] if rid else [])
+        if rid and rid not in links:links.insert(0,rid)
+        library.require_links(links)
         source={'builder':data['builder'],'draft_id':id,'questions':data.get('questions',[]),'message':data.get('text',''),'question_answers':data.get('question_answers',{}),'contribution_confirmation':body.contribution,'reviewed_at':db.now(),'manual_review':True}
         for key in ('snapshot_id','analysis_id','prompt_id','job_id'):
             if data.get(key):source[key]=data[key]
@@ -78,7 +83,7 @@ def review(user,id,body):
         if existing:
             aid=existing['id'];existing['data']['sources'].append(source);library.write(c,user,existing['data'],aid)
         else:
-            library.write(c,user,{'version':1,'status':'confirmed','answer_kind':'experience','title':body.title,'text':text,'experience_id':rid,'category':'project','record_context':{},'backed_fields':{'contribution':text} if body.create_experience or body.update_experience else {},'scope':{},'sources':[source],'history':[],'review_history':[{'reviewed_at':db.now(),'text':text}]},aid)
+            library.write(c,user,{'version':1,'status':'confirmed','answer_kind':'experience','title':body.title,'text':text,'experience_id':links[0],'experience_ids':links,'category':'project','record_context':{},'backed_fields':{'contribution':text} if body.create_experience or body.update_experience else {},'scope':{},'sources':[source],'history':[],'review_history':[{'reviewed_at':db.now(),'text':text}]},aid)
         data.update(status='reviewed',version=data['version']+1,profile_answer_id=aid,review_request=body.model_dump(),reviewed_at=db.now())
         write(c,user,'answer_draft',data,id);library.touch_resumes(c,user,None,rid or aid)
     return db.get(user,aid,'profile_answer')

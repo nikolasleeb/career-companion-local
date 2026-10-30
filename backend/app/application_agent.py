@@ -113,6 +113,7 @@ class ReviewedAnswer(StrictModel):
     question_id: str = Field(max_length=100)
     value: str = Field(min_length=1,max_length=3000)
     answer_kind: Literal['private','professional'] = 'private'
+    experience_ids:list[str]=Field(default_factory=list,max_length=10)
     decision: Literal['once','save']
     private_answer: private_answers.Answer | None = None
     expected_version: int
@@ -360,7 +361,7 @@ def review_answer(id:str,body:ReviewedAnswer,user=Depends(auth.current)):
     if body.decision=='save' and body.answer_kind=='professional':
         if q['private'] or PRIVATE.search(body.value):raise HTTPException(422,'Private disclosures must remain in the encrypted vault.')
         from . import profile_answers
-        profile_answers.confirm_application_answer(user['id'],owned(user['id'],run['application_id'],'application'),q['label'],body.value,q.get('description',''),q.get('context',''))
+        profile_answers.confirm_application_answer(user['id'],owned(user['id'],run['application_id'],'application'),q['label'],body.value,q.get('description',''),q.get('context',''),body.experience_ids)
     elif body.decision=='save':
         a=body.private_answer
         if not a or a.question!=q['label'] or a.options!=q['options'] or a.description!=q.get('description','') or a.context!=q.get('context','') or a.value!=body.value:raise HTTPException(422,'Review the exact question, choices and scope before saving.')

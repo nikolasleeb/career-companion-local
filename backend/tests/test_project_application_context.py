@@ -204,7 +204,7 @@ def test_foreign_project_question_ids_and_fabricated_material_evidence_fail_clos
     from app import comparison
     with pytest.raises(ServiceError):comparison.attach_evidence_sources({'duty_assessments':[{'evidence':[{'source_id':context[0]['context_id']}]}]},comparison.evidence_catalog([record],{}))
 
-def test_explicit_unlinked_material_can_save_standalone_story_without_creating_project(client,account,monkeypatch):
+def test_explicit_unlinked_material_requires_a_related_project(client,account,monkeypatch):
     user=account['id'];record,snap,analysis=project(client,user,linked=False)
     context=pc.catalog(user,{'project_snapshot_ids':[snap['id']]});refs=pc.references([analysis['id']],context)
     state,_=resume_with_question(client,user,refs)
@@ -213,8 +213,6 @@ def test_explicit_unlinked_material_can_save_standalone_story_without_creating_p
     q=state['data']['asked_questions'][0]
     state=asyncio.run(question_answers.review(user,state['id'],'resume',AnswerBatchReview(expected_version=state['data']['version'],question_ids=[q['id']])))
     p=state['data']['proposals'][0];assert p['evidence_only'] and p['allow_standalone']
-    state=resumes.approve(user,state['id'],FactApproval(expected_version=state['data']['version'],proposal_id=p['id'],action='approve',keep_standalone=True,update_draft=False))
-    entry=library.confirmed(user)[0]
-    assert not entry['data']['experience_id'] and entry['id'] in state['data']['approved_record_ids']
+    with pytest.raises(HTTPException):resumes.approve(user,state['id'],FactApproval(expected_version=state['data']['version'],proposal_id=p['id'],action='approve',keep_standalone=True,update_draft=False))
+    assert not library.confirmed(user)
     assert without_setup(db.list_entities(user,'experience'))==[record] and len(calls)==1
-    assert entry['data']['sources'][0]['project_refs'][0]['snapshot_id']==snap['id']

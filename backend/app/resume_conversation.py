@@ -276,7 +276,7 @@ async def send(user,id,body):
                 checked_suggestion({'suggested_text':f['suggested_value']},f['user_quote'])
         if old and not db.get(user,rid,'experience'):
             proposal={**proposal,'record_id':'','library_parent_id':rid};rid=''
-        item={**proposal,'id':db.uid(),'status':'pending','source_message_id':data['messages'][-1]['id'],'expected_updated_at':old['updated_at'] if old else None,'original':old['data'] if old else {k:v for k,v in db.settings(user).items() if k in ('us_citizen','authorized_us','sponsorship_now','sponsorship_future')} if private else None}
+        item={**proposal,'id':db.uid(),'status':'pending','source_message_id':data['messages'][-1]['id'],'expected_updated_at':old['updated_at'] if old else None,'original':(db.get(user,old['id'],'experience') or old)['data'] if old else {k:v for k,v in db.settings(user).items() if k in ('us_citizen','authorized_us','sponsorship_now','sponsorship_future')} if private else None}
         profile_answers.associate_inputs(data,item,'resume',body.question_answers)
         project_context.bind_proposal(user,data,item,'resume')
         proposals.append(item)
@@ -321,6 +321,7 @@ def approve(user,id,body):
         if proposal['status']!='pending':raise HTTPException(409,'This proposal has already been reviewed.')
         profile_answers.check_fresh(data,proposal,'resume')
         if body.action=='reject':proposal['status']='rejected';return
+        if body.keep_standalone:raise HTTPException(422,'Choose a related project; standalone Supporting Details are no longer supported.')
         allowed={f['field'] for f in proposal['fields']}
         if set(body.values)-allowed:raise HTTPException(400,'Only the proposed fields can be approved.')
         values={f['field']:body.values.get(f['field'],f['value']).strip() for f in proposal['fields']}
@@ -332,8 +333,10 @@ def approve(user,id,body):
             validated=SettingsUpdate.model_validate(values).model_dump(exclude_none=True)
             c.execute('UPDATE users SET settings=? WHERE id=?',(json.dumps({**settings,**validated}),user))
         elif proposal.get('evidence_only'):
-            target=project_context.destination(c,user,proposal,body.evidence_experience_id,body.evidence_expected_updated_at,body.keep_standalone)
-            rid=target['id'] if target else '';proposal['applied_record_id']=rid;proposal['category']='project'
+            links=profile_answers.validate_links(c,user,body.experience_ids) if body.experience_ids is not None else []
+            selected_project=next((id for id in links if profile_answers.owned_experience(c,user,id)['data']['category']=='project'),'')
+            target=project_context.destination(c,user,proposal,selected_project or body.evidence_experience_id,body.evidence_expected_updated_at,body.keep_standalone)
+            rid=target['id'] if target else '';proposal['applied_record_id']=rid;proposal['category']='project';proposal['experience_ids']=links or [rid]
             data['approved_record_ids']=list(dict.fromkeys(data['approved_record_ids']+([rid] if rid else [])))
         else:
             existing=db.decode(c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='experience'",(rid,user)).fetchone()) if rid else None

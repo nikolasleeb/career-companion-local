@@ -24,12 +24,12 @@ def test_no_broad_platform_product_false_matches_or_acronym_guesses():
 
 def test_confirmed_sources_and_learning_supporting_details_are_scoped(client,account):
  u=account['id']
- db.save(u,'experience',{'confirmed':True,'title':'Project source','category':'project','description':'Created AWS pipelines. Built SQL queries.'})
+ project=db.save(u,'experience',{'confirmed':True,'title':'Project source','category':'project','description':'Created AWS pipelines. Built SQL queries.'})
  db.save(u,'experience',{'confirmed':True,'title':'Python','category':'coursework'})
  db.save(u,'experience',{'confirmed':False,'title':'Secret draft','tools':'Docker'})
  with db.connect() as c:c.execute("INSERT INTO users VALUES(?,?,?,?,?)",('other','other-evidence','unused','{}',db.now()))
  db.save('other','experience',{'confirmed':True,'title':'Other account','tools':'Azure'})
- db.save(u,'profile_answer',{'answer_kind':'experience','status':'confirmed','text':'Used Excel for scheduling.'})
+ db.save(u,'profile_answer',{'answer_kind':'experience','status':'confirmed','text':'Used Excel for scheduling.','experience_ids':[project['id']]})
  db.save(u,'profile_answer',{'answer_kind':'motivation','status':'confirmed','text':'Want to use Docker.'})
  rows=ev.sources(u)
  assert ev.matches({'name':'Python'},rows)['match_status']=='related'

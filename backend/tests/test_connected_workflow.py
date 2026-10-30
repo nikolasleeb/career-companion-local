@@ -119,14 +119,14 @@ def test_manual_review_without_key_and_motivation_explicit_selection(guided,clie
 
 def test_corrections_archive_and_history_do_not_rewrite_saved_pdf(guided,client):
     state=review(guided,answer(guided,prepare(guided)));user=guided[0];original=copy.deepcopy(db.get(user,state['current']['id'],'cover_revision')['data']);entry=library.confirmed(user)[0]
-    body={'expected_version':entry['data']['version'],'title':entry['data']['title'],'text':'I wrote a QA guide used by two classmates.','experience_id':''}
+    body={'expected_version':entry['data']['version'],'title':entry['data']['title'],'text':'I wrote a QA guide used by two classmates.','experience_id':entry['data']['experience_id'],'experience_ids':entry['data']['experience_ids']}
     changed=client.put('/api/profile-answers/'+entry['id'],json=body);assert changed.status_code==200,changed.text
     assert changed.json()['data']['history'][0]['text']==entry['data']['text']
     state=letters.state(user,state['id']);assert state['current']['data']['approved_context'][0]['text']==entry['data']['text']
     assert any(r['text']==body['text'] for r in state['sources'])
     data=changed.json()['data'];body.update({'expected_version':data['version'],'archived':True})
     assert client.put('/api/profile-answers/'+entry['id'],json=body).status_code==200
-    library.migrate(user);assert not library.confirmed(user) and not without_setup(library.records(user))
+    library.migrate(user);assert not library.confirmed(user) and all(body['text'] not in json.dumps(r['data']) and entry['data']['text'] not in json.dumps(r['data']) for r in library.records(user))
     assert db.get(user,state['current']['id'],'cover_revision')['data']==original
     assert client.put('/api/profile-answers/'+entry['id'],json=body).status_code==409
 
@@ -195,7 +195,8 @@ def test_multiple_inline_answers_reviewed_in_one_paid_action(guided,monkeypatch)
     state=asyncio.run(question_answers.review(user,state['id'],'cover',AnswerBatchReview(expected_version=state['data']['version'],question_ids=[q['id'] for q in questions])))
     assert counts==['CoverChatOutput'] and len(state['data']['context_proposals'])==2
     from app import cover_context
-    state=asyncio.run(cover_context.review(user,state['id'],CoverContextReview(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),build=False,decisions=[CoverReviewDecision(proposal_id=p['id'],action='approve',text=p['text']) for p in state['data']['context_proposals']])))
+    target=db.save(user,'experience',ExperienceItem(category='project',title='Fictional QA guide project',confirmed=True).model_dump())
+    state=asyncio.run(cover_context.review(user,state['id'],CoverContextReview(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),build=False,decisions=[CoverReviewDecision(proposal_id=p['id'],action='approve',text=p['text'],experience_ids=[target['id']] if p['kind']=='experience' else []) for p in state['data']['context_proposals']])))
     assert all(q['status']=='reviewed' for q in state['data']['questions'])
     assert len(library.confirmed(user))==2 and len(without_setup(library.records(user)))==1
     assert all('interested in analysis' not in json.dumps(r['data']) for r in without_setup(library.records(user)))
@@ -212,10 +213,10 @@ def test_reviewed_stories_reach_comparison_resume_and_interview_inputs(guided,mo
         raise AssertionError(schema.__name__)
     monkeypatch.setattr(ai,'structured',model)
     analysis=asyncio.run(ai.analyze(user,guided[1]['data'],'economy'));assert analysis['score']['groups']['required']['supported']==1
-    asyncio.run(ai.prepare(user,guided[1]['data'],[],'economy'))
+    asyncio.run(ai.prepare(user,guided[1]['data'],['Python'],'economy'))
     assert text in json.dumps(seen[0][1]['retrieved']) and text in json.dumps(seen[1][1]['reviewed_professional_profile'])
     from app.main import build_resume
-    snapshot=build_resume(user,ResumeRequest(job_id=guided[1]['id'],experience_ids=[entry['id']]))
+    snapshot=build_resume(user,ResumeRequest(job_id=guided[1]['id'],experience_ids=[entry['data']['experience_id']]))
     assert text in json.dumps(snapshot['sections'])
 
 
@@ -237,9 +238,10 @@ def test_saved_letter_workflow_matches_exact_resume_without_changing_submission(
 
 def test_manual_review_deduplicates_same_professional_detail_and_rejects_empty(guided):
     user=guided[0];state=prepare(guided);text='I wrote a QA guide for classmates.'
+    target=db.save(user,'experience',ExperienceItem(category='project',title='Fictional QA guide project',confirmed=True).model_dump())
     for question in state['data']['questions'][:2]:
         state=save_answer(user,state,'cover',text,question)
-        body=ProfileDraftReview(builder='cover',conversation_id=state['id'],question_id=question['id'],expected_answer_version=1,title='Writing a QA guide',text=text,answer_kind='experience')
+        body=ProfileDraftReview(builder='cover',conversation_id=state['id'],question_id=question['id'],expected_answer_version=1,title='Writing a QA guide',text=text,answer_kind='experience',experience_ids=[target['id']])
         library.confirm_draft(user,body);state=letters.state(user,state['id'])
     entries=library.confirmed(user);assert len(entries)==1 and len(entries[0]['data']['sources'])==2
     with pytest.raises(HTTPException):library.confirm_draft(user,body.model_copy(update={'text':'  '}))
@@ -258,7 +260,8 @@ def test_changed_linked_profile_facts_do_not_reenter_from_story_history(guided):
 def test_authorization_answers_cannot_become_reusable_stories(guided,private):
     user=guided[0];state=prepare(guided);q=state['data']['questions'][0];state=save_answer(user,state,'cover',private,q)
     assert not library.drafts(user)
-    with pytest.raises(HTTPException) as error:library.confirm_draft(user,ProfileDraftReview(builder='cover',conversation_id=state['id'],question_id=q['id'],expected_answer_version=1,title='Private answer',text=private,answer_kind='experience'))
+    target=db.save(user,'experience',ExperienceItem(category='project',title='Fictional privacy guard target',confirmed=True).model_dump())
+    with pytest.raises(HTTPException) as error:library.confirm_draft(user,ProfileDraftReview(builder='cover',conversation_id=state['id'],question_id=q['id'],expected_answer_version=1,title='Private answer',text=private,answer_kind='experience',experience_ids=[target['id']]))
     assert error.value.status_code==400 and not library.confirmed(user)
 
 
