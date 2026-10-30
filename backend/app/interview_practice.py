@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Literal
 from fastapi import APIRouter,Depends,HTTPException,UploadFile,File
 from fastapi.responses import FileResponse
-from pydantic import Field
+from pydantic import Field,model_validator
 from . import auth,db,onboarding,config,documents,storage,ai,career_coach,task_progress,application_documents,chat_visuals,work_preferences,profile_answers,interview_guides
 from .models import StrictModel
 from .network import ServiceError
@@ -64,6 +64,7 @@ class PracticeMaterial(StrictModel):
  references:list[Reference]=Field(default_factory=list,max_length=8)
  visuals:list[chat_visuals.Visual]=Field(default_factory=list,max_length=3)
 class Coaching(StrictModel):
+ reviewer_takeaway:str=Field(default='',max_length=2500)
  useful_details:list[DetailCandidate]=Field(default_factory=list,max_length=4)
  summary:str=Field(max_length=3000)
  strengths:list[str]=Field(max_length=8)
@@ -82,8 +83,13 @@ class Discussion(StrictModel):
  references:list[Reference]=Field(default_factory=list,max_length=8)
  visuals:list[chat_visuals.Visual]=Field(default_factory=list,max_length=3)
 class ManualQuestion(StrictModel):
- question:str=Field(min_length=5,max_length=7000)
+ question:str=Field(default='',max_length=7000)
+ guide_question_id:str=Field(default='',max_length=100)
  expected_updated_at:str=Field(max_length=100)
+ @model_validator(mode='after')
+ def one_source(self):
+  if bool(self.question.strip())==bool(self.guide_question_id) or self.question and len(self.question.strip())<5:raise ValueError('Provide a guide question ID or a question of at least five characters.')
+  return self
 class Action(StrictModel):
  operation:Literal['question','guide','review','research','message','material']
  expected_updated_at:str=Field(max_length=100)
@@ -167,11 +173,14 @@ def active(user,id):
 @router.post('/sessions/{id}/questions')
 def manual(id:str,body:ManualQuestion,user=Depends(owner)):
  s=owned(user,id,'interview_session')
+ starter=interview_guides.starter(s['data']['kind'],body.guide_question_id) if body.guide_question_id else None
  with db.connect() as c:
   c.execute('BEGIN IMMEDIATE')
   row=c.execute('SELECT updated_at FROM entities WHERE id=? AND user_id=?',(id,user)).fetchone()
+  if not row:raise HTTPException(404,'Interview practice session is unavailable.')
   if row['updated_at']!=body.expected_updated_at or active(user,id):raise HTTPException(409,'The session changed or has a running action. Reload it before saving a question.')
-  qid=db.uid();stamp=db.now();q={'session_id':id,'question':body.question,'topic':'Your question','evaluation_focus':[],'constraints':[],'examples':[],'hints':[],'references':[],'origin':'user','code_execution':False}
+  qid=db.uid();stamp=db.now();q=starter or {'question':body.question,'topic':'Your question','evaluation_focus':[],'constraints':[],'examples':[],'hints':[],'references':[],'origin':'user','code_execution':False}
+  q={**q,'session_id':id}
   c.execute('INSERT INTO entities VALUES(?,?,?,?,?,?)',(qid,user,'interview_question',json.dumps(q),stamp,stamp));c.execute('UPDATE entities SET updated_at=? WHERE id=? AND user_id=?',(stamp,id,user))
  return detail(user,id)
 
@@ -277,9 +286,10 @@ async def execute(user,id,body):
   if any(len(x)>6000 for x in body.star.values()):raise HTTPException(422,'Keep each STAR section within 6,000 characters.')
   answer=body.answer.strip() or '\n\n'.join(k+': '+v for k,v in body.star.items() if v.strip())
   if body.operation=='review' and len(answer)<5:raise HTTPException(422,'Enter your answer or code before requesting feedback.')
-  task_progress.stage('reviewing');output,meta=await ai.structured(Coaching,{**payload,'question':{k:q['data'].get(k) for k in ('question','topic','evaluation_focus','constraints','examples','hints')},'answer':answer,'details_source':voice['data']['reviewed_transcript'] if voice else answer,'star_draft':body.star,'task':('Help the user build their own STAR response. Give all four STAR parts as prompts and memory cues, not a fabricated finished personal story. Suggest relevant reviewed examples with references; ask for missing facts. Review an existing draft when supplied.' if body.operation=='guide' else 'Review this attempt. Behavioral: evaluate relevance, specificity, individual contribution, supported results and clarity; provide STAR guidance when useful. Coding: review correctness, reasoning, time/space complexity, edge cases and explain proposed tests; do not claim execution. Provide concrete profile connections with source references. List claims that need clarification; never automatically add them to Profile. End with one useful follow-up question. Optionally propose up to four useful_details using exact user_quote excerpts from details_source only. Keep these tentative self-reports. Flag conflicts with older Profile evidence for clarification; never infer a new fact or automatically save it.')},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+  approach=interview_guides.approach(d['kind'],q['data'])
+  task_progress.stage('reviewing');output,meta=await ai.structured(Coaching,{**payload,'answer_structure_guidance':approach,'question':{k:q['data'].get(k) for k in ('question','topic','evaluation_focus','constraints','examples','hints')},'answer':answer,'details_source':voice['data']['reviewed_transcript'] if voice else answer,'star_draft':body.star,'task':('Help the user prepare their own answer using answer_structure_guidance and the question type. Use all four STAR parts only when use_star is true; otherwise keep star empty and explain the suitable structure in summary and improvements. Introductions, motivation, cases, scenarios and presentations must not be forced into STAR. Coding: guide the approach, assumptions, edge cases and proposed tests without revealing a complete solution or claiming execution. Give prompts and memory cues, not a fabricated personal story. Suggest reviewed examples with references and ask for missing facts.' if body.operation=='guide' else 'Review the answer against this specific question. Evaluate relevance, structure, specificity, individual contribution, supported outcomes and clarity regardless of whether STAR fields were used. Follow answer_structure_guidance; do not force introductions or other formats into STAR. In reviewer_takeaway, explain what a reviewer may reasonably understand from this response and what is unclear, grounding every observation in the actual words or code. Do not infer personality, honesty, protected traits, hiring suitability or predict a hiring decision. Behavioral: provide STAR guidance when useful. Coding: review correctness, reasoning, time/space complexity, edge cases and explain proposed tests; do not claim execution. Provide concrete profile connections with source references. List claims that need clarification; never automatically add them to Profile. End with one useful follow-up question. Optionally propose up to four useful_details using exact user_quote excerpts from details_source only. Keep these tentative self-reports. Flag conflicts with older Profile evidence for clarification; never infer a new fact or automatically save it.')},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
   output=Coaching.model_validate(output).model_dump();output['references']=references(output['references'],catalog)
-  if body.operation=='guide' and {r['part'] for r in output['star']}!=set(PARTS):raise ServiceError('STAR guidance omitted a section. Previous feedback remains available.')
+  if body.operation=='guide' and approach['use_star'] and {r['part'] for r in output['star']}!=set(PARTS):raise ServiceError('STAR guidance omitted a section. Previous feedback remains available.')
   if len({r['part'] for r in output['star']})!=len(output['star']):raise ServiceError('The feedback repeated a STAR section. Previous feedback remains available.')
   output['useful_details']=[v for v in output['useful_details'] if v['user_quote'] in (voice['data']['reviewed_transcript'] if voice else answer)]
   db.save(user,'interview_attempt',{'session_id':id,'question_id':q['id'],'operation':body.operation,'answer':answer,'star':body.star,'voice_id':body.voice_id,'transcript_snapshot':voice['data']['reviewed_transcript'] if voice else '', 'delivery':voice['data'].get('delivery') if voice else None,'delivery_metrics':voice['data'].get('metrics') if voice else None,'feedback':output,'profile_revision':p['revision'],'source_snapshot':catalog,'ai':meta,'code_execution':False})
@@ -296,7 +306,6 @@ def install(app,start_task,require_ai):
   require_ai(user)
   if active(user,id):raise HTTPException(409,'An action is already running for this practice session. Check its status first.')
   if owned(user,id,'interview_session')['updated_at']!=body.expected_updated_at:raise HTTPException(409,'This session changed. Reload it before continuing.')
-  if body.operation=='guide' and owned(user,id,'interview_session')['data']['kind']=='coding':raise HTTPException(422,'STAR guidance is for behavioral practice. Submit your coding solution for a review instead.')
   if body.operation in ('guide','review'):
    q=owned(user,body.question_id,'interview_question')
    if q['data']['session_id']!=id:raise HTTPException(404,'Question not found in this session.')
