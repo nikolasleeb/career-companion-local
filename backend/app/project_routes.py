@@ -48,6 +48,7 @@ class Draft(StrictModel):
     text:str=Field(default='',max_length=6000)
     contribution:str=Field(default='',max_length=3000)
     experience_id:str=Field(default='',max_length=64)
+    experience_ids:list[str]|None=Field(default=None,max_length=10)
     question_answers:dict[str,str]=Field(default_factory=dict,max_length=3)
     question:str=Field(default='',max_length=2000)
     prompt_id:str=Field(default='',max_length=64)
@@ -59,6 +60,7 @@ class Review(StrictModel):
     confirmed:bool=False
     rejected:bool=False
     experience_id:str=Field(default='',max_length=64)
+    experience_ids:list[str]|None=Field(default=None,max_length=10)
     experience_updated_at:str=Field(default='',max_length=100)
     create_experience:bool=False
     update_experience:bool=False
@@ -228,7 +230,7 @@ def validate_backup(record,kinds,by_id):
     data=record['data'];kind=record['kind']
     refs={'source_id':'project_source','snapshot_id':'project_snapshot','analysis_id':'project_analysis','experience_id':'experience','profile_answer_id':'profile_answer','prompt_id':'story_prompts','job_id':'job'}
     for key,target in refs.items():
-        if data.get(key) and kinds.get(data[key])!=target:raise ValueError('Invalid project/reflection reference')
+        if data.get(key) and kinds.get(data[key])!=target and not (key=='experience_id' and data[key] in data.get('unavailable_experience_ids',[])):raise ValueError('Invalid project/reflection reference')
     if kind=='project_source' and data.get('provider') in ('upload_preview','mixed'):
         files=data.get('available_files',[])
         if not 1<=len(files)<=3000:raise ValueError()
@@ -265,7 +267,7 @@ def validate_nested_references(value,kinds,by_id=None):
             if key=='visual_document_id' and item and (kinds.get(item)!='document' or by_id is not None and by_id[item]['data'].get('purpose')!='project_material'):raise ValueError('Invalid original project file reference')
             if key=='project_snapshot_ids' and (not isinstance(item,list) or any(kinds.get(id)!='project_snapshot' for id in item)):raise ValueError()
             if key=='project_context_ids' and (not isinstance(item,list) or any(kinds.get(id) not in ('project_snapshot','project_analysis') for id in item)):raise ValueError()
-            if key=='experience_ids' and ('answer_kind' in value or value.get('kind') in ('experience','motivation')) and (not isinstance(item,list) or len(item)>10 or len(set(item))!=len(item) or any(not isinstance(id,str) or kinds.get(id)!='experience' for id in item)):raise ValueError()
+            if key=='experience_ids' and ('answer_kind' in value or value.get('kind') in ('experience','motivation')) and (not isinstance(item,list) or len(item)>10 or len(set(item))!=len(item) or any(not isinstance(id,str) or kinds.get(id)!='experience' and id not in value.get('unavailable_experience_ids',[]) for id in item)):raise ValueError()
             if key=='evidence_experience_id' and item and kinds.get(item)!='experience':raise ValueError()
             if key=='project_refs':
                 if not isinstance(item,list):raise ValueError()

@@ -101,10 +101,10 @@ def test_project_analysis_needs_approval_before_it_counts(client,fresh):
     assert client.post('/api/project-snapshots/'+snap['id']+'/analyze',json={'mode':'economy'}).status_code==503
     draft=client.post('/api/project-snapshots/'+snap['id']+'/notes').json()
     assert section(state(client),'project')['status']=='needs_review'
-    body={'expected_version':1,'title':'Course project','text':'I cleaned public data and compared regressions.','contribution':'I implemented preprocessing and checked held-out predictions.','confirmed':True}
+    body={'expected_version':1,'title':'Course project','text':'I cleaned public data and compared regressions.','contribution':'I implemented preprocessing and checked held-out predictions.','confirmed':True,'create_experience':True}
     response=client.post('/api/profile-answers/drafts/'+draft['id']+'/review',json=body)
     assert response.status_code==200,response.text
-    assert not db.list_entities(fresh['id'],'experience')
+    records=db.list_entities(fresh['id'],'experience');assert len(records)==1 and records[0]['data']['category']=='project' and records[0]['data']['confirmed']
     assert section(state(client),'project')['status']=='complete'
     assert client.post('/api/project-snapshots/'+snap['id']+'/attach',json={'builder':'resume','conversation_id':'missing','expected_version':1}).status_code==403
     assert client.post('/api/work-style/prompts',json={'themes':['1'],'job_id':'missing'}).status_code==403

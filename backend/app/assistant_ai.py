@@ -7,7 +7,7 @@ from datetime import datetime,timezone
 from fastapi import Depends, HTTPException
 from pydantic import Field
 from typing import Literal
-from . import ai,auth,credentials,db,career_goals
+from . import ai,auth,credentials,db,career_goals,profile_answers
 from .models import StrictModel
 from .application_agent import router,load,PRIVATE,BOUNDARY,owned,TERMINAL
 
@@ -46,7 +46,7 @@ def build_payload(user,run,body):
     evidence=[]
     for id in body.evidence_ids:
         record=owned(user,id,'profile_answer');data=record['data']
-        if data.get('status')!='confirmed' or data.get('answer_kind')!='experience':raise HTTPException(422,'Select reviewed professional Supporting Details only.')
+        if data.get('status')!='confirmed' or data.get('answer_kind')!='experience' or profile_answers.needs_link(user,data):raise HTTPException(422,'Select reviewed professional Supporting Details only.')
         text=str(data.get('answer') or data.get('text') or data.get('response') or '')[:3000]
         if CREDENTIAL_PATTERN.search(text):raise HTTPException(422,'Selected professional evidence contains credential-like text. Review it before optional AI use.')
         if PRIVATE.search(text):raise HTTPException(422,'Private disclosures cannot be sent as professional evidence.')

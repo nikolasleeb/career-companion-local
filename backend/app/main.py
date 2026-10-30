@@ -339,6 +339,7 @@ def workspace(paged_jobs:bool=False,user=Depends(auth.current)):
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
     unlocked=onboarding.status(user['id'])['completed']
     result={kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] if unlocked or kind in ('experience','document','profile_answer','onboarding','prep','interview','assessment','assessment_progress') else [] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
+    result['profile_answer']=[{**row,'data':{**row['data'],'needs_related_experience':profile_answers.needs_link(user['id'],row['data'])}} for row in result['profile_answer']]
     result['search']=[job_results.public_search(user['id'],r) for r in result['search']]
     result['job']=job_cache.decorate_records(user['id'],result['job'])
     if paged_jobs:
@@ -496,6 +497,7 @@ def add_experience(body:ExperienceItem,user=Depends(auth.current)):
 @app.put('/api/experience/{entity_id}')
 def edit_experience(entity_id:str,body:ExperienceItem,user=Depends(auth.current)):
     old=require(user['id'],entity_id,'experience')['data']
+    if 'linked_employment_ids' not in body.model_fields_set:body=body.model_copy(update={'linked_employment_ids':old.get('linked_employment_ids',[])})
     certifications.validate_documents(user['id'],body.model_dump())
     return db.save(user['id'],'experience',{**body.model_dump(),'source_references':combined_import.edited_references(old,body.model_dump()),'unavailable_source_ids':old.get('unavailable_source_ids',[])},entity_id)
 
@@ -1285,6 +1287,9 @@ def backup(user=Depends(auth.current)):
     cost_history.recover(user['id'])
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
     records=[r for kind in BACKUP_KINDS for r in db.list_entities(user['id'],kind)]
+    record_ids={r['id'] for r in records}
+    from . import project_relations
+    for record in records:project_relations.backup_markers(record['data'],record_ids)
     cached_jobs={r['id']:r for r in job_cache.decorate_records(user['id'],[r for r in records if r['kind']=='job'])}
     records=[cached_jobs.get(r['id'],r) for r in records]
     files={}
@@ -1322,7 +1327,12 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             project_routes.validate_nested_references(record['data'],kinds,by_id)
             application_documents.validate_backup(record,kinds,by_id,payload.get('files',{}))
             if record['kind']=='experience':
-                ExperienceItem.model_validate(record['data'])
+                ExperienceItem.model_validate({k:v for k,v in record['data'].items() if k!='unavailable_employment_ids'})
+                links=record['data'].get('linked_employment_ids',[])
+                if links and record['data'].get('category')!='project' or len(links)!=len(set(links)):raise ValueError()
+                for link in links:
+                    if link not in kinds and link not in record['data'].get('unavailable_employment_ids',[]):raise ValueError()
+                    if link in kinds and (kinds[link]!='experience' or by_id[link]['data'].get('category')!='employment'):raise ValueError()
                 for reference in record['data'].get('source_references',[]):
                     if kinds.get(reference['document_id'])!='document' and reference['document_id'] not in record['data'].get('unavailable_source_ids',[]):raise ValueError()
                 for credential in record['data'].get('certification_items',[]):
@@ -1343,7 +1353,10 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             if record['kind']=='profile_answer':
                 data=record['data']
                 if data['answer_kind'] not in ('experience','motivation') or data['status'] not in ('confirmed','archived') or not isinstance(data['version'],int) or data['version']<1:raise ValueError()
-                if data.get('experience_id') and kinds.get(data['experience_id'])!='experience':raise ValueError()
+                if data.get('experience_id') and data['experience_id'] in kinds and kinds[data['experience_id']]!='experience':raise ValueError()
+                if data.get('experience_id') and data['experience_id'] not in kinds and data['experience_id'] not in data.get('unavailable_experience_ids',[]):raise ValueError()
+                links=profile_answers.experience_ids(data)
+                if len(links)>10 or any(kinds.get(link)!='experience' and link not in data.get('unavailable_experience_ids',[]) for link in links):raise ValueError()
                 if data.get('scope',{}).get('job_id') and kinds.get(data['scope']['job_id'])!='job':raise ValueError()
                 for source in data['sources']:
                     if source.get('builder')=='interview':
@@ -1352,7 +1365,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                             continue
                         if kinds.get(source.get('conversation_id'))!='interview_session' or kinds.get(source.get('attempt_id'))!='interview_attempt':raise ValueError()
                         attempt=by_id[source['attempt_id']]['data']
-                        if attempt['session_id']!=source['conversation_id'] or source.get('user_quote','') not in attempt.get('answer',''):raise ValueError()
+                        if attempt['session_id']!=source['conversation_id'] or any(not isinstance(quote,str) or not quote.strip() or quote not in attempt.get('answer','') or attempt.get('voice_id') and quote not in attempt.get('transcript_snapshot','') for quote in source.get('user_quotes') or [source.get('user_quote','')]):raise ValueError()
                         continue
                     if source.get('builder')=='application_agent':
                         if kinds.get(source.get('application_id'))!='application' or (source.get('job_id') and kinds.get(source['job_id'])!='job'):raise ValueError()
@@ -1447,7 +1460,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         if isinstance(value,str) and ':' in value and value.split(':',1)[0] in ids:return ids[value.split(':',1)[0]]+':'+value.split(':',1)[1]
         if isinstance(value,str): return 'library:'+ids[value[8:]] if value.startswith('library:') and value[8:] in ids else ids.get(value,value)
         if isinstance(value,list): return [remap(x) for x in value]
-        if isinstance(value,dict): return {ids.get(k,k):remap(v) for k,v in value.items() if k not in ('password','token','csrf','api_key','path','user_id')}
+        if isinstance(value,dict): return {ids.get(k,k):remap(v) for k,v in value.items() if k not in ('password','token','csrf','api_key','path','user_id','unavailable_experience_ids','unavailable_employment_ids')}
         return value
     storage.ensure_capacity(sum(len(value) for value in decoded.values())+len(json.dumps(payload).encode())*4+65536)
     existing_usage={r['data']['event_key']:r['id'] for r in db.list_entities(user['id'],'usage_event')}
@@ -1494,7 +1507,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 restored['career_goal_selection']={**restored['career_goal_selection'],'enabled':False,'goal_ids':[]}
                 for proposal in restored.get('context_proposals',[]):
                     if proposal.get('career_goal_source') and proposal.get('status')=='pending':proposal['status']='rejected'
-            db.save(user['id'],record['kind'],restored,ids[record['id']])
+            db.save(user['id'],record['kind'],restored,ids[record['id']],restoring=True)
     onboarding.restore(user['id'],setup_records[0]['data'] if setup_records else None,legacy=any(r['kind'] in onboarding.LEGACY for r in records))
     # Restored pending proposals use the new record timestamp only when their reviewed
     # original still matches. Conflicting/newer source data continues to block approval.

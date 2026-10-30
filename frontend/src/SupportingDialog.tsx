@@ -1,0 +1,7 @@
+import React,{useId,useLayoutEffect,useRef} from 'react';
+import './supportingDetails.css';
+export function SupportingDialog({title,close,children,busy=false}:{title:string;close:()=>void;children:React.ReactNode;busy?:boolean}){
+ const ref=useRef<HTMLDialogElement>(null),heading=useRef<HTMLHeadingElement>(null),id=useId();
+ useLayoutEffect(()=>{const origin=document.activeElement as HTMLElement|null;ref.current?.showModal();heading.current?.focus();return()=>{ref.current?.close();queueMicrotask(()=>{if(origin?.isConnected&&!origin.closest('[hidden]'))origin.focus();});};},[]);
+ return <dialog ref={ref} className="supporting-dialog" aria-labelledby={id} aria-modal="true" onCancel={e=>{e.preventDefault();if(!busy)close();}} onKeyDown={e=>{if(e.key!=='Tab'||(e.target as HTMLElement).closest('dialog')!==e.currentTarget)return;const nodes=Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href],summary')).filter(v=>v.getClientRects().length>0),at=nodes.indexOf(document.activeElement as HTMLElement);if(!nodes.length){e.preventDefault();heading.current?.focus();}else if(at<0||e.shiftKey&&at===0||!e.shiftKey&&at===nodes.length-1){e.preventDefault();nodes[e.shiftKey?nodes.length-1:0].focus();}}}><div className="modal-head"><h2 ref={heading} tabIndex={-1} id={id}>{title}</h2><button type="button" className="icon-button" aria-label={'Close '+title} disabled={busy} onClick={close}>×</button></div>{children}</dialog>;
+}

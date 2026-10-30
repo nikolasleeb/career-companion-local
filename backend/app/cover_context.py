@@ -170,6 +170,7 @@ async def review(user,id,body):
                 if proposal['status']=='rejected' and decision.action=='reject':continue
                 raise HTTPException(409,'This detail was already reviewed. Reload to use the current context.')
             if decision.action=='reject':proposal.update({'status':'rejected','reviewed_at':db.now()});continue
+            if decision.keep_standalone:raise HTTPException(422,'Choose a related Profile experience; standalone details are no longer supported.')
             text=(decision.text or proposal['text']).strip()
             if not text or re.search(PRIVATE,text,re.I):raise HTTPException(400,'Use a nonempty experience or motivation detail; authorization stays in private settings.')
             links=profile_answers.validate_links(c,user,decision.experience_ids) if decision.experience_ids is not None else None

@@ -10,8 +10,10 @@ from .models import ExperienceItem
 PRIVATE=r'\b(citizenship|citizen|sponsorship|visa(?: status)?|immigration status|work authori[sz]ation|authori[sz]ed to work|eligible to work|allowed to work|us_citizen|authorized_us|sponsorship_now|sponsorship_future)\b'
 def norm(text):return re.sub(r'\s+',' ',str(text)).strip().casefold()
 def key(user,origin):return hashlib.sha256((user+':profile-answer:'+origin).encode()).hexdigest()[:32]
-def write(c,user,data,id=None):
+def write(c,user,data,id=None,allow_unlinked=False):
     from .resume_conversation import write as store
+    if not allow_unlinked and data.get('status')=='confirmed' and data.get('answer_kind')=='experience':
+        links=validate_links(c,user,experience_ids(data));require_links(links)
     return store(c,user,'profile_answer',data,id)
 def row(c,user,id):return db.decode(c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='profile_answer'",(id,user)).fetchone())
 def owned_experience(c,user,id):
@@ -29,7 +31,23 @@ def validate_links(c,user,ids):
         if not isinstance(id,str) or not id or len(id)>64:raise HTTPException(400,'Choose valid Profile experiences.')
         target=owned_experience(c,user,id)
         if not target['data'].get('confirmed') or target['data'].get('category') not in ('employment','project','education','volunteering','skills','coursework'):raise HTTPException(400,'Choose confirmed roles, projects, education or volunteering records.')
+        from . import project_relations
+        if project_relations.unresolved(c,user,target['data']):raise HTTPException(422,'Resolve the project’s unavailable related jobs before linking this detail.')
     return ids
+
+def require_links(links):
+    if not links:raise HTTPException(422,'Choose at least one related experience before saving this professional Supporting Detail.')
+
+def needs_link(user,data):
+    if data.get('answer_kind')!='experience':return False
+    links=experience_ids(data)
+    if not links:return True
+    from . import project_relations
+    with db.connect() as c:
+        for id in links:
+            record=db.decode(c.execute("SELECT * FROM entities WHERE user_id=? AND id=? AND kind='experience'",(user,id)).fetchone())
+            if not record or not record['data'].get('confirmed') or project_relations.unresolved(c,user,record['data']):return True
+    return False
 
 def stable_questions(data,kind):
     """Assign old questions repeat-safe IDs; edits/status never depend on list position."""
@@ -84,7 +102,9 @@ def reviewed(c,user,conversation_id,data,proposal,kind,mark=True):
         text=proposal.get('text','');answer_kind=proposal.get('kind','experience');experience_id=proposal.get('applied_record_id') or proposal.get('profile_record_id','');title=proposal.get('title','Letter detail');backed={}
     if not text.strip() or re.search(PRIVATE,text,re.I):return None
     links=experience_ids(proposal) if 'experience_ids' in proposal else [experience_id] if experience_id else []
-    links=validate_links(c,user,links);experience_id=links[0] if links else ''
+    links=validate_links(c,user,links)
+    if mark and answer_kind=='experience':require_links(links)
+    experience_id=links[0] if links else ''
     if proposal.get('profile_answer_id') and row(c,user,proposal['profile_answer_id']):return proposal['profile_answer_id']
     origin=kind+':'+conversation_id+':'+proposal['id'];id=key(user,origin)
     if row(c,user,id):return id
@@ -108,9 +128,9 @@ def reviewed(c,user,conversation_id,data,proposal,kind,mark=True):
     existing=next((db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind='profile_answer'",(user,)) if (lambda v:v.get('status')=='confirmed' and v.get('answer_kind')==answer_kind and norm(v.get('text'))==norm(text) and experience_ids(v)==links and (answer_kind=='experience' or v.get('scope',{}).get('job_id')==data['job_id']))(json.loads(r['payload']))),None)
     if existing:
         if not any(s.get('conversation_id')==conversation_id and s.get('proposal_id')==proposal['id'] for s in existing['data']['sources']):
-            existing['data']['sources'].append(source);write(c,user,existing['data'],existing['id'])
+            existing['data']['sources'].append(source);write(c,user,existing['data'],existing['id'],allow_unlinked=not mark)
         id=existing['id']
-    else:write(c,user,value,id)
+    else:write(c,user,value,id,allow_unlinked=not mark)
     if proposal.get('supersedes_id'):
         old=next((db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind='profile_answer'",(user,)) if any(s.get('proposal_id')==proposal['supersedes_id'] and s.get('conversation_id')==conversation_id for s in json.loads(r['payload']).get('sources',[]))),None)
         if old and old['id']!=id:archive_data=old['data'];archive_data['history'].append({**copy.deepcopy(archive_data),'history':[]});archive_data['status']='archived';archive_data['version']+=1;write(c,user,archive_data,old['id'])
@@ -141,7 +161,7 @@ def confirmed(user):
     rows=[]
     for r in db.list_entities(user,'profile_answer'):
         data=r['data']
-        if data.get('status')!='confirmed':continue
+        if data.get('status')!='confirmed' or needs_link(user,data):continue
         if data.get('backed_fields'):
             target=db.get(user,data.get('experience_id',''),'experience')
             if not target or not target['data'].get('confirmed') or any(str(value) not in str(target['data'].get(field,'')) for field,value in data['backed_fields'].items()):continue
@@ -150,19 +170,18 @@ def confirmed(user):
 
 def records(user):
     """Effective confirmed Profile for future requests. No persistent record or historical snapshot changes."""
-    records={r['id']:copy.deepcopy(r) for r in db.list_entities(user,'experience') if r['data'].get('confirmed')}
+    from . import project_relations
+    records={r['id']:copy.deepcopy(r) for r in db.list_entities(user,'experience') if r['data'].get('confirmed') and project_relations.available(user,r['data'])}
     for answer in confirmed(user):
         a=answer['data']
         if a['answer_kind']!='experience':continue
         links=experience_ids(a);rid=links[0] if links else '';record=records.get(rid)
-        if not record:
-            ctx=a.get('record_context',{});category=ctx.get('category') or a.get('category','project')
-            if category not in ExperienceItem.model_fields['category'].annotation.__args__:category='project'
-            value=ExperienceItem(category=category,title=ctx.get('title') or a['title'],organization=ctx.get('organization',''),dates=ctx.get('dates',''),location=ctx.get('location',''),confirmed=True).model_dump()
-            record={**answer,'kind':'experience','data':value};records[answer['id']]=record
+        if not record:continue
         full='\n'.join(str(v) for v in record['data'].values())
         if norm(a['text']) not in norm(full):record['data']['contribution']='\n'.join(filter(None,[record['data'].get('contribution',''),a['text']]))
         record['data'].setdefault('answer_sources',[]).append({'id':answer['id'],'version':a['version'],'experience_ids':links,'linked_experiences':[{'id':id,'title':records[id]['data']['title']} for id in links if id in records],'association_note':'Use this fact once in its main context. Additional links indicate related work, not separate accomplishments.','text':a['text'],'title':a['title'],'questions':[q['text'] for source in a['sources'] for q in source.get('questions',[])],'provenance':[{k:copy.deepcopy(v) for k,v in source.items() if k in ('builder','draft_id','snapshot_id','analysis_id','commit','excerpts','reviewed_at','proposal_id','conversation_id','job_id','resume_id','project_refs')} for source in a['sources']]})
+    for record in records.values():
+        if record['data'].get('category')=='project':record['data']['related_jobs']=[{'id':id,'title':records[id]['data']['title'],'organization':records[id]['data'].get('organization','')} for id in record['data'].get('linked_employment_ids',[]) if id in records and records[id]['data'].get('category')=='employment']
     return list(records.values())
 
 def reusable(user,job_id,selected=()):
@@ -184,7 +203,7 @@ def drafts(user):
 
 def listing(user):
     migrate(user)
-    return db.list_entities(user,'profile_answer')+drafts(user)+[{'id':r['id'],'kind':'profile_answer','created_at':r['created_at'],'updated_at':r['updated_at'],'data':{**r['data'],'answer_kind':'experience','sources':[{'builder':r['data']['builder'],'draft_id':r['id'],'questions':r['data'].get('questions',[]),'message':r['data'].get('text','')}]}} for r in db.list_entities(user,'answer_draft') if r['data']['status']=='draft']
+    return [{**r,'data':{**r['data'],'needs_related_experience':needs_link(user,r['data'])}} for r in db.list_entities(user,'profile_answer')]+drafts(user)+[{'id':r['id'],'kind':'profile_answer','created_at':r['created_at'],'updated_at':r['updated_at'],'data':{**r['data'],'answer_kind':'experience','sources':[{'builder':r['data']['builder'],'draft_id':r['id'],'questions':r['data'].get('questions',[]),'message':r['data'].get('text','')}]}} for r in db.list_entities(user,'answer_draft') if r['data']['status']=='draft']
 
 def edit(user,id,body):
     with db.connect() as c:
@@ -194,6 +213,7 @@ def edit(user,id,body):
         if data['version']!=body.expected_version:raise HTTPException(409,'This answer changed in another window. Reload before saving.')
         if not body.text.strip() or re.search(PRIVATE,body.text,re.I):raise HTTPException(400,'Keep authorization in private settings. Use a nonempty professional detail or motivation.')
         links=validate_links(c,user,body.experience_ids if body.experience_ids is not None else experience_ids(data) if body.experience_id==data.get('experience_id','') else [body.experience_id] if body.experience_id else [])
+        if data['answer_kind']=='experience' and not body.archived:require_links(links)
         if data['answer_kind']=='motivation' and links:raise HTTPException(400,'Personal motivation stays scoped to its opportunity.')
         if data.get('backed_fields') and (links[0] if links else '')!=data.get('experience_id',''):raise HTTPException(400,'Keep the original main experience for Profile-backed facts.')
         old=copy.deepcopy(data);old['history']=[]
@@ -237,6 +257,7 @@ def confirm_draft(user,body):
                 target=destination(c,user,{'evidence_experience_id':ids[0] if len(ids)==1 else ''},project_id or body.experience_id)
                 if not links:links=[target['id']]
                 body=body.model_copy(update={'experience_id':links[0],'category':'project'})
+        if body.answer_kind=='experience':require_links(links)
         if not question['answer'].strip() or not body.text.strip() or re.search(PRIVATE,body.text,re.I):raise HTTPException(400,'Review a nonempty answer; authorization belongs in private settings.')
         if body.experience_id and not owned_experience(c,user,body.experience_id)['data'].get('confirmed'):raise HTTPException(400,'Choose a confirmed experience.')
         origin='manual:'+body.builder+':'+body.conversation_id+':'+body.question_id+':'+str(body.expected_answer_version);id=key(user,origin)
@@ -266,17 +287,18 @@ def touch_resumes(c,user,exclude=None,record_id=''):
         data['version']+=1;store(c,user,'resume_conversation',data,record['id'])
 
 
-def confirm_application_answer(user,application,question,text,description='',context=''):
+def confirm_application_answer(user,application,question,text,description='',context='',experience_ids=None):
     """Explicitly reviewed professional answer enters the existing Supporting Details library."""
     if re.search(PRIVATE,text,re.I) or re.search(PRIVATE,question,re.I):
         raise HTTPException(422,'Private disclosures belong in the encrypted application-answer vault.')
     from .resume_conversation import write as store
     id=key(user,'application:'+application['id']+':'+norm(question)+':'+norm(description)+':'+norm(context)+':'+norm(text))
     with db.connect() as c:
+        links=validate_links(c,user,experience_ids or []);require_links(links)
         if not row(c,user,id):
             data=application['data']
             source={'builder':'application_agent','application_id':application['id'],'job_id':data.get('job_id',''),'questions':[{'id':key(user,question),'text':question,'description':description,'context':context}],'reviewed_at':db.now(),'manual_review':True}
-            value={'version':1,'status':'confirmed','answer_kind':'experience','title':question[:200],'text':text,'experience_id':'','experience_ids':[],'category':'project','record_context':{},'backed_fields':{},'scope':{'job_id':data.get('job_id',''),'company':data.get('company',''),'role':data.get('title','')},'sources':[source],'history':[]}
+            value={'version':1,'status':'confirmed','answer_kind':'experience','title':question[:200],'text':text,'experience_id':links[0],'experience_ids':links,'category':'project','record_context':{},'backed_fields':{},'scope':{'job_id':data.get('job_id',''),'company':data.get('company',''),'role':data.get('title','')},'sources':[source],'history':[]}
             store(c,user,'profile_answer',value,id)
             touch_resumes(c,user,record_id=id)
     return db.get(user,id,'profile_answer')

@@ -289,13 +289,13 @@ def test_full_single_page_form_fills_and_stops_before_final_submit(client,accoun
 
 def test_professional_accomplishment_enters_answers_stories_separate_from_vault(client,account):
     r,c,_=run(client,account['id']);r=scan(client,r,c,[field(label='Describe your analysis experience.')]).json()['run']
-    result=client.post('/api/application-agent/runs/'+r['id']+'/answers',json={'question_id':'f0','value':'I analyzed a fictional class dataset.','answer_kind':'professional','decision':'save','expected_version':r['version']})
+    result=client.post('/api/application-agent/runs/'+r['id']+'/answers',json={'question_id':'f0','value':'I analyzed a fictional class dataset.','answer_kind':'professional','decision':'save','experience_ids':[db.save(account['id'],'experience',{'title':'Fictional coursework project','category':'project','confirmed':True})['id']],'expected_version':r['version']})
     assert result.status_code==200,result.text
     library=db.list_entities(account['id'],'profile_answer')
     assert library[0]['data']['text']=='I analyzed a fictional class dataset.'
     assert library[0]['data']['sources'][0]['builder']=='application_agent'
     assert client.get('/api/private-application-answers').json()['answers']==[]
-    assert not without_setup(db.list_entities(account['id'],'experience'))
+    assert [r['data']['title'] for r in without_setup(db.list_entities(account['id'],'experience'))]==['Fictional coursework project']
 
 
 def test_expired_pairing_is_checked_before_each_browser_write(client,account):
@@ -327,7 +327,7 @@ def test_streamed_body_limit_without_content_length():
 
 def test_professional_answer_backup_round_trip_keeps_provenance_and_excludes_vault(client,account):
     r,c,_=run(client,account['id']);r=scan(client,r,c,[field(label='Describe a professional project.')]).json()['run']
-    result=client.post('/api/application-agent/runs/'+r['id']+'/answers',json={'question_id':'f0','value':'I analyzed fictional course data.','answer_kind':'professional','decision':'save','expected_version':r['version']})
+    result=client.post('/api/application-agent/runs/'+r['id']+'/answers',json={'question_id':'f0','value':'I analyzed fictional course data.','answer_kind':'professional','decision':'save','experience_ids':[db.save(account['id'],'experience',{'title':'Fictional coursework project','category':'project','confirmed':True})['id']],'expected_version':r['version']})
     assert result.status_code==200
     client.post('/api/private-application-answers',json=answer())
     backup=client.get('/api/account/export').content

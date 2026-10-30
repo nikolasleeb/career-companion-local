@@ -103,7 +103,10 @@ def test_new_facts_need_approval_and_keep_provenance(env,monkeypatch):
 
 
 def test_concurrent_profile_update_is_never_overwritten(env,monkeypatch):
-    user,job,rows,session,calls=env;p=proposal(env,rid=rows[1]['id']);chat_mock(monkeypatch,response([p]))
+    user,job,rows,session,calls=env
+    related=db.save(user,'experience',{'category':'employment','title':'Fictional related job','confirmed':True})
+    rows[1]=db.save(user,'experience',{**rows[1]['data'],'linked_employment_ids':[related['id']]},rows[1]['id'])
+    p=proposal(env,rid=rows[1]['id']);chat_mock(monkeypatch,response([p]))
     state=asyncio.run(guided.send(user,session['id'],ConversationMessage(text=p['fields'][0]['value'],expected_version=0)))
     latest={**rows[1]['data'],'contribution':'Newer manual Profile details.'};db.save(user,'experience',latest,rows[1]['id'])
     with pytest.raises(HTTPException,match='409'):guided.approve(user,session['id'],FactApproval(proposal_id=state['data']['proposals'][0]['id'],expected_version=state['data']['version'],action='approve'))
@@ -376,7 +379,10 @@ def test_unsupported_generated_claim_does_not_replace_working_revision(env,monke
 
 
 def test_restored_pending_proposal_can_be_approved(env,client,monkeypatch):
-    user,job,rows,session,calls=env;p=proposal(env,rid=rows[1]['id']);chat_mock(monkeypatch,response([p]))
+    user,job,rows,session,calls=env
+    related=db.save(user,'experience',{'category':'employment','title':'Fictional related job','confirmed':True})
+    rows[1]=db.save(user,'experience',{**rows[1]['data'],'linked_employment_ids':[related['id']]},rows[1]['id'])
+    p=proposal(env,rid=rows[1]['id']);chat_mock(monkeypatch,response([p]))
     state=asyncio.run(guided.send(user,session['id'],ConversationMessage(text=p['fields'][0]['value'],expected_version=0)))
     backup=client.get('/api/account/export').json();assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup).encode())}).status_code==200
     restored=next(r for r in db.list_entities(user,'resume_conversation') if r['id']!=session['id'])

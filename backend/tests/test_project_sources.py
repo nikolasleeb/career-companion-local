@@ -222,7 +222,7 @@ def test_reflection_story_autosave_review_and_prompt_privacy(client,account,monk
     saved=client.put('/api/answer-drafts/'+row['id'],json=value);assert saved.status_code==200,saved.text
     assert not profile_answers.confirmed(user)
     listing=client.get('/api/profile-answers').json();assert any(r['id']==row['id'] and r['data']['status']=='draft' for r in listing)
-    response=client.post('/api/profile-answers/drafts/'+row['id']+'/review',json={'expected_version':2,'title':value['title'],'text':value['text'],'confirmed':True});assert response.status_code==200,response.text
+    response=client.post('/api/profile-answers/drafts/'+row['id']+'/review',json={'expected_version':2,'title':value['title'],'text':value['text'],'confirmed':True,'create_experience':True});assert response.status_code==200,response.text
     assert len(profile_answers.confirmed(user))==1
     job=db.save(user,'job',{'title':'Analyst','description':'Clean datasets and present results.'})
     async def fake(schema,payload,mode,**kwargs):
@@ -237,7 +237,7 @@ def test_reflection_story_autosave_review_and_prompt_privacy(client,account,monk
 
 def test_backup_round_trip_remaps_new_evidence_and_reflection_references(client,account):
     user=account['id'];snap=pasted(client);draft=draft_for(user,snap)
-    response=client.post('/api/profile-answers/drafts/'+draft['id']+'/review',json={'expected_version':1,'title':'Course project','text':'I prepared public data.','contribution':'I built the model.','confirmed':True})
+    response=client.post('/api/profile-answers/drafts/'+draft['id']+'/review',json={'expected_version':1,'title':'Course project','text':'I prepared public data.','contribution':'I built the model.','confirmed':True,'create_experience':True})
     assert response.status_code==200,response.text
     client.post('/api/work-style')
     backup=client.get('/api/account/export');assert backup.status_code==200
@@ -345,7 +345,7 @@ def test_manual_source_review_without_key_and_malformed_links(client,account):
     draft=notes.json()
     assert client.post('/api/project-snapshots/'+snap['id']+'/notes').json()['id']==draft['id']
     assert client.post('/api/project-snapshots/'+snap['id']+'/analyze',json={'mode':'economy'}).status_code==503
-    result=client.post('/api/profile-answers/drafts/'+draft['id']+'/review',json={'expected_version':1,'title':'Project','text':'I prepared data for a coursework model.','contribution':'I implemented the cleaning.','confirmed':True})
+    result=client.post('/api/profile-answers/drafts/'+draft['id']+'/review',json={'expected_version':1,'title':'Project','text':'I prepared data for a coursework model.','contribution':'I implemented the cleaning.','confirmed':True,'create_experience':True})
     assert result.status_code==200,result.text
     backup=client.get('/api/account/export').json()
     assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup),'application/json')}).status_code==200

@@ -63,7 +63,8 @@ def test_voice_review_context_details_and_backup(client,account,providers,monkey
  r=wait(client,client.post('/api/interview-practice/sessions/'+s['id']+'/actions',json=body(s,'review',question_id=q['id'],voice_id=v['id'])))
  assert r['status']=='completed',r
  attempt=load(client,s['id'])['attempts'][0];assert attempt['data']['delivery'] and attempt['data']['transcript_snapshot']
- b={'expected_updated_at':attempt['updated_at'],'candidate':0,'title':'Scheduling project','text':'Built a scheduling tool.','reviewed':False}
+ target=db.save(account['id'],'experience',{'category':'project','title':'Fictional scheduling project','confirmed':True})
+ b={'experience_ids':[target['id']],'expected_updated_at':attempt['updated_at'],'candidate':0,'title':'Scheduling project','text':'Built a scheduling tool.','reviewed':False}
  path='/api/interview-practice/attempts/'+attempt['id']+'/supporting-details'
  assert client.post(path,json=b).status_code==422
  b['reviewed']=True;approved=client.post(path,json=b);assert approved.status_code==200,approved.text

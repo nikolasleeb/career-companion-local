@@ -103,6 +103,11 @@ def save(user, kind, data, entity_id=None, *, restoring=False):
             data={**data,'title':saved_names.next_practice(c,user)}
         if restoring and kind=='interview_session' and not saved_names.available(c,user,kind,data.get('title',''),entity_id):
             data={**data,'title':saved_names.next_interview(c,user,data['kind'])}
+        if kind=='experience':
+            from . import project_relations
+            old=json.loads(existing['payload']) if existing else {}
+            if existing and 'linked_employment_ids' not in data:data={**data,'linked_employment_ids':old.get('linked_employment_ids',[])}
+            project_relations.validate(c,user,data,old,restoring=restoring)
         if existing:
             c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?', (json.dumps(data), timestamp, entity_id))
         else:

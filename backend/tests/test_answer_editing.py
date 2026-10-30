@@ -17,6 +17,7 @@ POLISHED='I added drawing annotations to support extraction improvements; the fe
 def role(user,title):return db.save(user,'experience',{'title':title,'category':'employment','confirmed':True,'contribution':'Original contribution.'})
 def approve(user,state,**kw):
  p=next(p for p in state['data']['context_proposals'] if p['status']=='pending')
+ if p['kind']=='experience' and not kw.get('save_to_profile') and 'experience_ids' not in kw:kw['experience_ids']=[role(user,'Fictional reviewed report work')['id']]
  return asyncio.run(context.review(user,state['id'],CoverContextReview(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),build=False,decisions=[CoverReviewDecision(proposal_id=p['id'],action='approve',**kw)])))
 def polish(user,state,ids=None):
  return asyncio.run(letters.send(user,state['id'],CoverMessage(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),text='Suggest polished wording.',polish_proposal_ids=ids or [state['data']['context_proposals'][0]['id']])))
@@ -121,8 +122,8 @@ def test_link_editing_clearing_and_legacy_compatibility(guided):
  # Older clients can archive without discarding additional links.
  r=library.edit(user,r['id'],ProfileAnswerEdit(expected_version=r['data']['version'],title=r['data']['title'],text=RAW,experience_id=a['id'],archived=True))
  assert library.experience_ids(r['data'])==[a['id'],b['id']]
- r=library.edit(user,r['id'],ProfileAnswerEdit(expected_version=r['data']['version'],title=r['data']['title'],text=RAW,experience_id=a['id'],experience_ids=[]))
- assert r['data']['experience_ids']==[] and r['data']['experience_id']=='' and r['data']['history'][0]['text']==RAW
+ with pytest.raises(HTTPException):library.edit(user,r['id'],ProfileAnswerEdit(expected_version=r['data']['version'],title=r['data']['title'],text=RAW,experience_id=a['id'],experience_ids=[]))
+ assert library.experience_ids(r['data'])==[a['id'],b['id']]
  assert library.experience_ids({'experience_id':a['id']})==[a['id']]
  assert library.experience_ids({'experience_id':a['id'],'experience_ids':[]})==[]
 
