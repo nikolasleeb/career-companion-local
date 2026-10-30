@@ -41,7 +41,7 @@ def test_type_appropriate_guidance_and_grounded_content_review(client,account,mo
   return {'reviewer_takeaway':'The response describes a decision, but the result needs an example.','summary':'Explain your own contribution.','strengths':[],'improvements':['Give the outcome.'],'star':[{'part':p,'guidance':'Explain '+p} for p in practice.PARTS] if use_star else [],'profile_connections':[],'claims_to_clarify':[],'follow_up':'What changed?'},{'model':'fictional'}
  monkeypatch.setattr(ai,'structured',model)
  r=wait(client,client.post('/api/interview-practice/sessions/'+s['id']+'/actions',json=body(d['session'],'guide',question_id=qid)));assert r['status']=='completed',r
- d=load(client,s['id']);assert d['attempts'][0]['data']['feedback']['reviewer_takeaway']
+ d=load(client,s['id']);assert d['attempts'][0]['data']['feedback']['reviewer_takeaway']==''
  r=wait(client,client.post('/api/interview-practice/sessions/'+s['id']+'/actions',json=body(d['session'],'review',question_id=qid,answer='I changed a fictional project plan and checked the outcome.')));assert r['status']=='completed',r
  assert 'regardless of whether STAR fields were used' in calls[-1]['task']
  assert 'grounding every observation in the actual words or code' in calls[-1]['task']
