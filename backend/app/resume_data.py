@@ -27,6 +27,18 @@ def record_dates(data):
     return structured or clean(data.get('dates'))
 
 
+def profile_bullets(text):
+    """Only explicit list items can own indented continuation lines."""
+    result=[];active=False
+    for line in str(text or '').splitlines():
+        explicit=bool(re.match(r'^\s*[•*-](?:[ \t]+|$)',line))
+        content=clean((re.sub(r'^\s*[•*-](?:[ \t]+|$)','',line) if explicit else line).strip(' •-'))
+        if not content:active=False;continue
+        if active and not explicit and re.match(r'^(?: {2}|\t)',line):result[-1]+=' '+content
+        else:result.append(content);active=explicit
+    return result
+
+
 def entry_snapshot(data,source_id,granular=False):
     title=clean(data.get('title'))
     majors=' & '.join(subjects(data,'major'));minors='; '.join(subjects(data,'minor'))
@@ -51,9 +63,11 @@ def entry_snapshot(data,source_id,granular=False):
                     bullets.extend('Relevant class: '+v.strip() for v in re.split(r'[;\n]' if re.search(r'[;\n]',clean(data[key])) else r',',clean(data[key])) if v.strip())
                 else: bullets.append(label+': '+clean(data[key]))
     from . import certifications
+    field_bullets={}
     for field in ('description','contribution','accomplishments'):
         if field=='description' and certifications.is_group(data) and not data.get('certification_items') and not data.get('tools') and not data.get('skill_items'): continue
-        bullets.extend(clean(line.strip(' •-')) for line in str(data.get(field,'')).splitlines() if clean(line.strip(' •-')))
+        field_bullets[field]=profile_bullets(data.get(field,'')) if data.get('category') in ('employment','volunteering') and field in ('description','accomplishments') else [clean(line.strip(' •-')) for line in str(data.get(field,'')).splitlines() if clean(line.strip(' •-'))]
+        bullets.extend(field_bullets[field])
     from . import certifications
     if certifications.is_group(data):
         bullets.extend(certifications.text(v) for v in certifications.rows(data))
@@ -81,7 +95,7 @@ def entry_snapshot(data,source_id,granular=False):
         elif value.startswith('Project:'):field='url'
         elif data.get('category')=='education':field='education_note'
         elif value in str(data.get('contribution','')):field='contribution'
-        elif value in str(data.get('accomplishments','')):field='accomplishment'
+        elif value in str(data.get('accomplishments','')) or value in field_bullets.get('accomplishments',[]):field='accomplishment'
         item_id=hashlib.sha256((str(data.get('title'))+'|'+str(data.get('organization'))+'|'+field+'|'+value).encode()).hexdigest()[:24]
         items.append({'item_id':item_id,'field':field,'original':value,'text':value})
     return {**data,'source_id':source_id,'title':title,'dates':dates,'details':' | '.join(filter(None,details)),

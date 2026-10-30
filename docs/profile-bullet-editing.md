@@ -1,0 +1,7 @@
+# Profile bullet editing
+
+Employment and volunteering Responsibilities and Accomplishments offer optional text-only bullets. Empty fields enable bullets without creating content until typing begins. Existing paragraphs remain unchanged until the user explicitly chooses Bullets; existing lists support continuation. Enter adds a list item, Shift+Enter adds an indented continuation, and Enter on an empty bullet or Backspace at its marker exits the list. Native editing transactions preserve Undo/Redo and selection behavior. Paste preserves wording and existing line boundaries, without duplicate markers or sentence splitting. Oversized edits are rejected without changing the draft.
+
+The same editor serves editable import proposals. Existing APIs and plain-string storage are retained. Newly built resumes group indented continuation lines following explicit bullets in these fields and preserve accomplishment attribution; old snapshots remain untouched.
+
+Verification covers desktop input, composition, keyboard access, formatting, save failures, save/reopen, imported paragraphs, backup/restore and TXT/DOCX/PDF exports with fictional accounts and simulated providers. Both interfaces are built and public source audited; hosted deployment uses protected backups and post-deployment preservation/access checks. No paid user-account requests, mobile checks, installed-localhost changes, tags or releases.
