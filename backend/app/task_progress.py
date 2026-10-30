@@ -41,7 +41,7 @@ def stage(code):
     if not context:return
     label,kind=STAGES[code];user,task_id,process=context
     if code=='starting' and process!='resume_guided':label='Preparing '+LABELS.get(process,'action')
-    if process=='interview_practice':label={'drafting':'Preparing an original interview question','reviewing':'Reviewing your interview practice','coach_research':'Checking official company interview resources','saving':'Saving interview practice'}.get(code,label)
+    if process=='interview_practice':label={'preparing':'Preparing interview help','drafting':'Preparing an original interview question','reviewing':'Reviewing your interview practice','coach_research':'Checking official company interview resources','saving':'Saving interview practice'}.get(code,label)
     if process=='cover_letter':
         label={'drafting':'Writing the cover-letter draft','reviewing':'Reviewing cover-letter answers and changes','rendering':'Rendering the cover-letter PDF','checking':'Checking cover-letter claims against saved evidence','saving':'Saving the cover-letter result','preparing':'Preparing saved resume and reviewed details'}.get(code,label)
     with db.connect() as c:
