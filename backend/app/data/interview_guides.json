@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-30.1",
+  "version": "2026-10-30.2",
   "reviewed_at": "2026-10-30",
   "note": "Career Companion editorial guidance. The questions are original practice prompts, not a proprietary bank, a prediction of employer questions or a frequency ranking. Source links support the methods and formats; they do not endorse these exercises.",
   "sources": [
@@ -15,7 +15,8 @@
       "publisher": "University of Arizona Center for Career Readiness",
       "title": "Interview Skills",
       "url": "https://career.arizona.edu/channels/interview-skills/",
-      "supports": "Learning interview formats, preparation and deliberate answer practice."
+      "supports": "Learning interview formats, preparation and deliberate answer practice.",
+      "access_note": "The public guide is open to everyone; Big Interview requires a University of Arizona NetID."
     },
     {
       "id": "mckinsey-interviews",
@@ -44,6 +45,13 @@
       "title": "Code of Ethics for Engineers",
       "url": "https://www.nspe.org/career-growth/nspe-code-ethics-engineers",
       "supports": "Engineering competence and professional responsibility; consult the original code for practice requirements."
+    },
+    {
+      "id": "vt-star",
+      "publisher": "Virginia Tech Career and Professional Development",
+      "title": "STAR Method",
+      "url": "https://career.vt.edu/resources/star-method/",
+      "supports": "STAR explanations, worked examples and an interactive worksheet."
     }
   ],
   "guides": [
@@ -310,6 +318,11 @@
             "arizona-interviews"
           ]
         }
+      ],
+      "further_reading_ids": [
+        "mit-primer",
+        "vt-star",
+        "arizona-interviews"
       ]
     },
     {

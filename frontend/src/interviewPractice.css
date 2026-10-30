@@ -13,3 +13,5 @@
 @media(max-width:900px){.interview-guide-grid,.interview-guide-structures{grid-template-columns:1fr}.interview-guide-intro .section-header{display:block}}
 
 .interview-delete-dialog{width:min(560px,92vw)}.interview-delete-dialog .modal-head{align-items:flex-start}.interview-delete-dialog h2{overflow-wrap:anywhere;line-height:1.4}.interview-delete-dialog .icon-button{flex-shrink:0;min-width:44px;min-height:44px}.interview-delete-dialog p{line-height:1.7}.interview-delete-dialog .card-actions{justify-content:flex-end;margin-top:24px}.interview-delete-dialog .notice{margin-top:20px}
+
+.interview-guide-reading{border-top:1px solid var(--line);padding-top:24px;margin:32px 0}.interview-guide-reading ul{list-style:none;padding:0;margin:18px 0}.interview-guide-reading li{margin:18px 0}.interview-guide-reading a{font-weight:600}.interview-guide-reading p{margin:6px 0 0}
