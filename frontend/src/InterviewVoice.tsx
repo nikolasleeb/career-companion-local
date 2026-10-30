@@ -5,7 +5,7 @@ import {transcriptState} from './interviewTranscript';
 import {useGlobalInterviewProgress} from './InterviewStatus';
 import {pollTask} from './apiClient';
 import {recordingWav,audioActionKey} from './interviewAudioData';
-export type InterviewVoiceState={row:any;ready:boolean};
+export type InterviewVoiceState={row:any;ready:boolean;hasRecordingBuffer:boolean};
 export type InterviewVoiceHandle={confirmForReview:()=>Promise<string>};
 type Props={account:string;session:string;question:string;call:any;available:boolean;blocked:boolean;onFormat:(value:string)=>void;onBusy:(value:boolean)=>void;format:string;statusHost:HTMLElement|null;onRecording:(value:boolean)=>void;onReady:()=>void;onState:(value:InterviewVoiceState)=>void};
 export function DeliveryFeedback({delivery,metrics}:{delivery:any;metrics:any}){return <section className="interview-delivery"><h3>Delivery feedback</h3>{metrics&&<><p>{metrics.estimated_wpm!=null&&<><strong>Estimated pace:</strong> {metrics.estimated_wpm} words/min · </>}{metrics.duration_seconds}s recorded · {metrics.long_pauses} pauses of at least 1s · {metrics.audible_fillers_in_transcript??'—'} transcribed “um / uh / erm” fillers</p><p className="small muted">Pace uses the original transcript and total recording duration. Quiet intervals are approximate and can include thinking time or background noise. Editing text does not change these measurements.</p></>}{delivery?<><p><strong>Audibility:</strong> {delivery.audibility}</p><p><strong>Pacing:</strong> {delivery.pacing}</p><p><strong>Vocal delivery:</strong> {delivery.vocal_delivery}</p><ul>{delivery.suggestions.map((v:string,i:number)=><li key={i}>{v}</li>)}</ul><p className="small muted">Qualitative AI observations, not a personality assessment or hiring score.</p></>:<p>Delivery observations are unavailable. A completed transcript can still be used for answer feedback.</p>}</section>;}
@@ -17,7 +17,7 @@ export const InterviewVoice=forwardRef<InterviewVoiceHandle,Props>(function Inte
  const transcriptKey=(id:string)=>'interview-transcript:'+account+':'+id;
  const stale=!!row&&revision!==row.updated_at;
  const ready=!!row&&!!row.data.transcript?.trim()&&!!text.trim()&&reviewed&&!stale&&!busy&&!pending&&!recording&&!blob;
- useEffect(()=>onState({row,ready}),[row,ready]);
+ useEffect(()=>onState({row,ready,hasRecordingBuffer:!!blob||!!pending}),[row,ready,blob,pending]);
  useImperativeHandle(ref,()=>({confirmForReview:async()=>{
   if(!ready)throw Error('Check and confirm the transcript before reviewing your spoken answer.');
   if(row.data.reviewed_at&&row.data.reviewed_transcript===text)return row.id;

@@ -103,6 +103,7 @@ class ManualQuestion(StrictModel):
   return self
 class Action(StrictModel):
  operation:Literal['question','guide','review','research','message','material','examples']
+ replace_question_id:str=Field(default='',max_length=64)
  expected_updated_at:str=Field(max_length=100)
  text:str=Field(default='',max_length=8000)
  question_id:str=Field(default='',max_length=64)
@@ -252,10 +253,33 @@ def action_status(token:str,user=Depends(owner)):
  r,_=saved_action(user,token)
  if not r:raise HTTPException(404,'No interview action was found for this request token.')
  return {'task_id':r['id'],'status':r['status']}
+def question_history(user,session):
+ # Include recent owned sessions, since identical Profile context can otherwise
+ # cause a fresh session to repeat the same topic. STAR shares Behavioral topics.
+ family=lambda kind:'behavioral' if kind=='star' else kind
+ sessions={r['id'] for r in db.list_entities(user,'interview_session') if family(r['data']['kind'])==family(session['data']['kind'])}
+ questions=[r for r in db.list_entities(user,'interview_question') if r['data']['session_id'] in sessions]
+ current=[r for r in questions if r['data']['session_id']==session['id']]
+ recent=[r for r in questions if r['data']['session_id']!=session['id']]
+ return (current[:20]+recent[:20])[:40]
+
+def replacement_question(user,id,body):
+ if not body.replace_question_id:return None
+ if body.operation!='question' or body.answer.strip() or any(v.strip() for v in body.star.values()) or body.voice_id:raise HTTPException(422,'Only an unanswered generated question can be replaced.')
+ q=owned(user,body.replace_question_id,'interview_question')
+ if q['data']['session_id']!=id:raise HTTPException(404,'Question not found in this session.')
+ if q['data'].get('origin')!='ai':raise HTTPException(422,'Guide and custom questions are kept when generating another question.')
+ if any(r['data'].get('question_id')==q['id'] for kind in ('interview_attempt','interview_voice','interview_material') for r in db.list_entities(user,kind)):
+  raise HTTPException(409,'This question has saved work. Reload before generating another question.')
+ # Conversation context can reference a question without an explicit question ID.
+ if any(r['data']['session_id']==id for r in db.list_entities(user,'interview_message')):raise HTTPException(409,'Keep questions discussed in a saved conversation. Reload before continuing.')
+ return q
+
 async def execute(user,id,body):
  s=owned(user,id,'interview_session');d=s['data']
  if s['updated_at']!=body.expected_updated_at:raise HTTPException(409,'This session changed. Reload it before starting another action.')
  if body.operation=='examples' and (d['kind'] not in ('behavioral','star') or body.answer.strip() or body.star or body.voice_id):raise HTTPException(422,'Examples use Behavioral or STAR questions and reviewed Profile context, without an answer draft or recording.')
+ replacement=replacement_question(user,id,body)
  p,catalog=context(user,s,body.focus)
  voice=None
  if body.voice_id:
@@ -313,9 +337,15 @@ async def execute(user,id,body):
   value=PracticeMaterial.model_validate(value).model_dump();value['references']=references(value['references'],catalog);value['visuals']=chat_visuals.validate(value['visuals'],catalog)
   db.save(user,'interview_material',{'session_id':id,'question_id':q['id'],'material':value,'source_snapshot':catalog,'profile_revision':p['revision'],'ai':meta,'code_execution':False})
  elif body.operation=='question':
-  previous=[r['data']['question'][:400] for r in db.list_entities(user,'interview_question') if r['data']['session_id']==id][:20]
-  task_progress.stage('drafting');output,meta=await ai.structured(Question,{**payload,'task':'Generate ONE original practice question suited to this session. Use Profile evidence to choose relevant topics, not to assume mastery. Coding: include a precise problem, constraints, 1–3 consistent input/output examples and optional hints; do not reveal the full solution. Behavioral/STAR: ask for one real example and make the competency clear. Case/business: a fictional business case. Domain/scenario: a fictional science, healthcare, education or other professional scenario appropriate to the selected field, asking reasoning rather than pretending a clinical qualification. Presentation/portfolio: ask the user to explain a real artifact or prepare a presentation. Other: use the supplied focus and instructions. Never claim this is an actual company question.','previous_questions':previous},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+  history=question_history(user,s)
+  previous=[r['data']['question'][:700] for r in history]
+  task_progress.stage('drafting');output,meta=await ai.structured(Question,{**payload,'task':'Generate ONE original practice question suited to this session. Use Profile evidence to choose relevant topics, not to assume mastery. Coding: include a precise problem, constraints, 1–3 consistent input/output examples and optional hints; do not reveal the full solution. Behavioral/STAR: ask for one real example and make the competency clear. Case/business: a fictional business case. Domain/scenario: a fictional science, healthcare, education or other professional scenario appropriate to the selected field, asking reasoning rather than pretending a clinical qualification. Presentation/portfolio: ask the user to explain a real artifact or prepare a presentation. Other: use the supplied focus and instructions. Never claim this is an actual company question. The previous questions come from this account in this interview type, across sessions. Choose a DIFFERENT competency, topic and situation where possible, not a paraphrase. Vary which relevant Profile experience you draw on; do not repeatedly choose the most detailed project. Keep the saved role and job requirements relevant.','previous_questions':previous,'previous_topics':[r['data'].get('topic','') for r in history]},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
   output=Question.model_validate(output).model_dump();output['references']=references(output['references'],catalog)
+  normalize=lambda text:re.sub(r'[^\w]+',' ',text.casefold()).strip()
+  if any(normalize(output['question'])==normalize(r['data']['question']) for r in history):raise ServiceError('The AI repeated an earlier question. Your existing question and work are unchanged. Request another question to try again; no automatic retry was made.')
+  if replacement:
+   replacement_question(user,id,body)
+   db.delete(user,replacement['id'])
   db.save(user,'interview_question',{**output,'session_id':id,'origin':'ai','profile_revision':p['revision'],'source_snapshot':catalog,'ai':meta,'code_execution':False})
  else:
   q=owned(user,body.question_id,'interview_question')
@@ -342,9 +372,10 @@ def install(app,start_task,require_ai):
  async def action(id:str,body:Action,user=Depends(owner)):
   session=owned(user,id,'interview_session');inputs={**body.model_dump(),'session_id':id};previous,saved=saved_action(user,body.request_token)
   if previous:
-   if saved!=inputs:raise HTTPException(409,'This request token belongs to different interview inputs.')
+   if {'replace_question_id':'',**saved}!=inputs:raise HTTPException(409,'This request token belongs to different interview inputs.')
    return {'task_id':previous['id'],'status':previous['status']}
   if body.operation=='examples' and (session['data']['kind'] not in ('behavioral','star') or body.answer.strip() or body.star or body.voice_id):raise HTTPException(422,'Examples use Behavioral or STAR questions and reviewed Profile context, without an answer draft or recording.')
+  replacement_question(user,id,body)
   require_ai(user)
   if active(user,id):raise HTTPException(409,'An action is already running for this practice session. Check its status first.')
   if owned(user,id,'interview_session')['updated_at']!=body.expected_updated_at:raise HTTPException(409,'This session changed. Reload it before continuing.')
