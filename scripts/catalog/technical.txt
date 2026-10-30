@@ -1,0 +1,274 @@
+# group|provider|base URL
+@programming|Python documentation|https://docs.python.org/3/
+Python|tutorial/introduction.html
+Python control flow|tutorial/controlflow.html
+Python data structures|tutorial/datastructures.html
+Python modules|tutorial/modules.html
+Python file input and output|tutorial/inputoutput.html
+Python exceptions|tutorial/errors.html
+Python classes|tutorial/classes.html
+Python virtual environments|tutorial/venv.html
+Python standard library|tutorial/stdlib.html
+Python text processing|library/string.html
+Python regular expressions|library/re.html
+Python date and time handling|library/datetime.html
+Python decimal arithmetic|library/decimal.html
+Python collections|library/collections.html
+Python iterators|library/itertools.html
+Python functional programming tools|library/functools.html
+Python filesystem paths|library/pathlib.html
+Python file operations|library/shutil.html
+Python CSV processing|library/csv.html
+Python JSON processing|library/json.html
+Python SQLite access|library/sqlite3.html
+Python logging|library/logging.html
+Python unit testing|library/unittest.html
+Python command-line arguments|library/argparse.html
+Python subprocess management|library/subprocess.html
+Python concurrency|library/concurrent.futures.html
+Python asynchronous programming|library/asyncio.html
+Python data classes|library/dataclasses.html
+Python type annotations|library/typing.html
+Python debugging|library/pdb.html
+Python profiling|library/profile.html
+Python performance measurement|library/timeit.html
+@programming|MDN Web Docs|https://developer.mozilla.org/en-US/docs/
+JavaScript|Web/JavaScript/Guide/Introduction
+JavaScript expressions and operators|Web/JavaScript/Guide/Expressions_and_operators
+JavaScript functions|Web/JavaScript/Guide/Functions
+JavaScript loops|Web/JavaScript/Guide/Loops_and_iteration
+JavaScript arrays|Web/JavaScript/Guide/Indexed_collections
+JavaScript objects|Web/JavaScript/Guide/Working_with_objects
+JavaScript promises|Web/JavaScript/Guide/Using_promises
+JavaScript modules|Web/JavaScript/Guide/Modules
+HTML|Learn_web_development/Core/Structuring_content/Basic_HTML_syntax
+CSS|Learn_web_development/Core/Styling_basics/Getting_started
+Web accessibility|Learn_web_development/Core/Accessibility/What_is_accessibility
+@databases|PostgreSQL documentation|https://www.postgresql.org/docs/current/
+SQL|tutorial-sql.html
+PostgreSQL|tutorial-start.html
+Relational database concepts|tutorial-concepts.html
+Creating database tables|tutorial-table.html
+Inserting database records|tutorial-populate.html
+SQL SELECT queries|tutorial-select.html
+SQL joins|tutorial-join.html
+SQL aggregate functions|tutorial-agg.html
+Updating database records|tutorial-update.html
+Deleting database records|tutorial-delete.html
+SQL views|tutorial-views.html
+SQL foreign keys|tutorial-fk.html
+Database transactions|tutorial-transactions.html
+SQL window functions|tutorial-window.html
+SQL table inheritance|tutorial-inheritance.html
+SQL table constraints|ddl-constraints.html
+SQL schemas|ddl-schemas.html
+Database privileges|ddl-priv.html
+SQL common table expressions|queries-with.html
+SQL set operations|queries-union.html
+SQL sorting|queries-order.html
+SQL LIMIT and OFFSET|queries-limit.html
+SQL date and time functions|functions-datetime.html
+SQL string functions|functions-string.html
+SQL JSON functions|functions-json.html
+Database indexes|indexes-intro.html
+Database query plans|using-explain.html
+Database backup|backup-dump.html
+Database roles|user-manag.html
+Database concurrency control|mvcc-intro.html
+@data-engineering|Apache Spark documentation|https://spark.apache.org/docs/latest/
+Spark|quick-start.html
+PySpark|api/python/getting_started/index.html
+PySpark DataFrames|api/python/getting_started/quickstart_df.html
+Spark SQL|sql-getting-started.html
+Structured Streaming|streaming/index.html
+Spark data sources|sql-data-sources.html
+Spark CSV processing|sql-data-sources-csv.html
+Spark JSON processing|sql-data-sources-json.html
+Spark Parquet processing|sql-data-sources-parquet.html
+Spark ORC processing|sql-data-sources-orc.html
+Spark JDBC integration|sql-data-sources-jdbc.html
+Spark text data sources|sql-data-sources-text.html
+Spark Avro processing|sql-data-sources-avro.html
+Spark XML processing|sql-data-sources-xml.html
+Spark data source options|sql-data-sources-generic-options.html
+Spark partitioning|sql-performance-tuning.html
+Spark caching|sql-performance-tuning.html
+Spark query hints|sql-ref-syntax-qry-select-hints.html
+Spark window functions|sql-ref-syntax-qry-select-window.html
+Spark aggregation|sql-ref-syntax-qry-select-groupby.html
+Spark application submission|submitting-applications.html
+Spark cluster configuration|configuration.html
+Spark monitoring|monitoring.html
+Spark tuning|tuning.html
+Spark job scheduling|job-scheduling.html
+Spark security|security.html
+Spark resilient distributed datasets|rdd-programming-guide.html
+Spark machine learning pipelines|ml-pipeline.html
+Spark model selection|ml-tuning.html
+Spark feature extraction|ml-features.html
+Spark classification and regression|ml-classification-regression.html
+Spark clustering|ml-clustering.html
+Spark collaborative filtering|ml-collaborative-filtering.html
+Spark frequent pattern mining|ml-frequent-pattern-mining.html
+Spark graph processing|graphx-programming-guide.html
+@analytics|pandas documentation|https://pandas.pydata.org/docs/
+pandas|getting_started/intro_tutorials/01_table_oriented.html
+Reading and writing tabular data|getting_started/intro_tutorials/02_read_write.html
+DataFrame selection|getting_started/intro_tutorials/03_subset_data.html
+Plotting tabular data|getting_started/intro_tutorials/04_plotting.html
+Deriving data columns|getting_started/intro_tutorials/05_add_columns.html
+Summary statistics|getting_started/intro_tutorials/06_calculate_statistics.html
+Reshaping tabular data|getting_started/intro_tutorials/07_reshape_table_layout.html
+Combining data tables|getting_started/intro_tutorials/08_combine_dataframes.html
+Time-series data analysis|getting_started/intro_tutorials/09_timeseries.html
+Text data analysis|getting_started/intro_tutorials/10_text_data.html
+Handling missing data|user_guide/missing_data.html
+Categorical data analysis|user_guide/categorical.html
+Data grouping|user_guide/groupby.html
+Window calculations|user_guide/window.html
+Data merging|user_guide/merging.html
+Data visualization|user_guide/visualization.html
+Excel data import|user_guide/io.html
+DataFrame indexing|user_guide/indexing.html
+DataFrame styling|user_guide/style.html
+Time deltas|user_guide/timedeltas.html
+@analytics|Seaborn documentation|https://seaborn.pydata.org/tutorial/
+Statistical visualization|relational.html
+Data distributions|distributions.html
+Categorical visualization|categorical.html
+Regression visualization|regression.html
+Multi-plot grids|axis_grids.html
+Plot styling|aesthetics.html
+Color palettes|color_palettes.html
+@cloud|AWS documentation|https://docs.aws.amazon.com/
+AWS|AmazonS3/latest/userguide/Welcome.html
+Amazon S3 object storage|AmazonS3/latest/userguide/UsingObjects.html
+S3 bucket management|AmazonS3/latest/userguide/UsingBucket.html
+S3 access management|AmazonS3/latest/userguide/access-control-overview.html
+S3 versioning|AmazonS3/latest/userguide/Versioning.html
+S3 lifecycle management|AmazonS3/latest/userguide/object-lifecycle-mgmt.html
+AWS Lambda|lambda/latest/dg/welcome.html
+Lambda function creation|lambda/latest/dg/getting-started.html
+Lambda Python handlers|lambda/latest/dg/python-handler.html
+Lambda permissions|lambda/latest/dg/lambda-permissions.html
+AWS IAM|IAM/latest/UserGuide/introduction.html
+IAM policies|IAM/latest/UserGuide/access_policies.html
+IAM roles|IAM/latest/UserGuide/id_roles.html
+AWS EC2|AWSEC2/latest/UserGuide/concepts.html
+EC2 security groups|AWSEC2/latest/UserGuide/ec2-security-groups.html
+AWS Glue|glue/latest/dg/what-is-glue.html
+AWS Glue ETL|glue/latest/dg/author-job.html
+AWS Athena|athena/latest/ug/what-is.html
+Amazon Redshift|redshift/latest/dg/welcome.html
+Amazon RDS|AmazonRDS/latest/UserGuide/Welcome.html
+Amazon DynamoDB|amazondynamodb/latest/developerguide/Introduction.html
+AWS Step Functions|step-functions/latest/dg/welcome.html
+Amazon SQS|AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html
+Amazon CloudWatch|AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html
+AWS CloudFormation|AWSCloudFormation/latest/UserGuide/Welcome.html
+@devops|Docker documentation|https://docs.docker.com/
+Docker|get-started/docker-overview/
+Container images|build/concepts/dockerfile/
+Docker build context|build/concepts/context/
+Docker multi-stage builds|build/building/multi-stage/
+Docker build cache|build/cache/
+Docker image tags|reference/cli/docker/image/tag/
+Docker container lifecycle|get-started/docker-concepts/running-containers/start-stop-containers/
+Docker volumes|engine/storage/volumes/
+Docker bind mounts|engine/storage/bind-mounts/
+Docker networking|engine/network/
+Docker Compose|compose/gettingstarted/
+Docker Compose environment variables|compose/how-tos/environment-variables/
+Docker secrets|compose/how-tos/use-secrets/
+Docker container resource limits|engine/containers/resource_constraints/
+Docker logging|engine/logging/
+@devops|Kubernetes documentation|https://kubernetes.io/docs/
+Kubernetes|concepts/overview/
+Kubernetes pods|concepts/workloads/pods/
+Kubernetes deployments|concepts/workloads/controllers/deployment/
+Kubernetes services|concepts/services-networking/service/
+Kubernetes ConfigMaps|concepts/configuration/configmap/
+Kubernetes Secrets|concepts/configuration/secret/
+Kubernetes persistent volumes|concepts/storage/persistent-volumes/
+Kubernetes scheduling|concepts/scheduling-eviction/
+Kubernetes probes|concepts/configuration/liveness-readiness-startup-probes/
+Kubernetes resource management|concepts/configuration/manage-resources-containers/
+@devops|Git documentation|https://git-scm.com/book/en/v2/
+Git|Git-Basics-Getting-a-Git-Repository
+Git change tracking|Git-Basics-Recording-Changes-to-the-Repository
+Git history inspection|Git-Basics-Viewing-the-Commit-History
+Git undo operations|Git-Basics-Undoing-Things
+Git remotes|Git-Basics-Working-with-Remotes
+Git tags|Git-Basics-Tagging
+Git branching|Git-Branching-Branches-in-a-Nutshell
+Git merging|Git-Branching-Basic-Branching-and-Merging
+Git rebasing|Git-Branching-Rebasing
+Git stashing|Git-Tools-Stashing-and-Cleaning
+@systems|GNU Coreutils manual|https://www.gnu.org/software/coreutils/manual/html_node/
+Linux directory listing|ls-invocation.html
+Linux file copying|cp-invocation.html
+Linux file movement|mv-invocation.html
+Linux file removal|rm-invocation.html
+Linux directory creation|mkdir-invocation.html
+Linux file permissions|chmod-invocation.html
+Linux file ownership|chown-invocation.html
+Linux text sorting|sort-invocation.html
+Linux unique records|uniq-invocation.html
+Linux column selection|cut-invocation.html
+Linux text joining|join-invocation.html
+Linux text concatenation|cat-invocation.html
+Linux head and tail|tail-invocation.html
+Linux checksums|cksum-invocation.html
+Linux file comparison|comm-invocation.html
+Linux disk usage|du-invocation.html
+Linux filesystem capacity|df-invocation.html
+Linux environment variables|env-invocation.html
+Linux symbolic links|ln-invocation.html
+Linux command execution|timeout-invocation.html
+@cybersecurity|OWASP Cheat Sheet Series|https://cheatsheetseries.owasp.org/cheatsheets/
+Authentication security|Authentication_Cheat_Sheet.html
+Authorization security|Authorization_Cheat_Sheet.html
+Password storage|Password_Storage_Cheat_Sheet.html
+Session management|Session_Management_Cheat_Sheet.html
+SQL injection prevention|SQL_Injection_Prevention_Cheat_Sheet.html
+Cross-site scripting prevention|Cross_Site_Scripting_Prevention_Cheat_Sheet.html
+Cross-site request forgery prevention|Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
+Input validation|Input_Validation_Cheat_Sheet.html
+API security|REST_Security_Cheat_Sheet.html
+Secure file uploads|File_Upload_Cheat_Sheet.html
+Transport layer security|Transport_Layer_Security_Cheat_Sheet.html
+Secrets management|Secrets_Management_Cheat_Sheet.html
+Cryptographic storage|Cryptographic_Storage_Cheat_Sheet.html
+Security logging|Logging_Cheat_Sheet.html
+Security code review|Code_Review_Cheat_Sheet.html
+Threat modeling|Threat_Modeling_Cheat_Sheet.html
+Secure Docker configuration|Docker_Security_Cheat_Sheet.html
+Secure Kubernetes configuration|Kubernetes_Security_Cheat_Sheet.html
+Software supply-chain security|Software_Supply_Chain_Security_Cheat_Sheet.html
+Web content security policy|Content_Security_Policy_Cheat_Sheet.html
+@ai-ml|scikit-learn documentation|https://scikit-learn.org/stable/modules/
+Linear regression|linear_model.html
+Support vector machines|svm.html
+Nearest-neighbor methods|neighbors.html
+Gaussian processes|gaussian_process.html
+Naive Bayes|naive_bayes.html
+Decision trees|tree.html
+Ensemble learning|ensemble.html
+Multiclass classification|multiclass.html
+Feature selection|feature_selection.html
+Semi-supervised learning|semi_supervised.html
+Clustering|clustering.html
+Dimensionality reduction|decomposition.html
+Manifold learning|manifold.html
+Density estimation|density.html
+Outlier detection|outlier_detection.html
+Model cross-validation|cross_validation.html
+Hyperparameter tuning|grid_search.html
+Model evaluation|model_evaluation.html
+Classification thresholds|classification_threshold.html
+Learning curves|learning_curve.html
+Data preprocessing|preprocessing.html
+Missing-value imputation|impute.html
+Feature extraction|feature_extraction.html
+Model pipelines|compose.html
+Model persistence|model_persistence.html

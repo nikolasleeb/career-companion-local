@@ -1,0 +1,5236 @@
+[
+  {
+    "url": "https://docs.python.org/3/tutorial/introduction.html",
+    "final_url": "https://docs.python.org/3/tutorial/introduction.html",
+    "status": 200,
+    "title": "3. An Informal Introduction to Python \u2014 Python 3.15.2 documentation",
+    "heading": "3.  An Informal Introduction to Python \u00b6",
+    "bytes": 71884,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/controlflow.html",
+    "final_url": "https://docs.python.org/3/tutorial/controlflow.html",
+    "status": 200,
+    "title": "4. More Control Flow Tools \u2014 Python 3.15.2 documentation",
+    "heading": "4.  More Control Flow Tools \u00b6",
+    "bytes": 140035,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/datastructures.html",
+    "final_url": "https://docs.python.org/3/tutorial/datastructures.html",
+    "status": 200,
+    "title": "5. Data Structures \u2014 Python 3.15.2 documentation",
+    "heading": "5.  Data Structures \u00b6",
+    "bytes": 110941,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/modules.html",
+    "final_url": "https://docs.python.org/3/tutorial/modules.html",
+    "status": 200,
+    "title": "6. Modules \u2014 Python 3.15.2 documentation",
+    "heading": "6.  Modules \u00b6",
+    "bytes": 70916,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/inputoutput.html",
+    "final_url": "https://docs.python.org/3/tutorial/inputoutput.html",
+    "status": 200,
+    "title": "7. Input and output \u2014 Python 3.15.2 documentation",
+    "heading": "7.  Input and output \u00b6",
+    "bytes": 76727,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/errors.html",
+    "final_url": "https://docs.python.org/3/tutorial/errors.html",
+    "status": 200,
+    "title": "8. Errors and Exceptions \u2014 Python 3.15.2 documentation",
+    "heading": "8.  Errors and Exceptions \u00b6",
+    "bytes": 85576,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/classes.html",
+    "final_url": "https://docs.python.org/3/tutorial/classes.html",
+    "status": 200,
+    "title": "9. Classes \u2014 Python 3.15.2 documentation",
+    "heading": "9.  Classes \u00b6",
+    "bytes": 108209,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/venv.html",
+    "final_url": "https://docs.python.org/3/tutorial/venv.html",
+    "status": 200,
+    "title": "12. Virtual Environments and Packages \u2014 Python 3.15.2 documentation",
+    "heading": "12.  Virtual Environments and Packages \u00b6",
+    "bytes": 31942,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/stdlib.html",
+    "final_url": "https://docs.python.org/3/tutorial/stdlib.html",
+    "status": 200,
+    "title": "10. Brief tour of the standard library \u2014 Python 3.15.2 documentation",
+    "heading": "10.  Brief tour of the standard library \u00b6",
+    "bytes": 59872,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/string.html",
+    "final_url": "https://docs.python.org/3/library/string.html",
+    "status": 200,
+    "title": "string \u2014 Common string operations \u2014 Python 3.15.2 documentation",
+    "heading": "string   \u2014 Common string operations \u00b6",
+    "bytes": 129571,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/re.html",
+    "final_url": "https://docs.python.org/3/library/re.html",
+    "status": 200,
+    "title": "re \u2014 Regular expression operations \u2014 Python 3.15.2 documentation",
+    "heading": "re   \u2014 Regular expression operations \u00b6",
+    "bytes": 257321,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/datetime.html",
+    "final_url": "https://docs.python.org/3/library/datetime.html",
+    "status": 200,
+    "title": "datetime \u2014 Basic date and time types \u2014 Python 3.15.2 documentation",
+    "heading": "datetime   \u2014 Basic date and time types \u00b6",
+    "bytes": 429697,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/decimal.html",
+    "final_url": "https://docs.python.org/3/library/decimal.html",
+    "status": 200,
+    "title": "decimal \u2014 Decimal fixed-point and floating-point arithmetic \u2014 Python 3.15.2 documentation",
+    "heading": "decimal   \u2014 Decimal fixed-point and floating-point arithmetic \u00b6",
+    "bytes": 309291,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/collections.html",
+    "final_url": "https://docs.python.org/3/library/collections.html",
+    "status": 200,
+    "title": "collections \u2014 Container datatypes \u2014 Python 3.15.2 documentation",
+    "heading": "collections   \u2014 Container datatypes \u00b6",
+    "bytes": 210328,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/itertools.html",
+    "final_url": "https://docs.python.org/3/library/itertools.html",
+    "status": 200,
+    "title": "itertools \u2014 Functions creating iterators for efficient looping \u2014 Python 3.15.2 documentation",
+    "heading": "itertools   \u2014 Functions creating iterators for efficient looping \u00b6",
+    "bytes": 175603,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/functools.html",
+    "final_url": "https://docs.python.org/3/library/functools.html",
+    "status": 200,
+    "title": "functools \u2014 Higher-order functions and operations on callable objects \u2014 Python 3.15.2 documentation",
+    "heading": "functools   \u2014 Higher-order functions and operations on callable objects \u00b6",
+    "bytes": 117130,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/pathlib.html",
+    "final_url": "https://docs.python.org/3/library/pathlib.html",
+    "status": 200,
+    "title": "pathlib \u2014 Object-oriented filesystem paths \u2014 Python 3.15.2 documentation",
+    "heading": "pathlib   \u2014 Object-oriented filesystem paths \u00b6",
+    "bytes": 270752,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/shutil.html",
+    "final_url": "https://docs.python.org/3/library/shutil.html",
+    "status": 200,
+    "title": "shutil \u2014 High-level file operations \u2014 Python 3.15.2 documentation",
+    "heading": "shutil   \u2014 High-level file operations \u00b6",
+    "bytes": 120741,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/csv.html",
+    "final_url": "https://docs.python.org/3/library/csv.html",
+    "status": 200,
+    "title": "csv \u2014 CSV file reading and writing \u2014 Python 3.15.2 documentation",
+    "heading": "csv   \u2014 CSV file reading and writing \u00b6",
+    "bytes": 99537,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/json.html",
+    "final_url": "https://docs.python.org/3/library/json.html",
+    "status": 200,
+    "title": "json \u2014 JSON encoder and decoder \u2014 Python 3.15.2 documentation",
+    "heading": "json   \u2014 JSON encoder and decoder \u00b6",
+    "bytes": 115961,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/sqlite3.html",
+    "final_url": "https://docs.python.org/3/library/sqlite3.html",
+    "status": 200,
+    "title": "sqlite3 \u2014 DB-API 2.0 interface for SQLite databases \u2014 Python 3.15.2 documentation",
+    "heading": "sqlite3   \u2014 DB-API 2.0 interface for SQLite databases \u00b6",
+    "bytes": 315547,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/logging.html",
+    "final_url": "https://docs.python.org/3/library/logging.html",
+    "status": 200,
+    "title": "logging \u2014 Logging facility for Python \u2014 Python 3.15.2 documentation",
+    "heading": "logging   \u2014 Logging facility for Python \u00b6",
+    "bytes": 192446,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/unittest.html",
+    "final_url": "https://docs.python.org/3/library/unittest.html",
+    "status": 200,
+    "title": "unittest \u2014 Unit testing framework \u2014 Python 3.15.2 documentation",
+    "heading": "unittest   \u2014 Unit testing framework \u00b6",
+    "bytes": 336612,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/argparse.html",
+    "final_url": "https://docs.python.org/3/library/argparse.html",
+    "status": 200,
+    "title": "argparse \u2014 Parser for command-line options, arguments and subcommands \u2014 Python 3.15.2 documentation",
+    "heading": "argparse   \u2014 Parser for command-line options, arguments and subcommands \u00b6",
+    "bytes": 334566,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/subprocess.html",
+    "final_url": "https://docs.python.org/3/library/subprocess.html",
+    "status": 200,
+    "title": "subprocess \u2014 Subprocess management \u2014 Python 3.15.2 documentation",
+    "heading": "subprocess   \u2014 Subprocess management \u00b6",
+    "bytes": 208444,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/concurrent.futures.html",
+    "final_url": "https://docs.python.org/3/library/concurrent.futures.html",
+    "status": 200,
+    "title": "concurrent.futures \u2014 Launching parallel tasks \u2014 Python 3.15.2 documentation",
+    "heading": "concurrent.futures   \u2014 Launching parallel tasks \u00b6",
+    "bytes": 110476,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/asyncio.html",
+    "final_url": "https://docs.python.org/3/library/asyncio.html",
+    "status": 200,
+    "title": "asyncio \u2014 Asynchronous I/O \u2014 Python 3.15.2 documentation",
+    "heading": "asyncio   \u2014 Asynchronous I/O \u00b6",
+    "bytes": 25399,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/dataclasses.html",
+    "final_url": "https://docs.python.org/3/library/dataclasses.html",
+    "status": 200,
+    "title": "dataclasses \u2014 Data Classes \u2014 Python 3.15.2 documentation",
+    "heading": "dataclasses   \u2014 Data Classes \u00b6",
+    "bytes": 134835,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/typing.html",
+    "final_url": "https://docs.python.org/3/library/typing.html",
+    "status": 200,
+    "title": "typing \u2014 Support for type hints \u2014 Python 3.15.2 documentation",
+    "heading": "typing   \u2014 Support for type hints \u00b6",
+    "bytes": 555370,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/pdb.html",
+    "final_url": "https://docs.python.org/3/library/pdb.html",
+    "status": 200,
+    "title": "pdb \u2014 The Python Debugger \u2014 Python 3.15.2 documentation",
+    "heading": "pdb   \u2014 The Python Debugger \u00b6",
+    "bytes": 107211,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/profile.html",
+    "final_url": "https://docs.python.org/3/library/profile.html",
+    "status": 200,
+    "title": "profile \u2014 Pure Python profiler \u2014 Python 3.15.2 documentation",
+    "heading": "profile   \u2014 Pure Python profiler \u00b6",
+    "bytes": 57557,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/library/timeit.html",
+    "final_url": "https://docs.python.org/3/library/timeit.html",
+    "status": 200,
+    "title": "timeit \u2014 Measure execution time of small code snippets \u2014 Python 3.15.2 documentation",
+    "heading": "timeit   \u2014 Measure execution time of small code snippets \u00b6",
+    "bytes": 60741,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Introduction",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Introduction",
+    "status": 200,
+    "title": "Introduction - JavaScript | MDN",
+    "heading": "Introduction",
+    "bytes": 209132,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Expressions_and_operators",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Expressions_and_operators",
+    "status": 200,
+    "title": "Expressions and operators - JavaScript | MDN",
+    "heading": "Expressions and operators",
+    "bytes": 263653,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions",
+    "status": 200,
+    "title": "Functions - JavaScript | MDN",
+    "heading": "Functions",
+    "bytes": 230178,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Loops_and_iteration",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Loops_and_iteration",
+    "status": 200,
+    "title": "Loops and iteration - JavaScript | MDN",
+    "heading": "Loops and iteration",
+    "bytes": 216126,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Indexed_collections",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Indexed_collections",
+    "status": 200,
+    "title": "Indexed collections - JavaScript | MDN",
+    "heading": "Indexed collections",
+    "bytes": 234134,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_objects",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_objects",
+    "status": 200,
+    "title": "Working with objects - JavaScript | MDN",
+    "heading": "Working with objects",
+    "bytes": 226164,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises",
+    "status": 200,
+    "title": "Using promises - JavaScript | MDN",
+    "heading": "Using promises",
+    "bytes": 228727,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules",
+    "status": 200,
+    "title": "JavaScript modules - JavaScript | MDN",
+    "heading": "JavaScript modules",
+    "bytes": 270723,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content/Basic_HTML_syntax",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content/Basic_HTML_syntax",
+    "status": 200,
+    "title": "Basic HTML syntax - Learn web development | MDN",
+    "heading": "Basic HTML syntax",
+    "bytes": 220859,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Getting_started",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Getting_started",
+    "status": 200,
+    "title": "Getting started with CSS - Learn web development | MDN",
+    "heading": "Getting started with CSS",
+    "bytes": 218803,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Accessibility/What_is_accessibility",
+    "final_url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Accessibility/What_is_accessibility",
+    "status": 200,
+    "title": "What is accessibility? - Learn web development | MDN",
+    "heading": "What is accessibility?",
+    "bytes": 207111,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-sql.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-sql.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: Chapter\u00a02.\u00a0The SQL Language",
+    "heading": "",
+    "bytes": 15127,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-start.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-start.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: Chapter\u00a01.\u00a0Getting Started",
+    "heading": "",
+    "bytes": 14610,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-concepts.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-concepts.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 2.2.\u00a0Concepts",
+    "heading": "",
+    "bytes": 15804,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-table.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-table.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 2.3.\u00a0Creating a New Table",
+    "heading": "",
+    "bytes": 17430,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-populate.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-populate.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 2.4.\u00a0Populating a Table With Rows",
+    "heading": "",
+    "bytes": 17298,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-select.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-select.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 2.5.\u00a0Querying a Table",
+    "heading": "",
+    "bytes": 19731,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-join.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-join.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 2.6.\u00a0Joins Between Tables",
+    "heading": "",
+    "bytes": 22273,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-agg.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-agg.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 2.7.\u00a0Aggregate Functions",
+    "heading": "",
+    "bytes": 20657,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-update.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-update.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 2.8.\u00a0Updates",
+    "heading": "",
+    "bytes": 14595,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-delete.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-delete.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 2.9.\u00a0Deletions",
+    "heading": "",
+    "bytes": 15001,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-views.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-views.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 3.2.\u00a0Views",
+    "heading": "",
+    "bytes": 14748,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-fk.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-fk.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 3.3.\u00a0Foreign Keys",
+    "heading": "",
+    "bytes": 15979,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-transactions.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-transactions.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 3.4.\u00a0Transactions",
+    "heading": "",
+    "bytes": 21308,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-window.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-window.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 3.5.\u00a0Window Functions",
+    "heading": "",
+    "bytes": 22918,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/tutorial-inheritance.html",
+    "final_url": "https://www.postgresql.org/docs/current/tutorial-inheritance.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 3.6.\u00a0Inheritance",
+    "heading": "",
+    "bytes": 17788,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/ddl-constraints.html",
+    "final_url": "https://www.postgresql.org/docs/current/ddl-constraints.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 5.5.\u00a0Constraints",
+    "heading": "",
+    "bytes": 46601,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/ddl-schemas.html",
+    "final_url": "https://www.postgresql.org/docs/current/ddl-schemas.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 5.10.\u00a0Schemas",
+    "heading": "",
+    "bytes": 35487,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/ddl-priv.html",
+    "final_url": "https://www.postgresql.org/docs/current/ddl-priv.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 5.8.\u00a0Privileges",
+    "heading": "",
+    "bytes": 43250,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/queries-with.html",
+    "final_url": "https://www.postgresql.org/docs/current/queries-with.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 7.8.\u00a0WITH Queries (Common Table Expressions)",
+    "heading": "",
+    "bytes": 43632,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/queries-union.html",
+    "final_url": "https://www.postgresql.org/docs/current/queries-union.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 7.4.\u00a0Combining Queries (UNION, INTERSECT, EXCEPT)",
+    "heading": "",
+    "bytes": 19999,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/queries-order.html",
+    "final_url": "https://www.postgresql.org/docs/current/queries-order.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 7.5.\u00a0Sorting Rows (ORDER BY)",
+    "heading": "",
+    "bytes": 19565,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/queries-limit.html",
+    "final_url": "https://www.postgresql.org/docs/current/queries-limit.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 7.6.\u00a0LIMIT and OFFSET",
+    "heading": "",
+    "bytes": 17298,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/functions-datetime.html",
+    "final_url": "https://www.postgresql.org/docs/current/functions-datetime.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 9.9.\u00a0Date/Time Functions and Operators",
+    "heading": "",
+    "bytes": 109025,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/functions-string.html",
+    "final_url": "https://www.postgresql.org/docs/current/functions-string.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 9.4.\u00a0String Functions and Operators",
+    "heading": "",
+    "bytes": 95856,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/functions-json.html",
+    "final_url": "https://www.postgresql.org/docs/current/functions-json.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 9.16.\u00a0JSON Functions and Operators",
+    "heading": "",
+    "bytes": 192887,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/indexes-intro.html",
+    "final_url": "https://www.postgresql.org/docs/current/indexes-intro.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 11.1.\u00a0Introduction",
+    "heading": "",
+    "bytes": 18577,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/using-explain.html",
+    "final_url": "https://www.postgresql.org/docs/current/using-explain.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 14.1.\u00a0Using EXPLAIN",
+    "heading": "",
+    "bytes": 69877,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/backup-dump.html",
+    "final_url": "https://www.postgresql.org/docs/current/backup-dump.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 25.1.\u00a0SQL Dump",
+    "heading": "",
+    "bytes": 29817,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/user-manag.html",
+    "final_url": "https://www.postgresql.org/docs/current/user-manag.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: Chapter\u00a021.\u00a0Database Roles",
+    "heading": "",
+    "bytes": 16188,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.postgresql.org/docs/current/mvcc-intro.html",
+    "final_url": "https://www.postgresql.org/docs/current/mvcc-intro.html",
+    "status": 200,
+    "title": "PostgreSQL: Documentation: 18: 13.1.\u00a0Introduction",
+    "heading": "",
+    "bytes": 15260,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/quick-start.html",
+    "final_url": "https://spark.apache.org/docs/latest/quick-start.html",
+    "status": 200,
+    "title": "Quick Start - Spark 4.2.0 Documentation",
+    "heading": "Quick Start",
+    "bytes": 58363,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/api/python/getting_started/index.html",
+    "final_url": "https://spark.apache.org/docs/latest/api/python/getting_started/index.html",
+    "status": 200,
+    "title": "Getting Started \u2014 PySpark 4.2.0 documentation",
+    "heading": "Getting Started #",
+    "bytes": 25981,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/api/python/getting_started/quickstart_df.html",
+    "final_url": "https://spark.apache.org/docs/latest/api/python/getting_started/quickstart_df.html",
+    "status": 200,
+    "title": "Quickstart: DataFrame \u2014 PySpark 4.2.0 documentation",
+    "heading": "Quickstart: DataFrame #",
+    "bytes": 82524,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-getting-started.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-getting-started.html",
+    "status": 200,
+    "title": "Getting Started - Spark 4.2.0 Documentation",
+    "heading": "Getting Started",
+    "bytes": 110406,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/streaming/index.html",
+    "final_url": "https://spark.apache.org/docs/latest/streaming/index.html",
+    "status": 200,
+    "title": "Structured Streaming Programming Guide - Spark 4.2.0 Documentation",
+    "heading": "Structured Streaming Programming Guide",
+    "bytes": 14460,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources.html",
+    "status": 200,
+    "title": "Data Sources - Spark 4.2.0 Documentation",
+    "heading": "Data Sources",
+    "bytes": 20042,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources-csv.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources-csv.html",
+    "status": 200,
+    "title": "CSV Files - Spark 4.2.0 Documentation",
+    "heading": "CSV Files",
+    "bytes": 47562,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources-json.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources-json.html",
+    "status": 200,
+    "title": "JSON Files - Spark 4.2.0 Documentation",
+    "heading": "JSON Files",
+    "bytes": 43275,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources-parquet.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources-parquet.html",
+    "status": 200,
+    "title": "Parquet Files - Spark 4.2.0 Documentation",
+    "heading": "Parquet Files",
+    "bytes": 86877,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources-orc.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources-orc.html",
+    "status": 200,
+    "title": "ORC Files - Spark 4.2.0 Documentation",
+    "heading": "ORC Files",
+    "bytes": 29768,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html",
+    "status": 200,
+    "title": "JDBC To Other Databases - Spark 4.2.0 Documentation",
+    "heading": "JDBC To Other Databases",
+    "bytes": 102017,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources-text.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources-text.html",
+    "status": 200,
+    "title": "Text Files - Spark 4.2.0 Documentation",
+    "heading": "Text Files",
+    "bytes": 29745,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources-avro.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources-avro.html",
+    "status": 200,
+    "title": "Apache Avro Data Source Guide - Spark 4.2.0 Documentation",
+    "heading": "Apache Avro Data Source Guide",
+    "bytes": 63501,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources-xml.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources-xml.html",
+    "status": 200,
+    "title": "XML Files - Spark 4.2.0 Documentation",
+    "heading": "XML Files",
+    "bytes": 38931,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-data-sources-generic-options.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-data-sources-generic-options.html",
+    "status": 200,
+    "title": "Generic File Source Options - Spark 4.2.0 Documentation",
+    "heading": "Generic File Source Options",
+    "bytes": 48231,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-performance-tuning.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-performance-tuning.html",
+    "status": 200,
+    "title": "Performance Tuning - Spark 4.2.0 Documentation",
+    "heading": "Performance Tuning",
+    "bytes": 56707,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-ref-syntax-qry-select-hints.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-ref-syntax-qry-select-hints.html",
+    "status": 200,
+    "title": "Hints - Spark 4.2.0 Documentation",
+    "heading": "Hints",
+    "bytes": 34407,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-ref-syntax-qry-select-window.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-ref-syntax-qry-select-window.html",
+    "status": 200,
+    "title": "Window Functions - Spark 4.2.0 Documentation",
+    "heading": "Window Functions",
+    "bytes": 54059,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/sql-ref-syntax-qry-select-groupby.html",
+    "final_url": "https://spark.apache.org/docs/latest/sql-ref-syntax-qry-select-groupby.html",
+    "status": 200,
+    "title": "GROUP BY Clause - Spark 4.2.0 Documentation",
+    "heading": "GROUP BY Clause",
+    "bytes": 55565,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/submitting-applications.html",
+    "final_url": "https://spark.apache.org/docs/latest/submitting-applications.html",
+    "status": 200,
+    "title": "Submitting Applications - Spark 4.2.0 Documentation",
+    "heading": "Submitting Applications",
+    "bytes": 30116,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/configuration.html",
+    "final_url": "https://spark.apache.org/docs/latest/configuration.html",
+    "status": 200,
+    "title": "Configuration - Spark 4.2.0 Documentation",
+    "heading": "Spark Configuration",
+    "bytes": 304971,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/monitoring.html",
+    "final_url": "https://spark.apache.org/docs/latest/monitoring.html",
+    "status": 200,
+    "title": "Monitoring and Instrumentation - Spark 4.2.0 Documentation",
+    "heading": "Monitoring and Instrumentation",
+    "bytes": 92434,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/tuning.html",
+    "final_url": "https://spark.apache.org/docs/latest/tuning.html",
+    "status": 200,
+    "title": "Tuning - Spark 4.2.0 Documentation",
+    "heading": "Tuning Spark",
+    "bytes": 40182,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/job-scheduling.html",
+    "final_url": "https://spark.apache.org/docs/latest/job-scheduling.html",
+    "status": 200,
+    "title": "Job Scheduling - Spark 4.2.0 Documentation",
+    "heading": "Job Scheduling",
+    "bytes": 38596,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/security.html",
+    "final_url": "https://spark.apache.org/docs/latest/security.html",
+    "status": 200,
+    "title": "Security - Spark 4.2.0 Documentation",
+    "heading": "Spark Security",
+    "bytes": 68580,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/rdd-programming-guide.html",
+    "final_url": "https://spark.apache.org/docs/latest/rdd-programming-guide.html",
+    "status": 200,
+    "title": "RDD Programming Guide - Spark 4.2.0 Documentation",
+    "heading": "RDD Programming Guide",
+    "bytes": 166936,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/ml-pipeline.html",
+    "final_url": "https://spark.apache.org/docs/latest/ml-pipeline.html",
+    "status": 200,
+    "title": "ML Pipelines - Spark 4.2.0 Documentation",
+    "heading": "ML Pipelines",
+    "bytes": 103923,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/ml-tuning.html",
+    "final_url": "https://spark.apache.org/docs/latest/ml-tuning.html",
+    "status": 200,
+    "title": "ML Tuning - Spark 4.2.0 Documentation",
+    "heading": "ML Tuning: model selection and hyperparameter tuning",
+    "bytes": 82752,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/ml-features.html",
+    "final_url": "https://spark.apache.org/docs/latest/ml-features.html",
+    "status": 200,
+    "title": "Extracting, transforming and selecting features - Spark 4.2.0 Documentation",
+    "heading": "Extracting, transforming and selecting features",
+    "bytes": 673372,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/ml-classification-regression.html",
+    "final_url": "https://spark.apache.org/docs/latest/ml-classification-regression.html",
+    "status": 200,
+    "title": "Classification and regression - Spark 4.2.0 Documentation",
+    "heading": "Classification and regression",
+    "bytes": 483145,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/ml-clustering.html",
+    "final_url": "https://spark.apache.org/docs/latest/ml-clustering.html",
+    "status": 200,
+    "title": "Clustering - Spark 4.2.0 Documentation",
+    "heading": "Clustering",
+    "bytes": 93462,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/ml-collaborative-filtering.html",
+    "final_url": "https://spark.apache.org/docs/latest/ml-collaborative-filtering.html",
+    "status": 200,
+    "title": "Collaborative Filtering - Spark 4.2.0 Documentation",
+    "heading": "Collaborative Filtering",
+    "bytes": 65199,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/ml-frequent-pattern-mining.html",
+    "final_url": "https://spark.apache.org/docs/latest/ml-frequent-pattern-mining.html",
+    "status": 200,
+    "title": "Frequent Pattern Mining - Spark 4.2.0 Documentation",
+    "heading": "Frequent Pattern Mining",
+    "bytes": 52314,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://spark.apache.org/docs/latest/graphx-programming-guide.html",
+    "final_url": "https://spark.apache.org/docs/latest/graphx-programming-guide.html",
+    "status": 200,
+    "title": "GraphX - Spark 4.2.0 Documentation",
+    "heading": "GraphX Programming Guide",
+    "bytes": 172221,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/01_table_oriented.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/01_table_oriented.html",
+    "status": 200,
+    "title": "What kind of data does pandas handle? \u2014 pandas 3.1.0 documentation",
+    "heading": "What kind of data does pandas handle? #",
+    "bytes": 41973,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/02_read_write.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/02_read_write.html",
+    "status": 200,
+    "title": "How do I read and write tabular data? \u2014 pandas 3.1.0 documentation",
+    "heading": "How do I read and write tabular data? #",
+    "bytes": 44733,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/03_subset_data.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/03_subset_data.html",
+    "status": 200,
+    "title": "How do I select a subset of a DataFrame? \u2014 pandas 3.1.0 documentation",
+    "heading": "How do I select a subset of a   DataFrame  ? #",
+    "bytes": 59207,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/04_plotting.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/04_plotting.html",
+    "status": 200,
+    "title": "How do I create plots in pandas? \u2014 pandas 3.1.0 documentation",
+    "heading": "How do I create plots in pandas? #",
+    "bytes": 43323,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/05_add_columns.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/05_add_columns.html",
+    "status": 200,
+    "title": "How to create new columns derived from existing columns \u2014 pandas 3.1.0 documentation",
+    "heading": "How to create new columns derived from existing columns #",
+    "bytes": 39514,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/06_calculate_statistics.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/06_calculate_statistics.html",
+    "status": 200,
+    "title": "How to calculate summary statistics \u2014 pandas 3.1.0 documentation",
+    "heading": "How to calculate summary statistics #",
+    "bytes": 47603,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/07_reshape_table_layout.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/07_reshape_table_layout.html",
+    "status": 200,
+    "title": "How to reshape the layout of tables \u2014 pandas 3.1.0 documentation",
+    "heading": "How to reshape the layout of tables #",
+    "bytes": 60294,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/08_combine_dataframes.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/08_combine_dataframes.html",
+    "status": 200,
+    "title": "How to combine data from multiple tables \u2014 pandas 3.1.0 documentation",
+    "heading": "How to combine data from multiple tables #",
+    "bytes": 53493,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/09_timeseries.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/09_timeseries.html",
+    "status": 200,
+    "title": "How to handle time series data with ease \u2014 pandas 3.1.0 documentation",
+    "heading": "How to handle time series data with ease #",
+    "bytes": 58185,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/10_text_data.html",
+    "final_url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/10_text_data.html",
+    "status": 200,
+    "title": "How to manipulate textual data \u2014 pandas 3.1.0 documentation",
+    "heading": "How to manipulate textual data #",
+    "bytes": 48641,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/missing_data.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/missing_data.html",
+    "status": 200,
+    "title": "Working with missing data \u2014 pandas 3.1.0 documentation",
+    "heading": "Working with missing data #",
+    "bytes": 161245,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/categorical.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/categorical.html",
+    "status": 200,
+    "title": "Categorical data \u2014 pandas 3.1.0 documentation",
+    "heading": "Categorical data #",
+    "bytes": 217833,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/groupby.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/groupby.html",
+    "status": 200,
+    "title": "Group by: split-apply-combine \u2014 pandas 3.1.0 documentation",
+    "heading": "Group by: split-apply-combine #",
+    "bytes": 300927,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/window.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/window.html",
+    "status": 200,
+    "title": "Windowing operations \u2014 pandas 3.1.0 documentation",
+    "heading": "Windowing operations #",
+    "bytes": 122748,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/merging.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/merging.html",
+    "status": 200,
+    "title": "Merge, join, concatenate and compare \u2014 pandas 3.1.0 documentation",
+    "heading": "Merge, join, concatenate and compare #",
+    "bytes": 207973,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/visualization.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/visualization.html",
+    "status": 200,
+    "title": "Chart visualization \u2014 pandas 3.1.0 documentation",
+    "heading": "Chart visualization #",
+    "bytes": 205523,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/io.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/io.html",
+    "status": 200,
+    "title": "IO tools (text, CSV, HDF5, \u2026) \u2014 pandas 3.1.0 documentation",
+    "heading": "IO tools (text, CSV, HDF5, \u2026) #",
+    "bytes": 888290,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/indexing.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/indexing.html",
+    "status": 200,
+    "title": "Indexing and selecting data \u2014 pandas 3.1.0 documentation",
+    "heading": "Indexing and selecting data #",
+    "bytes": 385548,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/style.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/style.html",
+    "status": 200,
+    "title": "Table Visualization \u2014 pandas 3.1.0 documentation",
+    "heading": "Table Visualization #",
+    "bytes": 724998,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://pandas.pydata.org/docs/user_guide/timedeltas.html",
+    "final_url": "https://pandas.pydata.org/docs/user_guide/timedeltas.html",
+    "status": 200,
+    "title": "Time deltas \u2014 pandas 3.1.0 documentation",
+    "heading": "Time deltas #",
+    "bytes": 110975,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://seaborn.pydata.org/tutorial/relational.html",
+    "final_url": "https://seaborn.pydata.org/tutorial/relational.html",
+    "status": 200,
+    "title": "Visualizing statistical relationships \u2014 seaborn 0.13.2 documentation",
+    "heading": "Visualizing statistical relationships #",
+    "bytes": 63964,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://seaborn.pydata.org/tutorial/distributions.html",
+    "final_url": "https://seaborn.pydata.org/tutorial/distributions.html",
+    "status": 200,
+    "title": "Visualizing distributions of data \u2014 seaborn 0.13.2 documentation",
+    "heading": "Visualizing distributions of data #",
+    "bytes": 76115,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://seaborn.pydata.org/tutorial/categorical.html",
+    "final_url": "https://seaborn.pydata.org/tutorial/categorical.html",
+    "status": 200,
+    "title": "Visualizing categorical data \u2014 seaborn 0.13.2 documentation",
+    "heading": "Visualizing categorical data #",
+    "bytes": 62555,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://seaborn.pydata.org/tutorial/regression.html",
+    "final_url": "https://seaborn.pydata.org/tutorial/regression.html",
+    "status": 200,
+    "title": "Estimating regression fits \u2014 seaborn 0.13.2 documentation",
+    "heading": "Estimating regression fits #",
+    "bytes": 52538,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://seaborn.pydata.org/tutorial/axis_grids.html",
+    "final_url": "https://seaborn.pydata.org/tutorial/axis_grids.html",
+    "status": 200,
+    "title": "Building structured multi-plot grids \u2014 seaborn 0.13.2 documentation",
+    "heading": "Building structured multi-plot grids #",
+    "bytes": 67067,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://seaborn.pydata.org/tutorial/aesthetics.html",
+    "final_url": "https://seaborn.pydata.org/tutorial/aesthetics.html",
+    "status": 200,
+    "title": "Controlling figure aesthetics \u2014 seaborn 0.13.2 documentation",
+    "heading": "Controlling figure aesthetics #",
+    "bytes": 40389,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://seaborn.pydata.org/tutorial/color_palettes.html",
+    "final_url": "https://seaborn.pydata.org/tutorial/color_palettes.html",
+    "status": 200,
+    "title": "Choosing color palettes \u2014 seaborn 0.13.2 documentation",
+    "heading": "Choosing color palettes #",
+    "bytes": 89266,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html",
+    "final_url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html",
+    "status": 200,
+    "title": "What is Amazon S3? - Amazon Simple Storage Service",
+    "heading": "What is Amazon S3?",
+    "bytes": 62276,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingObjects.html",
+    "final_url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingObjects.html",
+    "status": 200,
+    "title": "Amazon S3 objects overview - Amazon Simple Storage Service",
+    "heading": "Amazon S3 objects overview",
+    "bytes": 17063,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingBucket.html",
+    "final_url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingBucket.html",
+    "status": 200,
+    "title": "General purpose buckets overview - Amazon Simple Storage Service",
+    "heading": "General purpose buckets overview",
+    "bytes": 36310,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-overview.html",
+    "final_url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-management.html",
+    "status": 200,
+    "title": "Access control in Amazon S3 - Amazon Simple Storage Service",
+    "heading": "Access control in Amazon S3",
+    "bytes": 81738,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html",
+    "final_url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html",
+    "status": 200,
+    "title": "Retaining multiple versions of objects with S3 Versioning - Amazon Simple Storage Service",
+    "heading": "Retaining multiple versions of objects with S3 Versioning",
+    "bytes": 18127,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
+    "final_url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
+    "status": 200,
+    "title": "Managing the lifecycle of objects - Amazon Simple Storage Service",
+    "heading": "Managing the lifecycle of objects",
+    "bytes": 21026,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html",
+    "final_url": "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html",
+    "status": 200,
+    "title": "What is AWS Lambda? - AWS Lambda",
+    "heading": "What is AWS Lambda?",
+    "bytes": 19654,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html",
+    "final_url": "https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html",
+    "status": 200,
+    "title": "Create your first Lambda function - AWS Lambda",
+    "heading": "Create your first Lambda function",
+    "bytes": 41055,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/lambda/latest/dg/python-handler.html",
+    "final_url": "https://docs.aws.amazon.com/lambda/latest/dg/python-handler.html",
+    "status": 200,
+    "title": "Define Lambda Event Function handler in Python - AWS Lambda",
+    "heading": "Define Lambda Event Function handler in Python",
+    "bytes": 38375,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-permissions.html",
+    "final_url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-permissions.html",
+    "status": 200,
+    "title": "Managing permissions in AWS Lambda - AWS Lambda",
+    "heading": "Managing permissions in AWS Lambda",
+    "bytes": 15351,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html",
+    "final_url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html",
+    "status": 200,
+    "title": "What is IAM? - AWS Identity and Access Management",
+    "heading": "What is IAM?",
+    "bytes": 16322,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html",
+    "final_url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html",
+    "status": 200,
+    "title": "Policies and permissions in AWS Identity and Access Management - AWS Identity and Access Management",
+    "heading": "Policies and permissions in AWS Identity and Access Management",
+    "bytes": 54294,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html",
+    "final_url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html",
+    "status": 200,
+    "title": "IAM roles - AWS Identity and Access Management",
+    "heading": "IAM roles",
+    "bytes": 34239,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html",
+    "final_url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html",
+    "status": 200,
+    "title": "What is Amazon EC2? - Amazon Elastic Compute Cloud",
+    "heading": "What is Amazon EC2?",
+    "bytes": 29015,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html",
+    "final_url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html",
+    "status": 200,
+    "title": "Amazon EC2 security groups for your EC2 instances - Amazon Elastic Compute Cloud",
+    "heading": "Amazon EC2 security groups for your EC2 instances",
+    "bytes": 15163,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/glue/latest/dg/what-is-glue.html",
+    "final_url": "https://docs.aws.amazon.com/glue/latest/dg/what-is-glue.html",
+    "status": 200,
+    "title": "What is AWS Glue? - AWS Glue",
+    "heading": "What is AWS Glue?",
+    "bytes": 25978,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/glue/latest/dg/author-job.html",
+    "final_url": "https://docs.aws.amazon.com/glue/latest/dg/",
+    "status": 200,
+    "title": "AWS Glue",
+    "heading": "",
+    "bytes": 2235,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/athena/latest/ug/what-is.html",
+    "final_url": "https://docs.aws.amazon.com/athena/latest/ug/what-is.html",
+    "status": 200,
+    "title": "What is Amazon Athena? - Amazon Athena",
+    "heading": "What is Amazon Athena?",
+    "bytes": 11942,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/redshift/latest/dg/welcome.html",
+    "final_url": "https://docs.aws.amazon.com/redshift/latest/dg/welcome.html",
+    "status": 200,
+    "title": "Introduction to Amazon Redshift - Amazon Redshift",
+    "heading": "Introduction to Amazon Redshift",
+    "bytes": 13750,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html",
+    "final_url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html",
+    "status": 200,
+    "title": "What is Amazon Relational Database Service (Amazon RDS)? - Amazon Relational Database Service",
+    "heading": "What is Amazon Relational Database Service (Amazon RDS)?",
+    "bytes": 46732,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html",
+    "final_url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html",
+    "status": 200,
+    "title": "What is Amazon DynamoDB? - Amazon DynamoDB",
+    "heading": "What is Amazon DynamoDB?",
+    "bytes": 42274,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html",
+    "final_url": "https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html",
+    "status": 200,
+    "title": "What is Step Functions? - AWS Step Functions",
+    "heading": "What is Step Functions?",
+    "bytes": 35440,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html",
+    "final_url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html",
+    "status": 200,
+    "title": "What is Amazon Simple Queue Service? - Amazon Simple Queue Service",
+    "heading": "What is Amazon Simple Queue Service?",
+    "bytes": 23935,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html",
+    "final_url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html",
+    "status": 200,
+    "title": "What is Amazon CloudWatch? - Amazon CloudWatch",
+    "heading": "What is Amazon CloudWatch?",
+    "bytes": 30232,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html",
+    "final_url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html",
+    "status": 200,
+    "title": "What is CloudFormation? - AWS CloudFormation",
+    "heading": "What is CloudFormation?",
+    "bytes": 17697,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/get-started/docker-overview/",
+    "final_url": "https://docs.docker.com/get-started/docker-overview/",
+    "status": 200,
+    "title": "What is Docker? | Docker Docs",
+    "heading": "What is Docker?",
+    "bytes": 203486,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/build/concepts/dockerfile/",
+    "final_url": "https://docs.docker.com/build/concepts/dockerfile/",
+    "status": 200,
+    "title": "Dockerfile overview | Docker Docs",
+    "heading": "Dockerfile overview",
+    "bytes": 570601,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/build/concepts/context/",
+    "final_url": "https://docs.docker.com/build/concepts/context/",
+    "status": 200,
+    "title": "Build context | Docker Docs",
+    "heading": "Build context",
+    "bytes": 674879,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/build/building/multi-stage/",
+    "final_url": "https://docs.docker.com/build/building/multi-stage/",
+    "status": 200,
+    "title": "Multi-stage builds | Docker Docs",
+    "heading": "Multi-stage builds",
+    "bytes": 561287,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/build/cache/",
+    "final_url": "https://docs.docker.com/build/cache/",
+    "status": 200,
+    "title": "Docker build cache | Docker Docs",
+    "heading": "Docker build cache",
+    "bytes": 529016,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/reference/cli/docker/image/tag/",
+    "final_url": "https://docs.docker.com/reference/cli/docker/image/tag/",
+    "status": 200,
+    "title": "docker image tag | Docker Docs",
+    "heading": "docker image tag",
+    "bytes": 450773,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/get-started/docker-concepts/running-containers/start-stop-containers/",
+    "valid": false,
+    "error": "HTTP Error 404: Not Found",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://docs.docker.com/engine/storage/volumes/",
+    "final_url": "https://docs.docker.com/engine/storage/volumes/",
+    "status": 200,
+    "title": "Volumes | Docker Docs",
+    "heading": "Volumes",
+    "bytes": 679843,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/engine/storage/bind-mounts/",
+    "final_url": "https://docs.docker.com/engine/storage/bind-mounts/",
+    "status": 200,
+    "title": "Bind mounts | Docker Docs",
+    "heading": "Bind mounts",
+    "bytes": 605827,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/engine/network/",
+    "final_url": "https://docs.docker.com/engine/network/",
+    "status": 200,
+    "title": "Networking overview | Docker Docs",
+    "heading": "Networking overview",
+    "bytes": 565487,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/compose/gettingstarted/",
+    "final_url": "https://docs.docker.com/compose/gettingstarted/",
+    "status": 200,
+    "title": "Docker Compose Quickstart | Docker Docs",
+    "heading": "Docker Compose Quickstart",
+    "bytes": 639149,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/compose/how-tos/environment-variables/",
+    "final_url": "https://docs.docker.com/compose/how-tos/environment-variables/",
+    "status": 200,
+    "title": "Environment variables in Compose | Docker Docs",
+    "heading": "Environment variables in Compose",
+    "bytes": 523799,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/compose/how-tos/use-secrets/",
+    "final_url": "https://docs.docker.com/compose/how-tos/use-secrets/",
+    "status": 200,
+    "title": "Manage secrets securely in Docker Compose | Docker Docs",
+    "heading": "Manage secrets securely in Docker Compose",
+    "bytes": 543720,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/engine/containers/resource_constraints/",
+    "final_url": "https://docs.docker.com/engine/containers/resource_constraints/",
+    "status": 200,
+    "title": "Resource constraints | Docker Docs",
+    "heading": "Resource constraints",
+    "bytes": 552323,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.docker.com/engine/logging/",
+    "final_url": "https://docs.docker.com/engine/logging/",
+    "status": 200,
+    "title": "View container logs | Docker Docs",
+    "heading": "View container logs",
+    "bytes": 524949,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/overview/",
+    "final_url": "https://kubernetes.io/docs/concepts/overview/",
+    "status": 200,
+    "title": "Overview | Kubernetes",
+    "heading": "Overview",
+    "bytes": 506362,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/workloads/pods/",
+    "final_url": "https://kubernetes.io/docs/concepts/workloads/pods/",
+    "status": 200,
+    "title": "Pods | Kubernetes",
+    "heading": "Pods",
+    "bytes": 546881,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+    "final_url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+    "status": 200,
+    "title": "Deployments | Kubernetes",
+    "heading": "Deployments",
+    "bytes": 594666,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/services-networking/service/",
+    "final_url": "https://kubernetes.io/docs/concepts/services-networking/service/",
+    "status": 200,
+    "title": "Service | Kubernetes",
+    "heading": "Service",
+    "bytes": 592884,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/configuration/configmap/",
+    "final_url": "https://kubernetes.io/docs/concepts/configuration/configmap/",
+    "status": 200,
+    "title": "ConfigMaps | Kubernetes",
+    "heading": "ConfigMaps",
+    "bytes": 538645,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+    "final_url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+    "status": 200,
+    "title": "Secrets | Kubernetes",
+    "heading": "Secrets",
+    "bytes": 572225,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+    "final_url": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+    "status": 200,
+    "title": "Persistent Volumes | Kubernetes",
+    "heading": "Persistent Volumes",
+    "bytes": 605695,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/",
+    "final_url": "https://kubernetes.io/docs/concepts/scheduling-eviction/",
+    "status": 200,
+    "title": "Scheduling, Preemption and Eviction | Kubernetes",
+    "heading": "Scheduling, Preemption and Eviction",
+    "bytes": 502155,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/",
+    "final_url": "https://kubernetes.io/docs/concepts/workloads/pods/probes/",
+    "status": 200,
+    "title": "Liveness, Readiness, and Startup Probes | Kubernetes",
+    "heading": "Liveness, Readiness, and Startup Probes",
+    "bytes": 544689,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+    "final_url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+    "status": 200,
+    "title": "Resource Management for Pods and Containers | Kubernetes",
+    "heading": "Resource Management for Pods and Containers",
+    "bytes": 563318,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository",
+    "status": 200,
+    "title": "Git - Getting a Git Repository",
+    "heading": "2.1 Git Basics - Getting a Git Repository",
+    "bytes": 127341,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository",
+    "status": 200,
+    "title": "Git - Recording Changes to the Repository",
+    "heading": "2.2 Git Basics - Recording Changes to the Repository",
+    "bytes": 155737,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Basics-Viewing-the-Commit-History",
+    "status": 200,
+    "title": "Git - Viewing the Commit History",
+    "heading": "2.3 Git Basics - Viewing the Commit History",
+    "bytes": 144264,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Basics-Undoing-Things",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Basics-Undoing-Things",
+    "status": 200,
+    "title": "Git - Undoing Things",
+    "heading": "2.4 Git Basics - Undoing Things",
+    "bytes": 133484,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes",
+    "status": 200,
+    "title": "Git - Working with Remotes",
+    "heading": "2.5 Git Basics - Working with Remotes",
+    "bytes": 135828,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Basics-Tagging",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Basics-Tagging",
+    "status": 200,
+    "title": "Git - Tagging",
+    "heading": "2.6 Git Basics - Tagging",
+    "bytes": 133068,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell",
+    "status": 200,
+    "title": "Git - Branches in a Nutshell",
+    "heading": "3.1 Git Branching - Branches in a Nutshell",
+    "bytes": 135960,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging",
+    "status": 200,
+    "title": "Git - Basic Branching and Merging",
+    "heading": "3.2 Git Branching - Basic Branching and Merging",
+    "bytes": 139477,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Branching-Rebasing",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Branching-Rebasing",
+    "status": 200,
+    "title": "Git - Rebasing",
+    "heading": "3.6 Git Branching - Rebasing",
+    "bytes": 139906,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://git-scm.com/book/en/v2/Git-Tools-Stashing-and-Cleaning",
+    "final_url": "https://git-scm.com/book/en/v2/Git-Tools-Stashing-and-Cleaning",
+    "status": 200,
+    "title": "Git - Stashing and Cleaning",
+    "heading": "7.3 Git Tools - Stashing and Cleaning",
+    "bytes": 135814,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html",
+    "status": 200,
+    "title": "ls invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 6465,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/cp-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/cp-invocation.html",
+    "status": 200,
+    "title": "cp invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 40351,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/mv-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/mv-invocation.html",
+    "status": 200,
+    "title": "mv invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 18320,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/rm-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/rm-invocation.html",
+    "status": 200,
+    "title": "rm invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 13486,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/mkdir-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/mkdir-invocation.html",
+    "status": 200,
+    "title": "mkdir invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 8942,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/chmod-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/chmod-invocation.html",
+    "status": 200,
+    "title": "chmod invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 14332,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/chown-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/chown-invocation.html",
+    "status": 200,
+    "title": "chown invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 17740,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html",
+    "status": 200,
+    "title": "sort invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 52410,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/uniq-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/uniq-invocation.html",
+    "status": 200,
+    "title": "uniq invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 15054,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/cut-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/cut-invocation.html",
+    "status": 200,
+    "title": "cut invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 14479,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/join-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/join-invocation.html",
+    "status": 200,
+    "title": "join invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 4565,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html",
+    "status": 200,
+    "title": "cat invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 8900,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/tail-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/tail-invocation.html",
+    "status": 200,
+    "title": "tail invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 22446,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/cksum-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/cksum-invocation.html",
+    "status": 200,
+    "title": "cksum invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 4475,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/comm-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/comm-invocation.html",
+    "status": 200,
+    "title": "comm invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 10560,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html",
+    "status": 200,
+    "title": "du invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 32782,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html",
+    "status": 200,
+    "title": "df invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 23470,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/env-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/env-invocation.html",
+    "status": 200,
+    "title": "env invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 39157,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/ln-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/ln-invocation.html",
+    "status": 200,
+    "title": "ln invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 20391,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html",
+    "final_url": "https://www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html",
+    "status": 200,
+    "title": "timeout invocation (GNU Coreutils 9.12)",
+    "heading": "",
+    "bytes": 11812,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Authentication - OWASP Cheat Sheet Series",
+    "heading": "Authentication Cheat Sheet \u00b6",
+    "bytes": 135389,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Authorization - OWASP Cheat Sheet Series",
+    "heading": "Authorization Cheat Sheet \u00b6",
+    "bytes": 101654,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Password Storage - OWASP Cheat Sheet Series",
+    "heading": "Password Storage Cheat Sheet \u00b6",
+    "bytes": 96007,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Session Management - OWASP Cheat Sheet Series",
+    "heading": "Session Management Cheat Sheet \u00b6",
+    "bytes": 157286,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html",
+    "status": 200,
+    "title": "SQL Injection Prevention - OWASP Cheat Sheet Series",
+    "heading": "SQL Injection Prevention Cheat Sheet \u00b6",
+    "bytes": 79849,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Cross Site Scripting Prevention - OWASP Cheat Sheet Series",
+    "heading": "Cross Site Scripting Prevention Cheat Sheet \u00b6",
+    "bytes": 119127,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Cross-Site Request Forgery Prevention - OWASP Cheat Sheet Series",
+    "heading": "Cross-Site Request Forgery Prevention Cheat Sheet \u00b6",
+    "bytes": 157772,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Input Validation - OWASP Cheat Sheet Series",
+    "heading": "Input Validation Cheat Sheet \u00b6",
+    "bytes": 76349,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html",
+    "status": 200,
+    "title": "REST Security - OWASP Cheat Sheet Series",
+    "heading": "REST Security Cheat Sheet \u00b6",
+    "bytes": 98202,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html",
+    "status": 200,
+    "title": "File Upload - OWASP Cheat Sheet Series",
+    "heading": "File Upload Cheat Sheet \u00b6",
+    "bytes": 86399,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Transport Layer Security - OWASP Cheat Sheet Series",
+    "heading": "Transport Layer Security Cheat Sheet \u00b6",
+    "bytes": 101334,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Secrets Management - OWASP Cheat Sheet Series",
+    "heading": "Secrets Management Cheat Sheet \u00b6",
+    "bytes": 175290,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Cryptographic Storage - OWASP Cheat Sheet Series",
+    "heading": "Cryptographic Storage Cheat Sheet \u00b6",
+    "bytes": 93896,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Logging - OWASP Cheat Sheet Series",
+    "heading": "Logging Cheat Sheet \u00b6",
+    "bytes": 108718,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Code_Review_Cheat_Sheet.html",
+    "valid": false,
+    "error": "HTTP Error 404: Not Found",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Threat Modeling - OWASP Cheat Sheet Series",
+    "heading": "Threat Modeling Cheat Sheet \u00b6",
+    "bytes": 88587,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Docker Security - OWASP Cheat Sheet Series",
+    "heading": "Docker Security Cheat Sheet \u00b6",
+    "bytes": 112573,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Kubernetes_Security_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Kubernetes_Security_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Kubernetes Security - OWASP Cheat Sheet Series",
+    "heading": "Kubernetes Security Cheat Sheet \u00b6",
+    "bytes": 204707,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Software_Supply_Chain_Security_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Software_Supply_Chain_Security_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Software Supply Chain Security - OWASP Cheat Sheet Series",
+    "heading": "Software Supply Chain Security \u00b6",
+    "bytes": 100444,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html",
+    "final_url": "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html",
+    "status": 200,
+    "title": "Content Security Policy - OWASP Cheat Sheet Series",
+    "heading": "Content Security Policy Cheat Sheet \u00b6",
+    "bytes": 108559,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/linear_model.html",
+    "final_url": "https://scikit-learn.org/stable/modules/linear_model.html",
+    "status": 200,
+    "title": "1.1. Linear Models \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.1.  Linear Models #",
+    "bytes": 240759,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/svm.html",
+    "final_url": "https://scikit-learn.org/stable/modules/svm.html",
+    "status": 200,
+    "title": "1.4. Support Vector Machines \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.4.  Support Vector Machines #",
+    "bytes": 132675,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/neighbors.html",
+    "final_url": "https://scikit-learn.org/stable/modules/neighbors.html",
+    "status": 200,
+    "title": "1.6. Nearest Neighbors \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.6.  Nearest Neighbors #",
+    "bytes": 129564,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/gaussian_process.html",
+    "final_url": "https://scikit-learn.org/stable/modules/gaussian_process.html",
+    "status": 200,
+    "title": "1.7. Gaussian Processes \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.7.  Gaussian Processes #",
+    "bytes": 90805,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/naive_bayes.html",
+    "final_url": "https://scikit-learn.org/stable/modules/naive_bayes.html",
+    "status": 200,
+    "title": "1.9. Naive Bayes \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.9.  Naive Bayes #",
+    "bytes": 62312,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/tree.html",
+    "final_url": "https://scikit-learn.org/stable/modules/tree.html",
+    "status": 200,
+    "title": "1.10. Decision Trees \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.10.  Decision Trees #",
+    "bytes": 105823,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/ensemble.html",
+    "final_url": "https://scikit-learn.org/stable/modules/ensemble.html",
+    "status": 200,
+    "title": "1.11. Ensembles: Gradient boosting, random forests, bagging, voting, stacking \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.11.  Ensembles: Gradient boosting, random forests, bagging, voting, stacking #",
+    "bytes": 240000,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/multiclass.html",
+    "final_url": "https://scikit-learn.org/stable/modules/multiclass.html",
+    "status": 200,
+    "title": "1.12. Multiclass and multioutput algorithms \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.12.  Multiclass and multioutput algorithms #",
+    "bytes": 112836,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/feature_selection.html",
+    "final_url": "https://scikit-learn.org/stable/modules/feature_selection.html",
+    "status": 200,
+    "title": "1.13. Feature selection \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.13.  Feature selection #",
+    "bytes": 79751,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/semi_supervised.html",
+    "final_url": "https://scikit-learn.org/stable/modules/semi_supervised.html",
+    "status": 200,
+    "title": "1.14. Semi-supervised learning \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "1.14.  Semi-supervised learning #",
+    "bytes": 49273,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/clustering.html",
+    "final_url": "https://scikit-learn.org/stable/modules/clustering.html",
+    "status": 200,
+    "title": "2.3. Clustering \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "2.3.  Clustering #",
+    "bytes": 245500,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/decomposition.html",
+    "final_url": "https://scikit-learn.org/stable/modules/decomposition.html",
+    "status": 200,
+    "title": "2.5. Decomposing signals in components (matrix factorization problems) \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "2.5.  Decomposing signals in components (matrix factorization problems) #",
+    "bytes": 133670,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/manifold.html",
+    "final_url": "https://scikit-learn.org/stable/modules/manifold.html",
+    "status": 200,
+    "title": "2.2. Manifold learning \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "2.2.  Manifold learning #",
+    "bytes": 95402,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/density.html",
+    "final_url": "https://scikit-learn.org/stable/modules/density.html",
+    "status": 200,
+    "title": "2.8. Density Estimation \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "2.8.  Density Estimation #",
+    "bytes": 50875,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/outlier_detection.html",
+    "final_url": "https://scikit-learn.org/stable/modules/outlier_detection.html",
+    "status": 200,
+    "title": "2.7. Novelty and Outlier Detection \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "2.7.  Novelty and Outlier Detection #",
+    "bytes": 79512,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/cross_validation.html",
+    "final_url": "https://scikit-learn.org/stable/modules/cross_validation.html",
+    "status": 200,
+    "title": "3.1. Cross-validation: evaluating estimator performance \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "3.1.  Cross-validation: evaluating estimator performance #",
+    "bytes": 169645,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/grid_search.html",
+    "final_url": "https://scikit-learn.org/stable/modules/grid_search.html",
+    "status": 200,
+    "title": "3.2. Tuning the hyper-parameters of an estimator \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "3.2.  Tuning the hyper-parameters of an estimator #",
+    "bytes": 137758,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/model_evaluation.html",
+    "final_url": "https://scikit-learn.org/stable/modules/model_evaluation.html",
+    "status": 200,
+    "title": "3.4. Metrics and scoring: quantifying the quality of predictions \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "3.4.  Metrics and scoring: quantifying the quality of predictions #",
+    "bytes": 437603,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/classification_threshold.html",
+    "final_url": "https://scikit-learn.org/stable/modules/classification_threshold.html",
+    "status": 200,
+    "title": "3.3. Tuning the decision threshold for class prediction \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "3.3.  Tuning the decision threshold for class prediction #",
+    "bytes": 55249,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/learning_curve.html",
+    "final_url": "https://scikit-learn.org/stable/modules/learning_curve.html",
+    "status": 200,
+    "title": "3.5. Validation curves: plotting scores to evaluate models \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "3.5.  Validation curves: plotting scores to evaluate models #",
+    "bytes": 56800,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/preprocessing.html",
+    "final_url": "https://scikit-learn.org/stable/modules/preprocessing.html",
+    "status": 200,
+    "title": "8.3. Preprocessing data \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "8.3.  Preprocessing data #",
+    "bytes": 205475,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/impute.html",
+    "final_url": "https://scikit-learn.org/stable/modules/impute.html",
+    "status": 200,
+    "title": "8.4. Imputation of missing values \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "8.4.  Imputation of missing values #",
+    "bytes": 90800,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/feature_extraction.html",
+    "final_url": "https://scikit-learn.org/stable/modules/feature_extraction.html",
+    "status": 200,
+    "title": "8.2. Feature extraction \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "8.2.  Feature extraction #",
+    "bytes": 152619,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/compose.html",
+    "final_url": "https://scikit-learn.org/stable/modules/compose.html",
+    "status": 200,
+    "title": "8.1. Pipelines and composite estimators \u2014 scikit-learn 1.9.1 documentation",
+    "heading": "8.1.  Pipelines and composite estimators #",
+    "bytes": 120305,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://scikit-learn.org/stable/modules/model_persistence.html",
+    "final_url": "https://scikit-learn.org/stable/modules/model_persistence.html",
+    "status": 200,
+    "title": "scikit-learn: machine learning in Python",
+    "heading": "",
+    "bytes": 573,
+    "checked_at": "2026-10-30",
+    "valid": false
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-1-1-focused-pain-assessment/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/vital-signs/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-4-health-history-subjective-assessment/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-2-head-to-toe-assessment-checklist/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-2-emergency-assessment-checklist/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/2-5-focussed-respiratory-assessment/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/positioning-a-patient-in-bed/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-2-pulse-oximetry-2/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-3-causes-of-hypoxemia-2/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/8-2-glucometer-use/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/hypoglycemia-protocol/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/medical-asepsis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/1-6-hand-hygiene/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/1-8-masks/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/surgical-asepsis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/entering-the-operating-room/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/sterile-gloving/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-2-body-mechanics/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-6-transferring-and-ambulation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-4-positioning-a-patient-in-bed/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-5-positioning-a-patient-on-the-side-of-a-bed/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-7-transfers-and-ambulation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/3-7-fall-prevention/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/wound-assessment/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-2-simple-dressing-change/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-3-suture-care-and-removal/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-4-suture-care-and-removal/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-5-complex-dressing-change/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/4-8-drain-management-and-removal/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-5-oxygen-therapy-systems/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-5-management-of-hypoxemia/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-6-complications-of-oxygen-therapy/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/5-7-oral-suctioning/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/6-1-safe-medication-adminstration/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/6-2-oral-and-gastric-medication/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/inhaled-and-topical-medications/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/intravenous-therapy-peripheral-and-central-venous-catheters/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/8-8/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/clinicalskills/chapter/10-6-ostomies/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-2-2-epistemology-and-why-its-important/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-3-2-behaviourism/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/3-3-cognitivism/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-3-4-constructivism/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/3-6-connectivism/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-4-1-five-perspectives-on-teaching/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-2-transmissive-lectures/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-3-interactive-lectures-seminars-tutorials-and-moocs/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/3-5-apprenticeship-learning-by-doing-1/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-4-models-for-teaching-by-doing/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-5-the-nurturing-and-social-reform-models-of-teaching/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-5-the-addie-model/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-5-online-collaborative-learning/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-6-competency-based-learning/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-7-experiential-learning/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/6-10-agile-design-flexible-designs-for-learning/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/conclusions/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/4-1-online-learning-and-teaching-methods/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-7-4-design-models-for-moocs/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/section-7-5-strengths-and-weaknesses-of-moocs/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-3-broadcast-vs-communicative-technologies/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-4-synchronous-vs-asynchronous/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-7-media-richness/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/8-8-pedagogical-differences-between-media/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-5-2-audio/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-5-3-video/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/computers-and-learning/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-5-5-social-media/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-1-models-for-media-selection/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/9-9-the-sections-model-speed-and-security/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/10-3-comparing-delivery-methods/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/oer/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/11-8-step-six-set-appropriate-learning-goals/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/11-9-step-seven/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/11-10-step-eight-communicate-communicate-communicate/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/11-step-nine-evaluate-and-innovate/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/12-6-team-teaching/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/5-3-learner-characteristics/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/5-6-learner-support/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/5-8-assessment-of-learning/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/teachinginadigitalage/chapter/a-9-culture-and-learning-environments/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/1-1-themes-and-concepts-of-biology/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/1-2-the-process-of-science/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/2-1-the-building-blocks-of-molecules/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/2-2-water/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/2-3-biological-molecules/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-1-how-cells-are-studied/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-2-comparing-prokaryotic-and-eukaryotic-cells/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-3-eukaryotic-cells/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-4-the-cell-membrane/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-5-passive-transport/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/3-6-active-transport/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-1-energy-and-metabolism/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-2-glycolysis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-3-citric-acid-cycle-and-oxidative-phosphorylation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-4-fermentation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/4-5-connections-to-other-metabolic-pathways/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/5-1-overview-of-photosynthesis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/5-2-the-light-dependent-reactions-of-photosynthesis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/5-3-the-calvin-cycle/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/6-1-the-genome/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/6-2-the-cell-cycle/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/6-3-cancer-and-the-cell-cycle/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/6-4-prokaryotic-cell-division/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/7-1-sexual-reproduction/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/7-2-meiosis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/7-3-errors-in-meiosis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/8-1-mendels-experiments/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/8-2-laws-of-inheritance/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/8-3-extensions-of-the-laws-of-inheritance/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-1-the-structure-of-dna/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-2-dna-replication/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-3-transcription/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-4-translation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/9-5-how-genes-are-regulated/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/10-1-cloning-and-genetic-engineering/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/10-2-biotechnology-in-medicine-and-agriculture/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/10-3-genomics-and-proteomics/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/11-1-homeostasis-and-osmoregulation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/11-2-digestive-system/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/11-3-circulatory-and-respiratory-systems/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/11-4-endocrine-system/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/11-5-musculoskeletal-system/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/11-6-nervous-system/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/12-1-viruses/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/12-2-innate-immunity/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/12-3-adaptive-immunity/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/12-4-disruptions-in-the-immune-system/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/13-1-how-animals-reproduce/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/13-2-development-and-organogenesis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/13-3-human-reproduction/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/14-1-animal-form-and-function/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/14-2-animal-primary-tissues/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/14-3-homeostasis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/15-1-digestive-systems/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/15-2-nutrition-and-energy-production/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/15-3-digestive-system-processes/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/15-4-digestive-system-regulation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/16-1-neurons-and-glial-cells/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/16-2-how-neurons-communicate/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/16-3-the-central-nervous-system/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/16-4-the-peripheral-nervous-system/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/16-5-nervous-system-disorders/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/17-1-sensory-processes/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/17-2-somatosensation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/17-3-taste-and-smell/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/17-4-hearing-and-vestibular-sensation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/17-5-vision/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/18-1-types-of-hormones/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/18-2-how-hormones-work/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/18-3-regulation-of-body-processes/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/18-4-regulation-of-hormone-production/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/18-5-endocrine-glands/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/19-1-types-of-skeletal-systems/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/19-2-bone/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/19-3-joints-and-skeletal-movement/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/19-4-muscle-contraction-and-locomotion/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/20-1-systems-of-gas-exchange/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/20-2-gas-exchange-across-respiratory-surfaces/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/20-3-breathing/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/20-4-transport-of-gases-in-human-bodily-fluids/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/21-1-overview-of-the-circulatory-system/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/21-2-components-of-the-blood/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/21-3-mammalian-heart-and-blood-vessels/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/21-4-blood-flow-and-blood-pressure-regulation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/22-1-osmoregulation-and-osmotic-balance/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/22-2-the-kidneys-and-osmoregulatory-organs/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/22-3-excretion-systems/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/22-4-nitrogenous-wastes/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/22-5-hormonal-control-of-osmoregulatory-functions/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/23-1-innate-immune-response/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/23-2-adaptive-immune-response/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/23-3-antibodies/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/23-4-disruptions-in-the-immune-system/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/24-1-reproduction-methods/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/24-2-fertilization/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/24-3-human-reproductive-anatomy-and-gametogenesis/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/24-4-hormonal-control-of-human-reproduction/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/24-5-human-pregnancy-and-birth/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/24-6-fertilization-and-early-embryonic-development/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://opentextbc.ca/biology/chapter/24-7-organogenesis-and-vertebrate-formation/",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s05-04-planning-organizing-leading-an.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s05-04-planning-organizing-leading-an.html",
+    "status": 200,
+    "title": "Planning, Organizing, Leading, and Controlling",
+    "heading": "",
+    "bytes": 18362,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s05-05-economic-social-and-environmen.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s05-05-economic-social-and-environmen.html",
+    "status": 200,
+    "title": "Economic, Social, and Environmental Performance",
+    "heading": "",
+    "bytes": 21487,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s05-06-performance-of-individuals-and.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s05-06-performance-of-individuals-and.html",
+    "status": 200,
+    "title": "Performance of Individuals and Groups",
+    "heading": "",
+    "bytes": 18828,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s08-02-the-roles-of-mission-vision-an.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s08-02-the-roles-of-mission-vision-an.html",
+    "status": 200,
+    "title": "The Roles of Mission, Vision, and Values",
+    "heading": "",
+    "bytes": 16259,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s08-05-stakeholders.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s08-05-stakeholders.html",
+    "status": 200,
+    "title": "Stakeholders",
+    "heading": "",
+    "bytes": 23734,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s08-06-crafting-mission-and-vision-st.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s08-06-crafting-mission-and-vision-st.html",
+    "status": 200,
+    "title": "Crafting Mission and Vision Statements",
+    "heading": "",
+    "bytes": 22270,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-02-strategic-management-in-the-p-.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-02-strategic-management-in-the-p-.html",
+    "status": 200,
+    "title": "Strategic Management in the P-O-L-C Framework",
+    "heading": "",
+    "bytes": 26443,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-03-how-do-strategies-emerge.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-03-how-do-strategies-emerge.html",
+    "status": 200,
+    "title": "How Do Strategies Emerge?",
+    "heading": "",
+    "bytes": 14190,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-04-strategy-as-trade-offs-discipl.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-04-strategy-as-trade-offs-discipl.html",
+    "status": 200,
+    "title": "Strategy as Trade-Offs, Discipline, and Focus",
+    "heading": "",
+    "bytes": 38363,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-05-developing-strategy-through-in.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-05-developing-strategy-through-in.html",
+    "status": 200,
+    "title": "Developing Strategy Through Internal Analysis",
+    "heading": "",
+    "bytes": 42024,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-06-developing-strategy-through-ex.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-06-developing-strategy-through-ex.html",
+    "status": 200,
+    "title": "Developing Strategy Through External Analysis",
+    "heading": "",
+    "bytes": 38567,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-07-formulating-organizational-and.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s09-07-formulating-organizational-and.html",
+    "status": 200,
+    "title": "Formulating Organizational and Personal Strategy With the Strategy Diamond",
+    "heading": "",
+    "bytes": 25945,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s10-03-from-management-by-objectives-.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s10-03-from-management-by-objectives-.html",
+    "status": 200,
+    "title": "From Management by Objectives to the Balanced Scorecard",
+    "heading": "",
+    "bytes": 29645,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s10-04-characteristics-of-effective-g.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s10-04-characteristics-of-effective-g.html",
+    "status": 200,
+    "title": "Characteristics of Effective Goals and Objectives",
+    "heading": "",
+    "bytes": 21262,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s19-02-organizational-control.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s19-02-organizational-control.html",
+    "status": 200,
+    "title": "Organizational Control",
+    "heading": "",
+    "bytes": 29852,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s19-04-financial-controls.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s19-04-financial-controls.html",
+    "status": 200,
+    "title": "Financial Controls",
+    "heading": "",
+    "bytes": 35427,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s19-05-nonfinancial-controls.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s19-05-nonfinancial-controls.html",
+    "status": 200,
+    "title": "Nonfinancial Controls",
+    "heading": "",
+    "bytes": 23652,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s19-06-lean-control.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s19-06-lean-control.html",
+    "status": 200,
+    "title": "Lean Control",
+    "heading": "",
+    "bytes": 19310,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s07-06-developing-your-values-based-l.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s07-06-developing-your-values-based-l.html",
+    "status": 200,
+    "title": "Developing Your Values-Based Leadership Skills",
+    "heading": "",
+    "bytes": 18502,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-02-organizational-structure.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-02-organizational-structure.html",
+    "status": 200,
+    "title": "Organizational Structure",
+    "heading": "",
+    "bytes": 31188,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-03-contemporary-forms-of-organiza.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-03-contemporary-forms-of-organiza.html",
+    "status": 200,
+    "title": "Contemporary Forms of Organizational Structures",
+    "heading": "",
+    "bytes": 16806,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-04-organizational-change.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-04-organizational-change.html",
+    "status": 200,
+    "title": "Organizational Change",
+    "heading": "",
+    "bytes": 35254,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-05-planning-and-executing-change-.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-05-planning-and-executing-change-.html",
+    "status": 200,
+    "title": "Planning and Executing Change Effectively",
+    "heading": "",
+    "bytes": 22156,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-06-building-your-change-managemen.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s11-06-building-your-change-managemen.html",
+    "status": 200,
+    "title": "Building Your Change Management Skills",
+    "heading": "",
+    "bytes": 6109,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s12-02-understanding-organizational-c.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s12-02-understanding-organizational-c.html",
+    "status": 200,
+    "title": "Understanding Organizational Culture",
+    "heading": "",
+    "bytes": 13867,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s12-03-measuring-organizational-cultu.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s12-03-measuring-organizational-cultu.html",
+    "status": 200,
+    "title": "Measuring Organizational Culture",
+    "heading": "",
+    "bytes": 28101,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s12-04-creating-and-maintaining-organ.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s12-04-creating-and-maintaining-organ.html",
+    "status": 200,
+    "title": "Creating and Maintaining Organizational Culture",
+    "heading": "",
+    "bytes": 50590,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s12-05-creating-culture-change.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s12-05-creating-culture-change.html",
+    "status": 200,
+    "title": "Creating Culture Change",
+    "heading": "",
+    "bytes": 14404,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-02-who-is-a-leader-trait-approach.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-02-who-is-a-leader-trait-approach.html",
+    "status": 200,
+    "title": "Who Is a Leader? Trait Approaches to Leadership",
+    "heading": "",
+    "bytes": 18764,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-03-what-do-leaders-do-behavioral-.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-03-what-do-leaders-do-behavioral-.html",
+    "status": 200,
+    "title": "What Do Leaders Do? Behavioral Approaches to Leadership",
+    "heading": "",
+    "bytes": 15301,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-04-what-is-the-role-of-the-contex.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-04-what-is-the-role-of-the-contex.html",
+    "status": 200,
+    "title": "What Is the Role of the Context? Contingency Approaches to Leadership",
+    "heading": "",
+    "bytes": 28561,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-05-contemporary-approaches-to-lea.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-05-contemporary-approaches-to-lea.html",
+    "status": 200,
+    "title": "Contemporary Approaches to Leadership",
+    "heading": "",
+    "bytes": 51597,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-06-developing-your-leadership-ski.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s14-06-developing-your-leadership-ski.html",
+    "status": 200,
+    "title": "Developing Your Leadership Skills",
+    "heading": "",
+    "bytes": 13312,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s15-02-understanding-decision-making.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s15-02-understanding-decision-making.html",
+    "status": 200,
+    "title": "Understanding Decision Making",
+    "heading": "",
+    "bytes": 44147,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s15-03-faulty-decision-making.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s15-03-faulty-decision-making.html",
+    "status": 200,
+    "title": "Faulty Decision Making",
+    "heading": "",
+    "bytes": 18101,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s15-04-decision-making-in-groups.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s15-04-decision-making-in-groups.html",
+    "status": 200,
+    "title": "Decision Making in Groups",
+    "heading": "",
+    "bytes": 26690,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s17-02-group-dynamics.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s17-02-group-dynamics.html",
+    "status": 200,
+    "title": "Group Dynamics",
+    "heading": "",
+    "bytes": 36131,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s17-03-understanding-team-design-char.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s17-03-understanding-team-design-char.html",
+    "status": 200,
+    "title": "Understanding Team Design Characteristics",
+    "heading": "",
+    "bytes": 56523,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s17-04-organizing-effective-teams.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s17-04-organizing-effective-teams.html",
+    "status": 200,
+    "title": "Organizing Effective Teams",
+    "heading": "",
+    "bytes": 15612,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s17-05-barriers-to-effective-teams.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s17-05-barriers-to-effective-teams.html",
+    "status": 200,
+    "title": "Barriers to Effective Teams",
+    "heading": "",
+    "bytes": 8249,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s18-02-need-based-theories-of-motivat.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s18-02-need-based-theories-of-motivat.html",
+    "status": 200,
+    "title": "Need-Based Theories of Motivation",
+    "heading": "",
+    "bytes": 25051,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s18-03-process-based-theories.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s18-03-process-based-theories.html",
+    "status": 200,
+    "title": "Process-Based Theories",
+    "heading": "",
+    "bytes": 76607,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s20-02-the-changing-role-of-strategic.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s20-02-the-changing-role-of-strategic.html",
+    "status": 200,
+    "title": "The Changing Role of Strategic Human Resource Management in Principles of Management",
+    "heading": "",
+    "bytes": 21834,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s20-04-effective-selection-and-placem.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s20-04-effective-selection-and-placem.html",
+    "status": 200,
+    "title": "Effective Selection and Placement Strategies",
+    "heading": "",
+    "bytes": 22325,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s20-05-the-roles-of-pay-structure-and.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s20-05-the-roles-of-pay-structure-and.html",
+    "status": 200,
+    "title": "The Roles of Pay Structure and Pay for Performance",
+    "heading": "",
+    "bytes": 23289,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s20-06-designing-a-high-performance-w.html",
+    "final_url": "https://saylordotorg.github.io/text_principles-of-management-v1.1/s20-06-designing-a-high-performance-w.html",
+    "status": 200,
+    "title": "Designing a High-Performance Work System",
+    "heading": "",
+    "bytes": 21780,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s08-04-style-in-written-communication.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s08-04-style-in-written-communication.html",
+    "status": 200,
+    "title": "Style in Written Communication",
+    "heading": "",
+    "bytes": 15007,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s08-05-principles-of-written-communic.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s08-05-principles-of-written-communic.html",
+    "status": 200,
+    "title": "Principles of Written Communication",
+    "heading": "",
+    "bytes": 17777,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-01-think-then-write-writing-prepa.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-01-think-then-write-writing-prepa.html",
+    "status": 200,
+    "title": "Think, Then Write: Writing Preparation",
+    "heading": "",
+    "bytes": 20702,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-02-a-planning-checklist-for-busin.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-02-a-planning-checklist-for-busin.html",
+    "status": 200,
+    "title": "A Planning Checklist for Business Messages",
+    "heading": "",
+    "bytes": 34287,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-03-research-and-investigation-get.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-03-research-and-investigation-get.html",
+    "status": 200,
+    "title": "Research and Investigation: Getting Started",
+    "heading": "",
+    "bytes": 17803,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-04-ethics-plagiarism-and-reliable.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-04-ethics-plagiarism-and-reliable.html",
+    "status": 200,
+    "title": "Ethics, Plagiarism, and Reliable Sources",
+    "heading": "",
+    "bytes": 29063,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-06-reading-and-analyzing.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s09-06-reading-and-analyzing.html",
+    "status": 200,
+    "title": "Reading and Analyzing",
+    "heading": "",
+    "bytes": 9152,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s10-01-organization.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s10-01-organization.html",
+    "status": 200,
+    "title": "Organization",
+    "heading": "",
+    "bytes": 55471,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s10-02-writing-style.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s10-02-writing-style.html",
+    "status": 200,
+    "title": "Writing Style",
+    "heading": "",
+    "bytes": 31966,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s10-03-making-an-argument.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s10-03-making-an-argument.html",
+    "status": 200,
+    "title": "Making an Argument",
+    "heading": "",
+    "bytes": 30618,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s10-04-paraphrase-and-summary-versus-.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s10-04-paraphrase-and-summary-versus-.html",
+    "status": 200,
+    "title": "Paraphrase and Summary versus Plagiarism",
+    "heading": "",
+    "bytes": 12706,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-01-general-revision-points-to-con.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-01-general-revision-points-to-con.html",
+    "status": 200,
+    "title": "General Revision Points to Consider",
+    "heading": "",
+    "bytes": 10434,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-02-specific-revision-points-to-co.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-02-specific-revision-points-to-co.html",
+    "status": 200,
+    "title": "Specific Revision Points to Consider",
+    "heading": "",
+    "bytes": 40648,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-03-style-revisions.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-03-style-revisions.html",
+    "status": 200,
+    "title": "Style Revisions",
+    "heading": "",
+    "bytes": 23323,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-04-evaluating-the-work-of-others.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-04-evaluating-the-work-of-others.html",
+    "status": 200,
+    "title": "Evaluating the Work of Others",
+    "heading": "",
+    "bytes": 10716,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-05-proofreading-and-design-evalua.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s11-05-proofreading-and-design-evalua.html",
+    "status": 200,
+    "title": "Proofreading and Design Evaluation",
+    "heading": "",
+    "bytes": 15772,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s13-01-text-e-mail-and-netiquette.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s13-01-text-e-mail-and-netiquette.html",
+    "status": 200,
+    "title": "Text, E-mail, and Netiquette",
+    "heading": "",
+    "bytes": 16406,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s13-02-memorandums-and-letters.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s13-02-memorandums-and-letters.html",
+    "status": 200,
+    "title": "Memorandums and Letters",
+    "heading": "",
+    "bytes": 23965,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s13-03-business-proposal.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s13-03-business-proposal.html",
+    "status": 200,
+    "title": "Business Proposal",
+    "heading": "",
+    "bytes": 18954,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s13-04-report.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s13-04-report.html",
+    "status": 200,
+    "title": "Report",
+    "heading": "",
+    "bytes": 22658,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s06-05-emphasis-strategies.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s06-05-emphasis-strategies.html",
+    "status": 200,
+    "title": "Emphasis Strategies",
+    "heading": "",
+    "bytes": 14481,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s06-06-improving-verbal-communication.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s06-06-improving-verbal-communication.html",
+    "status": 200,
+    "title": "Improving Verbal Communication",
+    "heading": "",
+    "bytes": 17011,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s07-04-getting-to-know-your-audience.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s07-04-getting-to-know-your-audience.html",
+    "status": 200,
+    "title": "Getting to Know Your Audience",
+    "heading": "",
+    "bytes": 16601,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s07-05-listening-and-reading-for-unde.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s07-05-listening-and-reading-for-unde.html",
+    "status": 200,
+    "title": "Listening and Reading for Understanding",
+    "heading": "",
+    "bytes": 9407,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s14-04-myths-and-realities-of-public-.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s14-04-myths-and-realities-of-public-.html",
+    "status": 200,
+    "title": "Myths and Realities of Public Speaking",
+    "heading": "",
+    "bytes": 11456,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s14-05-overcoming-obstacles-in-your-p.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s14-05-overcoming-obstacles-in-your-p.html",
+    "status": 200,
+    "title": "Overcoming Obstacles in Your Presentation",
+    "heading": "",
+    "bytes": 21509,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s15-01-principles-of-nonverbal-commun.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s15-01-principles-of-nonverbal-commun.html",
+    "status": 200,
+    "title": "Principles of Nonverbal Communication",
+    "heading": "",
+    "bytes": 29763,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s15-03-movement-in-your-speech.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s15-03-movement-in-your-speech.html",
+    "status": 200,
+    "title": "Movement in Your Speech",
+    "heading": "",
+    "bytes": 14828,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s15-04-visual-aids.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s15-04-visual-aids.html",
+    "status": 200,
+    "title": "Visual Aids",
+    "heading": "",
+    "bytes": 34137,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s16-04-sample-speech-outlines.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s16-04-sample-speech-outlines.html",
+    "status": 200,
+    "title": "Sample Speech Outlines",
+    "heading": "",
+    "bytes": 8534,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s16-05-organizing-principles-for-your.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s16-05-organizing-principles-for-your.html",
+    "status": 200,
+    "title": "Organizing Principles for Your Speech",
+    "heading": "",
+    "bytes": 18179,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s16-06-transitions.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s16-06-transitions.html",
+    "status": 200,
+    "title": "Transitions",
+    "heading": "",
+    "bytes": 12662,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s17-06-creating-an-informative-presen.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s17-06-creating-an-informative-presen.html",
+    "status": 200,
+    "title": "Creating an Informative Presentation",
+    "heading": "",
+    "bytes": 11372,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s18-02-principles-of-persuasion.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s18-02-principles-of-persuasion.html",
+    "status": 200,
+    "title": "Principles of Persuasion",
+    "heading": "",
+    "bytes": 10939,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s18-06-speaking-ethically-and-avoidin.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s18-06-speaking-ethically-and-avoidin.html",
+    "status": 200,
+    "title": "Speaking Ethically and Avoiding Fallacies",
+    "heading": "",
+    "bytes": 15947,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s18-08-elevator-speech.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s18-08-elevator-speech.html",
+    "status": 200,
+    "title": "Elevator Speech",
+    "heading": "",
+    "bytes": 8241,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s19-05-media-interviews.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s19-05-media-interviews.html",
+    "status": 200,
+    "title": "Media Interviews",
+    "heading": "",
+    "bytes": 13216,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s20-06-conflict-in-the-work-environme.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s20-06-conflict-in-the-work-environme.html",
+    "status": 200,
+    "title": "Conflict in the Work Environment",
+    "heading": "",
+    "bytes": 26335,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s21-01-delivering-a-negative-news-mes.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s21-01-delivering-a-negative-news-mes.html",
+    "status": 200,
+    "title": "Delivering a Negative News Message",
+    "heading": "",
+    "bytes": 40502,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s21-03-crisis-communication-plan.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s21-03-crisis-communication-plan.html",
+    "status": 200,
+    "title": "Crisis Communication Plan",
+    "heading": "",
+    "bytes": 10140,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s21-04-press-conferences.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s21-04-press-conferences.html",
+    "status": 200,
+    "title": "Press Conferences",
+    "heading": "",
+    "bytes": 21575,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s22-01-intercultural-communication.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s22-01-intercultural-communication.html",
+    "status": 200,
+    "title": "Intercultural Communication",
+    "heading": "",
+    "bytes": 13956,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s23-03-group-problem-solving.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s23-03-group-problem-solving.html",
+    "status": 200,
+    "title": "Group Problem Solving",
+    "heading": "",
+    "bytes": 25907,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://saylordotorg.github.io/text_business-communication-for-success/s23-04-business-and-professional-meet.html",
+    "final_url": "https://saylordotorg.github.io/text_business-communication-for-success/s23-04-business-and-professional-meet.html",
+    "status": 200,
+    "title": "Business and Professional Meetings",
+    "heading": "",
+    "bytes": 33202,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/newtons-laws.html",
+    "final_url": "https://engineeringstatics.org/newtons-laws.html",
+    "status": 200,
+    "title": "Statics: Newton\u2019s Laws of Motion",
+    "heading": "Section     1.1     Newton\u2019s Laws of Motion",
+    "bytes": 112757,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_01-units.html",
+    "final_url": "https://engineeringstatics.org/Chapter_01-units.html",
+    "status": 200,
+    "title": "Statics: Units",
+    "heading": "Section     1.2     Units",
+    "bytes": 125527,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_01-forces.html",
+    "final_url": "https://engineeringstatics.org/Chapter_01-forces.html",
+    "status": 200,
+    "title": "Statics: Forces",
+    "heading": "Section     1.3     Forces",
+    "bytes": 98872,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_01-problem-solving.html",
+    "final_url": "https://engineeringstatics.org/Chapter_01-problem-solving.html",
+    "status": 200,
+    "title": "Statics: Problem Solving",
+    "heading": "Section     1.4     Problem Solving",
+    "bytes": 101910,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_02-vectors.html",
+    "final_url": "https://engineeringstatics.org/Chapter_02-vectors.html",
+    "status": 200,
+    "title": "Statics: Vectors",
+    "heading": "Section     2.1     Vectors",
+    "bytes": 99462,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/cartesian-coords-2d.html",
+    "final_url": "https://engineeringstatics.org/cartesian-coords-2d.html",
+    "status": 200,
+    "title": "Statics: 2D Coordinate Systems & Vectors",
+    "heading": "Section     2.3     2D Coordinate Systems & Vectors",
+    "bytes": 128261,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/coordinates-3d.html",
+    "final_url": "https://engineeringstatics.org/coordinates-3d.html",
+    "status": 200,
+    "title": "Statics: 3D Coordinate Systems & Vectors",
+    "heading": "Section     2.4     3D Coordinate Systems & Vectors",
+    "bytes": 154030,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_02-unit-vectors.html",
+    "final_url": "https://engineeringstatics.org/Chapter_02-unit-vectors.html",
+    "status": 200,
+    "title": "Statics: Unit Vectors",
+    "heading": "Section     2.5     Unit Vectors",
+    "bytes": 145725,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/vector_algebra_2D.html",
+    "final_url": "https://engineeringstatics.org/vector_algebra_2D.html",
+    "status": 200,
+    "title": "Statics: Vector Addition",
+    "heading": "Section     2.6     Vector Addition",
+    "bytes": 137498,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/dot_products_2D.html",
+    "final_url": "https://engineeringstatics.org/dot_products_2D.html",
+    "status": 200,
+    "title": "Statics: Dot Products",
+    "heading": "Section     2.7     Dot Products",
+    "bytes": 166992,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/cross-product-math.html",
+    "final_url": "https://engineeringstatics.org/cross-product-math.html",
+    "status": 200,
+    "title": "Statics: Cross Products",
+    "heading": "Section     2.8     Cross Products",
+    "bytes": 136050,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/CH03-1d-particles.html",
+    "final_url": "https://engineeringstatics.org/CH03-1d-particles.html",
+    "status": 200,
+    "title": "Statics: 1D Particle Equilibrium",
+    "heading": "Section     3.3     1D Particle Equilibrium",
+    "bytes": 162305,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/CH03-2d-particles.html",
+    "final_url": "https://engineeringstatics.org/CH03-2d-particles.html",
+    "status": 200,
+    "title": "Statics: 2D Particle Equilibrium",
+    "heading": "Section     3.4     2D Particle Equilibrium",
+    "bytes": 209888,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/ch3-3d-particles.html",
+    "final_url": "https://engineeringstatics.org/ch3-3d-particles.html",
+    "status": 200,
+    "title": "Statics: 3D Particle Equilibrium",
+    "heading": "Section     3.5     3D Particle Equilibrium",
+    "bytes": 141009,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/moment-of-force.html",
+    "final_url": "https://engineeringstatics.org/moment-of-force.html",
+    "status": 200,
+    "title": "Statics: Moment of Force",
+    "heading": "Section     4.1     Moment of Force",
+    "bytes": 124437,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/scalar-components-moments.html",
+    "final_url": "https://engineeringstatics.org/scalar-components-moments.html",
+    "status": 200,
+    "title": "Statics: Scalar Addition of Moments",
+    "heading": "Section     4.2     Scalar Addition of Moments",
+    "bytes": 115410,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/varignons-theorem.html",
+    "final_url": "https://engineeringstatics.org/varignons-theorem.html",
+    "status": 200,
+    "title": "Statics: Varignon\u2019s Theorem",
+    "heading": "Section     4.3     Varignon\u2019s Theorem",
+    "bytes": 164143,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_04-moments-in-three-dimensions.html",
+    "final_url": "https://engineeringstatics.org/Chapter_04-moments-in-three-dimensions.html",
+    "status": 200,
+    "title": "Statics: 3D Moments",
+    "heading": "Section     4.4     3D Moments",
+    "bytes": 166967,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_04-couples.html",
+    "final_url": "https://engineeringstatics.org/Chapter_04-couples.html",
+    "status": 200,
+    "title": "Statics: Couples",
+    "heading": "Section     4.5     Couples",
+    "bytes": 95464,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/equivalent-tranformations.html",
+    "final_url": "https://engineeringstatics.org/equivalent-tranformations.html",
+    "status": 200,
+    "title": "Statics: Equivalent Transformations",
+    "heading": "Section     4.6     Equivalent Transformations",
+    "bytes": 114849,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/statically-equivalent-systems.html",
+    "final_url": "https://engineeringstatics.org/statically-equivalent-systems.html",
+    "status": 200,
+    "title": "Statics: Statically Equivalent Systems",
+    "heading": "Section     4.7     Statically Equivalent Systems",
+    "bytes": 157452,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_05-degree-of-freedom.html",
+    "final_url": "https://engineeringstatics.org/Chapter_05-degree-of-freedom.html",
+    "status": 200,
+    "title": "Statics: Degree of Freedom",
+    "heading": "Section     5.1     Degree of Freedom",
+    "bytes": 91833,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_05-free-body-diagrams.html",
+    "final_url": "https://engineeringstatics.org/Chapter_05-free-body-diagrams.html",
+    "status": 200,
+    "title": "Statics: Free-Body Diagrams",
+    "heading": "Section     5.2     Free-Body Diagrams",
+    "bytes": 127091,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_05-equations-of-equilibrium.html",
+    "final_url": "https://engineeringstatics.org/Chapter_05-equations-of-equilibrium.html",
+    "status": 200,
+    "title": "Statics: Equations of Equilibrium",
+    "heading": "Section     5.3     Equations of Equilibrium",
+    "bytes": 91977,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_05-2d-rigid-body-equilibrium.html",
+    "final_url": "https://engineeringstatics.org/Chapter_05-2d-rigid-body-equilibrium.html",
+    "status": 200,
+    "title": "Statics: 2D Rigid Body Equilibrium",
+    "heading": "Section     5.4     2D Rigid Body Equilibrium",
+    "bytes": 122695,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_05-3d-rigid-body-equilibrium.html",
+    "final_url": "https://engineeringstatics.org/Chapter_05-3d-rigid-body-equilibrium.html",
+    "status": 200,
+    "title": "Statics: 3D Rigid Body Equilibrium",
+    "heading": "Section     5.5     3D Rigid Body Equilibrium",
+    "bytes": 114305,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_05-stability-and-determinacy.html",
+    "final_url": "https://engineeringstatics.org/Chapter_05-stability-and-determinacy.html",
+    "status": 200,
+    "title": "Statics: Stability and Determinacy",
+    "heading": "Section     5.6     Stability and Determinacy",
+    "bytes": 99604,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_06-trusses.html",
+    "final_url": "https://engineeringstatics.org/Chapter_06-trusses.html",
+    "status": 200,
+    "title": "Statics: Trusses",
+    "heading": "Section     6.3     Trusses",
+    "bytes": 135306,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/method-of-joints.html",
+    "final_url": "https://engineeringstatics.org/method-of-joints.html",
+    "status": 200,
+    "title": "Statics: Method of Joints",
+    "heading": "Section     6.4     Method of Joints",
+    "bytes": 101601,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/method-of-sections.html",
+    "final_url": "https://engineeringstatics.org/method-of-sections.html",
+    "status": 200,
+    "title": "Statics: Method of Sections",
+    "heading": "Section     6.5     Method of Sections",
+    "bytes": 98701,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/frames-and-machines.html",
+    "final_url": "https://engineeringstatics.org/frames-and-machines.html",
+    "status": 200,
+    "title": "Statics: Frames and Machines",
+    "heading": "Section     6.6     Frames and Machines",
+    "bytes": 191710,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_07-center-of-gravity.html",
+    "final_url": "https://engineeringstatics.org/Chapter_07-center-of-gravity.html",
+    "status": 200,
+    "title": "Statics: Center of Gravity",
+    "heading": "Section     7.2     Center of Gravity",
+    "bytes": 118287,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_07-center-of-mass.html",
+    "final_url": "https://engineeringstatics.org/Chapter_07-center-of-mass.html",
+    "status": 200,
+    "title": "Statics: Center of Mass",
+    "heading": "Section     7.3     Center of Mass",
+    "bytes": 88739,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_07-centroids.html",
+    "final_url": "https://engineeringstatics.org/Chapter_07-centroids.html",
+    "status": 200,
+    "title": "Statics: Centroids",
+    "heading": "Section     7.4     Centroids",
+    "bytes": 117748,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/composite-parts.html",
+    "final_url": "https://engineeringstatics.org/composite-parts.html",
+    "status": 200,
+    "title": "Statics: Centroids using Composite Parts",
+    "heading": "Section     7.5     Centroids using Composite Parts",
+    "bytes": 136051,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/centroids-by-integration.html",
+    "final_url": "https://engineeringstatics.org/centroids-by-integration.html",
+    "status": 200,
+    "title": "Statics: Centroids using Integration",
+    "heading": "Section     7.7     Centroids using Integration",
+    "bytes": 269236,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/distributed-loads.html",
+    "final_url": "https://engineeringstatics.org/distributed-loads.html",
+    "status": 200,
+    "title": "Statics: Distributed Loads",
+    "heading": "Section     7.8     Distributed Loads",
+    "bytes": 124481,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_07-fluid-statics.html",
+    "final_url": "https://engineeringstatics.org/Chapter_07-fluid-statics.html",
+    "status": 200,
+    "title": "Statics: Fluid Statics",
+    "heading": "Section     7.9     Fluid Statics",
+    "bytes": 144914,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_08-internal-forces.html",
+    "final_url": "https://engineeringstatics.org/Chapter_08-internal-forces.html",
+    "status": 200,
+    "title": "Statics: Internal Forces",
+    "heading": "Section     8.1     Internal Forces",
+    "bytes": 105098,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/VM_diagrams.html",
+    "final_url": "https://engineeringstatics.org/VM_diagrams.html",
+    "status": 200,
+    "title": "Statics: Shear and Bending Moment Diagrams",
+    "heading": "Section     8.4     Shear and Bending Moment Diagrams",
+    "bytes": 92319,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/VM_relations.html",
+    "final_url": "https://engineeringstatics.org/VM_relations.html",
+    "status": 200,
+    "title": "Statics: Relations between Loading, Shear and Moment",
+    "heading": "Section     8.5     Relations between Loading, Shear and Moment",
+    "bytes": 109065,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/section_cut_method.html",
+    "final_url": "https://engineeringstatics.org/section_cut_method.html",
+    "status": 200,
+    "title": "Statics: Section Cut Method",
+    "heading": "Section     8.6     Section Cut Method",
+    "bytes": 114880,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_09-dry-friction.html",
+    "final_url": "https://engineeringstatics.org/Chapter_09-dry-friction.html",
+    "status": 200,
+    "title": "Statics: Dry Friction",
+    "heading": "Section     9.1     Dry Friction",
+    "bytes": 140177,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_09-slipping-vs--tipping.html",
+    "final_url": "https://engineeringstatics.org/Chapter_09-slipping-vs--tipping.html",
+    "status": 200,
+    "title": "Statics: Slipping vs. Tipping",
+    "heading": "Section     9.2     Slipping vs. Tipping",
+    "bytes": 100310,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_09-block-and-wedge-friction.html",
+    "final_url": "https://engineeringstatics.org/Chapter_09-block-and-wedge-friction.html",
+    "status": 200,
+    "title": "Statics: Wedges",
+    "heading": "Section     9.3     Wedges",
+    "bytes": 114932,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_09-screw-friction.html",
+    "final_url": "https://engineeringstatics.org/Chapter_09-screw-friction.html",
+    "status": 200,
+    "title": "Statics: Screw Threads",
+    "heading": "Section     9.4     Screw Threads",
+    "bytes": 147636,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_09-flexible-belt-friction.html",
+    "final_url": "https://engineeringstatics.org/Chapter_09-flexible-belt-friction.html",
+    "status": 200,
+    "title": "Statics: Flexible Belts",
+    "heading": "Section     9.5     Flexible Belts",
+    "bytes": 153110,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_09-journal-bearing-friction.html",
+    "final_url": "https://engineeringstatics.org/Chapter_09-journal-bearing-friction.html",
+    "status": 200,
+    "title": "Statics: Journal Bearings",
+    "heading": "Section     9.6     Journal Bearings",
+    "bytes": 108840,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/MOI-common-shapes.html",
+    "final_url": "https://engineeringstatics.org/MOI-common-shapes.html",
+    "status": 200,
+    "title": "Statics: Moments of Inertia of Common Shapes",
+    "heading": "Section     10.2     Moments of Inertia of Common Shapes",
+    "bytes": 186651,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/parallel-axis-theorem-section.html",
+    "final_url": "https://engineeringstatics.org/parallel-axis-theorem-section.html",
+    "status": 200,
+    "title": "Statics: Parallel Axis Theorem",
+    "heading": "Section     10.3     Parallel Axis Theorem",
+    "bytes": 139469,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_10-moment-of-inertia-of-composite-shapes.html",
+    "final_url": "https://engineeringstatics.org/Chapter_10-moment-of-inertia-of-composite-shapes.html",
+    "status": 200,
+    "title": "Statics: Composite Shapes",
+    "heading": "Section     10.4     Composite Shapes",
+    "bytes": 165958,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/polar-moment.html",
+    "final_url": "https://engineeringstatics.org/polar-moment.html",
+    "status": 200,
+    "title": "Statics: Polar Moment of Inertia",
+    "heading": "Section     10.5     Polar Moment of Inertia",
+    "bytes": 93518,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/radius-of-gyration-sec.html",
+    "final_url": "https://engineeringstatics.org/radius-of-gyration-sec.html",
+    "status": 200,
+    "title": "Statics: Radius of Gyration",
+    "heading": "Section     10.6     Radius of Gyration",
+    "bytes": 95709,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/products-of-inertia.html",
+    "final_url": "https://engineeringstatics.org/products-of-inertia.html",
+    "status": 200,
+    "title": "Statics: Products of Inertia",
+    "heading": "Section     10.7     Products of Inertia",
+    "bytes": 89669,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://engineeringstatics.org/Chapter_10-mass-moment-of-inertia.html",
+    "final_url": "https://engineeringstatics.org/Chapter_10-mass-moment-of-inertia.html",
+    "status": 200,
+    "title": "Statics: Mass Moment of Inertia",
+    "heading": "Section     10.8     Mass Moment of Inertia",
+    "bytes": 88168,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://datalemur.com/questions",
+    "final_url": "https://datalemur.com/questions",
+    "status": 200,
+    "title": "SQL Interview Questions | DataLemur",
+    "heading": "SQL & Data Interview Questions",
+    "bytes": 263902,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://sqlbolt.com/",
+    "final_url": "https://sqlbolt.com/",
+    "status": 200,
+    "title": "SQLBolt - Learn SQL - Introduction to SQL",
+    "heading": "What is SQL?",
+    "bytes": 15345,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://docs.python.org/3/tutorial/",
+    "final_url": "https://docs.python.org/3/tutorial/",
+    "status": 200,
+    "title": "The Python Tutorial \u2014 Python 3.15.2 documentation",
+    "heading": "The Python Tutorial \u00b6",
+    "bytes": 37295,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.openintro.org/book/os/",
+    "final_url": "https://www.openintro.org/book/os/",
+    "status": 200,
+    "title": "OpenIntro Statistics",
+    "heading": "Getting Started",
+    "bytes": 153092,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://learn.microsoft.com/en-us/training/powerplatform/power-bi",
+    "final_url": "https://learn.microsoft.com/en-us/training/powerplatform/power-bi",
+    "status": 200,
+    "title": "Training for Power BI | Microsoft Learn",
+    "heading": "Microsoft Power BI",
+    "bytes": 36552,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://learn.github.com/",
+    "final_url": "https://learn.github.com/",
+    "status": 200,
+    "title": "GitHub Learn",
+    "heading": "",
+    "bytes": 2979,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.netacad.com/",
+    "final_url": "https://www.netacad.com/",
+    "status": 200,
+    "title": "Cisco Networking Academy: Learn Cybersecurity, Python & More",
+    "heading": "",
+    "bytes": 5515,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://ubuntu.com/tutorials/command-line-for-beginners",
+    "final_url": "https://ubuntu.com/tutorials/command-line-for-beginners",
+    "status": 200,
+    "title": "The Linux command line for beginners | Ubuntu",
+    "heading": "The Linux command line for beginners",
+    "bytes": 119598,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/",
+    "final_url": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/welcome-windows-client",
+    "status": 200,
+    "title": "Windows client troubleshooting documentation | Microsoft Learn",
+    "heading": "Windows client troubleshooting",
+    "bytes": 34686,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.codecademy.com/learn/learn-python-3",
+    "final_url": "https://www.codecademy.com/learn/learn-python-3",
+    "status": 200,
+    "title": "Learn Python 3 | Codecademy",
+    "heading": "Learn Python 3",
+    "bytes": 507607,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.codecademy.com/learn/learn-sql",
+    "final_url": "https://www.codecademy.com/learn/learn-sql",
+    "status": 200,
+    "title": "Learn SQL | Codecademy",
+    "heading": "Learn SQL",
+    "bytes": 434907,
+    "checked_at": "2026-10-30",
+    "valid": true
+  },
+  {
+    "url": "https://www.datacamp.com/courses/intro-to-python-for-data-science",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  },
+  {
+    "url": "https://www.datacamp.com/courses/introduction-to-sql",
+    "valid": false,
+    "error": "HTTP Error 403: Forbidden",
+    "checked_at": "2026-10-30"
+  }
+]

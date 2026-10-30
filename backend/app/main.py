@@ -469,6 +469,7 @@ def get_task(task_id:str,user=Depends(auth.current)):
     if not row: raise HTTPException(404,'Task not found.')
     result=dict(row);result['result']=json.loads(result['result']) if result['result'] else None
     payload=result['result'] if isinstance(result['result'],dict) else {}
+    if payload.get('deleted_practice_id'):raise HTTPException(410,'These practice suggestions were deleted. Open the current Skills workspace instead.')
     if payload.get('deleted_by_cleanup'):raise HTTPException(410,'This recovered result was removed by account cleanup. Open the current saved workspace instead.')
     inputs=payload.get('_task_inputs',payload.get('inputs',{}))
     if inputs.get('operation') in ('document_upload','posting_upload') and db.get(user['id'],inputs.get('job_id',''),'job'):
