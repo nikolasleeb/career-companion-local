@@ -15,3 +15,13 @@ A guide question is immediately available for Typed, Voice or Mixed answers. Gui
 Verification uses fictional desktop accounts and simulated AI, including account isolation, atomic rollback, older STAR sessions, guide navigation, setup preservation, backup/restore and deletion. No paid user-account requests or mobile checks are needed.
 
 Behavioral additionally supplies ordered `further_reading_ids` referencing the shared source catalog. Its three public links are visible below the questions, open in a new tab, and are omitted from the collapsed source list to avoid repetition. Source `access_note` is optional and shown with further reading; the U of A note distinguishes its public guide from NetID access to Big Interview. Other formats retain their existing source lists. The reading catalog changes no saved question IDs, destinations or original provenance snapshots.
+
+## Saved session workspace
+
+All saved session types, including Coding and legacy STAR, use `tab=practice` or `tab=feedback` with the existing `item` and optional `question` identifiers. Links without a tab open Practice. Guide and setup route values retain their original meaning.
+
+Practice puts the current question, answer mode, answer editor and review action first. A session without a question presents generation and manual entry; otherwise these remain under Question options. Answer options contains reviewed Profile examples, optional STAR and AI guidance. Active typed STAR drafts display all four fields in the main editor. Mixed keeps its notes separately from the stored STAR draft.
+
+Session options contains Work Styles consent, preparation context and research. More tools contains narration, materials and illustrations. Costs and transcript confirmation remain beside their respective paid actions. Both view panels and the voice controller remain mounted while changing tabs or disclosures. Active microphone recording blocks navigation away from Practice; stopping leaves an unsent in-memory buffer. Raw recordings and narration remain temporary and are not persisted across page reloads. Reviewed transcripts and browser answer drafts retain their existing persistence.
+
+Successful answer review and guidance open Feedback and focus its heading. The selected question’s latest feedback appears first, followed by conversation controls. Complete session history remains collapsed. Revise answer returns to the editor without clearing it. Request errors, pending-status recovery, cancellation and audio status stay outside disclosures. Checking a pending result does not send another model request. No schema, endpoint, consent default or automatic AI action changes.
