@@ -56,6 +56,10 @@ class ImportSourceReference(StrictModel):
     fields: list[str] = Field(default_factory=list,max_length=70)
     edited_fields: list[str] = Field(default_factory=list,max_length=70)
 
+class ProjectCourseLink(StrictModel):
+    education_id: str = Field(min_length=1,max_length=64)
+    course: str = Field(min_length=1,max_length=4000)
+
 class ExperienceItem(StrictModel):
     unavailable_source_ids: list[str] = Field(default_factory=list,max_length=1000)
     source_references: list[ImportSourceReference] = Field(default_factory=list,max_length=400)
@@ -69,6 +73,8 @@ class ExperienceItem(StrictModel):
     contribution: str = Field(default='',max_length=6000)
     individual_project: bool = False
     linked_employment_ids: list[str] = Field(default_factory=list,max_length=10)
+    linked_education_ids: list[str] = Field(default_factory=list,max_length=10)
+    linked_courses: list[ProjectCourseLink] = Field(default_factory=list,max_length=10)
     tools: str = Field(default='',max_length=1000)
     confirmed: bool = False
     source_document_id: str = Field(default='',max_length=64)

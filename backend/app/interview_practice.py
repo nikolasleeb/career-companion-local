@@ -276,6 +276,18 @@ def replacement_question(user,id,body):
  if any(r['data']['session_id']==id for r in db.list_entities(user,'interview_message')):raise HTTPException(409,'Keep questions discussed in a saved conversation. Reload before continuing.')
  return q
 
+def question_task(kind):
+ task={
+  'coding':'Create a precise original coding problem in the selected language, with constraints, 1–3 consistent input/output examples and optional hints. Do not reveal the full solution or claim code execution.',
+  'behavioral':'Ask for one real experience and make the competency clear. The user should explain their own contribution and an honest outcome.',
+  'star':'Ask for one real experience and make the competency clear. The user should explain their own contribution and an honest outcome.',
+  'case':'Create a fictional BUSINESS CASE about a practical decision, evidence, assumptions and tradeoffs. Ask the user to reason through a recommendation and explain it. A technical Profile may inform the business setting; it does not turn this into a coding or SQL-query exercise. Do not ask the user to write queries, code or implement a technical solution unless their explicit question focus or preparation notes request that task. A job listing that mentions SQL is not such a request.',
+  'domain':'Create a fictional professional SCENARIO appropriate to the selected field. Ask for reasoning, priorities, decisions and communication, without pretending the user holds a clinical or other qualification. Do not default to coding or SQL implementation because of Profile skills; require that only if explicitly requested in the question focus or preparation notes.',
+  'presentation':'Create a PRESENTATION OR PORTFOLIO rehearsal using a real artifact or reviewed project when available. Specify the audience and ask for a clear explanation of purpose, contribution, useful detail, limitations and a takeaway. Ask the user to present or discuss work, not solve a coding/SQL problem or write queries, unless their explicit question focus or preparation notes request that task. Profile tools supply background, not an instruction to test every listed technology.',
+  'other':'Use the supplied field, question focus and preparation instructions to choose the interview task. Do not assume a coding interview from Profile technologies alone.',
+ }[kind]
+ return 'Generate ONE original practice question suited to this session. '+task+' Use reviewed Profile evidence to choose relevant context, not to assume mastery or invent accomplishments. Never claim this is an actual company question. Previous questions come from this account in this interview type, across sessions. Choose a DIFFERENT competency, topic and situation where possible, not a paraphrase. Vary which relevant Profile experience you draw on; do not repeatedly choose the most detailed project. Keep the saved role and job requirements relevant.'
+
 async def execute(user,id,body):
  s=owned(user,id,'interview_session');d=s['data']
  if s['updated_at']!=body.expected_updated_at:raise HTTPException(409,'This session changed. Reload it before starting another action.')
@@ -292,7 +304,7 @@ async def execute(user,id,body):
   experience=owned(user,body.experience_id,'experience')
   if not experience['data'].get('confirmed'):raise HTTPException(422,'Choose reviewed Profile experience.')
   catalog=[r for r in catalog if r['kind']!='profile' or r['record_id']==body.experience_id]
- payload={'practice_kind':d['kind'],'company':d['company'],'role':d['role'],'notes':d['notes'],'difficulty':d['difficulty'],'language':d['language'],'focus':body.focus,'source_catalog':catalog,'unknowns':'Company name alone does not establish its interview format or actual questions. All personal accomplishments must come from reviewed sources; new answer claims need clarification.'}
+ payload={'practice_kind':d['kind'],'company':d['company'],'role':d['role'],'notes':d['notes'],**({'difficulty':d['difficulty'],'language':d['language']} if d['kind']=='coding' else {}),'focus':body.focus,'source_catalog':catalog,'unknowns':'Company name alone does not establish its interview format or actual questions. All personal accomplishments must come from reviewed sources; new answer claims need clarification.'}
  if body.operation=='research':
   if not d['company']:raise HTTPException(422,'Add a company when creating a session before researching it.')
   if not config.ENABLE_WEB_SEARCH:raise HTTPException(422,'Web research is unavailable for this installation.')
@@ -340,7 +352,7 @@ async def execute(user,id,body):
  elif body.operation=='question':
   history=question_history(user,s)
   previous=[r['data']['question'][:700] for r in history]
-  task_progress.stage('drafting');output,meta=await ai.structured(Question,{**payload,'task':'Generate ONE original practice question suited to this session. Use Profile evidence to choose relevant topics, not to assume mastery. Coding: include a precise problem, constraints, 1–3 consistent input/output examples and optional hints; do not reveal the full solution. Behavioral/STAR: ask for one real example and make the competency clear. Case/business: a fictional business case. Domain/scenario: a fictional science, healthcare, education or other professional scenario appropriate to the selected field, asking reasoning rather than pretending a clinical qualification. Presentation/portfolio: ask the user to explain a real artifact or prepare a presentation. Other: use the supplied focus and instructions. Never claim this is an actual company question. The previous questions come from this account in this interview type, across sessions. Choose a DIFFERENT competency, topic and situation where possible, not a paraphrase. Vary which relevant Profile experience you draw on; do not repeatedly choose the most detailed project. Keep the saved role and job requirements relevant.','previous_questions':previous,'previous_topics':[r['data'].get('topic','') for r in history]},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+  task_progress.stage('drafting');output,meta=await ai.structured(Question,{**payload,'task':question_task(d['kind']),'previous_questions':previous,'previous_topics':[r['data'].get('topic','') for r in history]},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
   output=Question.model_validate(output).model_dump();output['references']=references(output['references'],catalog)
   normalize=lambda text:re.sub(r'[^\w]+',' ',text.casefold()).strip()
   if any(normalize(output['question'])==normalize(r['data']['question']) for r in history):raise ServiceError('The AI repeated an earlier question. Your existing question and work are unchanged. Request another question to try again; no automatic retry was made.')

@@ -28,16 +28,14 @@ def imported_title(c,user,kind,title):
 
 def next_interview(c,user,kind):
  label=INTERVIEW_LABELS[kind]
- row=c.execute('SELECT settings FROM users WHERE id=?',(user,)).fetchone()
- settings=json.loads(row['settings']);counters=settings.get('_interview_sequences',{})
- highest=int(counters.get(kind,0));pattern=re.compile(re.escape(label)+r' (\d+)',re.I)
+ # Deleted sessions do not reserve numbers. The caller holds the same write
+ # lock for allocation and insertion, so concurrent creates still stay unique.
+ highest=0;pattern=re.compile(re.escape(label)+r' (\d+)',re.I)
  for r in c.execute("SELECT payload FROM entities WHERE user_id=? AND kind='interview_session'",(user,)):
   match=pattern.fullmatch(clean(json.loads(r['payload']).get('title','')))
   if match:highest=max(highest,int(match[1]))
  number=highest+1
  while not available(c,user,'interview_session',f'{label} {number}'):number+=1
- settings['_interview_sequences']={**counters,kind:number}
- c.execute('UPDATE users SET settings=? WHERE id=?',(json.dumps(settings),user))
  return f'{label} {number}'
 
 
