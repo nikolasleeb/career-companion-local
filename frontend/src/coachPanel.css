@@ -80,3 +80,8 @@ body.career-coach-open.career-coach-task-narrow .guided-workspace,body.career-co
 .coach-message-prose p { margin: .65rem 0; font-size: inherit; line-height: 1.6; }
 .coach-message-prose pre { overflow-x: auto; white-space: pre; padding: .75rem; background: #edf2f8; border-radius: .4rem; }
 .coach-message-prose code { font-family: ui-monospace, monospace; font-size: .9em; }
+
+.adjustable-coach .dock-history-row { align-items:center; gap:6px; }
+.adjustable-coach .dock-history-row>button:first-child { min-width:0; overflow-wrap:anywhere; }
+.adjustable-coach .coach-history-rename { display:inline-flex; align-items:center; justify-content:center; flex:0 0 36px; width:36px; padding:8px; }
+.adjustable-coach .coach-history-rename svg { width:18px; height:18px; }
