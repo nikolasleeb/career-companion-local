@@ -1,3 +1,4 @@
+import {nextApplicationAction} from './applicationJourney';
 import React from 'react';
 import {applicationDocumentCounts} from './applicationDetailsState';
 type Props={busy?:boolean;records:any[];documents:any[];statuses:Record<string,string>;formatDate:(v:string)=>string;onOpen:(r:any)=>void;onContinue:(r:any)=>void;onArchive:(r:any)=>void;onRestore:(r:any)=>void;onDelete:(r:any)=>void};
@@ -9,7 +10,7 @@ export function ApplicationRows({busy=false,records,documents,statuses,formatDat
  <td className="application-date-cell"><span className="application-cell-label" aria-hidden="true">Last activity</span><span>{formatDate(r.updated_at)}</span></td>
  <td className="application-documents-cell"><span className="application-cell-label" aria-hidden="true">Documents</span><span>{counts.resumes} {counts.resumes===1?'resume version':'resume versions'}</span>{counts.letters>0&&<span>{counts.letters} {counts.letters===1?'cover letter':'cover letters'}</span>}{counts.files>0&&<span>{counts.files} {counts.files===1?'supporting file':'supporting files'}</span>}</td></tr>
  <tr className="application-actions-row"><td colSpan={5}><div className="application-row-actions" role="group" aria-label={'Actions for '+company+' — '+d.title}>
- <button type="button" disabled={busy} className="button quiet" onClick={()=>onOpen(r)}>Open</button>{d.job_id&&<button type="button" disabled={busy} className="button quiet" onClick={()=>onContinue(r)}>Continue application ↗</button>}{d.status!=='preparing'&&!d.applied_date&&<button type="button" disabled={busy} className="button quiet" aria-label={'Add date for '+company} onClick={()=>onOpen(r)}>Add date</button>}
- <button type="button" disabled={busy} className="button quiet" onClick={()=>d.archived?onRestore(r):onArchive(r)}>{d.archived?'Restore':'Archive'}</button>{d.archived&&<button type="button" disabled={busy} className="button quiet" onClick={()=>onDelete(r)}>Delete</button>}</div></td></tr>
+ <button type="button" disabled={busy} className="button secondary application-next-action" onClick={()=>nextApplicationAction(d).stage==='activity'?onOpen(r):onContinue(r)}>{nextApplicationAction(d).label} ↗</button><button type="button" disabled={busy} className="button quiet" onClick={()=>onOpen(r)}>Details, Documents &amp; Activity</button>{d.status!=='preparing'&&!d.applied_date&&<button type="button" disabled={busy} className="button quiet" aria-label={'Add date for '+company} onClick={()=>onOpen(r)}>Add date</button>}
+ <details><summary>Manage application</summary><button type="button" disabled={busy} className="button quiet" onClick={()=>d.archived?onRestore(r):onArchive(r)}>{d.archived?'Restore':'Archive'}</button>{d.archived&&<button type="button" disabled={busy} className="button quiet" onClick={()=>onDelete(r)}>Delete</button>}</details></div></td></tr>
  </tbody>;})}</table></div>;
 }

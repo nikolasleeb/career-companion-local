@@ -1,6 +1,6 @@
 export async function refreshExplicit(item:any,call:any){return item.context_ref.kind==='occupation'?call('/career-explorer/occupations/'+encodeURIComponent(item.context_ref.id)+(item.context_ref.salary_area?'?salary_area='+encodeURIComponent(item.context_ref.salary_area):'')):call('/applications/'+encodeURIComponent(item.context_ref.id)+'/offer/preview');}
 
-export function acceptHandoff(detail:any,current:string){return !current.trim()||current===detail.prompt||window.confirm('Replace the current unsent message with this career question? Choose Cancel to keep your draft.');}
+export async function acceptHandoff(detail:any,current:string,confirm:()=>Promise<boolean>=async()=>false){return !current.trim()||current===detail.prompt||confirm();}
 
 export function contextFromSources(sources:any[]=[]){return sources.map(s=>({...s.snapshot,context_ref:{kind:s.kind==='explicit_offer'?'offer':'occupation',id:s.record_id,revision:s.revision,...(s.snapshot?.salary_area?{salary_area:s.snapshot.salary_area}:{})}}));}
 

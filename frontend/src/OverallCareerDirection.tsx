@@ -1,3 +1,4 @@
+import {confirmAction,requestText} from './WorkspaceDialog';
 import React,{useRef,useState} from 'react';
 import {buildStatement,cleanEditor,emptyStatementEditor,meaningfulStatement,statementText,StatementEditor,StatementFields} from './goalStatement';
 
@@ -40,7 +41,7 @@ export function OverallCareerDirection({goal,disabled,onSave,onDelete}:{goal:any
    </>:<>
     <label>Overall career direction<textarea ref={text} rows={7} maxLength={36000} value={direct} onChange={e=>setDirect(e.target.value)}/></label>
     <p className="small muted">Your wording is used exactly as reviewed, with [blank] markers removed. Guided fields will not overwrite it.</p>
-    <button type="button" className="button secondary" onClick={()=>{if(window.confirm('Replace your current draft wording with a statement rebuilt from guided fields? Your saved statement stays unchanged until you save.'))setEditor(v=>({...v,mode:'guided'}));}}>Rebuild from guided fields</button>
+    <button type="button" className="button secondary" onClick={async ()=>{if((await confirmAction({title:'Replace current draft?',message:'Replace your current draft wording with a statement rebuilt from guided fields? Your saved statement stays unchanged until you save.',confirmLabel:'Replace draft',cancelLabel:'Cancel',danger:false})))setEditor(v=>({...v,mode:'guided'}));}}>Rebuild from guided fields</button>
    </>}
    <div className="card-actions"><button className="button primary" disabled={!meaningfulStatement(value)||statementText(value).length>36000}>{disabled?'Saving…':'Save overall career direction'}</button><button type="button" className="button secondary" onClick={()=>{setOpen(false);setError('');}}>Cancel</button></div>
    <p className="small muted">Saving replaces your one overall statement. Your specific goals and AI guidance choice stay unchanged.</p>

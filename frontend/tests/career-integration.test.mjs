@@ -4,12 +4,12 @@ import {readFileSync} from 'node:fs';
 import ts from 'typescript';
 const code=ts.transpileModule(readFileSync(new URL('../src/explicitContextData.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
 const data=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
-test('handoffs cannot silently overwrite an unrelated unsent draft',()=>{
+test('handoffs cannot silently overwrite an unrelated unsent draft',async()=>{
  let confirmations=0;globalThis.window={confirm:()=>{confirmations++;return false;}};
  const detail={prompt:'Explore this occupation'};
- assert.equal(data.acceptHandoff(detail,''),true);assert.equal(data.acceptHandoff(detail,detail.prompt),true);assert.equal(confirmations,0);
- assert.equal(data.acceptHandoff(detail,'My own unfinished message'),false);assert.equal(confirmations,1);
- globalThis.window.confirm=()=>true;assert.equal(data.acceptHandoff(detail,'My own unfinished message'),true);
+ assert.equal(await data.acceptHandoff(detail,''),true);assert.equal(await data.acceptHandoff(detail,detail.prompt),true);assert.equal(confirmations,0);
+ assert.equal(await data.acceptHandoff(detail,'My own unfinished message',async()=>window.confirm()),false);assert.equal(confirmations,1);
+ globalThis.window.confirm=()=>true;assert.equal(await data.acceptHandoff(detail,'My own unfinished message',async()=>window.confirm()),true);
  delete globalThis.window;
 });
 test('context draft recovery is account and destination scoped',()=>{

@@ -14,4 +14,8 @@ export function ExplicitContext({items,onRemove,onRefresh,disabled=false}:{items
  <div className="card-actions">{onRefresh&&<button type="button" className="text-button" disabled={disabled} onClick={()=>onRefresh(i)}>Refresh context preview</button>}{onRemove&&<button type="button" className="text-button" disabled={disabled} onClick={()=>onRemove(i)}>Remove selected context</button>}</div></article>)}</section>;
 }
 
-export {refreshExplicit,acceptHandoff,contextFromSources,readContextDraft,saveContextDraft} from './explicitContextData';
+export {refreshExplicit,contextFromSources,readContextDraft,saveContextDraft} from './explicitContextData';
+
+import {acceptHandoff as acceptContextHandoff} from './explicitContextData';
+import {confirmAction} from './WorkspaceDialog';
+export const acceptHandoff=(detail:any,current:string)=>acceptContextHandoff(detail,current,()=>confirmAction({title:'Replace unsent message?',message:'This career question would replace your current unsent message.',confirmLabel:'Replace message',cancelLabel:'Keep my draft'}));
