@@ -1,5 +1,5 @@
 """Persistent, account-owned guided builder with immutable rendered revisions."""
-from . import project_sources,project_context,task_progress
+from . import project_sources,project_context,task_progress,linked_project_evidence
 import asyncio
 import base64
 import copy
@@ -48,6 +48,8 @@ def source(user,data,decisions=None,template='education'):
     ids=[r['id'] for r in profile_answers.records(user)]
     job=require(user,data['job_id'],'job')
     value=build_resume(user,ResumeRequest(job_id=job['id'],analysis_id=data.get('analysis_id'),experience_ids=ids,decisions=decisions or [],template=template))
+    if data.get('linked_project_placements'):
+        value=linked_project_evidence.apply(value,linked_project_evidence.checked(user,data['linked_project_placements']))
     value['schema_version']=4
     value['project_snapshot_ids']=list(data.get('project_snapshot_ids',[]))
     return value
@@ -196,6 +198,10 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
     if not manual and data.get('analysis_id') and not data['profile_dirty']:
         checked=require(user,data['analysis_id'],'analysis')['data'];posting=require(user,data['job_id'],'job')['data']
         if checked.get('schema_version')!=3 or checked.get('posting_hash')!=job_parser.posting_hash(posting):raise HTTPException(409,'Rerun the comparison for this posting before building an AI revision. The previous draft remains available.')
+    prior=require(user,data['current_revision_id'],'resume_revision')['data'] if data.get('current_revision_id') else None
+    placements=(prior['snapshot'] if prior else data).get('linked_project_placements',[])
+    if placements:linked_project_evidence.checked(user,placements)
+    data={**data,'linked_project_placements':placements}
     if feedback is None and data.get('pending_feedback'):feedback=data['pending_feedback']
     token=db.uid();record=begin(user,id,version,token,preparation=prepared.model_dump() if prepared else None);version=record['data']['version'];data=record['data']
     current=require(user,data['current_revision_id'],'resume_revision')['data'] if data.get('current_revision_id') else None
@@ -207,7 +213,7 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
         def refresh(d,c):d.update({'analysis_id':analysis['id'],'profile_dirty':False})
         record=mutate(user,id,version,refresh);version=record['data']['version'];data=record['data']
     # Suggested edits refer to their original analysis. Approved facts append rather than replace source text.
-    snapshot=source(user,data,decisions if not data['profile_dirty'] and not comparison_usage else [],(feedback or {}).get('template') if (feedback or {}).get('template') in ('education','experience') else current['snapshot']['template'] if current else template)
+    snapshot=source(user,{**data,'linked_project_placements':placements},decisions if not data['profile_dirty'] and not comparison_usage else [],(feedback or {}).get('template') if (feedback or {}).get('template') in ('education','experience') else current['snapshot']['template'] if current else template)
     if prepared:
         snapshot=optimization.apply(snapshot,{'entries':[],'headline':prepared.headline if prepared.headline is not None else snapshot['headline']},prepared.overrides)
         snapshot['profile']['headline']=snapshot['headline']
@@ -451,3 +457,49 @@ def adopt(user,id,body):
     rendered=resume_layout.render(resume_builder.select(proposal,draft['content'],draft['experience_ids']))
     rendered['optimization']={k:draft.get(k) for k in ('ai','audit_ai','actual_cost_usd','headline_evidence','keywords','source_checked')}
     return save_revision(user,id,record['data']['version'],rendered,resume_builder.catalog(proposal),'Opened a historical AI draft as a new working revision. Review its current PDF before saving.',token,source_snapshot=snapshot,draft_id=body.draft_id)
+
+
+def place_project_evidence(user,id,body):
+    """Explicit local placement review. Immutable prior revision and Profile stay intact."""
+    record=require(user,id,'resume_conversation');data=record['data']
+    if data['version']!=body.expected_version:raise HTTPException(409,'This draft changed. Reload it before applying linked evidence. Your choices are retained.')
+    if data.get('workspace_request'):raise HTTPException(409,'Finish rendering or restore your local edits before applying linked evidence.')
+    with db.connect() as c:
+        if task_running(c,user,id):
+            # The endpoint's own local task is running; reject other request types via workspace token/version below.
+            active=[json.loads(r['result'] or '{}').get('inputs',{}) for r in c.execute("SELECT result FROM tasks WHERE user_id=? AND kind='resume_guided' AND status IN ('queued','running')",(user,))]
+            if any(v.get('conversation_id')==id and 'placements' not in v for v in active):raise HTTPException(409,'Wait for the current resume request before changing placements.')
+    reviewed=linked_project_evidence.checked(user,body.placements)
+    current=require(user,data['current_revision_id'],'resume_revision')['data'] if data.get('current_revision_id') else None
+    choices=[c for c,r in reviewed]
+    if not current:
+        def save(d,c):d['linked_project_placements']=choices
+        mutate(user,id,body.expected_version,save)
+        return state(user,id)
+    full=copy.deepcopy(current['source_snapshot'])
+    # Restore all local catalog rewrites before moving source items.
+    old_rows={r['id']:r for r in current['catalog']}
+    for rid,entry in linked_project_evidence.entries(full).items():
+        if rid in old_rows:entry['content_items']=copy.deepcopy(old_rows[rid]['items']);linked_project_evidence.sync(entry)
+    old_selected={}
+    for rid,entry in linked_project_evidence.entries(current['snapshot']).items():
+        for item in entry['content_items']:
+            ref=item.get('project_source')
+            old_selected[(ref['project_id'],ref['item_id']) if ref else (rid,item['item_id'])]=True
+    full=linked_project_evidence.apply(full,reviewed)
+    explicit={(r['project_id'],r['item_id']):c for c,r in reviewed}
+    parts={};ids=[]
+    for rid,entry in linked_project_evidence.entries(full).items():
+        chosen=[]
+        for n,item in enumerate(entry['content_items']):
+            ref=item.get('project_source');key=(ref['project_id'],ref['item_id']) if ref else (rid,item['item_id'])
+            # Explicit placements include the reviewed detail; all unrelated selection is retained.
+            if (key in explicit and explicit[key]['placement']!='omit') or key in old_selected:chosen.append(n)
+        parts[rid]=chosen
+        if chosen or (entry['category']=='education' and rid in current['snapshot']['experience_ids']):ids.append(rid)
+    selected=resume_builder.select(full,parts,ids)
+    task_progress.stage('rendering');rendered=resume_layout.render(selected)
+    # Render first: failures never move the head or erase the current PDF.
+    linked_project_evidence.checked(user,choices)  # Recheck sources after potentially slow local rendering.
+    token=db.uid();record=begin(user,id,body.expected_version,token)
+    return save_revision(user,id,record['data']['version'],rendered,resume_builder.catalog(full),'Applied reviewed linked-project placements. No AI request. Review the updated PDF before saving.',token,source_snapshot=full,draft_id=None)

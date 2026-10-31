@@ -997,6 +997,18 @@ async def resume_conversation_render(entity_id:str,body:WorkingRender,user=Depen
     async def work():return await asyncio.to_thread(resume_conversation.render,user['id'],entity_id,body)
     return start_task(user['id'],'resume_guided',work,{'conversation_id':entity_id,**body.model_dump()})
 
+@app.get('/api/resume-conversations/{entity_id}/linked-evidence')
+def resume_linked_evidence(entity_id:str,user=Depends(auth.current)):
+    resume_conversation.require(user['id'],entity_id,'resume_conversation')
+    from . import linked_project_evidence
+    return linked_project_evidence.candidates(user['id'])
+
+@app.post('/api/resume-conversations/{entity_id}/linked-evidence')
+async def resume_linked_evidence_apply(entity_id:str,body:LinkedEvidenceReview,user=Depends(auth.current)):
+    resume_conversation.require(user['id'],entity_id,'resume_conversation')
+    async def work():return await asyncio.to_thread(resume_conversation.place_project_evidence,user['id'],entity_id,body)
+    return start_task(user['id'],'resume_guided',work,{'conversation_id':entity_id,**body.model_dump()})
+
 @app.post('/api/resume-conversations/{entity_id}/restore')
 def resume_conversation_restore(entity_id:str,body:RevisionAction,user=Depends(auth.current)):
     return resume_conversation.restore(user['id'],entity_id,body)
