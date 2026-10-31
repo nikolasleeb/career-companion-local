@@ -1,4 +1,5 @@
 from . import work_style_summary,work_preferences,knowledge_assistant,personalized_jobs,chat_visuals,skills
+from . import home
 from . import interview_practice
 from . import profile_import
 import asyncio
@@ -55,6 +56,7 @@ from .local_access import LocalAccess
 app.add_middleware(LocalAccess)
 from .security import ResourceBoundary,request_limit
 app.add_middleware(ResourceBoundary)
+app.include_router(home.router)
 app.include_router(job_alerts.router)
 app.include_router(job_results.router)
 app.include_router(job_cache.router)
@@ -964,7 +966,7 @@ async def resume_conversation_build(entity_id:str,body:GuidedBuild,manual:bool=F
         resume_conversation.require_initial_comparison(user['id'],entity_id);require_ai(user['id'])
     conversation=resume_conversation.require(user['id'],entity_id,'resume_conversation')
     applications.start(user['id'],conversation['data']['job_id'],recovering=True)
-    async def work():return await resume_conversation.build(user['id'],entity_id,body.expected_version,body.mode,body.decisions,body.template,manual=manual,preparation=body.preparation)
+    async def work():return await resume_conversation.build(user['id'],entity_id,body.expected_version,body.mode,body.decisions,body.template,manual=manual,preparation=body.preparation,feedback={"refresh_linked_evidence":True} if body.refresh_linked_evidence else None)
     return start_task(user['id'],'resume_guided',work,{'conversation_id':entity_id,**body.model_dump()})
 
 @app.post('/api/resume-conversations/{entity_id}/messages')

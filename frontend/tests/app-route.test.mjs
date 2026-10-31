@@ -14,7 +14,7 @@ test('routes only serialize navigation identities, never typed/private values',(
  assert.equal(route.parseRoute('#assistant-run=abc'),null);assert.equal(route.parseRoute('#/unknown'),null);
 });
 test('unfinished root ignores remembered Resources but explicit resource links work',()=>{
- route.resetRoutes();location.hash='';route.initializeRoutes('one',false,{view:'coach',jobId:'old'});assert.equal(route.routeNow().view,'master');assert.equal(route.routeNow().tab,'upload');
+ route.resetRoutes();location.hash='';route.initializeRoutes('one',false,{view:'coach',jobId:'old'});assert.equal(route.routeNow().view,'home');assert.equal(route.routeNow().tab,undefined);
  route.resetRoutes();location.hash='#/interview-practice?item=abc';route.initializeRoutes('two',false);assert.deepEqual(route.routeNow(),{view:'interviews',item:'abc'});
  route.resetRoutes();location.hash='#/applications?item=abc';route.initializeRoutes('three',false);assert.equal(route.routeNow().view,'master');
 });
@@ -41,3 +41,9 @@ test('skill resource links retain a bounded topic and exact plan milestone refer
  assert.equal(route.routeHash({view:'coach',item:'chat1',plan:'version2',milestone:'step:abc'}),'#/career-plans?item=chat1&plan=version2&milestone=step%3Aabc');
 });
 test('document stages and personalization deep links are explicit, bounded navigation fields',()=>{for(const stage of ['posting','resume','letter','finish'])assert.equal(route.parseRoute(route.routeHash({view:stage==='letter'?'cover':'tailor',job:'job',application:'app',stage})).stage,stage);assert.equal(route.parseRoute('#/resume?stage=unknown').stage,undefined);assert.deepEqual(route.parseRoute('#/profile?tab=personalization'),{view:'master',tab:'personalization'});});
+
+test('Home defaults without overriding explicit links or reload destinations',()=>{
+ route.resetRoutes();location.hash='';route.initializeRoutes('home-user',true,{view:'tailor',jobId:'old'});assert.equal(route.routeNow().view,'home');
+ route.resetRoutes();location.hash='#/resume?job=job1&stage=resume';route.initializeRoutes('home-user',true);assert.equal(route.routeNow().job,'job1');assert.equal(route.routeNow().stage,'resume');
+ route.resetRoutes();location.hash='#/home';route.initializeRoutes('new-home-user',false);assert.equal(route.routeNow().view,'home');
+});

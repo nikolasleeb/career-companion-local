@@ -48,8 +48,9 @@ def source(user,data,decisions=None,template='education'):
     ids=[r['id'] for r in profile_answers.records(user)]
     job=require(user,data['job_id'],'job')
     value=build_resume(user,ResumeRequest(job_id=job['id'],analysis_id=data.get('analysis_id'),experience_ids=ids,decisions=decisions or [],template=template))
-    if data.get('linked_project_placements'):
-        value=linked_project_evidence.apply(value,linked_project_evidence.checked(user,data['linked_project_placements']))
+    if data.get("linked_project_placements"):
+        value=linked_project_evidence.apply(value,linked_project_evidence.checked(user,data["linked_project_placements"]))
+    else:value=linked_project_evidence.automatic(value)
     value['schema_version']=4
     value['project_snapshot_ids']=list(data.get('project_snapshot_ids',[]))
     return value
@@ -199,8 +200,8 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
         checked=require(user,data['analysis_id'],'analysis')['data'];posting=require(user,data['job_id'],'job')['data']
         if checked.get('schema_version')!=3 or checked.get('posting_hash')!=job_parser.posting_hash(posting):raise HTTPException(409,'Rerun the comparison for this posting before building an AI revision. The previous draft remains available.')
     prior=require(user,data['current_revision_id'],'resume_revision')['data'] if data.get('current_revision_id') else None
-    placements=(prior['snapshot'] if prior else data).get('linked_project_placements',[])
-    if placements:linked_project_evidence.checked(user,placements)
+    placements=[]  # Explicit builds use current Profile relationships, not the retired placement gate.
+    # Saved relationships are refreshed only by this explicit build, never by opening a draft.
     data={**data,'linked_project_placements':placements}
     if feedback is None and data.get('pending_feedback'):feedback=data['pending_feedback']
     token=db.uid();record=begin(user,id,version,token,preparation=prepared.model_dump() if prepared else None);version=record['data']['version'];data=record['data']
@@ -234,6 +235,12 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
         return save_revision(user,id,version,rendered,resume_builder.catalog(snapshot),'Built a locally fitted draft. Review the content before saving.',token,source_snapshot=snapshot)
     analysis=require(user,data['analysis_id'],'analysis')['data'] if data.get('analysis_id') else None
     feedback={'fit_one_page':data.get('one_page_requested',False),**(feedback or {}),'approved_record_ids':data['approved_record_ids']}
+    if current and (feedback.get('refresh_linked_evidence') or not current['snapshot'].get('automatic_linked_evidence')):
+        affected=[e['source_id'] for s in snapshot['sections'] for e in s['entries'] if feedback.get('refresh_linked_evidence') or e['category']=='project' or any(i.get('project_source') for i in e['content_items'])]
+        feedback.update(change_selection=True,target_record_ids=affected)
+        if feedback.get('refresh_linked_evidence'):
+            feedback['target_item_ids']=[i['item_id'] for s in snapshot['sections'] for e in s['entries'] for i in e['content_items'] if i['field'] in linked_project_evidence.NARRATIVE]
+            feedback['revision_instruction']='Re-evaluate the full confirmed Profile and its linked evidence for this posting. Select the strongest supported points yourself; the user does not need to choose bullets. Preserve factual and role boundaries.'
     if prepared and prepared.headline is not None and prepared.headline!=db.settings(user).get('headline',''):feedback['prepared_headline']=prepared.headline
     draft=await optimization.create(user,snapshot,analysis,mode,feedback,guided=True,current=current['snapshot'] if current else None)
     result=draft['data'];rendered=result['rendered_snapshot'];rendered['draft_id']=draft['id']
