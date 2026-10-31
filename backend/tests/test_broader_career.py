@@ -111,7 +111,7 @@ def test_personalized_search_limit_evidence_and_normal_preferences(client,accoun
  job_results.save_search(key,{'jobs':[{**r,'data':{**r['data'],'_last_verified_epoch':time.time()}} for r in records],'sources':[],'query':{},'ai_calls':[]})
  async def discover(user,request):assert 'web' not in request.sources;return {'jobs':records,'sources':[],'query':request.model_dump(),'ai_calls':[]}
  async def web(*a,**kw):calls.extend(['web','extract']);assert kw['retry_allowed'] is False;return [],[{'model':'mock'},{'model':'mock'}]
- async def verify(row,req):verified.append(row['id']);return row if len(verified)<=7 else None
+ async def verify(row,req,outcomes=None):verified.append(row['id']);return row if len(verified)<=7 else None
  async def model(schema,payload,*a,**kw):
   calls.append(schema.__name__);assert kw['retry_allowed'] is False
   if schema==jobs.Criteria:return {'roles':['Research assistant'],'explanation':'Explore a related professional direction.'},{'model':'mock'}

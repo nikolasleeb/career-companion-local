@@ -1,0 +1,22 @@
+{
+  "change": "Clearer Resources, reviewable For you recommendations, and refreshed Adzuna capabilities",
+  "desktop_sizes": [[1280, 800], [1600, 900], [1920, 1080]],
+  "editions": ["hosted", "public"],
+  "verification": {
+    "full_backend_suites": "hosted 1479 passed, 1 skipped; public 1504 passed, 1 skipped",
+    "final_hosted_image_focused_tests": "59 passed",
+    "frontend_tests": "hosted 305 passed; public 306 passed",
+    "typescript_and_production_builds": "both passed",
+    "browser": "Both editions passed: missing filter caveats, named evidence disclosures, historical display-only cleanup, source diagnostics, keyboard focus, zoom, short windows, both assistants, and all desktop sizes.",
+    "adzuna": "A fictional test-only connection changed to regular in Settings becomes selectable in the already-mounted Job Search. Draft roles remain intact. Selecting the source remains explicit.",
+    "limits": "50 candidates screened, 10 verification attempts, up to 5 recommendations; no additional research rounds or retries.",
+    "source_audit": "passed"
+  },
+  "safety": {
+    "fictional_accounts_and_simulated_providers": true,
+    "paid_user_account_requests": false,
+    "mobile_checks": false,
+    "historical_searches_rewritten_or_rerun": false,
+    "live_recommendation_quality": "not tested"
+  }
+}

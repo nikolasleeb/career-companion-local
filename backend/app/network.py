@@ -65,7 +65,7 @@ def safe_fetch(url, max_bytes=10*1024*1024):
 async def public_fetch(url, max_bytes=10*1024*1024):
     return await asyncio.to_thread(safe_fetch, url, max_bytes)
 
-def html_job(content):
+def html_job(content, *, structured_only=False):
     soup = BeautifulSoup(content, 'html.parser')
     found = []
     def walk(value):
@@ -98,8 +98,9 @@ def html_job(content):
                 'company':str(hiring.get('name','') if isinstance(hiring,dict) else '')[:250],
                 'description':BeautifulSoup(str(job.get('description','')), 'html.parser').get_text(' ',strip=True)[:100000],
                 'published_at':job.get('datePosted'), 'valid_through':job.get('validThrough'),
-                'location':location[:300], 'country':next((c for c in countries if c.upper() in ('US','USA','UNITED STATES')), ''),
+                'location':location[:300], 'country':next((c for c in countries if c.upper() in ('US','USA','UNITED STATES')), next((c for c in countries if c),'')),
                 'workplace':'remote' if str(job.get('jobLocationType','')).upper() == 'TELECOMMUTE' else 'unknown'}
+    if structured_only:return {}
     for tag in soup(['script','style','nav','footer','header','noscript']):
         tag.decompose()
     main = soup.find('main') or soup.find('article') or soup

@@ -94,7 +94,7 @@ export function CareerReadiness({accountId,call,mode,aiAvailable,webAvailable,op
   }
   if(target==='coach')window.dispatchEvent(new CustomEvent('open-career-coach',{detail:{prompt:'Help me understand this career readiness assessment and the next actions I could take.',context,record_id:reportId}}));
   if(target==='goal')setGoal(shared.occupation);
-  if(target==='save'){await call('/career-explorer/saved','POST',{code:shared.occupation.code,source:'search'});setNotice('Career saved to Explore Occupations.');}
+  if(target==='save'){await call('/career-explorer/saved','POST',{code:shared.occupation.code,source:'search'});setNotice('Career saved to Explore careers.');}
   if(target==='explore')setRoute({view:'explorer',item:shared.occupation.code});
  }
  const turn=data?.turns.find((r:any)=>r.id===turnId),report=data?.reports.find((r:any)=>r.id===reportId),shown=turn?.data.reply.outcome==='assessment'?report||turn:turn||report,reply=shown?.data.reply,sources=shown?.data.source_snapshot||[];
@@ -103,7 +103,7 @@ export function CareerReadiness({accountId,call,mode,aiAvailable,webAvailable,op
  const continueLabel:Record<string,string>={discover:'Continue exploring',compare:'Continue comparison',assess:'Continue assessment',follow_up:'Continue follow-up',reassess:'Continue reassessment'};
  const blocked=!!busy||recover||!!data?.task_id;
  return <div className="career-readiness">
-  <header className="job-search-heading"><span className="eyebrow">RESOURCES / FIND YOUR DIRECTION</span><h1 ref={heading} tabIndex={-1}>Career Readiness</h1><p>Explore directions, understand the experience you can demonstrate, and choose a useful next step.</p><p className="small muted">An AI agent investigates relevant sources and asks focused questions. You choose the direction and review every proposed action.</p></header>
+  <header className="job-search-heading"><span className="eyebrow">RESOURCES / FIND YOUR DIRECTION</span><h1 ref={heading} tabIndex={-1}>Career fit & direction · AI</h1><p>Explore directions, understand the experience you can demonstrate, and choose a useful next step.</p><p className="small muted">An AI agent investigates relevant sources and asks focused questions. You choose the direction and review every proposed action.</p></header>
   {error&&<div className="notice" role="alert">{error}</div>}{notice&&<p className="notice" role="status">{notice}</p>}
   <section className="panel readiness-history"><div className="section-header"><h2>{id?'Your assessment session':'Start an assessment'}</h2>{id&&<button className="button secondary" onClick={()=>setRoute({view:'readiness'})}>New assessment</button>}</div>
    <label>Saved assessments<select value={id} disabled={!!busy} onChange={e=>setRoute({view:'readiness',...(e.target.value?{item:e.target.value}:{})})}><option value="">New assessment</option>{sessions.map(r=><option key={r.id} value={r.id}>{r.data.inputs.title} · {stamp(r.updated_at)}</option>)}</select></label>

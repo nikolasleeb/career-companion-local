@@ -24,7 +24,7 @@ export const InterviewVoice=forwardRef<InterviewVoiceHandle,Props>(function Inte
   setBusy(true);onBusy(true);setError('');
   try{const value=await call('/interview-practice/voice/'+row.id+'/transcript','PUT',{expected_updated_at:revision,transcript:text,reviewed:true});sessionStorage.removeItem(transcriptKey(row.id));loadRow(value);return value.id;}catch(error){setError((error as Error).message);throw error;}finally{setBusy(false);onBusy(false);}
  }}),[ready,row,text,revision]);
- useEffect(()=>{if(navRoute.view!=='interviews'){if(capture.current){stop(true);setError('Recording stopped and discarded when you left Interview Practice.');}setBlob(null);if(playRef.current){URL.revokeObjectURL(playRef.current);playRef.current='';}}},[navRoute.view]);
+ useEffect(()=>{if(navRoute.view!=='interviews'){if(capture.current){stop(true);setError('Recording stopped and discarded when you left Practice interviews.');}setBlob(null);if(playRef.current){URL.revokeObjectURL(playRef.current);playRef.current='';}}},[navRoute.view]);
  useEffect(()=>{onRecording(recording);},[recording]);
  function release(){const c=capture.current;if(!c)return;capture.current=null;c.stream.getTracks().forEach((t:MediaStreamTrack)=>t.stop());cancelAnimationFrame(c.frame);clearInterval(c.timer);if(c.context.state!=='closed')void c.context.close();}
  function stop(discard=false){const c=capture.current;if(!c)return;c.discard=discard;if(c.recorder.state!=='inactive')c.recorder.stop();release();setRecording(false);setLevel(0);if(discard)setBlob(null);}

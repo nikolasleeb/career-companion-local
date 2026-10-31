@@ -122,7 +122,7 @@ async def test(user=Depends(auth.current)):
     except Exception:
         # Upstream exceptions may contain a credential-bearing URL. Never echo it.
         raise ServiceError('Adzuna test failed. Check this account’s ID, key, plan and remaining allowance. One test request was attempted.') from None
-    return {'message':'Adzuna accepted one test request. Test-only connections remain excluded from normal and daily searches.'}
+    return {'message':'Adzuna accepted one test request. Test-only connections remain excluded from regular searches.'}
 
 api_router=APIRouter(prefix='/api/settings/api-connections',tags=['Connection overview'])
 @api_router.get('')
