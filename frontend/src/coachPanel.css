@@ -38,7 +38,9 @@ body.coach-panel-resizing,body.coach-panel-resizing *{cursor:col-resize!importan
 .adjustable-coach .dock-history-row>button:first-child{flex:1;text-align:left}
 .adjustable-coach .dock-source-choice{flex-wrap:wrap}
 .adjustable-coach .dock-source-choice span{flex-basis:100%}
-.adjustable-coach .dock-source-choice label{font-size:13px;min-height:32px}
+.adjustable-coach .dock-source-choice label{display:inline-flex;align-items:center;gap:7px;font-size:13px;min-height:32px;margin:0;padding:0;cursor:pointer}
+.adjustable-coach .dock-context input[type=checkbox]{width:16px;height:16px;min-width:16px;min-height:0;flex:0 0 16px;margin:0;padding:0;align-self:center}
+.adjustable-coach .dock-source-choice .context-choice-text{flex:0 0 auto;line-height:1.5}
 .adjustable-coach .coach-drawer label{font-size:13px;line-height:1.5}
 .adjustable-coach .coach-drawer input:not([type=checkbox]){min-height:40px;font-size:14px;margin-top:6px}
 .adjustable-coach .coach-conversation-name{margin-top:24px}
@@ -61,3 +63,16 @@ body.coach-panel-resizing,body.coach-panel-resizing *{cursor:col-resize!importan
 .adjustable-coach .coach-request-status{margin:0;padding:10px 20px 0;font-size:13px;color:#415d7a}
 
 body.career-coach-open.career-coach-task-narrow .guided-workspace,body.career-coach-open.career-coach-task-narrow .cover-workspace{grid-template-columns:minmax(0,1fr)}
+
+/* Assistant requests stay beside their composer; other workflows keep the page banner. */
+.coach-processing:empty{display:none}
+.adjustable-coach .coach-processing{max-width:768px;margin:auto}
+.adjustable-coach .coach-processing .resume-task-progress{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0;padding:12px 20px;background:transparent;color:var(--ink);border:0;box-shadow:none;font-size:12px}
+.adjustable-coach .coach-processing .status-spinner{width:18px;height:18px;min-width:18px;flex:0 0 18px;box-sizing:border-box;aspect-ratio:1;border:2px solid #cbd7e5;border-top-color:#315e8c}
+.adjustable-coach .coach-processing .status-copy{flex:1 1 160px;min-width:0;padding:0}
+.adjustable-coach .coach-processing .status-copy strong{font-size:13px;line-height:1.4}
+.adjustable-coach .coach-processing .status-copy span{font-size:11px;line-height:1.45;color:#52647b}
+.adjustable-coach .coach-processing .task-elapsed{flex:1 1 100%;margin:0 0 0 28px;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px 14px;font-size:11px}
+.adjustable-coach .coach-processing .status-unknown{background:#fff6df}
+.adjustable-coach .coach-processing .processing-recovery{margin:0;padding:12px 20px;font-size:12px}
+@media(prefers-reduced-motion:reduce){.adjustable-coach .coach-processing .status-spinner{animation:none}}
