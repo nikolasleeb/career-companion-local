@@ -1,5 +1,5 @@
 """Bounded five-match discovery, with aspirations and preferences kept separate."""
-import copy,hashlib,re,time
+import copy,hashlib,re,time,logging
 from typing import Literal
 from fastapi import APIRouter,Depends,HTTPException
 from pydantic import Field
@@ -55,12 +55,22 @@ async def verify(row,request):
  if not reviewed or reviewed.get('hard_filter_status')!='matches':return None
  return {**row,'data':{**reviewed,'availability_checked_at':db.now(),'availability_basis':'current employer posting or recent complete public feed'}}
 async def execute(user,body):
+ progress={'stage':'reading your saved context'}
+ try:return await _execute(user,body,progress)
+ except ServiceError as error:
+  raise ServiceError(f"Personalized suggestions stopped while {progress['stage']}. {error} Previous saved results are unchanged. No request was automatically repeated.") from None
+ except HTTPException:raise
+ except Exception as error:
+  logging.getLogger(__name__).warning('Personalized discovery stage %s failed (%s)',progress['stage'],type(error).__name__)
+  raise ServiceError(f"Personalized suggestions could not finish while {progress['stage']}. Check source coverage and connection settings before starting a new search. Previous saved results are unchanged; no paid request was repeated.") from None
+async def _execute(user,body,progress):
  from . import personalization
  request_version=personalization.request_version(user)
  p=career_coach.profile(user,' '.join(body.roles))
  if not p['sources']:raise ServiceError('Add reviewed professional Profile information before personalized discovery.')
  goals=career_goals.guidance_context(user);preferences=work_preferences.context(user);prefs=copy.deepcopy(job_alerts.preferences(user)['data']['query']);metas=[]
  context={'professional_profile':p['sources'],'career_goals_as_aspirations':{**goals,'text':job_ai.clean(goals['text'])},'work_preferences_not_qualifications':preferences}
+ progress['stage']='choosing public role directions'
  criteria,meta=await ai.structured(Criteria,{'task':'Select up to four plausible professional role directions using the supplied evidence. Return public role titles only, with no personal names, institutions, contact details or private answers. Targeted mode must stay within the explicitly selected roles. Broad mode should explore relevant professional directions rather than unrelated low-bar jobs.','scope':body.scope,'selected_roles':body.roles,**context},body.mode,instructions=INSTRUCTIONS,retry_allowed=False);metas.append(meta)
  personalization.check_request(user,request_version)
  roles=body.roles if body.scope=='targeted' else criteria['roles']
@@ -69,9 +79,11 @@ async def execute(user,body):
  if any(str(settings.get(k) or '').strip() and str(settings[k]).casefold() in ' '.join(roles).casefold() for k in ('name','email','phone','contact')):raise ServiceError('Personal details were excluded from public search criteria. Refine the target roles.')
  wire={**prefs,'title':roles[0],'interests':roles,'mode':body.mode,'sources':[v for v in prefs.get('sources',[]) if v not in ('web','jobspy')],'request_token':body.request_token,'refresh':False,'trial_roles':None}
  request=SearchRequest.model_validate(wire)
+ progress['stage']='searching selected public feeds'
  task_progress.stage('searching_jobs');result=await job_search.discover(user,request)
  candidates=list(result['jobs']);web_status='unavailable'
  if config.ENABLE_WEB_SEARCH:
+  progress['stage']='checking web job sources'
   try:
    web,usage=await ai.web_jobs('; '.join(roles),request.location,body.mode,retry_allowed=False);metas+=usage;web_status='checked'
    for v in web[:10]:
@@ -93,15 +105,18 @@ async def execute(user,body):
    if bucket and len(pool)<50:pool.append(bucket.pop(0))
  finalists=[]
  if pool:
+  progress['stage']='screening available postings'
   screened,meta=await ai.structured(Screen,{'task':'Select up to ten strongest candidates for full verification. Evaluate relevant duties, education and demonstrated experience, then aspirations and approved working conditions. Do not select unrelated work merely because its entry requirements are low. Return only provided IDs, no duplicates.','jobs':[{'id':r['id'],**{k:r['data'].get(k) for k in ('title','company','location')},'description':r['data'].get('description','')[:1600]} for r in pool],**context},body.mode,instructions=INSTRUCTIONS,retry_allowed=False);metas.append(meta)
   personalization.check_request(user,request_version)
   ids=screened['job_ids']
   if len(set(ids))!=len(ids) or any(id not in {r['id'] for r in pool} for id in ids):raise ServiceError('The shortlist contained an unsupported job reference.')
+  progress['stage']='verifying shortlisted employer postings'
   for id in ids[:10]:
    row=next(r for r in pool if r['id']==id);verified=await verify(row,request)
    if verified:finalists.append(verified)
  fits=[]
  if finalists:
+  progress['stage']='validating personalized match evidence'
   final,meta=await ai.structured(Final,{'task':'Return up to five suitable verified-open jobs, strongest first. Require literal professional Profile and posting evidence for each recommendation. Separate professional fit from goal and preference alignment. Omit obvious required-credential/experience conflicts. Unknowns must be stated. Never pad the list or give hiring probabilities.','jobs':[{'id':r['id'],**{k:r['data'].get(k) for k in ('title','company','location','description')}} for r in finalists],**context},body.mode,instructions=INSTRUCTIONS,retry_allowed=False);metas.append(meta)
   personalization.check_request(user,request_version)
   seen=set();sources={s['id']:s for s in p['sources']}
@@ -115,8 +130,9 @@ async def execute(user,body):
     if not source or not ai.valid_quote(ref['profile_quote'],source['text']) or not ai.valid_quote(ref['posting_quote'],text):raise ServiceError('A personalized match cited unsupported evidence.')
    if value['suitable'] and value['evidence']:fits.append(value)
  selected=[next(r for r in finalists if r['id']==f['job_id']) for f in fits]
+ progress['stage']='saving verified results'
  saved=job_results.save_search(user,{**result,'jobs':selected,'query':request.model_dump(),'discovery_kind':'for_you','ai_calls':metas,'checked_at':db.now(),'web_status':web_status})
- run=db.save(user,'personalized_search',{'search_id':saved['id'],'scope':body.scope,'roles':roles,'explanation':criteria['explanation'],'matches':fits,'posting_versions':{r['id']:copy.deepcopy(r['data']) for r in selected},'candidate_count':len(unique),'screened_count':len(pool),'verified_count':len(finalists),'returned_count':len(selected),'profile_revision':p['revision'],'goal_revision':goals['revision'],'work_preferences_revision':preferences['revision'],'work_preferences_used':bool(preferences['preferences']),'checked_at':db.now(),'ai':metas,'coverage':'At most 50 candidates screened and 10 finalists checked; not the entire job market.','notice':'These are evidence-backed matches, not hiring probabilities. Fewer than five are shown when support or current availability cannot be verified.'})
+ run=db.save(user,'personalized_search',{'search_id':saved['id'],'scope':body.scope,'roles':roles,'explanation':criteria['explanation'],'matches':fits,'posting_versions':{r['id']:copy.deepcopy(r['data']) for r in selected},'candidate_count':len(unique),'screened_count':len(pool),'verified_count':len(finalists),'returned_count':len(selected),'profile_revision':p['revision'],'goal_revision':goals['revision'],'work_preferences_revision':preferences['revision'],'work_preferences_used':bool(preferences['preferences']),'source_statuses':result.get('sources',[]),'web_status':web_status,'checked_at':db.now(),'ai':metas,'coverage':'At most 50 candidates screened and 10 finalists checked; not the entire job market.','notice':'These are evidence-backed matches, not hiring probabilities. Fewer than five are shown when support or current availability cannot be verified.'})
  return {'run':run,'search':saved}
 def install(app,start_task,require_ai):
  @router.post('/discover')

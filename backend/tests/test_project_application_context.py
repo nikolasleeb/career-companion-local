@@ -112,8 +112,12 @@ def test_resume_review_saves_linked_evidence_without_mutating_project(client,acc
     if ambiguous:
         with pytest.raises(HTTPException,match='Choose the confirmed'):
             resumes.approve(user,state['id'],FactApproval(expected_version=state['data']['version'],proposal_id=p['id'],action='approve',update_draft=False))
-    state=resumes.approve(user,state['id'],FactApproval(expected_version=state['data']['version'],proposal_id=p['id'],action='approve',evidence_experience_id=target['id'],update_draft=False))
+    role=client.post('/api/experience',json={'category':'employment','title':'Fictional linked intern','confirmed':True,'description':'Reviewed reports.'}).json()
+    # A job-first selection must not move the canonical source away from the project.
+    state=resumes.approve(user,state['id'],FactApproval(expected_version=state['data']['version'],proposal_id=p['id'],action='approve',experience_ids=[role['id'],target['id']],evidence_experience_id=target['id'],update_draft=False))
     entry=library.confirmed(user)[0]
+    assert entry['data']['experience_ids']==[target['id'],role['id']]
+    assert db.get(user,role['id'],'experience')==role
     assert entry['data']['experience_id']==target['id'] and entry['data']['backed_fields']=={}
     assert entry['data']['sources'][0]['questions'][0]['id']==q['id'] and entry['data']['sources'][0]['project_refs']==refs
     assert db.get(user,record['id'],'experience')==record and db.get(user,target['id'],'experience')==target
