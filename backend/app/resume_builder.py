@@ -32,6 +32,9 @@ def select(snapshot,content,ids):
             entry['bullets']=[v for i,v in enumerate(entry['bullets']) if i in allowed and v.strip()]
             entry['content_items']=[v for i,v in enumerate(entry.get('content_items',[])) if i in allowed and v['text'].strip()]
         section['entries']=[e for e in section['entries'] if e['bullets'] or e['category']=='education']
+    from . import linked_project_evidence
+    linked_project_evidence.validate_selected(result)
+    result.pop('linked_project_originals',None)  # Restoration catalog stays in the versioned source, not employer document context.
     result['experience_ids']=[e['source_id'] for s in result['sections'] for e in s['entries']]
     result['content']=content
     return result

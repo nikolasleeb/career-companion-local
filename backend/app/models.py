@@ -613,6 +613,18 @@ class FactApproval(StrictModel):
     evidence_expected_updated_at: str = Field(default='',max_length=100)
     keep_standalone: bool = False
 
+class ProjectEvidencePlacement(StrictModel):
+    project_id: str = Field(min_length=1,max_length=64)
+    item_id: str = Field(min_length=1,max_length=64)
+    source_fingerprint: str = Field(min_length=64,max_length=64)
+    placement: Literal['project','employment','omit']
+    employment_id: str = Field(default='',max_length=64)
+    replace_overlaps: bool = False
+
+class LinkedEvidenceReview(StrictModel):
+    expected_version: int = Field(ge=0)
+    placements: list[ProjectEvidencePlacement] = Field(max_length=300)
+
 class GuidedBuild(StrictModel):
     preparation: ResumeRequest | None = None
     expected_version: int = Field(ge=0)
