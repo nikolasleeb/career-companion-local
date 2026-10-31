@@ -21,6 +21,7 @@
 .home-continue>.button,.home-profile>.button{margin-top:auto}
 .home-dashboard .home-usage-panel{align-items:center;justify-content:center;text-align:center}
 .home-dashboard .home-usage-panel>.button{align-self:center;margin-top:0}
+.home-dashboard .panel>.button{align-self:stretch;width:100%;box-sizing:border-box}
 .home-dashboard .home-usage{font-size:28px;font-weight:700;line-height:1.2;margin:6px 0 14px;font-variant-numeric:tabular-nums}
 .home-dashboard label{font-size:12px;gap:3px;margin:0}
 .home-dashboard select{padding:6px 28px 6px 8px;min-height:36px;font-size:12px;max-width:100%;width:100%;text-overflow:ellipsis}
