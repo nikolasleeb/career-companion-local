@@ -977,7 +977,7 @@ async def resume_conversation_build(entity_id:str,body:GuidedBuild,manual:bool=F
     conversation=resume_conversation.require(user['id'],entity_id,'resume_conversation')
     applications.start(user['id'],conversation['data']['job_id'],recovering=True)
     async def work():return await resume_conversation.build(user['id'],entity_id,body.expected_version,body.mode,body.decisions,body.template,manual=manual,preparation=body.preparation,feedback={"refresh_linked_evidence":True} if body.refresh_linked_evidence else None)
-    return start_task(user['id'],'resume_guided',work,{'conversation_id':entity_id,**body.model_dump()})
+    return start_task(user['id'],'resume_guided',work,{'operation':'build?manual=true' if manual else 'build','conversation_id':entity_id,**body.model_dump()})
 
 @app.post('/api/resume-conversations/{entity_id}/messages')
 async def resume_conversation_send(entity_id:str,body:ConversationMessage,user=Depends(auth.current)):

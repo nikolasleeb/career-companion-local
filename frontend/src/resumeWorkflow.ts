@@ -32,3 +32,14 @@ export function resumeNeedsClarification(session:any){
  const questions=session?.data?.asked_questions||session?.data?.questions||[];
  return questions.some((q:any)=>!!q.text?.trim()&&!['reviewed','answered','skipped','superseded'].includes(q.status));
 }
+
+export function resumeRetryAction(last:any,failedBuild:any,freshBuild:any,form:any){
+ const action=last||failedBuild;
+ if(!action)return null;
+ if(action.operation==='build'||action.operation==='build?manual=true')return {
+  operation:action.operation,asTask:true,
+  body:{...freshBuild,refresh_linked_evidence:action.body?.refresh_linked_evidence===true}
+ };
+ if(action.operation==='render')return {...action,body:{...action.body,resume:form}};
+ return action;
+}

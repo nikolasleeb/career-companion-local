@@ -131,6 +131,13 @@ def state(user,id):
     own_tasks=[r for r in tasks if id in (r['result'] or '')]
     result['pending_task']=next((r['id'] for r in own_tasks if r['status'] in ('queued','running')),None)
     result['last_failure']=own_tasks[0]['error'] if own_tasks and own_tasks[0]['status'] in ('failed','interrupted') and own_tasks[0]['updated_at']>record['updated_at'] else None
+    if result['last_failure']:
+        saved=json.loads(own_tasks[0]['result'] or '{}');inputs=saved.get('_task_inputs',saved.get('inputs',{})) or {}
+        operation=inputs.get('operation')
+        # Recover action intent only; current form values stay client-reviewed.
+        # Do not send saved prompts, arbitrary task inputs or account settings.
+        if (operation in ('build','build?manual=true') or (operation is None and 'template' in inputs and 'decisions' in inputs)) and not inputs.get('text'):
+            result['failed_build_action']={'operation':operation or 'build','asTask':True,'body':{'refresh_linked_evidence':bool(inputs.get('refresh_linked_evidence'))}}
     result['preview_stale']=bool(current and current['data']['request_token']!=data.get('workspace_token'))
     if result['last_failure'] and result['preview_stale']:
         inputs=json.loads(own_tasks[0]['result'] or '{}').get('inputs') or {}
@@ -272,7 +279,7 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
         if before.keys()-after.keys():changes.append(f'Omitted {len(before.keys()-after.keys())} content items.')
         if current['snapshot']['template']!=rendered['template']:changes.append('Updated the section order.')
         if comparison_usage:changes.append('Refreshed qualifications using approved Profile details.')
-        summary=' '.join(changes) or 'Rechecked the draft; your reviewed content was preserved.'
+        summary=' '.join(changes) or ('Completed full optimization; the draft content was preserved. See Resume quality review for the review outcome.' if feedback.get('refresh_linked_evidence') else 'The draft wording was preserved. This refinement did not run an independent quality review.')
     updated=save_revision(user,id,version,rendered,result['catalog'],summary,token,usage,snapshot,draft['id'])
     return updated
 

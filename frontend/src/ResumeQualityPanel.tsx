@@ -3,7 +3,7 @@ import React from 'react';
 const labels:Record<string,string>={ready:'Ready for your review',needs_input:'Needs your input',needs_manual_changes:'Needs manual changes',unavailable:'Review unavailable',not_rechecked:'Not rechecked'};
 export function ResumeQualityPanel({review,busy,estimate,onRecheck}:{review:any;busy:boolean;estimate:any;onRecheck:()=>void}){
  return <section className={'resume-quality quality-'+(review?.status||'not_rechecked')} aria-label="Resume quality review"><h3>Resume quality review</h3><p><strong>{labels[review?.status]||'Not rechecked'}</strong></p>
- {!review&&<p>This historical draft has no independent quality review.</p>}
+ {!review&&<p>This draft has not had an independent quality review. Choose Recheck draft quality to review it, or Optimize for this posting to rebuild and review it.</p>}
  {review?.note&&<p className="small">{review.note}</p>}
  {!!review?.strengths?.length&&<><h4>Strengths</h4><ul>{review.strengths.map((s:string,i:number)=><li key={i}>{s}</li>)}</ul></>}
  {!!review?.findings?.length&&<><h4>Remaining issues</h4><ul>{review.findings.map((f:any,i:number)=><li key={i}><strong>{f.material?'Priority: ':'Suggestion: '}</strong>{f.issue}{f.resume_quote&&<blockquote>{f.resume_quote}</blockquote>}{f.posting_quote&&<details><summary>Posting reference</summary><blockquote>{f.posting_quote}</blockquote></details>}<p>{f.action}</p></li>)}</ul></>}
