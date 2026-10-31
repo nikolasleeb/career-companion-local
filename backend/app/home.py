@@ -32,7 +32,7 @@ def reminders(user):
     imports=sum(r['data'].get('purpose')=='resume' and not r['data'].get('reviewed') for r in db.list_entities(user,'document'))
     if imports:result.append({'text':f'Review {imports} pending Profile import(s).','tab':'upload'})
     pending=sum(not r['data'].get('confirmed') for r in records)
-    details=sum(r['data'].get('status')=='draft' or r['data'].get('needs_related_experience') for r in db.list_entities(user,'profile_answer'))
+    details=sum(bool(r['data'].get('status')=='draft' or r['data'].get('needs_related_experience')) for r in db.list_entities(user,'profile_answer'))
     if pending or details:result.append({'text':f'Review {pending} unconfirmed record(s) and {details} Supporting Detail(s).','tab':'resume'})
     with db.connect() as c:
         unresolved=[r for r in records if project_relations.unresolved(c,user,r['data'])]

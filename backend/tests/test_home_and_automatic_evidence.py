@@ -110,3 +110,17 @@ def test_automatic_supporting_detail_keeps_its_own_provenance(client,account):
     assert detail['project_source']['reviewed_answer_sources'][0]['version']==3
     ordinary=next(i for i in borrowed if i['original']=='Built a retrieval tool.')
     assert ordinary['project_source']['reviewed_answer_sources']==[]
+
+
+def test_home_profile_reminders_count_missing_optional_flags_as_false(client,account,monkeypatch):
+    user=account['id']
+    experience(user,category='education',title='BS Data Systems',degree='BS',organization='Fictional University')
+    for data in ({'status':'confirmed'},{'status':'confirmed','needs_related_experience':None},{'status':'confirmed','needs_related_experience':False},{'status':'draft'},{'status':'confirmed','needs_related_experience':True}):
+        db.save(user,'profile_answer',data)
+    before=stored(user)
+    def forbidden(*a,**kw):pytest.fail('Home must not write or call AI')
+    monkeypatch.setattr(db,'save',forbidden);monkeypatch.setattr(ai,'structured',forbidden)
+    result=client.get('/api/home').json()
+    assert 'profile' not in result['errors']
+    assert any('2 Supporting Detail(s)' in r['text'] for r in result['profile'])
+    assert stored(user)==before
