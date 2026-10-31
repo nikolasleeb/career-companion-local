@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import ts from 'typescript';
 const code=ts.transpileModule(readFileSync(new URL('../src/processing.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
-const {ProcessingStore,actionLabel,processingGroups}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+const {ProcessingStore,actionLabel,processingGroups,isCoachProcessing}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
 const task=(id,status='running')=>({id,status,kind:'cover_letter',created_at:'2026-10-22T12:00:00Z'});
 test('Review answers is visible before start response and remains visible through task completion',async()=>{
@@ -117,4 +117,21 @@ test('free Explorer pagination stays inline, including errors, without hiding re
  await assert.rejects(store.request('/career-explorer/explore','POST',async()=>{throw Error('offline');}));assert.deepEqual(store.snapshot(),[]);
  const review=deferred();const action=store.request('/career-explorer/occupations/15-1243.00/profile-review/actions','POST',()=>review.promise);assert.equal(store.snapshot().length,1);
  review.resolve({task_id:'real-review',status:'queued'});await action;assert.equal(store.snapshot()[0].id,'real-review');
+});
+
+
+test('assistant progress keeps its panel destination from start through polling and recovery',async()=>{
+ const store=new ProcessingStore(),start=deferred();
+ const request=store.request('/knowledge-coach/chats/new/messages','POST',()=>start.promise);
+ assert.equal(isCoachProcessing(store.snapshot()[0]),true);
+ assert.equal(actionLabel('/knowledge-coach/chats/new/messages'),'Preparing Career Coach response');
+ start.resolve({task_id:'coach',status:'queued'});await request;
+ assert.equal(isCoachProcessing(store.snapshot()[0]),true);
+ await store.request('/tasks/coach','GET',async()=>({...task('coach'),kind:'knowledge_coach'}));
+ assert.equal(isCoachProcessing(store.snapshot()[0]),true);
+ store.disconnected();assert.equal(isCoachProcessing(store.snapshot()[0]),true);
+ store.setOwner('another');store.reconcile([{...task('saved'),kind:'knowledge_coach'}],store.serial);
+ assert.equal(isCoachProcessing(store.snapshot()[0]),true);
+ assert.equal(isCoachProcessing({...task('resume'),serial:1}),false);
+ store.update({...task('saved','completed'),kind:'knowledge_coach'});assert.deepEqual(store.snapshot(),[]);
 });

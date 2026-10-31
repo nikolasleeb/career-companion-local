@@ -1,5 +1,5 @@
 import type {TaskStatus} from './taskProgress';
-export type ProcessingEntry=TaskStatus&{id:string;request?:boolean;settled?:boolean;serial:number;label?:string};
+export type ProcessingEntry=TaskStatus&{id:string;request?:boolean;settled?:boolean;serial:number;label?:string;presentation?:'coach'};
 const active=(s:string)=>['queued','running','cancelling','unknown'].includes(s);
 export function actionLabel(path:string){
  if(path.includes('/profile-review/actions'))return 'Reviewing Explore Occupations Profile connections';
@@ -17,8 +17,8 @@ export function actionLabel(path:string){
  if(/^\/project-sources\/[^/]+\/select$/.test(path))return 'Preparing selected project files';
  if(/\/analyze$/.test(path))return 'Analyzing project materials';
  if(/\/build$/.test(path))return 'Building the resume draft';
- if(/\/messages$/.test(path))return 'Reviewing resume changes';
  if(path.startsWith('/knowledge-coach/'))return 'Preparing Career Coach response';
+ if(/\/messages$/.test(path))return 'Reviewing resume changes';
  if(path==='/job-search/for-you/discover')return 'Finding personalized job matches';
  if(path==='/chat-visuals/generate')return 'Generating an illustration';
  if(path==='/preparation')return 'Preparing your skills plan';
@@ -29,6 +29,7 @@ export function actionLabel(path:string){
  return 'Processing your request';
 }
 export function backgroundLocalRequest(path:string,method:string){const route=path.split('?')[0];return method==='POST'&&/^\/career-coach\/chats\/[^/]+\/roadmap$/.test(route)||method==='PATCH'&&/^\/career-coach\/plans\/[^/]+\/progress$/.test(route)||method==='POST'&&route==='/career-explorer/explore'||route.endsWith('/estimate')||method==='PUT'&&/^\/work-style\/[^/]+\/progress$/.test(route);}
+export function isCoachProcessing(entry:ProcessingEntry){return entry.kind==='knowledge_coach'||entry.presentation==='coach';}
 export function processingGroups(entries:ProcessingEntry[]){
  return {confirmed:entries.filter(v=>!v.connection_lost&&v.status!=='unknown'),uncertain:entries.filter(v=>v.connection_lost||v.status==='unknown')};
 }
@@ -54,7 +55,7 @@ export class ProcessingStore{
  disconnected(){for(const [id,value] of this.records)if(!value.request||value.settled)this.records.set(id,{...value,connection_lost:true,status:'unknown',checked_at:value.checked_at||new Date().toISOString()});this.emit();}
  async request(path:string,method:string,call:(onTransfer:(value:{loaded:number;total:number;sent:boolean})=>void)=>Promise<any>){
   const epoch=this.epoch,write=method!=='GET'&&method!=='HEAD',id='request:'+String(++this.serial),stamp=new Date().toISOString();
-  if(write&&!path.endsWith('/cancel')&&!backgroundLocalRequest(path,method)){this.records.set(id,{id,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:path==='/project-sources/upload-preview'?'upload':path==='/project-sources/combine'?'local':/^\/project-sources\/[^/]+\/select$/.test(path)?'source_preparation':'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
+  if(write&&!path.endsWith('/cancel')&&!backgroundLocalRequest(path,method)){this.records.set(id,{id,presentation:path.startsWith('/knowledge-coach/')?'coach':undefined,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:path==='/project-sources/upload-preview'?'upload':path==='/project-sources/combine'?'local':/^\/project-sources\/[^/]+\/select$/.test(path)?'source_preparation':'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
   try{
    const value=await call(transfer=>{
     if(epoch!==this.epoch||path!=='/project-sources/upload-preview')return;
@@ -63,7 +64,7 @@ export class ProcessingStore{
     this.records.set(id,{...entry,serial:++this.serial,progress:{...entry.progress,code,label:transfer.sent?'Waiting for ZIP preview':'Uploading project ZIPs and files',kind:transfer.sent?'upload_wait':'upload',stage_started_at:changed?new Date().toISOString():entry.progress.stage_started_at,loaded_bytes:transfer.loaded,total_bytes:transfer.total}});this.emit();
    });if(epoch!==this.epoch)return value;
    if(write)this.records.delete(id);
-   if(value?.task_id)this.update({id:value.task_id,status:value.status||'queued',created_at:stamp,label:actionLabel(path)});
+   if(value?.task_id)this.update({id:value.task_id,status:value.status||'queued',created_at:stamp,label:actionLabel(path),presentation:path.startsWith('/knowledge-coach/')?'coach':undefined});
    else if(/^\/tasks\/[^/]+$/.test(path)&&!path.endsWith('/active'))this.update(value);
    else if(value?.pending_task)this.update({id:value.pending_task,status:'running',label:'Reconnecting to your saved action'});
    this.emit();return value;
