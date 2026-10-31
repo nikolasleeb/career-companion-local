@@ -68,3 +68,7 @@
 .result-toolbar {row-gap:16px;}
 .result-toolbar h2 {margin:0 auto 0 0;}
 .result-toolbar label {margin:0;}
+
+.job-search-form .job-search-submit {justify-content:center;margin-bottom:10px;}
+.job-search-save-status {display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;min-height:20px;text-align:center;}
+.search-action-message {text-align:center;}
