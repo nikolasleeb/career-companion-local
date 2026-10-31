@@ -626,6 +626,7 @@ class LinkedEvidenceReview(StrictModel):
     placements: list[ProjectEvidencePlacement] = Field(max_length=300)
 
 class GuidedBuild(StrictModel):
+    refresh_linked_evidence: bool = False
     preparation: ResumeRequest | None = None
     expected_version: int = Field(ge=0)
     mode: Literal['economy','deep','custom'] = 'economy'

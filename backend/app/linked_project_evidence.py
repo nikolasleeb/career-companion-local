@@ -73,6 +73,10 @@ def sync(entry):
 def apply(snapshot, reviewed):
     """Move individual items into a single catalog location with their original provenance."""
     full = copy.deepcopy(snapshot);rows = entries(full)
+    if full.pop('automatic_linked_evidence',None):
+        for entry in rows.values():
+            entry['content_items']=[i for i in entry['content_items'] if not i.get('project_source',{}).get('destination_id')]
+            sync(entry)
     # Undo previous placements in this working source, retaining original item identities.
     previous={(c['project_id'],c['item_id']):c for c in full.get('linked_project_placements',[])}
     originals = full.pop('linked_project_originals', {})
@@ -128,3 +132,61 @@ def validate_selected(snapshot):
     for n,(ref,text) in enumerate(narrative):
         if any(text == other and (ref or other_ref) for other_ref,other in narrative[:n]):
             raise ServiceError('A linked project bullet duplicates selected content. Omit the overlapping bullet before updating the draft.')
+
+
+def automatic(snapshot):
+    """Offer confirmed project facts through saved relationships; never mutate Profile."""
+    full=copy.deepcopy(snapshot);rows=entries(full)
+    for pid,project in list(rows.items()):
+        if project['category']!='project':continue
+        links=[]
+        for relation in project.get('relationship_context',[]):
+            target=relation.get('record_id') or relation.get('id') or relation.get('education_id')
+            if target in rows:links.append(target)
+        # Original metadata uses these identifiers; relationship_context supplies readable context.
+        links+=project.get('linked_employment_ids',[])+project.get('linked_education_ids',[])
+        links += [r['education_id'] for r in project.get('linked_courses',[])]
+        for target_id in dict.fromkeys(links):
+            target=rows.get(target_id)
+            if not target or target['category'] not in ('employment','education','coursework'):continue
+            for item in project['content_items']:
+                if item['field'] not in NARRATIVE:continue
+                ref={'project_id':pid,'item_id':item['item_id'],'original':item['original'],
+                     'project_title':project['title'],'project_dates':project.get('dates',''),
+                     'destination_id':target_id,'employment_id':target_id if target['category']=='employment' else '',
+                     'destination_category':target['category'],'destination_title':target['title'],
+                     'reviewed_answer_sources':copy.deepcopy([a for a in project.get('reviewed_answer_sources',[]) if normalized(a.get('text','')) and (normalized(a['text']) in normalized(item['original']) or normalized(item['original']) in normalized(a['text']))])}
+                target['content_items'].append({**copy.deepcopy(item),'item_id':digest([pid,item['item_id'],target_id])[:24], 'project_source':ref})
+            sync(target)
+    full['automatic_linked_evidence']=1
+    return full
+
+
+def deduplicate(snapshot):
+    """One source item/location; prefer selected higher-priority facts. No added facts."""
+    if not snapshot.get('automatic_linked_evidence'):return snapshot
+    candidates=[]
+    for rid,entry in entries(snapshot).items():
+        for index,item in enumerate(entry.get('content_items',[])):
+            ref=item.get('project_source')
+            origin=(ref['project_id'],ref['item_id']) if ref else (rid,item['item_id'])
+            candidates.append((-(item.get('priority',0)),bool(ref),rid,index,origin,item))
+    kept=set();origins=set();narratives=[]
+    for _,linked,rid,index,origin,item in sorted(candidates,key=lambda v:v[:4]):
+        if origin in origins:continue
+        if item['field'] in NARRATIVE and any((linked or prior_linked) and equivalent(item['original'],text) for prior_linked,text in narratives):continue
+        origins.add(origin);kept.add((rid,index))
+        if item['field'] in NARRATIVE:narratives.append((linked,item['original']))
+    for rid,entry in entries(snapshot).items():
+        entry['content_items']=[i for n,i in enumerate(entry['content_items']) if (rid,n) in kept];sync(entry)
+    for section in snapshot['sections']:
+        section['entries']=[e for e in section['entries'] if e['content_items'] or e['category']=='education']
+    return snapshot
+
+
+def equivalent(left,right):
+    # Similar wording with different quantities or limitations is not a duplicate fact.
+    import re
+    numbers=lambda text:set(re.findall(r'\d+(?:[.,]\d+)*',text))
+    limits=lambda text:set(re.findall(r'\b(no|not|never|without|incomplete|approximately|planned|expected)\b',text.lower()))
+    return numbers(left)==numbers(right) and limits(left)==limits(right) and overlaps(left,right)
