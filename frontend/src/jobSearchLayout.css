@@ -54,3 +54,17 @@
 
 .search-picker-popover label.check-line {display:flex;align-items:center;gap:10px;padding:8px 0;font-weight:400;}
 .search-picker-popover input[type=checkbox] {width:18px;height:18px;min-height:18px;margin:0;flex-shrink:0;}
+
+/* Keep the primary controls on one baseline; selected roles wrap below it. */
+.job-search-form .search-primary-fields label {margin:0 0 8px;line-height:20px;}
+.job-search-form .search-primary-fields input:not([type=checkbox]):not([type=radio]):not([type=file]) {height:44px;min-height:44px;margin:0;}
+.job-search-form .role-picker-input .button {height:44px;min-height:44px;gap:10px;}
+.job-search-form .location-picker-control {height:44px;}
+.job-search-form .location-picker-toggle {display:flex;align-items:center;justify-content:center;}
+.job-search-form .search-compact-filters select,.job-search-form .search-select-trigger {height:44px;min-height:44px;}
+.job-search-form .search-select-trigger {font-size:12px;font-weight:600;}
+.search-control-chevron {display:inline-block;flex:0 0 12px;width:12px;height:8px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%230c234b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px 8px no-repeat;}
+.result-browser {margin-top:24px;}
+.result-toolbar {row-gap:16px;}
+.result-toolbar h2 {margin:0 auto 0 0;}
+.result-toolbar label {margin:0;}
