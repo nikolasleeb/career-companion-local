@@ -7,10 +7,10 @@ from . import job_cache
 from . import config,db,integrations as x,task_progress,ai,job_locations
 from .network import ServiceError,public_fetch,html_job
 
-from . import role_catalog,provider_connections,public_job_feeds as feeds,job_filters as filters
+from . import role_catalog,provider_connections,public_job_feeds as feeds,job_filters as filters,job_role_matching
 TECH=role_catalog.GROUPS['Tech & Data']
 ALIASES=role_catalog.ALIASES
-VERSION=role_catalog.VERSION+3000
+VERSION=role_catalog.VERSION+3001
 
 def source_failed(label,error):
     # External feed failures must not cancel healthy sources. Never log response
@@ -24,9 +24,7 @@ def title_match(title,query,levels=None):
     chosen=levels if levels is not None else ['internship','early_career']
     band=filters.career({'title':title})
     if band=='senior' or band=='mid_career' and 'mid_career' not in chosen:return False
-    if isinstance(query,list):return any(title_match(title,q,chosen) for q in query)
-    phrases=ALIASES.get(query.casefold(),[query]);title_words=set(words(title))
-    return any(all(w in title_words for w in words(p) if w not in {'junior','entry','level','new','grad','intern','internship','jobs','position'}) for p in phrases)
+    return job_role_matching.matcher(query)(title)
 
 def blocked_url(value):
     host=(urlparse(value).hostname or '').lower()

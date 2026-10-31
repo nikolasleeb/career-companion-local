@@ -1,7 +1,7 @@
 """Account-owned immutable result versions and server-side paging. No provider calls."""
 import hashlib,json,math,re
 from fastapi import APIRouter,Depends,HTTPException,Query
-from . import db,auth,onboarding,job_cache
+from . import db,auth,onboarding,job_cache,job_role_matching
 router=APIRouter(prefix='/api/job-search')
 def init(c):
  c.execute('''CREATE TABLE IF NOT EXISTS cc_search_rows(
@@ -65,11 +65,12 @@ def ensure(user,id):
  return owned(user,id,'search')
 
 def all_rows(user,id):
- ensure(user,id)
+ search=ensure(user,id)
  with db.connect() as c:
+  relevant=job_role_matching.sql_filter(c,search)
   rows=c.execute('''SELECT r.*,e.payload,e.created_at,e.updated_at,j.payload AS current_payload,l.verified_at,l.deadline_at,l.closed_at,l.purged FROM cc_search_rows r
   JOIN entities e ON e.id=r.snapshot_id AND e.user_id=r.user_id
-  JOIN entities j ON j.id=r.job_id AND j.user_id=r.user_id LEFT JOIN cc_job_lifecycle l ON l.job_id=r.job_id AND l.user_id=r.user_id WHERE r.user_id=? AND r.search_id=? ORDER BY r.ordinal''',(user,id)).fetchall()
+  JOIN entities j ON j.id=r.job_id AND j.user_id=r.user_id LEFT JOIN cc_job_lifecycle l ON l.job_id=r.job_id AND l.user_id=r.user_id WHERE r.user_id=? AND r.search_id=?'''+relevant+' ORDER BY r.ordinal',(user,id)).fetchall()
  return [decode(row) for row in rows if row['verified_at'] is None or job_cache.lifecycle(row)['lifecycle_status']=='active']
 def decode(row,details=True):
  d=json.loads(row['payload']);current=json.loads(row['current_payload'])
@@ -97,6 +98,9 @@ def page(id:str,q:str=Query(default='',max_length=200),view:str=Query(default='m
  if id=='saved':base+=" AND r.rowid=(SELECT max(x.rowid) FROM cc_search_rows x WHERE x.user_id=r.user_id AND x.job_id=r.job_id)"
  with db.connect() as c:
   archived=c.execute('SELECT count(*)'+base+' AND NOT '+job_cache.active_sql(),args+job_cache.active_args()).fetchone()[0]
+  # Recheck title relevance locally, before counts and paging. Original snapshots,
+  # archived/dismissed views and explicit saved-job choices remain available.
+  if id!='saved' and view not in ('saved','dismissed','archived'):base+=job_role_matching.sql_filter(c,search)
   counts={v['status']:v['n'] for v in c.execute('SELECT r.status,count(*) AS n'+base+' AND '+job_cache.active_sql()+' GROUP BY r.status',args+job_cache.active_args())}
   base+=' AND '+('NOT ' if view=='archived' else '')+job_cache.active_sql();args+=job_cache.active_args()
   extra=[]
@@ -139,5 +143,7 @@ def public_search(user,record):
  """Preserve stored history while removing expired members from active API responses."""
  with db.connect() as c:
   inactive={r['job_id'] for r in c.execute('SELECT l.job_id FROM cc_job_lifecycle l WHERE l.user_id=? AND NOT '+job_cache.active_sql(),[user,*job_cache.active_args()])}
- data=record['data'];members=data.get('jobs',[]);active=[r for r in members if r['id'] not in inactive]
- return {**record,'data':{**data,'jobs':active,'active_count':len(active),'archived_count':len(members)-len(active)}}
+ data=record['data'];members=data.get('jobs',[]);active=[r for r in members if r['id'] not in inactive];archived_count=len(members)-len(active)
+ matches=job_role_matching.for_search(data)
+ if matches:active=[r for r in active if matches(r.get('data',{}).get('title',''))]
+ return {**record,'data':{**data,'jobs':active,'active_count':len(active),'archived_count':archived_count}}
