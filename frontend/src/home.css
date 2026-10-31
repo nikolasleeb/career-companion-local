@@ -6,7 +6,7 @@
 .home-dashboard-heading{margin:0 0 12px;align-items:center;gap:12px}
 .home-dashboard-heading h1{font-size:32px;line-height:1.15;margin:0}
 .home-dashboard-heading p{margin:4px 0 0}
-.home-dashboard{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"continue usage plan" "chart suggestions plan" "profile profile plan" "footnote footnote footnote";gap:10px;align-items:stretch}
+.home-dashboard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-areas:"chart chart chart plan" "usage profile continue plan" "footnote footnote footnote footnote";gap:12px;align-items:stretch}
 .home-dashboard .panel{margin:0;padding:12px;min-width:0;min-height:0;display:flex;flex-direction:column;align-items:stretch}
 .home-dashboard h2{font-size:18px;line-height:1.3;margin:0 0 6px}
 .home-dashboard .panel h3{font-size:15px;line-height:1.4;margin:0}
@@ -17,8 +17,8 @@
 .home-dashboard .button.secondary{background:#f0f4f9;border:1px solid #b5c2d4;color:#0c234b}
 .home-dashboard .button.secondary:hover:not(:disabled){background:#e2eaf5;border-color:#7186a4;text-decoration:none}
 .home-dashboard .button:focus-visible,.home-dashboard-heading .button:focus-visible{outline:3px solid #ab0520;outline-offset:3px}
-.home-continue{grid-area:continue}.home-usage-panel{grid-area:usage}.home-plan{grid-area:plan}.home-chart{grid-area:chart}.home-suggestions{grid-area:suggestions}.home-profile{grid-area:profile}
-.home-continue,.home-usage-panel{align-self:start}
+.home-continue{grid-area:continue}.home-usage-panel{grid-area:usage}.home-plan{grid-area:plan}.home-chart{grid-area:chart}.home-profile{grid-area:profile}
+.home-continue>.button,.home-usage-panel>.button,.home-profile>.button{margin-top:auto}
 .home-dashboard .home-usage{font-size:28px;font-weight:700;line-height:1.2;margin:6px 0 14px;font-variant-numeric:tabular-nums}
 .home-dashboard label{font-size:12px;gap:3px;margin:0}
 .home-dashboard select{padding:6px 28px 6px 8px;min-height:36px;font-size:12px;max-width:100%;width:100%;text-overflow:ellipsis}
@@ -31,22 +31,18 @@
 .home-text-link:focus-visible{outline:3px solid #ab0520;outline-offset:3px}
 .home-dashboard .home-ellipsis{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%}
 .home-dashboard .home-two-lines{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.home-next-steps,.home-job-list,.application-flow-legend{list-style:none;padding:0;margin:0}
-.home-profile{position:relative}
-.home-profile>h2{padding-right:110px;min-height:32px}
-.home-next-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px}
-.home-next-steps>li{margin:0;padding:2px 0;font-size:12px;line-height:1.45;min-width:0}
-.home-next-steps>li+li{border-left:1px solid #d8e0ec;padding-left:16px}
-.home-profile>.button{position:absolute;right:14px;top:10px}
-.home-dashboard .home-job-list>li{margin:0;padding:0;line-height:1.2;font-size:12px}
-.home-job-list>li+li{border-top:1px solid #d8e0ec}
-.home-dashboard .home-job-list .small{font-size:11px;line-height:1.2}
-.home-suggestions>.button,.home-chart>.button{margin-top:6px}
+.home-next-steps,.application-flow-legend{list-style:none;padding:0;margin:0}
+.home-next-steps{display:grid;gap:6px;margin-bottom:10px}
+.home-next-steps>li{margin:0;padding:0;font-size:12px;line-height:1.45;min-width:0}
+.home-next-steps>li+li{border-top:1px solid #d8e0ec;padding-top:6px}
+.home-profile>p{font-size:12px;line-height:1.45;margin-bottom:12px}
+.home-chart>.button{margin-top:6px}
 .home-dashboard .home-footnote{grid-area:footnote;margin:0}
 .home-dashboard .application-flow-compact{min-width:0;height:auto;overflow:visible;outline-offset:3px}
-.home-dashboard .application-flow-compact svg{width:100%;min-width:0;height:80px;display:block}
+.home-dashboard .application-flow-compact svg{width:100%;min-width:0;height:clamp(144px,18vh,200px);display:block}
 .home-dashboard .application-flow-legend{display:flex;flex-wrap:wrap;gap:4px 10px;margin:6px 0;font-size:11px;line-height:1.3}
 .application-flow-legend li{display:flex;align-items:center;gap:4px}
 .application-flow-legend li>span{width:8px;height:8px;flex-shrink:0;border-radius:2px}
-@container(max-width:850px){.home-dashboard{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"continue usage" "plan plan" "chart suggestions" "profile profile" "footnote footnote"}.home-plan>.button{margin-top:8px}}
-@container(max-width:560px){.home-dashboard{grid-template-columns:minmax(0,1fr);grid-template-areas:"continue" "usage" "plan" "chart" "suggestions" "profile" "footnote"}.home-dashboard-heading{flex-wrap:wrap}.home-next-steps{grid-template-columns:minmax(0,1fr)}.home-next-steps>li+li{border-left:0;padding-left:0;border-top:1px solid #d8e0ec;padding-top:8px}}
+@container(max-width:850px){.home-dashboard{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"chart chart plan" "usage profile plan" "continue continue plan" "footnote footnote footnote"}.home-plan>.button{margin-top:auto}}
+@container(max-width:650px){.home-dashboard{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"chart chart" "plan plan" "usage profile" "continue continue" "footnote footnote"}.home-plan>.button{margin-top:8px}}
+@container(max-width:400px){.home-dashboard{grid-template-columns:minmax(0,1fr);grid-template-areas:"chart" "plan" "usage" "profile" "continue" "footnote"}.home-dashboard-heading{flex-wrap:wrap}}
