@@ -18,7 +18,9 @@
 .home-dashboard .button.secondary:hover:not(:disabled){background:#e2eaf5;border-color:#7186a4;text-decoration:none}
 .home-dashboard .button:focus-visible,.home-dashboard-heading .button:focus-visible{outline:3px solid #ab0520;outline-offset:3px}
 .home-continue{grid-area:continue}.home-usage-panel{grid-area:usage}.home-plan{grid-area:plan}.home-chart{grid-area:chart}.home-profile{grid-area:profile}
-.home-continue>.button,.home-usage-panel>.button,.home-profile>.button{margin-top:auto}
+.home-continue>.button,.home-profile>.button{margin-top:auto}
+.home-dashboard .home-usage-panel{align-items:center;justify-content:center;text-align:center}
+.home-dashboard .home-usage-panel>.button{align-self:center;margin-top:0}
 .home-dashboard .home-usage{font-size:28px;font-weight:700;line-height:1.2;margin:6px 0 14px;font-variant-numeric:tabular-nums}
 .home-dashboard label{font-size:12px;gap:3px;margin:0}
 .home-dashboard select{padding:6px 28px 6px 8px;min-height:36px;font-size:12px;max-width:100%;width:100%;text-overflow:ellipsis}
