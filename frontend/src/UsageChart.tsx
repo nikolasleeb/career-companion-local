@@ -1,7 +1,7 @@
 import React,{useEffect,useId,useMemo,useRef,useState} from 'react';
 import {costTicks} from './costChartTicks';
 import {costAmount,dollars} from './costHistoryData';
-import {ChartMetric,UsageBucket,chartPeriods,chartValue,periodLabel,recordedTokens,tokenMissing,tokenText,tokenTotalText} from './usageChartData';
+import {ChartMetric,UsageBucket,periodColumns,chartPeriods,chartValue,periodLabel,recordedTokens,tokenMissing,tokenText,tokenTotalText} from './usageChartData';
 import './usageChart.css';
 export function UsageChart({rows,bucket,start,end}:{rows:UsageBucket[];bucket:string;start:string;end:string}){
  const ref=useRef<HTMLElement>(null),regions=useRef(new Map<string,SVGGElement>()),id=useId();
@@ -9,7 +9,8 @@ export function UsageChart({rows,bucket,start,end}:{rows:UsageBucket[];bucket:st
  const periods=useMemo(()=>chartPeriods(rows,costTicks(rows,bucket,700,start,end).periods),[rows,bucket,start,end]);
  const width=Math.max(160,size-80),left=48,baseline=185,height=150;
  const scale=useMemo(()=>costTicks(periods,bucket,width,start,end),[periods,bucket,width,start,end]);
- const highest=Math.max(0,...rows.map(row=>chartValue(row,metric))),peak=highest||(metric==='cost'?.000001:1),barWidth=Math.min(24,Math.max(3,width/Math.max(1,periods.length)*.5));
+ const columns=useMemo(()=>periodColumns(periods.map(p=>p.key),width),[periods,width]);
+ const highest=Math.max(0,...rows.map(row=>chartValue(row,metric))),peak=highest||(metric==='cost'?.000001:1),barWidth=Math.min(24,width/Math.max(1,periods.length)*.5);
  const current=periods.find(row=>row.key===active),focus=periods.some(p=>p.key===focusKey)?focusKey:periods[0]?.key;
  // A hidden, conservative sizing sample reserves the largest details layout
  // across both metrics. It contains no extra data requests or accessible content.
@@ -39,9 +40,8 @@ export function UsageChart({rows,bucket,start,end}:{rows:UsageBucket[];bucket:st
    <line x1={left} y1={baseline} x2={left+width} y2={baseline} stroke="#cad5e5"/>
    <text x={left} y="20">{metric==='cost'?(rows.length&&rows.every(row=>row.estimated_cost_usd==null)?'Unpriced':dollars(highest)):!highest&&rows.some(row=>row.requests&&tokenMissing(row))?'Not reported':new Intl.NumberFormat(undefined,{notation:'compact',maximumFractionDigits:1}).format(highest)}</text>
    {periods.map((row,index)=>{
-    const x=left+scale.position(index),value=chartValue(row,metric),barHeight=value/peak*height,inputHeight=(row.input_tokens||0)/peak*height,outputHeight=(row.output_tokens||0)/peak*height;
-    const previous=index?left+scale.position(index-1):left,next=index<periods.length-1?left+scale.position(index+1):left+width;
-    const hitLeft=index?(previous+x)/2:left,hitRight=index===periods.length-1?left+width:(next+x)/2;
+    const x=left+columns[index].center,value=chartValue(row,metric),barHeight=value/peak*height,inputHeight=(row.input_tokens||0)/peak*height,outputHeight=(row.output_tokens||0)/peak*height;
+    const hitLeft=left+columns[index].left,hitRight=left+columns[index].right;
     const unknown=metric==='cost'?row.requests>0&&row.estimated_cost_usd==null:row.requests>0&&tokenMissing(row)>0&&!value;
     return <g key={row.key} ref={node=>{if(node)regions.current.set(row.key,node);else regions.current.delete(row.key);}} role="button" data-usage-period={row.key} tabIndex={row.key===focus?0:-1} aria-label={description(row)} aria-describedby={active===row.key?id+'-tooltip':undefined} onFocus={()=>{setActive(row.key);setFocusKey(row.key);}} onBlur={()=>{if(!pinned)setActive(null);}} onKeyDown={event=>move(event,index)} onPointerEnter={event=>{if(event.pointerType!=='touch'&&!pinned)setActive(row.key);}} onPointerLeave={event=>{if(event.pointerType!=='touch'&&!pinned&&document.activeElement!==regions.current.get(row.key))setActive(null);}} onClick={()=>{setFocusKey(row.key);setActive(pinned&&active===row.key?null:row.key);setPinned(!(pinned&&active===row.key));}}>
      {active===row.key&&<rect x={hitLeft} y="25" width={Math.max(1,hitRight-hitLeft)} height={baseline-25} fill="#edf2f8"/>}
@@ -51,7 +51,7 @@ export function UsageChart({rows,bucket,start,end}:{rows:UsageBucket[];bucket:st
      <rect className="usage-hit-region" x={hitLeft} y="25" width={Math.max(1,hitRight-hitLeft)} height={baseline-20} fill="transparent"/>
     </g>;
    })}
-   {scale.ticks.map((tick,index)=><text key={tick.key} x={left+tick.x} y="213" textAnchor={index===0?'start':index===scale.ticks.length-1?'end':'middle'}>{tick.label}</text>)}
+   {scale.ticks.map((tick,index)=><text key={tick.key} x={left+(columns.find(column=>column.key===tick.key)?.center??tick.x)} y="213" textAnchor="middle">{tick.label}</text>)}
   </svg>
   <div className="usage-details-slot">
    <div className="usage-details-measure" aria-hidden="true" inert>{(['cost','tokens'] as const).map(value=><PeriodDetails key={value} row={sizingRow} metric={value} date="September 28, 2026 – September 30, 2026"/>)}<PeriodDetails row={{...sizingRow,input_tokens:0,output_tokens:0}} metric="tokens" date="September 28, 2026 – September 30, 2026"/></div>

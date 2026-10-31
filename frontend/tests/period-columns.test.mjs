@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import ts from 'typescript';
+const code=ts.transpileModule(readFileSync(new URL('../src/usageChartData.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const {periodColumns}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+for(const keys of [['2026-10-30'],['2026-10-24','2026-10-25','2026-10-26','2026-10-27','2026-10-28','2026-10-29','2026-10-30'],['2026-10-05','2026-10-12','2026-10-19'],['2026-08','2026-09','2026-10']])test('full equal columns for '+keys.length+' calendar periods',()=>{for(const width of [480,900,1450]){const cols=periodColumns(keys,width),step=width/keys.length;assert.equal(cols[0].left,0);assert.equal(cols.at(-1).right,width);for(const [i,c] of cols.entries()){assert.equal(c.key,keys[i]);assert(Math.abs(c.right-c.left-step)<1e-9);assert(Math.abs(c.center-(c.left+c.right)/2)<1e-9);if(i)assert.equal(c.left,cols[i-1].right);}}});
+test('empty period layout remains empty',()=>assert.deepEqual(periodColumns([],900),[]));
