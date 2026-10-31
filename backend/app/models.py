@@ -291,6 +291,7 @@ class InterviewOutput(StrictModel):
     follow_up: str
 
 class PrepRequest(StrictModel):
+    readiness_report_id: str = Field(default='',max_length=64)
     selected_topics: list[Annotated[str,Field(min_length=1,max_length=150)]] | None = Field(default=None,max_length=30)
     job_id: str | None = None
     analysis_id: str | None = None

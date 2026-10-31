@@ -7,6 +7,7 @@ offers have no automatic adapter. Read permissions are rechecked every request.
 import json,re
 from . import db,profile_answers,work_preferences,career_goals,project_relations
 REGISTRY={
+ 'readiness_report':'Generated career readiness assessment',
  'resume':'Finalized generated resume','resume_revision':'Finalized resume revision',
  'cover_letter':'Finalized generated cover letter','application':'Application tracking',
  'job':'Employer posting','analysis':'Completed generated posting analysis',
@@ -81,6 +82,7 @@ def project(user,r,permissions=None):
  if kind=='coach_plan':
   from . import plan_progress
   return text({**pick(d,('direction','actions')),'checklist':plan_progress.source_snapshot(user,r)})
+ if kind=='readiness_report':return text({'label':'Generated guidance, never qualification evidence','report':d.get('reply',{}),'selected_direction':d.get('input_snapshot',{}).get('inputs',{}).get('selected_code')})
  if kind=='saved_career':return text(pick(d,('code','title')))
  if kind=='career_explorer_search':return text(pick(d,('name','query','course_refs')))
  if kind=='project_analysis':
@@ -114,6 +116,7 @@ def records(user,excluded=()):
   yield {'source_key':source['id'],'record_id':source['record_id'],'kind':'reviewed_profile','label':'Confirmed Profile · '+source['field'].replace('_',' '),'revision':profile_context.digest(source),'status':'confirmed','text':text(source),'relationship_context_only':source.get('context_only',False)}
  with db.connect() as c:rows=[db.decode(r) for r in c.execute('SELECT * FROM entities WHERE user_id=? AND kind IN ('+','.join('?' for _ in REGISTRY)+') ORDER BY updated_at DESC',(user,*REGISTRY))]
  for r in rows:
+  if r['kind']=='readiness_report':continue # Shared only through explicit context, never automatic retrieval.
   if not __import__('app.personalization',fromlist=['allowed']).allowed(user) and r['kind']!='job':continue
   provenance=pick(r['data'],PROVENANCE)
   if r['id'] in excluded or not source_allowed(user,provenance,permissions,excluded):continue

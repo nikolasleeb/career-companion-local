@@ -7,7 +7,7 @@ from pydantic import Field
 from .models import StrictModel
 
 class Reference(StrictModel):
-    kind: Literal['occupation', 'offer']
+    kind: Literal['occupation', 'offer', 'readiness']
     id: str = Field(min_length=1, max_length=64)
     salary_area: str | None = Field(default=None,max_length=40)
     revision: str = Field(pattern=r'^[a-f0-9]{64}$')
@@ -46,6 +46,15 @@ def resolve(user, references):
             revision = digest(data)
             label = data['title'] + ' · occupation being explored, not a qualification'
             url = data['onet_url']
+        elif ref.kind == 'readiness':
+            from . import readiness, coach_access
+            report = readiness.owned(user, ref.id, 'readiness_report')
+            if not coach_access.source_allowed(user, report['data'].get('source_snapshot',[])):
+                raise HTTPException(409, 'Readiness sharing changed. Reassess before sharing this report.')
+            data = {'session_id': report['data']['session_id'], 'report_id': ref.id, 'reply': report['data']['reply'], 'label': 'Generated career guidance, not applicant evidence', 'source_snapshot': [{k:s[k] for k in ('record_id','kind','revision') if k in s} for s in report['data']['source_snapshot']]}
+            revision = readiness.digest(report['data'])
+            label = data['label']
+            url = ''
         else:
             from . import application_offers
             data = application_offers.shared_snapshot(user, ref.id)
@@ -62,6 +71,9 @@ def resolve(user, references):
 def plan_chunks(sources):
     chunks = []
     for source in sources:
+        if source['kind'] == 'explicit_readiness':
+            chunks.append({'chunk_id': 'readiness:'+source['record_id'], 'kind':'readiness', 'title':source['label'], 'url':'', 'text':json.dumps(source['snapshot']['reply'],ensure_ascii=False)[:10800], 'catalog_version':source['revision'], 'checked_at':None, 'stale':False})
+            continue
         if source['kind'] != 'explicit_occupation':
             raise HTTPException(422, 'Offer details can be shared with Career Coach, not added to a learning plan.')
         text = source['text']

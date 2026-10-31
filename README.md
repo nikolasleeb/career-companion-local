@@ -106,3 +106,7 @@ Resources → **Explore Occupations** offers occupation search, education links,
 ## Overall career direction
 
 Profile → Career Goals separates one optional overall statement from specific milestones. Use guided fields, skip education, or edit your statement directly. Empty fields or `[blank]` omit a part. Goals remain aspirations and automatic AI guidance stays opt-in. See [Career Goals](docs/CAREER-GOALS.md).
+
+## Career Readiness
+
+Resources → **Career Readiness** uses the OpenAI Python Agents SDK to explore directions, compare a reviewed shortlist, and assess preparation using sourced evidence. Ask follow-up questions or create a new assessment version when information changes. Proposed next steps connect to Action Plans, Skills, Interview Practice and Career Goals. Public research is optional and off by default; each explicit AI action uses your own key and an adjustable estimated spending ceiling. See [Career Readiness](docs/CAREER-READINESS.md) for evidence boundaries, costs and recovery.
