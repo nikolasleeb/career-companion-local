@@ -41,3 +41,15 @@ def test_ten_location_limit_legacy_single_and_return_to_single(client,account):
  assert client.get('/api/job-search/preferences').json()['preferences']['data']['query']['locations']==[]
  body['query']['locations']=['City '+str(i) for i in range(11)]
  assert client.put('/api/job-search/preferences',json=body).status_code==422
+
+
+def test_location_categories_cover_options_without_changing_matching_or_searching(client,account):
+ from app import job_locations
+ caps=client.get('/api/job-search/preferences').json()['capabilities']
+ groups=caps['location_groups']
+ assert list(groups)==['Nationwide','Regions','States','Cities']
+ assert groups['Nationwide']==['United States'] and 'East Coast' in groups['Regions']
+ assert 'Virginia' in groups['States'] and 'Richmond, VA' in groups['Cities']
+ assert [v for values in groups.values() for v in values]==caps['location_options']==job_locations.options()
+ assert len(set(caps['location_options']))==len(caps['location_options'])
+ assert not db.list_entities(account['id'],'search')

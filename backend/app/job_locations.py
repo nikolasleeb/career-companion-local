@@ -57,6 +57,7 @@ def provider_location(value):
  parts=value.rsplit(',',1)
  if len(parts)==2 and state(parts[1]):return parts[0].strip()+', '+STATES[state(parts[1])]
  return value.strip()
-def options():
- return ['United States',*REGIONS,*STATES.values(),'Tucson, AZ','Phoenix, AZ','Richmond, VA','Washington, DC','New York, NY','Boston, MA','Raleigh, NC','Atlanta, GA','Seattle, WA','San Francisco, CA']
+def groups():
+ return {'Nationwide':['United States'],'Regions':list(REGIONS),'States':list(STATES.values()),'Cities':['Tucson, AZ','Phoenix, AZ','Richmond, VA','Washington, DC','New York, NY','Boston, MA','Raleigh, NC','Atlanta, GA','Seattle, WA','San Francisco, CA']}
+def options():return [value for values in groups().values() for value in values]
 def region_details():return {name:[STATES[c] for c in values.split()] for name,values in REGIONS.items()}
