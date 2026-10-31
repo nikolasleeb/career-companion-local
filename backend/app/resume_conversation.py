@@ -71,6 +71,8 @@ def start(user,body):
             if body.analysis_id and existing['data'].get('analysis_id')!=body.analysis_id and not existing['data'].get('profile_dirty') and not task_running(c,user,id):
                 existing['data']['analysis_id']=body.analysis_id;existing['data']['version']+=1;write(c,user,'resume_conversation',existing['data'],id)
         else:
+            from . import job_cache
+            if not job_cache.is_active(user,body.job_id):raise HTTPException(409,'This posting is expired or closed. Existing application history remains available.')
             questions=project_context.fresh_questions(user,role_alignment.initial_questions((analysis or {}).get('data'),require(user,body.job_id,'job')['data']))
             data={'job_id':body.job_id,'analysis_id':body.analysis_id,'version':0,'messages':[],'questions':questions[:3],'asked_questions':questions[:3],'proposals':[],'revision_ids':[],'current_revision_id':None,'workspace_token':None,'profile_dirty':False,'approved_record_ids':[]}
             id=write(c,user,'resume_conversation',data)
