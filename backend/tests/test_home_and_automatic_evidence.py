@@ -39,15 +39,18 @@ def test_automatic_payload_source_labels_privacy_and_model_choice(client,account
     async def model(schema,payload,*a,**kw):
         calls.append(payload)
         if schema.__name__=='DraftAudit':return {'approved':True,'issues':[]},{'estimated_token_cost_usd':0}
-        rows=payload['catalog'];r=next(r for r in rows if r['id']==job['id']);i=next(i for i in r['items'] if i.get('project_source'))
-        return {'headline':'','headline_evidence':[],'keywords':[],'omissions':[],'entries':[{'record_id':job['id'],'reason':'Relevant project under its linked role','items':[{'item_id':i['item_id'],'text':i['original'],'priority':80,'reason':'Relevant tool'}]}]},{'estimated_token_cost_usd':0}
-    monkeypatch.setattr(ai,'structured',model);monkeypatch.setattr(resume_builder,'render',lambda s:(1,{}))
+        fact=next(f for f in payload['professional_evidence']['facts'] if f['record_id']==p['id'] and f['field']=='description')
+        if schema.__name__=='ResumeStrategy':return {'focus':'Scenario tooling','rationale':'Applied tool development.','priorities':[{'id':'tools','text':'Develop tools','posting_quote':'Develop scenario tools.','kind':'responsibility','evidence':'direct','source_ids':[fact['id']],'reason':'Reviewed tool project.','essential':True}],'constraints':[]},{'estimated_token_cost_usd':0}
+        return {'headline':'','headline_evidence':[],'keywords':[],'omissions':[],'entries':[{'record_id':job['id'],'reason':'Relevant project under its linked role','items':[{'source_ids':[fact['id']],'text':fact['text'],'priority':80,'reason':'Relevant tool'}]}]},{'estimated_token_cost_usd':0}
+    from app import resume_layout
+    monkeypatch.setattr(ai,'structured',model);monkeypatch.setattr(resume_layout,'render',lambda snap:{**copy.deepcopy(snap),'layout':{'pages':1,'issues':[]},'artifacts':{}})
     result=asyncio.run(optimization.create(u,snapshot,None,'economy'))['data']
     assert result['experience_ids']==[job['id']]
     wire=json.dumps(calls);assert 'PRIVATE_GOALS_SENTINEL' not in wire and 'authorized_us' not in wire
-    assert 'Saved links permit reuse without another placement approval' in wire
-    assert 'internship versus contractor' in wire
-    assert calls[1]['proposal']['entries'][0]['record_id']==job['id']
+    assert 'source/destination dates' in wire
+    canonical=[f for f in calls[0]['professional_evidence']['facts'] if f['record_id']==p['id'] and f['field']=='description']
+    assert len(canonical)==1 and job['id'] in canonical[0]['allowed_destinations']
+    assert calls[-1]['final_resume']['sections'][1]['entries'][0]['record_id']==job['id']
 
 
 def test_home_empty_read_only_account_scope_and_partial_failure(client,account,monkeypatch):

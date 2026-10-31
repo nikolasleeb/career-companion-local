@@ -131,15 +131,8 @@ def detail(id:str,job_id:str,user=Depends(owner)):
  return decode(row)
 
 @router.get('/alerts/{day}/jobs')
-def alert_jobs(day:str,page:int=Query(default=1,ge=1),user=Depends(owner)):
- """Lazy notification-history summaries; never send full posting text with the workspace."""
- with db.connect() as c:row=c.execute('SELECT result FROM cc_job_alert_runs WHERE user_id=? AND day=?',(user,day)).fetchone()
- if not row:raise HTTPException(404,'Daily check not found.')
- ids=list(dict.fromkeys(json.loads(row['result'] or '{}').get('new_jobs',[])));pages=max(1,math.ceil(len(ids)/25));page=min(page,pages);jobs=[]
- for id in ids[(page-1)*25:page*25]:
-  r=db.get(user,id,'job')
-  if r:jobs.append({'id':id,'data':{k:r['data'].get(k,'') for k in ('title','company','url')}})
- return {'jobs':jobs,'page':page,'pages':pages,'total':len(ids)}
+def alert_jobs(day:str,page:int=Query(default=1,ge=1),user=Depends(auth.current)):
+ raise HTTPException(410,'Daily alerts have been retired. Use Job Search for manual searches.')
 
 
 def public_search(user,record):

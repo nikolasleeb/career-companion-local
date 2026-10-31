@@ -6,6 +6,7 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
 class Credentials(StrictModel):
+    invite_token: str = Field(default='',max_length=100)
     username: str = Field(min_length=3, max_length=60, pattern=r'^[a-zA-Z0-9_.-]+$')
     password: str = Field(min_length=10, max_length=200)
 
@@ -552,6 +553,44 @@ class OptimizationOutput(StrictModel):
 class DraftAudit(StrictModel):
     approved: bool
     issues: list[str]
+
+class ResumePriority(StrictModel):
+    id: str
+    text: str
+    posting_quote: str
+    kind: Literal['required','preferred','responsibility','competency']
+    evidence: Literal['direct','transferable','unresolved']
+    source_ids: list[str] = Field(max_length=12)
+    reason: str
+    essential: bool
+
+class ResumeWritingConstraint(StrictModel):
+    instruction: str = Field(max_length=1200)
+    user_quote: str = Field(max_length=1200)
+
+class ResumeStrategy(StrictModel):
+    focus: str = Field(max_length=200)
+    rationale: str = Field(max_length=1200)
+    priorities: list[ResumePriority] = Field(max_length=24)
+    constraints: list[ResumeWritingConstraint] = Field(max_length=20)
+
+class ComposedResumeItem(StrictModel):
+    source_ids: list[str] = Field(min_length=1,max_length=8)
+    text: str = Field(min_length=1,max_length=1800)
+    priority: int = Field(ge=1,le=100)
+    reason: str = Field(max_length=1000)
+
+class ComposedResumeEntry(StrictModel):
+    record_id: str
+    reason: str
+    items: list[ComposedResumeItem] = Field(max_length=20)
+
+class ResumeComposition(StrictModel):
+    headline: str = Field(max_length=250)
+    headline_evidence: list[Evidence]
+    entries: list[ComposedResumeEntry] = Field(max_length=40)
+    omissions: list[DraftOmission] = Field(max_length=100)
+    keywords: list[DraftKeyword] = Field(max_length=24)
 
 class OptimizationRequest(ResumeRequest):
     mode: Literal['economy','deep','custom'] = 'economy'

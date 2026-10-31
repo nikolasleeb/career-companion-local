@@ -28,6 +28,7 @@ STAGES={
     'preparing':('Preparing confirmed experience','local'),
     'comparison':('Refreshing comparison with approved details','provider'),
     'drafting':('Writing the tailored draft','provider'),
+    'resume_planning':('Matching employer priorities to confirmed evidence','provider'),
     'fitting':('Fitting content to one page','local'),
     'rendering':('Rendering and inspecting the PDF','local'),
     'layout':('Refining wording to correct the layout','provider'),

@@ -1,20 +1,28 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
 import ts from 'typescript';
 const source=ts.transpileModule(readFileSync(new URL('../src/jobNotifications.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
-const {enrollBrowser}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
-const key=Buffer.alloc(65,1).toString('base64url');
-test('denied permission performs no enrollment or provider request',async()=>{
- let calls=0;await assert.rejects(()=>enrollBrowser(async()=>{calls++;},{notification:{requestPermission:async()=>'denied'},serviceWorker:{},pushSupported:true}),/not enabled/);assert.equal(calls,0);
+const {retireJobNotifications}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+test('retirement removes only the job-alert worker without permission or provider calls',async()=>{
+ const removed=[],unsubscribed=[];
+ const worker=(name,script)=>({active:{scriptURL:'https://example.org/'+script},pushManager:{getSubscription:async()=>({unsubscribe:async()=>unsubscribed.push(name)})},unregister:async()=>removed.push(name)});
+ await retireJobNotifications({getRegistrations:async()=>[worker('job','job-notifications.js'),worker('other','another-worker.js')]});
+ assert.deepEqual(removed,['job']);assert.deepEqual(unsubscribed,['job']);
 });
-test('reopening enrollment reuses an existing device subscription',async()=>{
- const calls=[],sub={toJSON:()=>({endpoint:'fictional-endpoint'})};let subscribed=0;
- const worker={pushManager:{getSubscription:async()=>sub,subscribe:async()=>{subscribed++;return sub;}}};
- await enrollBrowser(async(path,method,body)=>{calls.push([path,method,body]);return {public_key:key};},{notification:{requestPermission:async()=>'granted'},serviceWorker:{register:async()=>{},ready:Promise.resolve(worker)},pushSupported:true});
- assert.equal(subscribed,0);assert.deepEqual(calls[1],['/job-search/push','POST',{endpoint:'fictional-endpoint'}]);
+test('unsupported browsers and inaccessible registrations do not break search',async()=>{
+ await retireJobNotifications({getRegistrations:async()=>{throw Error('blocked');}});
+ await retireJobNotifications({getRegistrations:async()=>[]});
 });
-test('failed account enrollment rolls back a newly created browser subscription',async()=>{
- let removed=0;const worker={pushManager:{getSubscription:async()=>null,subscribe:async()=>({toJSON:()=>({}),unsubscribe:async()=>{removed++;}})}};
- await assert.rejects(()=>enrollBrowser(async path=>{if(path.endsWith('push-key'))return {public_key:key};throw new Error('Connection lost');},{notification:{requestPermission:async()=>'granted'},serviceWorker:{register:async()=>{},ready:Promise.resolve(worker)},pushSupported:true}),/Connection lost/);assert.equal(removed,1);
+test('retired worker ignores queued pushes and unregisters on activation',async()=>{
+ const listeners={};let removed=0,unsubscribed=0;
+ runInNewContext(readFileSync(new URL('../public/job-notifications.js',import.meta.url),'utf8'),{self:{addEventListener:(event,fn)=>listeners[event]=fn,skipWaiting:async()=>{},registration:{pushManager:{getSubscription:async()=>({unsubscribe:async()=>unsubscribed++})},unregister:async()=>removed++}}});
+ listeners.push({data:{json:()=>({body:'must not display'})}});
+ await new Promise((resolve,reject)=>listeners.activate({waitUntil:p=>p.then(resolve,reject)}));
+ assert.equal(removed,1);assert.equal(unsubscribed,1);
+});
+
+test('failed subscription cleanup still unregisters the retired worker',async()=>{
+ let removed=0;await retireJobNotifications({getRegistrations:async()=>[{active:{scriptURL:'https://example.org/job-notifications.js'},pushManager:{getSubscription:async()=>{throw Error('revoked');}},unregister:async()=>removed++}]});assert.equal(removed,1);
 });

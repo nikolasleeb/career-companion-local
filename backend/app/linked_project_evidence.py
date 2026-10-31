@@ -122,10 +122,16 @@ def apply(snapshot, reviewed):
 
 def validate_selected(snapshot):
     """Final deterministic duplicate gate, also used after fitting and manual editing."""
-    seen = set();narrative = []
+    seen = set();narrative = [];facts=set()
+    composed=any(i.get('source_refs') for e in entries(snapshot).values() for i in e.get('content_items',[]))
     for rid,entry in entries(snapshot).items():
         for item in entry.get('content_items', []):
             ref = item.get('project_source');key = (ref['project_id'],ref['item_id']) if ref else (rid,item['item_id'])
+            if composed:
+                from . import resume_strategy
+                keys={r['source_id'] for r in item.get('source_refs',[])} or {resume_strategy.digest([key[0],key[1],text])[:24] for text in resume_strategy.passages(ref.get('original',item['original']) if ref else item['original'],item['field'])}
+                if facts&keys:raise ServiceError('The same reviewed fact is selected in overlapping original and composed bullets. Uncheck the repeated source; your previous PDF is intact.')
+                facts.update(keys)
             if key in seen:raise ServiceError('The same project source item cannot appear in more than one resume location.')
             seen.add(key)
             if item['field'] in NARRATIVE:narrative.append((ref,normalized(item['text'])))

@@ -1,3 +1,4 @@
+from resume_strategy_fixtures import strategy as fake_strategy, composition as fake_composition
 from conftest import without_setup
 from conftest import onboard_test_account
 import copy
@@ -54,9 +55,11 @@ def fake_draft(payload):
 def mock_model(monkeypatch,mutate=None,audit=True):
     monkeypatch.setattr(config,'OPENAI_KEY','fictional-no-network')
     calls=[]
-    async def fake(body):
+    async def fake(body,**kwargs):
         payload=json.loads(body['input']);calls.append((body,payload))
         if body['text']['format']['name']=='DraftAudit':result=audit(payload) if callable(audit) else {'approved':audit,'issues':[] if audit else ['Unsupported accomplishment.']}
+        elif body['text']['format']['name']=='ResumeStrategy':result=fake_strategy(payload)
+        elif body['text']['format']['name']=='ResumeComposition':result=fake_composition(payload,mutate)
         else:
             result=fake_draft(payload)
             if mutate:mutate(result)
@@ -96,7 +99,7 @@ def test_ai_draft_roundtrip_keywords_privacy_both_layouts(client,account,monkeyp
     assert estimate.status_code==200 and estimate.json()['usd']>0 and not calls
     task=wait_task(client,client.post('/api/resumes/optimize',json={**body,'mode':'custom'}))
     assert task['status']=='completed',task
-    draft=task['result'];assert len(calls)==2 and draft['data']['source_checked']
+    draft=task['result'];assert len(calls)==3 and draft['data']['source_checked']
     assert 'authorized_us' not in json.dumps(calls) and 'sponsorship_now' not in json.dumps(calls)
     assert all('Worked unrelated' not in b for r in draft['data']['catalog'] for i,b in enumerate(r['bullets']) if i in draft['data']['content'].get(r['id'],[]))
     req={**body,'draft_id':draft['id'],'headline':draft['data']['headline'],'content':draft['data']['content'],'experience_ids':draft['data']['experience_ids']}
@@ -115,7 +118,7 @@ def test_ai_draft_roundtrip_keywords_privacy_both_layouts(client,account,monkeyp
         doc=Document(io.BytesIO(word));assert doc.styles['Normal'].font.size.pt==10.5
         assert documents.docx_pages(word)==1
         assert 'Data Science | Python & SQL' in client.get('/api/resumes/'+rid+'/export/txt').text
-    assert len(calls)==2 # saving, selecting, rendering and downloading make no API requests
+    assert len(calls)==3 # saving, selecting, rendering and downloading make no API requests
     backup=client.get('/api/account/export').json()
     assert any(r['kind']=='resume_draft' for r in backup['records'])
     assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup).encode(),'application/json')}).status_code==200
@@ -127,7 +130,7 @@ def test_ai_draft_roundtrip_keywords_privacy_both_layouts(client,account,monkeyp
     assert all(db.get(account['id'],rid,'experience') for rid in d['experience_ids'])
 
 
-@pytest.mark.parametrize('kind',['number','credential','foreign','empty','audit'])
+@pytest.mark.parametrize('kind',['number','foreign','empty','audit'])
 def test_invalid_draft_preserves_inputs_no_save(client,account,monkeypatch,kind):
     job,rows,body=setup(client,account)
     def mutate(d):
@@ -146,7 +149,7 @@ def test_invalid_draft_preserves_inputs_no_save(client,account,monkeypatch,kind)
 def test_draft_ownership_and_project_description(client,account,monkeypatch):
     job,rows,body=setup(client,account);calls=mock_model(monkeypatch)
     result=wait_task(client,client.post('/api/resumes/optimize',json=body));draft=result['result']
-    other=TestClient(app,base_url='http://localhost');me=other.post('/api/auth/register',json={'username':'another','password':'another-fictional-password'}).json();other.headers['X-CSRF-Token']=me['csrf']
+    other=TestClient(app,base_url="http://localhost");me=other.post('/api/auth/register',json={'username':'another','password':'another-fictional-password'}).json();other.headers['X-CSRF-Token']=me['csrf']
     onboard_test_account(me)
     assert other.get('/api/resume-drafts/'+draft['id']).status_code==404
     assert other.post('/api/resumes',json={**body,'draft_id':draft['id']}).status_code==400
@@ -172,12 +175,12 @@ def test_fit_never_leaves_empty_project_or_skills(monkeypatch):
 def test_user_edits_and_stale_source_preservation(client,account,monkeypatch):
     job,rows,body=setup(client,account);calls=mock_model(monkeypatch)
     task=wait_task(client,client.post('/api/resumes/optimize',json=body));draft=task['result']
-    project=next(r for r in draft['data']['catalog'] if r['category']=='project');item=project['items'][0]
+    project=next(r for r in draft['data']['catalog'] if r['category']=='project');item=project['items'][draft['data']['content'][project['id']][0]]
     req={**body,'draft_id':draft['id'],'headline':'Business Analytics | Python','experience_ids':draft['data']['experience_ids'],'content':draft['data']['content'],'overrides':{item['item_id']:'Used Python to analyze demand data and present findings to classmates.'}}
     saved=client.post('/api/resumes',json=req);assert saved.status_code==200,saved.text
     text=client.get('/api/resumes/'+saved.json()['id']+'/export/txt').text
     assert 'Business Analytics | Python' in text and 'Used Python to analyze demand' in text
-    assert len(calls)==2
+    assert len(calls)==3
     source=next(r for r in rows if r['id']==project['id'])
     client.put('/api/experience/'+source['id'],json={**source['data'],'description':'Changed source content after the AI draft.'})
     assert client.post('/api/resumes',json=req).status_code==409
@@ -191,7 +194,7 @@ def test_accepted_edits_survive_optimization(client,account,monkeypatch):
     analysis=db.save(account['id'],'analysis',{'schema_version':3,'job_id':job['id'],'requirements':[],'suggestions':[{'record_id':project['id'],'original':original,'proposed':replacement}]})
     req={**body,'analysis_id':analysis['id'],'decisions':[{'index':0,'action':'accept'}]}
     task=wait_task(client,client.post('/api/resumes/optimize',json=req));assert task['status']=='completed',task
-    payload=calls[0][1];assert replacement in payload['accepted_edits'].values()
+    payload=calls[0][1];assert replacement in [v['text'] for v in payload['user_constraints']['locked_items'].values()]
     draft=task['result']
     saved=client.post('/api/resumes',json={**req,'draft_id':draft['id'],'content':draft['data']['content'],'experience_ids':draft['data']['experience_ids']})
     assert saved.status_code==200,saved.text
@@ -254,20 +257,19 @@ def test_date_citations_reach_independent_audit_from_confirmed_headers(client,ac
     def audit(payload):
         # Model boundary: a shortened catalog must fail this check, even though
         # the deterministic citation check can already see the snapshot header.
-        source=next(r for r in payload['confirmed_sources'] if r['id']==education['id'])
-        assert all(quote not in i['text'] for i in source['items'])
+        source=next(r for r in payload['professional_evidence']['records'] if r['record_id']==education['id'])
         assert source['start_date']==dates['start_date']
         assert source['end_date']==dates['end_date']
         assert source['expected_graduation']==dates['expected_graduation']
-        supported=quote in source.get('dates','') and quote in source.get('details','')
-        variants=payload.get('evidence_sources',{}).get(education['id'],[])
+        supported=quote in source.get('dates','')
+        variants=[f['text'] for f in payload['professional_evidence']['facts'] if f['record_id']==education['id']]
         assert any(quote in text for text in variants)
-        assert all('authorized_us' not in r and 'sponsorship_now' not in r for r in payload['confirmed_sources'])
+        assert all('authorized_us' not in r and 'sponsorship_now' not in r for r in payload['professional_evidence']['records'])
         return {'approved':supported,'issues':[] if supported else ['Degree dates are missing from the confirmed sources.']}
     calls=mock_model(monkeypatch,mutate,audit=audit)
     task=wait_task(client,client.post('/api/resumes/optimize',json=body))
     assert task['status']=='completed',task
-    assert task['result']['data']['source_checked'] and len(calls)==2
+    assert task['result']['data']['source_checked'] and len(calls)==3
 
 
 @pytest.mark.parametrize('foreign_record',[False,True])
@@ -278,3 +280,21 @@ def test_header_date_citations_reject_invented_dates_and_other_records(foreign_r
     output={'headline':'Computing','headline_evidence':[{'record_id':'degree','quote':'BS Computing'}],'entries':[{'record_id':'degree','items':[]}],'keywords':[{'term':'Python','job_quote':'Python reporting','evidence':[{'record_id':'project' if foreign_record else 'degree','quote':'September 2019 – June 2023' if foreign_record else 'September 2019 – June 2024'}]}]}
     with pytest.raises(ServiceError,match='source could not be verified'):
         optimization.validate(output,snapshot,optimization.evidence_sources(snapshot))
+
+
+def test_model_cannot_rewrite_server_owned_credentials(client,account,monkeypatch):
+ job,rows,body=setup(client,account)
+ def changed(d):d['entries'][3]['items'][0]['text']='AWS Certified Solutions Architect'
+ mock_model(monkeypatch,changed)
+ result=wait_task(client,client.post('/api/resumes/optimize',json=body));assert result['status']=='completed',result
+ draft=result['result']['data'];items=[i['text'] for values in draft['composed_items'].values() for i in values]
+ assert 'AWS Certified Cloud Practitioner' in items and 'AWS Certified Solutions Architect' not in items
+
+
+def test_optimized_draft_uses_its_saved_selection_when_content_is_omitted(client,account,monkeypatch):
+ job,rows,body=setup(client,account);mock_model(monkeypatch)
+ task=wait_task(client,client.post('/api/resumes/optimize',json=body));assert task['status']=='completed',task
+ draft=task['result'];saved=client.post('/api/resumes',json={**body,'draft_id':draft['id'],'experience_ids':draft['data']['experience_ids']})
+ assert saved.status_code==200,saved.text
+ text=client.get('/api/resumes/'+saved.json()['id']+'/export/txt').text
+ assert text.count('Analyzed demand data using Python and presented findings to classmates.')==1

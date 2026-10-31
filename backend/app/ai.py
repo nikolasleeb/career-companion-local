@@ -47,7 +47,7 @@ async def call_api(body,retry_allowed=True):
     body={'service_tier':'default',**body}
     if 'max_output_tokens' in body:body['max_output_tokens']=output_limit(body['max_output_tokens'])
     policy=_request_policy.get()
-    if policy:retry_allowed=False
+    if policy or (_context.get() or {}).get('process') in ('resume_guided','resume_optimize'):retry_allowed=False
     # Reasoning-heavy comparisons can outlast the old 150-second read limit.
     # Transport timeouts are ambiguous: do not automatically repeat a paid POST.
     async with httpx.AsyncClient(timeout=httpx.Timeout(480,connect=15), trust_env=False) as client:

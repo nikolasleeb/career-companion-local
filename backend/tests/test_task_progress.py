@@ -94,10 +94,10 @@ def test_real_guided_pipeline_reports_draft_layout_audit_and_local_stages(env,cl
     completed=get_task(identity,user={'id':user})
     assert completed['status']=='completed',completed
     assert completed['result']['current']
-    assert observed==[('OptimizationOutput','drafting'),('OptimizationOutput','layout'),('DraftAudit','checking')]
-    assert len(calls)==3 # Existing bounded correction + audit; progress adds no requests.
+    assert observed==[('ResumeStrategy','resume_planning'),('ResumeComposition','drafting'),('OptimizationOutput','layout'),('DraftAudit','checking')]
+    assert len(calls)==4 # Planning, composition, one correction and audit; progress adds no requests.
     codes=[v['code'] for v in completed['progress']['history']]+[completed['progress']['code']]
-    assert codes==['starting','preparing','drafting','fitting','rendering','layout','rendering','checking','saving']
+    assert codes==['starting','preparing','resume_planning','drafting','rendering','layout','rendering','checking','saving']
 
 
 def test_manual_build_reports_only_local_work(env,client):

@@ -35,12 +35,7 @@ if os.getenv('CAREER_ENV', 'local') != 'local':
 # Shared job providers and opt-in notification delivery; never returned to browsers.
 USAJOBS_KEY=os.getenv('USAJOBS_API_KEY','')
 USAJOBS_EMAIL=os.getenv('USAJOBS_API_EMAIL','')
-CF_EMAIL_TOKEN=os.getenv('CF_EMAIL_TOKEN','')
-CF_EMAIL_ACCOUNT=os.getenv('CF_EMAIL_ACCOUNT_ID','')
-ALERT_FROM=os.getenv('ALERT_FROM','')
-JOB_SCHEDULER_ENABLED=os.getenv('JOB_SCHEDULER_ENABLED','true').lower()=='true'
 
-ALERT_PUBLIC_ORIGIN=os.getenv('ALERT_PUBLIC_ORIGIN','http://localhost:3000').rstrip('/')
 
 # Manual pilot trials are available only on the separately operated hosted edition.
 MANUAL_TRIAL_OWNER_ID=''

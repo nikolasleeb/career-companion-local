@@ -49,7 +49,7 @@ Cache hits make no calls. Recorded attempt counts cover this installation's new
 manual requests, not historical or external use or exact remaining allowance.
 Trial results and credentials never enter the public snapshot cache. Scheduled
 checks remove trial connections before discovery; trial results are never used
-as a source for daily alerts. Normal searches use no AI.
+as an automatic source. Normal searches use no AI.
 
 The trial is limited evaluation access. Provider terms and appropriate licensing
 still apply; no paid upgrade is made automatically. Adzuna redirect URLs and
@@ -60,7 +60,7 @@ review before tailoring.
 
 The latest 2026-10-28 expansion retains all 143 previous feeds and adds 156 verified feeds. Each industry now has at least 40 distinct employers. See [coverage verification](EMPLOYER_COVERAGE.md). The catalog covers Science & research, Healthcare & life sciences, Education, Finance & professional services, Manufacturing & engineering, Climate & energy, Nonprofits & public interest, and Consumer services & logistics. Technology remains a separate preset. Public feed/platform coverage varies by sector; this is not a complete employer index. Zero current postings can still be a working feed. Verification dates and observed counts describe the check, not future availability.
 
-Industry presets select employer feeds, while role and location filters select jobs inside them. Presets resolve at search time, so matching catalog additions join later searches. All employers remains the default. Selecting individuals switches to Custom; previous explicit selections are preserved. Manual searches, daily checks, For You and Ask AI use the same saved source choices. USAJOBS and Adzuna are independently selectable.
+Industry presets select employer feeds, while role and location filters select jobs inside them. Presets resolve at search time, so matching catalog additions join later searches. All employers remains the default. Selecting individuals switches to Custom; previous explicit selections are preserved. Manual Search, For you and AI search use the same saved source choices. USAJOBS and Adzuna are independently selectable.
 
 **Listing availability window — 30 days:** Current listings expire 30 days after their last source confirmation, or sooner if closed. A new source confirmation extends this window. Applications and their documents remain saved.
 

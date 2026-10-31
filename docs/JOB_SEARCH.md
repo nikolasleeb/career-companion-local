@@ -1,38 +1,25 @@
-# Job Search and daily alerts
+# Job Search
 
-Search supports Greenhouse, Ashby and Lever employer boards, Adzuna, and USAJOBS. Employer feeds cover only the employers added to the account. LinkedIn and Handshake open their own websites; they are not scanned automatically. Indeed and the former JobSpy scraper are excluded from new searches. Ask AI is a separate manual, paid action; daily alerts never call a model.
+Search supports Greenhouse, Ashby and Lever employer boards, Adzuna, and USAJOBS. Employer feeds cover only the employers added to the account. LinkedIn and Handshake open their own websites; they are not scanned automatically. Indeed and the former JobSpy scraper are excluded from new searches. AI search and Profile fit review are separate manual, paid actions.
 
 ## Account and shared connections
 
-Adzuna is configured in **Settings → Job search connections** for each account. Its ID and key are encrypted in a separate account-bound provider store. They are never returned to the browser, included in ordinary account exports, or resolved from another user's account. Environment-based Adzuna fallback is retired. **Test only** is the default; it excludes the connection from manual and daily searches. The explicit test button uses exactly one small API request. Saving, migration and removal make no provider calls. Confirm your provider plan before enabling regular searches; no paid upgrade is performed.
+Adzuna is configured in **Settings → Job search connections** for each account. Its ID and key are encrypted in a separate account-bound provider store. They are never returned to the browser, included in ordinary account exports, or resolved from another user's account. Environment-based Adzuna fallback is retired. **Test only** is the default; it excludes the connection from manual searches. The explicit test button uses exactly one small API request. Saving, migration and removal make no provider calls. Confirm your provider plan before enabling regular searches; no paid upgrade is performed.
 
 Configure these shared services through the installation's protected environment file; never place secrets in public source files or chat:
 - `USAJOBS_API_KEY`, `USAJOBS_API_EMAIL`: request access at https://developer.usajobs.gov/apirequest/index . The email must be the address registered for that API key, not each job seeker's address.
-- `CF_EMAIL_TOKEN`, `CF_EMAIL_ACCOUNT_ID`, `ALERT_FROM`: optional Cloudflare email delivery. The hosted sender is `jobs@notify.austrich-server.com`; local distributions must configure their own sender. Use a dedicated, narrowly scoped token supporting Email Sending and reading/creating verified Email Routing destination addresses. Do not reuse the tunnel or broad administrative token in the app.
 
 The compose files pass shared service variables into the app. Recreate only the app service after changing its protected environment. Provider credentials are not included in account exports or browser capabilities. Missing connections show actionable setup messages and do not block other sources.
 
-## Sender setup without a mailbox
+## Navigation and manual AI actions
 
-Cloudflare can send from an onboarded domain/subdomain without an inbox or personal email login. Configure sender DNS under the notification subdomain and verify it with Cloudflare. Preserve existing website, Access and mail records. A dedicated sending token is needed; the existing tunnel credentials do not establish email access.
+The three tabs are Search, For you · AI, and Saved jobs. Search keeps ordinary roles, location and source filters. Describe a search · AI opens a separate request form with optional example postings; Back to filters preserves inputs and results. AI discovery finds postings; it does not automatically perform a paid Profile fit review.
 
-The initial implementation sends only to provider-verified recipients. Cloudflare documents free sending to verified destinations, subject to its current product conditions. No paid upgrade is performed. Sending to arbitrary recipients requires a different plan/setup and is outside this rollout. Users request recipient verification, complete Cloudflare's verification if necessary, then request and confirm an account-bound six-digit code. A recipient cannot be enabled merely because another account verified it.
+Check fit with my Profile · AI opens beside the selected saved result set. Estimate first, then explicitly start a quick or detailed paid review. Job cards show evidence, gaps and unknowns; Profile fit sorting uses the saved review. This is not a hiring probability. Switching forms or tabs never starts an AI action.
 
-No email is sent until a user explicitly requests verification or enables email alerts. Digests contain public job information, not resumes, private eligibility answers or application documents. Email settings links lead back to the protected website and require sign-in; they do not bypass Cloudflare Access. Disable email in Daily alerts to unsubscribe.
+## Retired daily alerts
 
-## Browser notifications
-
-Choose Enable on this browser, grant the browser's notification permission, then save the daily alert settings. Web Push uses a service worker with no fetch handler and caches no account content. Messages contain a generic count and link; clicking opens the protected Job Search page. Browser/OS support and settings determine delivery when tabs are closed. No installed app or extension is required. Enrollment is account-scoped; unenroll a shared browser before connecting another account.
-
-## Scheduling and recovery
-
-Daily alerts are initially off. Each account has one daily schedule, defaulting to 08:00 in the browser's detected IANA time zone. The server must remain awake and the app container running. A persistent unique run per account/local date prevents duplicate scans; after downtime the next tick does one catch-up run. The initial successful check for each source establishes a baseline without sending all existing jobs as new. Changing saved search preferences establishes a fresh baseline. Failed sources do not advance their baseline.
-
-Searches and provider pagination are bounded. A failed or capped source does not mean no jobs exist. The daily history shows source coverage and delivery status. Newly found means not previously seen by this alert, not proof of the employer's original posting date. Date fields distinguish publication, republication, aggregator listing and discovery. No salary, citizenship or degree eligibility is inferred.
-
-Delivery intent is persisted before contacting a provider. An interrupted or uncertain send is not automatically replayed, because the recipient might already have received it. This favors avoiding duplicates and reports an unconfirmed outcome honestly. Expired browser subscriptions are removed. Provider failures do not turn off website results.
-
-Account backups preserve preferences, saved/dismissed jobs, and schedules. Imports pause restored schedules and require renewed channel verification; push endpoints and private provider credentials are never imported. Keep protected installation backups of the database, uploads, credentials and the secrets volume, including the persistent `job-push.pem` signing key, for service recovery.
+Daily alerts, scheduled searches, browser push and email job digests have been retired. Existing schedules cannot run, including after restart or account import. Legacy alert endpoints return authenticated 410 Gone responses. Historical schedules and delivery records remain inactive for compatibility; saved jobs and prior search results remain available. The retired notification worker ignores pushes and unregisters its own subscription without requesting permission. External mail infrastructure and unrelated credentials are unchanged.
 
 ## Search preferences
 
@@ -66,4 +53,4 @@ Search snapshots, example originals and assessments are included in private acco
 
 ## Posting-date window
 
-Choose Past 7, 14, 30, 60 or 90 days; the default is 30. Saved preferences, daily alerts and personalized discovery use the selected window. This is posting age, not cache retention: hosted disposable cache still expires 30 days after source verification, and earlier closing dates still take priority. Sources and request limits can restrict historical coverage.
+Choose Past 7, 14, 30, 60 or 90 days; the default is 30. Saved preferences and personalized discovery use the selected window. This is posting age, not cache retention: hosted disposable cache still expires 30 days after source verification, and earlier closing dates still take priority. Sources and request limits can restrict historical coverage.

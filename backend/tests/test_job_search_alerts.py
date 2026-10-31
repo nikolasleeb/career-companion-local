@@ -66,76 +66,14 @@ def test_providers_map_dates_ids_and_never_expose_keys(client,account,monkeypatc
     assert not any(secret in json.dumps([a,u]) for secret in ('private-key','federal-key','api-owner@example.com'))
 
 
-def test_preferences_schedule_validation_ownership_and_backup(client,account):
-    prefs={'query':SearchRequest(interests=['Nursing','Marketing'],sources=['ashby']).model_dump()}
-    assert client.put('/api/job-search/preferences',json=prefs).status_code==200
-    assert client.put('/api/job-search/schedule',json={'enabled':True,'timezone':'Not/AZone'}).status_code==422
-    assert client.put('/api/job-search/schedule',json={'enabled':True,'timezone':'America/Phoenix'}).status_code==200
-    backup=client.get('/api/account/export').json()
-    assert any(r['kind']=='job_alert' for r in backup['records'])
-    other=client.post('/api/auth/register',json={'username':'another','password':'fictional-other-password'}).json();onboard_test_account(other);client.headers['X-CSRF-Token']=other['csrf']
-    assert client.get('/api/job-search/preferences').json()['schedule']['data']['enabled'] is False
-    assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup))}).status_code==200
-    restored=client.get('/api/job-search/preferences').json()
-    assert restored['schedule']['data']['enabled'] is False
-    assert restored['preferences']['data']['query']['interests']==['Nursing','Marketing']
-    owned=db.save(account['id'],'job',job())
-    assert client.put('/api/job-search/jobs/'+owned['id']+'/interest',json={'state':'saved'}).status_code==404
 
 
-def test_daily_baseline_dedup_restart_and_no_ai(client,account,monkeypatch):
-    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
-    user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True,browser=True).model_dump())
-    rows=[job()];count=[]
-    async def discover(uid,request,*,execution='scheduled'):
-        assert 'web' not in request.sources and 'jobspy' not in request.sources
-        count.append(1);return {'jobs':[db.save(uid,'job',v,v['source_identity']) for v in rows],'sources':[{'source':'ashby:example','status':'ok','message':'Fixture'}]}
-    async def deliver(uid,day,batch):count.append(list(batch['new_jobs']))
-    async def forbidden(*a,**kw):raise AssertionError('Scheduled scans must not use AI')
-    monkeypatch.setattr(search,'discover',discover);monkeypatch.setattr(alerts,'deliver',deliver);monkeypatch.setattr(ai,'web_jobs',forbidden)
-    now=datetime(2026,10,25,16,tzinfo=timezone.utc)
-    run(alerts.run_daily(user,now));assert count[-1]==[]
-    rows.append(job(identity='new'));run(alerts.run_daily(user,now));assert len(count)==2
-    run(alerts.run_daily(user,now+timedelta(days=1)));assert count[-1]==['ashby:example:new']
-    run(alerts.run_daily(user,now+timedelta(days=4)));assert count[-1]==[]
-    # Claimed runs are not duplicated; expired leases recover persisted results.
-    assert alerts.claim(user,'2099-01-01',100)=={}
-    assert alerts.claim(user,'2099-01-01',101) is None
-    assert alerts.claim(user,'2099-01-01',1100)=={}
 
 
-def test_dst_schedule_runs_once_per_local_date(client,account,monkeypatch):
-    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
-    user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True,time='01:30',timezone='America/New_York').model_dump())
-    calls=[]
-    async def discover(*args,**kwargs):calls.append(1);return {'jobs':[],'sources':[]}
-    monkeypatch.setattr(search,'discover',discover)
-    for hour in (5,6,7):run(alerts.run_daily(user,datetime(2026,11,1,hour,45,tzinfo=timezone.utc)))
-    assert len(calls)==1
 
 
-def test_push_endpoints_and_account_binding(client,account):
-    body={'endpoint':'https://fcm.googleapis.com/fcm/send/fictional','keys':{'p256dh':base64.urlsafe_b64encode(alerts.ec.generate_private_key(alerts.ec.SECP256R1()).public_key().public_bytes(alerts.serialization.Encoding.X962,alerts.serialization.PublicFormat.UncompressedPoint)).rstrip(b'=').decode(),'auth':base64.urlsafe_b64encode(b'a'*16).rstrip(b'=').decode()}}
-    assert client.post('/api/job-search/push',json=body).status_code==200
-    for endpoint in ['http://127.0.0.1','https://localhost/test','https://fcm.googleapis.com.evil.invalid/test']:
-        assert client.post('/api/job-search/push',json={**body,'endpoint':endpoint}).status_code==422
-    other=client.post('/api/auth/register',json={'username':'pushother','password':'fictional-other-password'}).json();onboard_test_account(other);client.headers['X-CSRF-Token']=other['csrf']
-    assert client.post('/api/job-search/push',json=body).status_code==409
-    assert client.request('DELETE','/api/job-search/push',json=body).status_code==200
-    with db.connect() as c:assert c.execute('SELECT user_id FROM cc_job_push').fetchone()[0]==account['id']
 
 
-def test_delivery_intent_prevents_duplicate_send(client,account,monkeypatch):
-    user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True,email_enabled=True,email='recipient@example.com').model_dump())
-    with db.connect() as c:c.execute('INSERT INTO cc_job_email_verifications VALUES(?,?,?,?,?,?)',(user,'recipient@example.com','irrelevant',0,0,1))
-    calls=[]
-    async def verified(*a):return True
-    async def email(method,path,payload=None):calls.append(payload);return {'queued':['recipient@example.com']}
-    monkeypatch.setattr(alerts,'verified_recipient',verified);monkeypatch.setattr(alerts,'email_api',email)
-    row=db.save(user,'job',job());batch={'new_jobs':[row['id']]}
-    run(alerts.deliver(user,'2026-10-25',batch));run(alerts.deliver(user,'2026-10-25',batch));assert len(calls)==1
-    assert calls[0]['to']=='recipient@example.com' and 'text' in calls[0] and 'html' in calls[0]
-    assert 'cc' not in calls[0] and 'bcc' not in calls[0]
 
 
 def test_snippet_blocks_comparison_but_can_be_tracked(client,account,monkeypatch):
@@ -146,43 +84,12 @@ def test_snippet_blocks_comparison_but_can_be_tracked(client,account,monkeypatch
     assert applications.start(account['id'],row['id'])['data']['status']=='preparing'
 
 
-def test_email_code_belongs_to_recipient_and_account(client,account,monkeypatch):
-    calls=[]
-    async def verified(address):return True
-    async def email(method,path,payload=None):calls.append(payload);return {'queued':[payload['to']]}
-    monkeypatch.setattr(alerts,'verified_recipient',verified);monkeypatch.setattr(alerts,'email_api',email)
-    response=client.post('/api/job-search/email/verify',json={'email':'recipient@example.com'})
-    assert response.status_code==200
-    code=re.search(r'code is (\d{6})',calls[0]['text'])[1]
-    assert client.put('/api/job-search/schedule',json={'email_enabled':True,'email':'recipient@example.com'}).status_code==400
-    assert client.post('/api/job-search/email/confirm',json={'email':'elsewhere@example.com','code':code}).status_code==400
-    assert client.post('/api/job-search/email/confirm',json={'email':'recipient@example.com','code':code}).status_code==200
-    assert client.put('/api/job-search/schedule',json={'email_enabled':True,'email':'recipient@example.com'}).status_code==200
-    other=client.post('/api/auth/register',json={'username':'emailother','password':'fictional-other-password'}).json();onboard_test_account(other);client.headers['X-CSRF-Token']=other['csrf']
-    assert client.put('/api/job-search/schedule',json={'email_enabled':True,'email':'recipient@example.com'}).status_code==400
 
 
-def test_failed_source_establishes_baseline_only_after_recovery(client,account,monkeypatch):
-    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
-    user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True).model_dump());day=datetime(2026,10,25,16,tzinfo=timezone.utc);failed=[True]
-    async def discover(uid,request,*,execution='scheduled'):return {'jobs':[] if failed[0] else [db.save(uid,'job',job(),'found')],'sources':[{'source':'ashby:example','status':'error' if failed[0] else 'ok','message':'Unavailable' if failed[0] else 'Recovered'}]}
-    monkeypatch.setattr(search,'discover',discover)
-    run(alerts.run_daily(user,day));failed[0]=False;run(alerts.run_daily(user,day+timedelta(days=1)))
-    with db.connect() as c:result=json.loads(c.execute('SELECT result FROM cc_job_alert_runs WHERE user_id=? AND day=?',(user,'2026-10-26')).fetchone()[0])
-    assert result['new_jobs']==[] and result['baseline_established']
 
 
-def test_expired_delivery_intent_is_not_blindly_replayed(client,account):
-    user=account['id'];alerts.claim(user,'2099-01-01',100)
-    with db.connect() as c:c.execute('INSERT INTO cc_job_deliveries VALUES(?,?,?,?,?)',(user,'2099-01-01','email','sending','Pending'))
-    alerts.claim(user,'2099-01-01',1100)
-    with db.connect() as c:assert c.execute('SELECT state FROM cc_job_deliveries WHERE user_id=?',(user,)).fetchone()[0]=='unconfirmed'
 
 
-def test_duplicate_schedule_claims_are_atomic(client,account):
-    from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(4) as pool:claims=list(pool.map(lambda _:alerts.claim(account['id'],'2099-01-01',100),range(4)))
-    assert sum(r is not None for r in claims)==1
 
 
 def test_dates_distinguish_provider_listing_from_employer_publication():
@@ -215,31 +122,8 @@ def test_lever_partial_data_and_timeouts(client,account,monkeypatch):
     assert result['jobs']==[] and result['sources'][0]['status']=='error'
 
 
-def test_check_now_uses_existing_task_api_without_orphaning_a_run(client,account,monkeypatch):
-    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
-    from test_app import wait
-    async def discover(*args,**kwargs):return {'jobs':[],'sources':[],'query':{},'checked_at':db.now(),'ai_calls':[]}
-    monkeypatch.setattr(search,'discover',discover)
-    assert client.post('/api/job-search/check-now',json={}).status_code==400
-    alerts.save(account['id'],'job_alert',alerts.Schedule(enabled=True).model_dump())
-    start=client.post('/api/job-search/check-now',json={})
-    assert start.status_code==200,start.text
-    finished=wait(client,start.json()['task_id'])
-    assert finished['status']=='completed',finished
-    assert client.get('/api/job-search/notifications').json()['runs'][0]['result']['baseline_pending']
 
 
-def test_daily_cross_source_url_dedup(client,account,monkeypatch):
-    alerts.save(account['id'],'job_search_preferences',{'query':SearchRequest(interests=['Data analysis']).model_dump()})
-    user=account['id'];alerts.save(user,'job_alert',alerts.Schedule(enabled=True).model_dump())
-    rows=[job()];sources=[{'source':'ashby:example','status':'ok'},{'source':'adzuna','status':'ok'}]
-    async def discover(uid,request,*,execution='scheduled'):return {'jobs':[db.save(uid,'job',v,v['source_identity']) for v in rows],'sources':sources}
-    monkeypatch.setattr(search,'discover',discover)
-    now=datetime(2026,10,25,16,tzinfo=timezone.utc);run(alerts.run_daily(user,now))
-    rows[0]={**rows[0],'source_identity':'adzuna:new-id','origin_key':'adzuna'}
-    run(alerts.run_daily(user,now+timedelta(days=1)))
-    with db.connect() as c:result=json.loads(c.execute('SELECT result FROM cc_job_alert_runs WHERE day=?',('2026-10-26',)).fetchone()[0])
-    assert result['new_jobs']==[]
 
 
 def test_salary_summaries_and_missing_metadata_are_visible():

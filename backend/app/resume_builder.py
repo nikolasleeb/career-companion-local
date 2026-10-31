@@ -46,9 +46,9 @@ def render(snapshot):
     pages=len(PdfReader(io.BytesIO(pdf)).pages)
     return pages,{'docx':base64.b64encode(word).decode(),'pdf':base64.b64encode(pdf).decode()}
 
-def fit(snapshot, rows, initial=None, protected_item_ids=None, render_fn=None):
+def fit(snapshot, rows, initial=None, protected_item_ids=None, render_fn=None, protected_record_ids=None):
     job=(snapshot.get('posting_snapshot') or {}).get('description','')
-    protected=set(protected_item_ids or []);measure=render_fn or render
+    protected=set(protected_item_ids or []);protected_records=set(protected_record_ids or []);measure=render_fn or render
     ordered=sorted(rows,key=lambda r:-r['priority'])
     ids=list(initial['experience_ids']) if initial else [r['id'] for r in ordered if r['category']=='education' or r['bullets']]
     def priority(r,i):
@@ -75,7 +75,7 @@ def fit(snapshot, rows, initial=None, protected_item_ids=None, render_fn=None):
         if candidates:
             _,rid,i=min(candidates);content[rid].remove(i);removed.append((rid,i))
         elif len(ids)>1:
-            removable_ids=[rid for rid in ids if not any(item['item_id'] in protected for item in next(r for r in rows if r['id']==rid).get('items',[]))]
+            removable_ids=[rid for rid in ids if rid not in protected_records and not any(item['item_id'] in protected for item in next(r for r in rows if r['id']==rid).get('items',[]))]
             if not removable_ids:raise ServiceError('The required content does not fit one readable page. Your protected selections and previous draft are intact; shorten other content before retrying.')
             rid=min(removable_ids,key=lambda rid:next(r['priority'] for r in rows if r['id']==rid));ids.remove(rid)
         else:raise ServiceError('The remaining record exceeds one page. Shorten its wording or your contact header. Nothing was clipped.')

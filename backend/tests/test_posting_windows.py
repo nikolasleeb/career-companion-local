@@ -22,17 +22,11 @@ def test_posting_age_boundaries_keep_expiry_and_unknown_date_rules(client,monkey
  assert job_search.review({**base,'deadline':'2000-01-01'},req) is None
  assert job_cache.days()==30
 
-def test_ninety_day_preferences_roundtrip_and_daily_inheritance(client,account,monkeypatch):
+def test_ninety_day_preferences_roundtrip(client,account,monkeypatch):
  assert SearchRequest().days==30
  with pytest.raises(ValidationError):SearchRequest(days=91)
  query=SearchRequest(title='research assistant',days=90,sources=['ashby']).model_dump()
  assert client.put('/api/job-search/preferences',json={'query':query}).status_code==200
- seen=[]
- async def discover(user,request,**kw):
-  seen.append(request.days);return {'jobs':[],'sources':[{'source':'ashby:example','status':'empty'}],'query':request.model_dump()}
- monkeypatch.setattr(job_search,'discover',discover)
- job_alerts.save(account['id'],'job_alert',job_alerts.Schedule(enabled=True,time='00:00',timezone='UTC').model_dump())
- asyncio.run(job_alerts.run_daily(account['id'],datetime.now(timezone.utc),force=True));assert seen==[90]
  backup=client.get('/api/account/export').json()
  assert client.post('/api/account/import',files={'file':('backup.json',__import__('json').dumps(backup))}).status_code==200
  assert client.get('/api/job-search/preferences').json()['preferences']['data']['query']['days']==90

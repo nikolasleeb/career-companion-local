@@ -12,6 +12,7 @@ from app import ai, db, documents, resume_conversation as guided, resume_layout,
 from app.models import ConversationStart, ConversationMessage, FactApproval, WorkingRender, ResumeRequest, RevisionAction, FinalizeRevision
 from app.network import ServiceError
 from test_optimizer import setup, fake_draft
+from resume_strategy_fixtures import strategy as fake_strategy, composition as fake_composition
 
 META={'model':'test','estimated_token_cost_usd':.001,'usage':{'total_tokens':100},'reasoning_effort':'low'}
 
@@ -22,6 +23,8 @@ def env(client,account,monkeypatch):
     calls=[]
     async def model(schema,payload,mode='economy',**kwargs):
         calls.append((schema.__name__,payload))
+        if schema.__name__=='ResumeStrategy':return fake_strategy(payload),META
+        if schema.__name__=='ResumeComposition':return fake_composition(payload),META
         if schema.__name__=='DraftAudit':return {'approved':True,'issues':[]},META
         if schema.__name__=='OptimizationOutput':
             if 'catalog' in payload:return fake_draft(payload),META
@@ -48,7 +51,7 @@ def test_first_draft_preview_finalize_exact_artifacts_and_tracker(env):
     assert len(session['data']['questions'])<=3 and not calls
     assert guided.start(user,ConversationStart(job_id=job['id']))['id']==session['id']
     state=build(env);rev=state['current'];assert rev['data']['snapshot']['headline']=='Data Science | Python & SQL'
-    assert rev['data']['snapshot']['layout']['pages']==1 and len(calls)==2
+    assert rev['data']['snapshot']['layout']['pages']==1 and len(calls)==3
     assert db.list_entities(user,'resume')==[] and db.list_entities(user,'application')==[]
     assert state['data']['questions']==session['data']['questions'] # Skipping does not discard unanswered prompts.
     assert 'artifacts' not in json.dumps(state)
@@ -62,12 +65,12 @@ def test_first_draft_preview_finalize_exact_artifacts_and_tracker(env):
     assert len(db.list_entities(user,'application'))==1
     assert db.list_entities(user,'application')[0]['data']['status']=='preparing'
     guided.finalize(user,state['id'],FinalizeRevision(revision_id=rev['id'],expected_version=finalized['data']['version'],reviewed=True))
-    assert len(db.list_entities(user,'resume'))==1 and len(calls)==2
+    assert len(db.list_entities(user,'resume'))==1 and len(calls)==3
 
 def test_local_headline_preview_and_restore(env):
     user,job,rows,session,calls=env;state=build(env);original=state['current']['id'];body=request(state);body.headline='Analysis and stakeholder communication'
     changed=guided.render(user,state['id'],WorkingRender(expected_version=state['data']['version'],request_token='new',resume=body))
-    assert changed['current']['id']!=original and len(calls)==2
+    assert changed['current']['id']!=original and len(calls)==3
     snapshot=db.get(user,changed['current']['id'],'resume_revision')['data']['snapshot']
     word=Document(io.BytesIO(base64.b64decode(snapshot['artifacts']['docx'])))
     assert body.headline in '\n'.join(p.text for p in word.paragraphs)
@@ -415,7 +418,7 @@ def test_one_optional_layout_wording_pass_then_final_audit(env,monkeypatch):
         return [{'kind':'dangling_words','item_id':item['item_id'],'record_id':entry['source_id'],'text':'A short carryover line.'}]
     monkeypatch.setattr(resume_layout,'inspect',dangling)
     state=build(env)
-    assert [name for name,p in calls]==['OptimizationOutput','OptimizationOutput','DraftAudit']
+    assert [name for name,p in calls]==['ResumeStrategy','ResumeComposition','OptimizationOutput','DraftAudit']
     assert state['current']['data']['usage']['layout_ai'] and state['current']['data']['snapshot']['layout']['pages']==1
 
 
@@ -459,9 +462,9 @@ def test_empty_preparation_recovers_after_reload_without_provider_dispatch(env):
 def test_empty_preparation_ai_build_keeps_edits_and_does_not_retry_provider(env):
     user,job,rows,session,calls=env;body,item=empty_workspace(env);state=retain_empty(env,body)
     result=asyncio.run(guided.build(user,state['id'],state['data']['version'],'economy'))
-    assert len(calls)==2 # One draft and one audit, no comparison or retry.
+    assert len(calls)==3 # One draft and one audit, no comparison or retry.
     assert result['current']['data']['snapshot']['headline']==body.headline
-    assert calls[0][1]['accepted_edits'][item['item_id']]==body.overrides[item['item_id']]
+    assert calls[0][1]['user_constraints']['locked_items'][item['item_id']]['text']==body.overrides[item['item_id']]
     assert 'workspace_request' not in result['data']
 
 def test_failed_first_build_keeps_preparation_for_explicit_retry(env,monkeypatch):
@@ -474,7 +477,7 @@ def test_failed_first_build_keeps_preparation_for_explicit_retry(env,monkeypatch
     saved=guided.state(user,session['id']);assert not saved['current'] and saved['data']['workspace_request']==body.model_dump()
     monkeypatch.setattr(optimization,'create',original)
     result=asyncio.run(guided.build(user,session['id'],saved['data']['version'],'economy'))
-    assert result['current'] and len(calls)==2
+    assert result['current'] and len(calls)==3
 
 @pytest.mark.parametrize('change',['foreign_job','foreign_analysis','unknown_override','selection'])
 def test_first_build_preparation_validates_before_provider(env,change):
@@ -530,7 +533,7 @@ def test_refine_preserves_valid_original_headline_citation_after_checked_rewrite
     original_model=ai.structured
     async def model(schema,payload,*args,**kwargs):
         value,meta=await original_model(schema,payload,*args,**kwargs)
-        if schema.__name__=='OptimizationOutput' and 'catalog' in payload:
+        if schema.__name__=='ResumeComposition' or schema.__name__=='OptimizationOutput' and 'catalog' in payload:
             for entry in value['entries']:
                 for item in entry['items']:
                     if item['text']=='Analyzed demand data using Python and presented findings to classmates.':item['text']='Used Python to analyze demand data and presented findings to classmates.'
@@ -593,7 +596,7 @@ def test_resume_ai_gets_only_the_approved_work_style_summary(env):
     record=db.save(user,'work_style',{'status':'completed','report':{'domains':[{'name':'SECRET_REPORT_NAME','mean':4.75}],'facets':[],'preferences':[]},'answers':{'private':'SECRET_RAW_ANSWER'}})
     work_preferences.put(work_preferences.Change(expected_revision=0,summary='I prefer focused preparation with planned check-ins.',use_for_ai=True,reviewed=True,coach_report_access=True,assessment_id=record['id']),{'id':user})
     result=build(env)
-    payload=next(value for schema,value in calls if schema=='OptimizationOutput')
+    payload=next(value for schema,value in calls if schema=='ResumeStrategy')
     assert payload['work_style_guidance']['summary']=='I prefer focused preparation with planned check-ins.'
     assert 'SECRET_REPORT_NAME' not in json.dumps(calls) and 'SECRET_RAW_ANSWER' not in json.dumps(calls)
     assert 'professional evidence' in payload['work_style_guidance']['purpose']

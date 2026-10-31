@@ -226,7 +226,12 @@ def export_resume(data, format):
                     details=clean(entry.get('details')) or ' | '.join(filter(None,[clean(entry.get('organization')),clean(entry.get('dates'))]))
                     if details:p.add_run(' | '+details)
                 if data.get('schema_version',0)>=3 and entry.get('category')=='skills':
-                    if entry.get('bullets'):p.add_run(': '+', '.join(clean(v) for v in entry['bullets']))
+                    if entry.get('bullets'):
+                        values=', '.join(clean(v) for v in entry['bullets'])
+                        if len(entry['bullets'])==1 and values.startswith(clean(entry['title'])):
+                            # A single credential already names itself in its heading.
+                            p.add_run(values[len(clean(entry['title'])):])
+                        else:p.add_run(': '+values)
                     p.paragraph_format.keep_with_next=False
                 else:
                     courses=[clean(b) for b in entry.get('bullets',[]) if b.startswith('Relevant class: ')] if data.get('schema_version',0)>=3 else []

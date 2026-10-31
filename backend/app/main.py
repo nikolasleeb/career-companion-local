@@ -18,6 +18,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from . import storage
 from . import config, db, auth, ai, documents, integrations, resume_data, resume_parser, transcript_parser, credentials, ai_settings, applications, resume_builder, job_parser, optimization, resume_conversation, cover_letters, guidance, cover_context, profile_answers, question_answers, onboarding, certifications, cost_history, updates
+from . import resume_strategy
 from .models import *
 from .network import ServiceError, public_fetch, html_job
 from . import task_progress, posting_extraction, job_alerts, job_search, job_results, job_ai, job_cache, career_coach, task_atomic, career_goals
@@ -33,15 +34,11 @@ async def lifespan(app):
     await asyncio.to_thread(job_cache.cleanup)
     maintenance=asyncio.create_task(job_cache.maintain())
     cleanup_maintenance=asyncio.create_task(account_cleanup.maintain())
-    scheduler=asyncio.create_task(job_alerts.scheduler()) if config.JOB_SCHEDULER_ENABLED else None
     yield
     cleanup_maintenance.cancel()
     await asyncio.gather(cleanup_maintenance,return_exceptions=True)
     maintenance.cancel()
     await asyncio.gather(maintenance,return_exceptions=True)
-    if scheduler:
-        scheduler.cancel()
-        await asyncio.gather(scheduler,return_exceptions=True)
     tasks=list(workers.values())
     for task in tasks: task.cancel()
     if tasks: await asyncio.gather(*tasks,return_exceptions=True)
@@ -826,6 +823,7 @@ def build_resume(user,body):
     # Build all confirmed records to keep source checks independent of current selection.
     for entity_id,record in available.items():
         data=record['data'];entry=resume_data.entry_snapshot(data,entity_id,granular=True)
+        entry['source_revision']=record['updated_at']
         entry['source_original_bullets']=list(entry['bullets'])
         entry['reviewed_answer_sources']=data.get('answer_sources',[])
         for index,suggestion in enumerate(suggestions):
@@ -836,13 +834,14 @@ def build_resume(user,body):
             if not replacement:continue
             matches=[i for i,v in enumerate(entry['bullets']) if suggestion['original'] in v]
             if matches:
-                i=matches[0];entry['bullets'][i]=entry['bullets'][i].replace(suggestion['original'],replacement,1);entry['content_items'][i]['text']=entry['bullets'][i]
+                i=matches[0];entry['bullets'][i]=entry['bullets'][i].replace(suggestion['original'],replacement,1);entry['content_items'][i]['text']=entry['bullets'][i];entry['content_items'][i]['user_locked']=True
             else:
                 matches=[i for i,v in enumerate(entry['content_items']) if ai.normalized(re.sub(r'^Relevant class: ','',v['original'])) in ai.normalized(suggestion['original'])]
                 if not matches:raise HTTPException(409,'This edit no longer maps to source content. Rerun the comparison.')
                 for i in matches:
                     entry['bullets'][i]=replacement if i==matches[0] else ''
                     entry['content_items'][i]['text']=entry['bullets'][i]
+                entry['content_items'][matches[0]].update(user_locked=True,approved_source_item_ids=[entry['content_items'][i]['item_id'] for i in matches])
         entry['content_items']=[i for i in entry['content_items'] if i['text'].strip()]
         entry['bullets']=[i['text'] for i in entry['content_items']]
         if not entry['dates'] and data['category'] in ('education','employment','volunteering') and entity_id in ids:warnings.append(data['title']+': dates not provided.')
@@ -861,7 +860,7 @@ def build_resume(user,body):
         if draft['job_id']!=job_id:raise HTTPException(409,'Choose the AI draft for this posting.')
         if draft['source_fingerprint']!=optimization.fingerprint(snapshot,{r['id'] for r in draft['catalog']}):raise HTTPException(409,'Profile content changed since this AI draft. Create a new draft; your reviewed wording remains available.')
         snapshot=optimization.apply(snapshot,draft,body.overrides)
-        snapshot.update({'draft_id':body.draft_id,'optimization':{'ai':draft['ai'],'audit_ai':draft['audit_ai'],'actual_cost_usd':draft['actual_cost_usd'],'source_checked':True,'headline_evidence':draft['headline_evidence'],'omitted':draft['omitted'],'keywords':draft['keywords']}})
+        snapshot.update({'draft_id':body.draft_id,'optimization':{'ai':draft['ai'],'audit_ai':draft['audit_ai'],'actual_cost_usd':draft['actual_cost_usd'],'source_checked':True,'headline_evidence':draft['headline_evidence'],'omitted':draft['omitted'],'keywords':draft['keywords'],'strategy':draft.get('strategy'),'user_constraints':draft.get('user_constraints'),'planning_ai':draft.get('planning_ai')}})
     elif body.overrides:
         # Manual content editing uses the same stable source IDs and limits.
         snapshot=optimization.apply(snapshot,{'entries':[],'headline':snapshot['headline']},body.overrides)
@@ -871,9 +870,9 @@ def build_resume(user,body):
     if body.content is not None:
         for entity_id,chosen in body.content.items():
             if entity_id not in available:raise HTTPException(400,'Content selections must belong to your confirmed Profile.')
-            length=len(next(e['bullets'] for e in entries if e['source_id']==entity_id))
+            length=len(next(e['bullets'] for s in snapshot['sections'] for e in s['entries'] if e['source_id']==entity_id))
             if len(chosen)!=len(set(chosen)) or any(i<0 or i>=length for i in chosen):raise HTTPException(409,'Selected content changed. Refresh the content list before saving.')
-    parts=body.content if body.content is not None else {e['source_id']:list(range(len(e['bullets']))) for e in entries}
+    parts=body.content if body.content is not None else draft['content'] if body.draft_id else {e['source_id']:list(range(len(e['bullets']))) for s in snapshot['sections'] for e in s['entries']}
     return resume_builder.select(snapshot,parts,ids)
 
 def save_one_page(user,body):
@@ -1322,7 +1321,9 @@ def backup(user=Depends(auth.current)):
     records=readiness.backup_records(user['id'],[r for kind in BACKUP_KINDS for r in db.list_entities(user['id'],kind)])
     record_ids={r['id'] for r in records}
     from . import project_relations
-    for record in records:project_relations.backup_markers(record['data'],record_ids)
+    for record in records:
+        project_relations.backup_markers(record['data'],record_ids)
+        resume_strategy.backup_markers(record['data'],record_ids)
     cached_jobs={r['id']:r for r in job_cache.decorate_records(user['id'],[r for r in records if r['kind']=='job'])}
     records=[cached_jobs.get(r['id'],r) for r in records]
     files={}
@@ -1379,6 +1380,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             knowledge_assistant.validate_backup(record,kinds)
             readiness.validate_backup(record,kinds,by_id)
             personalized_jobs.validate_backup(record,kinds)
+            resume_strategy.validate_backup(record,kinds)
             chat_visuals.validate_backup(record,kinds)
             if record['kind']=='work_preferences':work_preferences.Change.model_validate({k:v for k,v in {**record['data'],'expected_revision':record['data']['revision']}.items() if k in work_preferences.Change.model_fields})
             if record['kind']=='career_goals':
@@ -1504,6 +1506,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         if record['kind']=='usage_event':ids[record['id']]=existing_usage.get(record['data']['event_key'],cost_history.digest([user['id'],record['data']['event_key']])[:32])
     for record in records:
         if record['kind']=='application_offer':ids[record['id']]=application_offers.identity(user['id'],ids[record['data']['application_id']])
+    resume_fact_ids=resume_strategy.import_fact_mapping(records,ids)
     # Import is additive; existing records are preserved and IDs are remapped.
     for record in records:
         if record['kind']=='usage_event':
@@ -1543,6 +1546,8 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         elif record['kind']=='ai_job_match':db.save(user['id'],record['kind'],{**remap(record['data']),'state':'imported','error':'Imported review is read-only. Start a new review to use your current Profile.','profile_revision':'imported','in_flight':None},ids[record['id']])
         elif record['kind']!='onboarding':
             restored=remap(record['data'])
+            if record['kind'] in ('resume','resume_draft','resume_revision','resume_conversation'):
+                restored=resume_strategy.remap_import(restored,ids,resume_fact_ids)
             if record['kind']=='cover_workspace' and restored.get('career_goal_selection'):
                 restored['career_goal_selection']={**restored['career_goal_selection'],'enabled':False,'goal_ids':[]}
                 for proposal in restored.get('context_proposals',[]):

@@ -25,6 +25,8 @@ class Finish(StrictModel):
 def identity(user):return hashlib.sha256((user+':onboarding-v1').encode()).hexdigest()[:32]
 def restricted(path):
     if not path.startswith('/api/'):return False
+    # Retired compatibility routes still authenticate, but do not require setup.
+    if re.fullmatch(r'/api/job-search/(?:schedule|check-now|notifications|push-key|push|email/(?:verify|confirm)|alerts/[^/]+/jobs)',path):return False
     allowed=r'^/api/(?:home|career-readiness|career-explorer|career-coach|knowledge-coach|interview-practice|chat-visuals|ai-actions|work-style|assessment|skills|guidance|resources|preparation|profile/work-preferences|profile/career-goals|profile/personalization|health|version|updates|auth|me|workspace|onboarding|experience|profile-import|documents|transcripts|certificates|profile-evidence|profile-answers|project-sources|project-documents|project-analysis|project-analyses|project-snapshots|project-builders|answer-drafts|private-application-profile|private-application-answers|settings|account|tasks|records|usage)(?:/|$)'
     return not bool(re.match(allowed,path))
 def _write(c,user,data):

@@ -150,17 +150,19 @@ def test_provider_payload_preserves_project_provenance_and_permissions(env,monke
     async def model(schema,payload,*a,**kw):
         calls.append(payload)
         if schema.__name__=='DraftAudit':return {'approved':True,'issues':[]},{'estimated_token_cost_usd':0}
-        rows=payload['catalog'];entries=[{'record_id':r['id'],'reason':'Relevant confirmed evidence','items':[{'item_id':i['item_id'],'text':i['text'],'priority':80,'reason':'Posting relevance'} for i in r['items']]} for r in rows if r['items'] or r['category']=='education']
-        return {'headline':'','headline_evidence':[],'entries':entries,'omissions':[],'keywords':[]},{'estimated_token_cost_usd':0}
+        from resume_strategy_fixtures import strategy as plan, composition
+        if schema.__name__=='ResumeStrategy':return plan(payload),{'estimated_token_cost_usd':0}
+        if schema.__name__=='ResumeComposition':return composition(payload),{'estimated_token_cost_usd':0}
+        return payload['proposal'],{'estimated_token_cost_usd':0}
     monkeypatch.setattr(ai,'structured',model)
     asyncio.run(optimization.create(user,snapshot,None,'economy'))
-    assert len(calls)==2
-    row=next(r for r in calls[0]['catalog'] if r['id']==intern['id'])
-    assert len([i for i in row['items'] if i.get('project_source')])==2
-    assert all(i['project_source']['employment_id']==intern['id'] for i in row['items'] if i.get('project_source'))
+    assert len(calls)==3
+    facts=[f for f in calls[0]['professional_evidence']['facts'] if f['record_id']==project['id'] and f['field']!='header']
+    assert len(facts)==2
+    assert all(intern['id'] in f['allowed_destinations'] for f in facts)
     wire=json.dumps(calls)
-    assert 'internship versus contractor' in wire and 'PRIVATE_GOAL_SENTINEL' not in wire and 'authorized_us' not in wire
-    assert any(project['data']['description'] in text for text in calls[0]['evidence_sources'][project['id']])
+    assert 'source/destination dates' in wire and 'PRIVATE_GOAL_SENTINEL' not in wire and 'authorized_us' not in wire
+    assert any(f['text']==project['data']['description'] for f in facts)
 
 
 def test_source_fingerprint_and_selected_version_survive_local_render(env):

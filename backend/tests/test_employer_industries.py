@@ -49,7 +49,7 @@ def test_nontech_manual_and_scheduled_searches_use_same_presets(client,account,m
  manual=asyncio.run(job_search.discover(account['id'],query));assert manual['jobs'] and set(calls)==expected
  scheduled=asyncio.run(job_search.discover(account['id'],query,execution='scheduled'));assert scheduled['jobs'] and set(calls)==expected and len(calls)==len(expected)
 
-def test_daily_and_for_you_inherit_source_choices(client,account,monkeypatch):
+def test_for_you_inherits_source_choices(client,account,monkeypatch):
  from app import job_alerts,job_search,personalized_jobs,ai
  from app.network import ServiceError
  from datetime import datetime,timezone
@@ -58,13 +58,12 @@ def test_daily_and_for_you_inherit_source_choices(client,account,monkeypatch):
  calls=[]
  async def discover(user,request,**kwargs):calls.append(request.model_dump());return {'jobs':[],'sources':[{'source':'greenhouse:fictional','status':'empty'}],'query':request.model_dump()}
  monkeypatch.setattr(job_search,'discover',discover)
- job_alerts.save(account['id'],'job_alert',job_alerts.Schedule(enabled=True,time='00:00',timezone='UTC').model_dump());asyncio.run(job_alerts.run_daily(account['id'],datetime.now(timezone.utc),force=True))
  async def text(*args,**kwargs):return {'roles':['research assistant'],'explanation':'Reviewed education.'},{'model':'fictional'}
  monkeypatch.setattr(ai,'structured',text)
  async def capture(user,request,**kwargs):calls.append(request.model_dump());raise ServiceError('Captured For You request')
  monkeypatch.setattr(job_search,'discover',capture)
  with pytest.raises(ServiceError,match='Captured'):asyncio.run(personalized_jobs.execute(account['id'],personalized_jobs.Request(request_token='fictional-for-you')))
- assert len(calls)==2
+ assert len(calls)==1
  for request in calls:assert request['employer_selection_mode']=='industries' and request['employer_industries']==['science','healthcare'] and request['employer_boards'] is None
 
 

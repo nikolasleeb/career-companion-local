@@ -15,11 +15,11 @@ def words(value):return re.findall(r'[a-z0-9]+',value.casefold())
 def one_page_request(text):
     return bool(re.search(r'\b(?:one|single|1)[\s-]+page\b',text,re.I))
 
-def fit(snapshot,rows,initial,protected_item_ids=None):
+def fit(snapshot,rows,initial,protected_item_ids=None,protected_record_ids=None):
     def measure(value):
         result=render(value)
         return result['layout']['pages'],result['artifacts']
-    return resume_builder.fit(snapshot,rows,initial,protected_item_ids,measure)
+    return resume_builder.fit(snapshot,rows,initial,protected_item_ids,measure,protected_record_ids)
 
 def text_lines(pdf):
     executable=shutil.which('pdftotext')

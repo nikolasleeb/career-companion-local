@@ -219,10 +219,11 @@ def test_application_reuse_known_ats_alias_keeps_distinct_requisitions(client,ac
  assert applications.start(account['id'],three['id'])['id']!=a['id']
 
 
-def test_daily_history_summaries_survive_light_workspace(client,account):
+def test_retired_history_keeps_jobs_and_historical_records(client,account):
  own=db.save(account['id'],'job',posting())
- with db.connect() as c:c.execute('INSERT INTO cc_job_alert_runs VALUES(?,?,?,?,?)',(account['id'],'2026-10-25','done',0,json.dumps({'new_jobs':[own['id']]})))
- assert not client.get('/api/workspace?paged_jobs=true').json()['search']
- body=client.get('/api/job-search/alerts/2026-10-25/jobs').json()
- assert body['jobs'][0]['id']==own['id'] and 'description' not in body['jobs'][0]['data']
- assert client.get('/api/job-search/alerts/2026-10-26/jobs').status_code==404
+ payload=json.dumps({'new_jobs':[own['id']]})
+ with db.connect() as c:c.execute('INSERT INTO cc_job_alert_runs VALUES(?,?,?,?,?)',(account['id'],'2026-10-25','done',0,payload))
+ assert client.get('/api/job-search/alerts/2026-10-25/jobs').status_code==410
+ assert client.get('/api/job-search/alerts/2026-10-26/jobs').status_code==410
+ assert db.get(account['id'],own['id'],'job')==own
+ with db.connect() as c:assert c.execute('SELECT result FROM cc_job_alert_runs WHERE user_id=?',(account['id'],)).fetchone()[0]==payload
