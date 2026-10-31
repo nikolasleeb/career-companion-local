@@ -82,7 +82,7 @@ def test_current_coach_research_three_call_bound(client,account,key,monkeypatch)
   return {'answer':'Check the organizer source for the current schedule.' if web else 'Research needed','references':[{'source_id':web['source_id'],'quote':web['text']}] if web else [],'needs_research':not bool(web),'research_topics':['Example Conference'],'visuals':[]},{'model':'mock'}
  async def research(user,chat,p,token,mode,**kw):
   calls.append('research');assert all('Test setup education' not in x for x in kw['public_topics'])
-  return db.save(user,'assistant_research',{'chat_id':chat['id'],'chunks':[{'chunk_id':'official','source_id':'web-source','title':'Official event','url':'https://example.org/conference','text':'The event provides workshops and a published schedule.','topics':['conference'],'checked_at':db.now(),'kind':'fetched','catalog_version':'test'}],'status':'checked','checked_at':db.now(),'warnings':[]})
+  return db.save(user,'assistant_research',{'chat_id':chat['id'],'chunks':[{'chunk_id':'official','source_id':'web-source','title':'Example Conference official event','url':'https://example.org/conference','text':'The event provides workshops and a published schedule.','topics':['conference'],'checked_at':db.now(),'kind':'fetched','catalog_version':'test'}],'status':'checked','checked_at':db.now(),'warnings':[]})
  monkeypatch.setattr(ai,'structured',model);monkeypatch.setattr(career_coach,'research',research)
  r=wait(client,turn(client,'new','What is the latest schedule for Example Conference?'));assert r['status']=='completed',r
  assert calls==['model','research','model'] and r['result']['messages'][-1]['data']['research_used']

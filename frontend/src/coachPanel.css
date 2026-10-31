@@ -76,3 +76,7 @@ body.career-coach-open.career-coach-task-narrow .guided-workspace,body.career-co
 .adjustable-coach .coach-processing .status-unknown{background:#fff6df}
 .adjustable-coach .coach-processing .processing-recovery{margin:0;padding:12px 20px;font-size:12px}
 @media(prefers-reduced-motion:reduce){.adjustable-coach .coach-processing .status-spinner{animation:none}}
+
+.coach-message-prose p { margin: .65rem 0; font-size: inherit; line-height: 1.6; }
+.coach-message-prose pre { overflow-x: auto; white-space: pre; padding: .75rem; background: #edf2f8; border-radius: .4rem; }
+.coach-message-prose code { font-family: ui-monospace, monospace; font-size: .9em; }
