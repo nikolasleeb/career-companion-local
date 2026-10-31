@@ -9,5 +9,7 @@ export function searchHistoryLabel(row:Search){
  const short=(text:string,max:number)=>text.length>max?text.slice(0,max-1)+'…':text;
  const subject=roles.length?roles.slice(0,2).join(', ')+(roles.length>2?' +'+(roles.length-2):''):q.title||row.data.ai_brief?.summary||'All roles';
  const date=Date.parse(row.created_at||'');
- return [row.data.ai_brief||row.data.ai_prompt||row.data.discovery_kind==='ai'?'AI search':'Search',Number.isNaN(date)?'Date unavailable':new Date(date).toLocaleString(),short(String(subject),70),short(String(q.location||'Location not recorded'),40)].join(' · ');
+ const places=(Array.isArray(q.locations)&&q.locations.length?q.locations:[q.location]).filter((v:unknown):v is string=>typeof v==='string'&&!!v.trim());
+ const location=places.length?short(places.slice(0,2).join('; '),50)+(places.length>2?' +'+(places.length-2):''):'Location not recorded';
+ return [row.data.ai_brief||row.data.ai_prompt||row.data.discovery_kind==='ai'?'AI search':'Search',Number.isNaN(date)?'Date unavailable':new Date(date).toLocaleString(),short(String(subject),70),location].join(' · ');
 }

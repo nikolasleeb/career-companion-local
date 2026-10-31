@@ -25,3 +25,7 @@ test('history labels identify roles and locations without relying on original re
  const ai=searchHistoryLabel(row('ai','invalid',{discovery_kind:'ai',ai_brief:{summary:'Research roles'}}));assert.match(ai,/AI search.*Date unavailable.*Research roles.*Location not recorded/);
  const long=searchHistoryLabel(row('long','2026-01-01',{query:{title:'x'.repeat(500),location:'y'.repeat(500)}}));assert.ok(long.length<200);
 });
+test('multi-location history labels include the selected locations rather than only the legacy scalar',()=>{
+ const label=searchHistoryLabel(row('multi','2026-01-01',{query:{title:'Analyst',location:'United States',locations:['Richmond, VA','Boston, MA','Virginia']}}));
+ assert.match(label,/Richmond, VA; Boston, MA \+1/);assert.doesNotMatch(label,/United States/);
+});

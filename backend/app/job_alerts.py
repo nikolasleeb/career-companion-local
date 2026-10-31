@@ -37,8 +37,9 @@ def location_values(values):
 def remembered_locations(user):
     data=preferences(user)['data']
     # Recover available earlier searches, even if they predate location history.
-    old=[(r['data'].get('query') or {}).get('location','') for r in db.list_entities(user,'search')]
-    return location_values([*data.get('location_history',[]),data['query'].get('location',''),*old])
+    queries=[data['query'],*((r['data'].get('query') or {}) for r in db.list_entities(user,'search'))]
+    old=[v for query in queries for v in (query.get('locations') or [query.get('location','')])]
+    return location_values([*data.get('location_history',[]),*old])
 
 def save_preferences(user,data,location=None,history=()):
     from .resume_conversation import write
