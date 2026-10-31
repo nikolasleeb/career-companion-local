@@ -248,8 +248,8 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
     if prepared and prepared.headline is not None and prepared.headline!=db.settings(user).get('headline',''):feedback['prepared_headline']=prepared.headline
     draft=await optimization.create(user,snapshot,analysis,mode,feedback,guided=True,current=current['snapshot'] if current else None)
     result=draft['data'];rendered=result['rendered_snapshot'];rendered['draft_id']=draft['id']
-    rendered['optimization']={k:result.get(k) for k in ('ai','audit_ai','planning_ai','actual_cost_usd','headline_evidence','keywords','source_checked','strategy','user_constraints')}
-    usage={k:result.get(k) for k in ('ai','audit_ai','planning_ai','layout_ai','actual_cost_usd')};usage['comparison_ai']=comparison_usage
+    rendered['optimization']={k:result.get(k) for k in ('ai','audit_ai','planning_ai','editorial_ai','actual_cost_usd','headline_evidence','keywords','source_checked','strategy','user_constraints')}
+    usage={k:result.get(k) for k in ('ai','audit_ai','planning_ai','editorial_ai','layout_ai','actual_cost_usd')};usage['comparison_ai']=comparison_usage
     if comparison_usage and usage['actual_cost_usd'] is not None:usage['actual_cost_usd']+=comparison_usage.get('estimated_token_cost_usd') or 0
     summary='Built your first tailored draft and updated its actual PDF. Review the headline, wording, and included content.'
     if current:
@@ -399,7 +399,9 @@ def render(user,id,body):
         for s in full['sections']:
             for e in s['entries']:
                 row=rows.get(e['source_id'])
-                if row:e['content_items']=copy.deepcopy(row['items']);e['bullets']=[i['text'] for i in row['items']]
+                if row:
+                    e['content_items']=copy.deepcopy(row['items']);e['bullets']=[i['text'] for i in row['items']]
+                    if 'resume_order' in row:e['resume_order']=row['resume_order']
     rows=resume_builder.catalog(full);available={r['id'] for r in rows}
     if set(body.resume.experience_ids)-available:raise HTTPException(400,'Select only content from this revision.')
     full=optimization.apply(full,{'entries':[],'headline':body.resume.headline if body.resume.headline is not None else (current['snapshot']['headline'] if current else full['headline'])},body.resume.overrides)
@@ -472,7 +474,7 @@ def estimate(user,id,mode):
     # Reserve one layout pass plus chat; approved new facts also require reassessment.
     multiplier=2 if data['profile_dirty'] else 1
     base['usd']=round(base['usd']+extra['usd']*multiplier,6) if base['usd'] is not None and extra['usd'] is not None else None
-    base['note']='Planning estimate for chat, evidence strategy, drafting, final source/coverage check, and at most one measured layout wording pass. Approved facts may add a comparison refresh. No automatic paid retries. A question-only reply costs less; actual usage is shown afterward. Local previews, saving and downloads make no provider requests.'
+    base['note']='Planning estimate for chat, evidence strategy, drafting, final source/coverage check, one editorial review, and at most one measured layout correction (up to five optimization requests). Approved facts may add a comparison refresh. No automatic paid retries. A question-only reply costs less; actual usage is shown afterward. Local previews, saving and downloads make no provider requests.'
     return base
 
 
@@ -489,7 +491,7 @@ def adopt(user,id,body):
     token=db.uid();record=begin(user,id,body.expected_version,token)
     proposal=optimization.apply(snapshot,draft)
     rendered=resume_layout.render(resume_builder.select(proposal,draft['content'],draft['experience_ids']))
-    rendered['optimization']={k:draft.get(k) for k in ('ai','audit_ai','planning_ai','actual_cost_usd','headline_evidence','keywords','source_checked','strategy','user_constraints')}
+    rendered['optimization']={k:draft.get(k) for k in ('ai','audit_ai','planning_ai','editorial_ai','actual_cost_usd','headline_evidence','keywords','source_checked','strategy','user_constraints')}
     return save_revision(user,id,record['data']['version'],rendered,resume_builder.catalog(proposal),'Opened a historical AI draft as a new working revision. Review its current PDF before saving.',token,source_snapshot=snapshot,draft_id=body.draft_id)
 
 

@@ -1,7 +1,7 @@
 """Opt-in paired fictional resume evaluation. Never uses real applicant records.
 
 The persisted ledger reserves a conservative maximum before every request, disables
-retries, and retains unknown charges. --ceiling defaults to the approved $2 cap.
+retries, and retains unknown charges. --ceiling defaults to $2; --ceiling supports the separately approved $12 editorial evaluation.
 """
 import argparse,asyncio,base64,copy,importlib.util,json,os,shutil,sys,tempfile,time
 from pathlib import Path
@@ -76,9 +76,63 @@ def seed(db,user,kind):
     db.save(user,'experience',{**row['data'],'confirmed':False},row['id'])
 
 
+EXTRA_PROFILES={
+ 'finance':('BS','Finance','Finance Intern','Example Services','Reconciled monthly expense records in Excel and investigated discrepancies with an accountant. Prepared a budget variance summary for a team meeting.','Valuation coursework','Compared three public-company financial statements and documented assumptions for a discounted cash-flow model. This was coursework, not investment advice.',['Excel','Financial Modeling','Accounting']),
+ 'research':('BS','Biology','Research Assistant','Example University Lab','Recorded sample preparation steps and checked measurements for missing values. Prepared a reproducible R notebook summarizing assay observations.','Genomics coursework','Used Python to clean public sequence metadata and visualize sample quality. This was a classroom analysis rather than a clinical study.',['R','Python','Laboratory Documentation']),
+ 'civil':('BS','Civil Engineering','Engineering Intern','Example Public Works','Reviewed drainage drawings with a licensed engineer and documented design-review comments. Built an Excel tracker for issues and revisions.','Stormwater design coursework','Compared stormwater design alternatives using hydraulic calculations in a team of three. Owned the spreadsheet calculations; another student prepared the CAD drawings.',['Excel','Hydraulic Analysis','AutoCAD']),
+ 'customer-success':('BA','Communication','Customer Support Associate','Example Software Company','Resolved account-access questions and documented recurring setup issues. Shared a weekly issue summary with the product team; did not own enterprise renewals.','Onboarding guide project','Wrote and tested a five-step onboarding guide with four volunteer users. Revised unclear instructions based on their feedback.',['Written Communication','Excel','Technical Support'])
+}
+POSTINGS.update({
+ 'finance':"""Graduate Finance Analyst. Required: finance or accounting degree, Excel and analytical thinking. Responsibilities: reconcile reports, investigate budget variances and explain findings to colleagues. Preferred: financial modeling and SQL.""",
+ 'research':"""Research Data Assistant. Required: life-sciences coursework, accurate documentation and R or Python. Responsibilities: clean experimental data, document methods and summarize observations. Preferred: reproducible analysis. Do not present classroom data as clinical research.""",
+ 'civil':"""Graduate Civil Engineer. Required: civil engineering degree, analytical calculations and clear technical documentation. Responsibilities: assist licensed engineers with drainage reviews and track design issues. Preferred: AutoCAD and stormwater design coursework.""",
+ 'customer-success':"""Customer Success Associate. Required: clear writing, troubleshooting and collaboration. Responsibilities: help customers complete onboarding, explain product setup and share recurring issues with product colleagues. Preferred: customer renewal experience and spreadsheet reporting."""
+})
+original_seed=seed
+def seed(db,user,kind):
+ if kind not in EXTRA_PROFILES:return original_seed(db,user,kind)
+ from app.models import ExperienceItem
+ degree,major,title,org,work,project,description,skills=EXTRA_PROFILES[kind]
+ def record(**d):return db.save(user,'experience',ExperienceItem(confirmed=True,**d).model_dump())
+ education=record(category='education',title=degree+' '+major,degree=degree,major=major,organization='Example University',expected_graduation='May 2027',gpa='3.7',gpa_scale='4.0')
+ job=record(category='employment',title=title,organization=org,start_date='June 2026',end_date='August 2026',description=work)
+ record(category='project',title=project,description=description,linked_education_ids=[education['id']])
+ record(category='skills',title='Relevant skills',skill_items=[{'name':n} for n in skills])
+ record(category='project',title='Unrelated hobby project',description='Built a wooden bookshelf for personal use.')
+ db.save(user,'experience',ExperienceItem(category='project',title='Unreviewed claim',description='Improved revenue by 75 percent using Kubernetes.',confirmed=False).model_dump())
+
+
+POSTINGS.update({
+ 'dense-engineering':"""Data Engineer. Required qualifications: Python, SQL, practical AWS pipelines and data transformation. Responsibilities: design ingestion workflows, build relational data models, validate data and collaborate with colleagues. Preferred: Apache Spark, automated testing, Git and cloud certification. Terraform is useful but not required.""",
+ 'linked-boundary':"""Graduate AI Application Engineer. Required qualifications: Python and practical application prototypes. Responsibilities: build and evaluate retrieval-based applications, explain progress to stakeholders and improve document-review workflows. Preferred: source traceability and clear testing notes."""
+})
+previous_seed=seed
+def seed(db,user,kind):
+ if kind not in ('dense-engineering','linked-boundary'):return previous_seed(db,user,kind)
+ from app.models import ExperienceItem
+ def record(**d):return db.save(user,'experience',ExperienceItem(confirmed=True,**d).model_dump())
+ if kind=='dense-engineering':
+  previous_seed(db,user,'data-engineering')
+  degree=next(r for r in db.list_entities(user,'experience') if r['data']['category']=='education')
+  record(category='project',title='Relational reporting warehouse',description='Designed a PostgreSQL star schema for a practice retail dataset. Wrote SQL joins and aggregation queries and checked row counts against source extracts. Documented table grain and transformation assumptions.',contribution='Owned the schema and SQL transformations; a teammate built the dashboard.',linked_education_ids=[degree['id']])
+  record(category='project',title='Pipeline test automation',description='Wrote Python unit tests for a data transformation function. Added a GitHub Actions workflow to run the tests and lint checks on pull requests.',linked_education_ids=[degree['id']],individual_project=True)
+  record(category='employment',title='Library Assistant',organization='Example Library',start_date='June 2022',end_date='August 2022',description='Helped visitors find books and maintained a spreadsheet of returned materials.')
+  record(category='volunteering',title='Fundraising Volunteer',organization='Example Community',start_date='2021',end_date='2022',description='Prepared flyers and helped set up community events.')
+  record(category='project',title='Historical reading log',description='Organized personal book notes in a spreadsheet.')
+  record(category='skills',title='Additional tools',skill_items=[{'name':n} for n in ('PostgreSQL','GitHub Actions','Excel','R','Java')])
+ else:
+  record(category='education',title='MS Information Systems',degree='MS',major='Information Systems',organization='Example University',expected_graduation='May 2027')
+  intern=record(category='employment',title='Technology Intern',organization='Example Agency',start_date='June 2026',end_date='August 2026',description='Demonstrated prototype progress to project sponsors during the summer internship.')
+  contractor=record(category='employment',title='Research Contractor',organization='Example University',start_date='September 2026',end_date='Present',description='Expanded document-review rule coverage and evaluated retrieval changes from September 2026 onward.')
+  project=record(category='project',title='Document QA prototype',start_date='June 2026',end_date='Present',description='Built the initial on-device Python retrieval-augmented generation prototype during the June to August 2026 internship. Initially tested it on approximately 10 documents. The later contractor phase began in September 2026 and added source-traceability checks.',contribution='A colleague prepared the sample documents. The sponsor intended this proof of concept to inform future adoption; no production deployment was completed.',linked_employment_ids=[intern['id'],contractor['id']])
+  record(category='skills',title='Technical skills',skill_items=[{'name':n} for n in ('Python','Git','Retrieval-Augmented Generation')])
+  db.save(user,'profile_answer',{'status':'confirmed','answer_kind':'experience','experience_id':project['id'],'experience_ids':[project['id'],intern['id'],contractor['id']],'text':'Selected for the initial assignment because of prior practical AI experience.','title':'Assignment rationale','version':1,'sources':[]})
+
+
 def main():
- p=argparse.ArgumentParser();p.add_argument('--key-file',required=True);p.add_argument('--output',required=True);p.add_argument('--baseline',required=True);p.add_argument('--model',default='gpt-6-luna');p.add_argument('--reasoning',default='low');p.add_argument('--cases',default=','.join(POSTINGS));p.add_argument('--ceiling',type=float,default=2);p.add_argument('--improved-only',action='store_true');args=p.parse_args()
- if not 0<args.ceiling<=2:raise SystemExit('The authorized evaluation ceiling is at most $2.')
+ p=argparse.ArgumentParser();p.add_argument('--key-file',required=True);p.add_argument('--output',required=True);p.add_argument('--baseline',required=True);p.add_argument('--model',default='gpt-6-luna');p.add_argument('--reasoning',default='low');p.add_argument('--cases',default=','.join(POSTINGS));p.add_argument('--ceiling',type=float,default=2);p.add_argument('--improved-only',action='store_true');p.add_argument('--variant-name',default='improved');args=p.parse_args()
+ if not 0<args.ceiling<=12:raise SystemExit('The authorized evaluation ceiling is at most $12.')
+ if not Path(args.key_file).read_text().strip():raise SystemExit('A nonempty explicitly authorized test key is required before evaluation starts.')
  target=Path(args.output);ledger=json.loads(target.read_text()) if target.exists() else {'ceiling_usd':args.ceiling,'estimated_or_reserved_usd':0,'requests':[],'cases':[]}
  folder=Path(tempfile.mkdtemp(prefix='resume-live-'));os.chmod(folder,0o700)
  os.environ.update(DATA_DIR=str(folder),VAULT_KEY_FILE=str(folder/'vault.key'),JOB_SCHEDULER_ENABLED='false')
@@ -92,7 +146,7 @@ def main():
  async def capture(schema,payload,*a,**kw):
   result=await original_structured(schema,payload,*a,**kw)
   if active_row is not None:
-   active_row.setdefault('stages',[]).append({'schema':schema.__name__,'output':copy.deepcopy(result[0]),'professional_evidence':payload.get('professional_evidence')});save()
+   active_row.setdefault('stages',[]).append({'schema':schema.__name__,'output':copy.deepcopy(result[0]),'professional_evidence':payload.get('professional_evidence'),'first_draft':payload.get('first_draft')});save()
   return result
  ai.structured=capture
  def save():
@@ -118,7 +172,7 @@ def main():
     db.update_settings(uid,{'name':'Example Student','custom_model':args.model,'custom_reasoning':args.reasoning,'custom_speed':'standard'})
     job=db.save(uid,'job',{'title':kind+' role','company':'Example Employer','description':POSTINGS[kind]});session=resume_conversation.start(uid,ConversationStart(job_id=job['id']));snapshot=resume_conversation.source(uid,session['data'])
     case={'source_version':__import__('hashlib').sha256(Path(resume_strategy.__file__).read_bytes()).hexdigest(),'name':kind,'model':args.model,'reasoning':args.reasoning,'variants':[]};ledger['cases'].append(case);save()
-    for variant,fn in ([('improved',optimization.create)] if args.improved_only else [('baseline',baseline.create),('improved',optimization.create)]):
+    for variant,fn in ([(args.variant_name,optimization.create)] if args.improved_only else [('baseline',baseline.create),('improved',optimization.create)]):
      row={'variant':variant};active_row=row;case['variants'].append(row);start=time.monotonic();token=ai.set_user_context(uid,process='resume_optimize')
      try:
       draft=asyncio.run(fn(uid,copy.deepcopy(snapshot),None,'custom',guided=True));data=draft['data'];rendered=data['rendered_snapshot'];row.update(completed=True,focus=data.get('strategy',{}).get('focus'),strategy=data.get('strategy'),sections=rendered['sections'],headline=rendered['headline'],pages=rendered['layout']['pages'],actual_cost_usd=data.get('actual_cost_usd'))

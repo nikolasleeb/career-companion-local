@@ -137,7 +137,7 @@ def provider(monkeypatch,scenario,mutate=None):
 def test_shell_like_selection_explanation_and_local_render_are_free(scenario,monkeypatch):
  calls=provider(monkeypatch,scenario);user,job,session,rows=scenario
  result=asyncio.run(guided.build(user,session['id'],session['data']['version'],'economy'))
- assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','DraftAudit']
+ assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','DraftAudit']
  snap=result['current']['data']['snapshot'];included=set(snap['experience_ids'])
  assert rows['cloud']['id'] in included and rows['energy']['id'] not in included
  assert snap['optimization']['strategy']['focus'] and snap['optimization']['strategy']['priorities'][0]['included']
@@ -172,7 +172,7 @@ def test_backup_import_remaps_composed_sources_and_detaches_missing_history(scen
  refs=[ref for e in strategy.entries(imported['data']['snapshot']).values() for i in e['content_items'] for ref in i.get('source_refs',[])]
  assert refs and all(ref['record_id']!=old_source for ref in refs)
  assert all(db.get(user,ref['record_id'],'experience') for ref in refs)
- assert len(calls)==3
+ assert len(calls)==4
  # A historical missing record can be imported read-only, but cannot become current evidence.
  ref={'source_id':'a'*24,'record_id':'deleted-source','quote':'Former reviewed source.','supporting_details':[]}
  value={'source_refs':[ref]};strategy.backup_markers(value,set());assert ref['unavailable_record']

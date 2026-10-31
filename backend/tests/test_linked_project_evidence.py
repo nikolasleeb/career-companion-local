@@ -156,7 +156,7 @@ def test_provider_payload_preserves_project_provenance_and_permissions(env,monke
         return payload['proposal'],{'estimated_token_cost_usd':0}
     monkeypatch.setattr(ai,'structured',model)
     asyncio.run(optimization.create(user,snapshot,None,'economy'))
-    assert len(calls)==3
+    assert len(calls)==4
     facts=[f for f in calls[0]['professional_evidence']['facts'] if f['record_id']==project['id'] and f['field']!='header']
     assert len(facts)==2
     assert all(intern['id'] in f['allowed_destinations'] for f in facts)

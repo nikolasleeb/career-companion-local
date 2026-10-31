@@ -99,7 +99,7 @@ def test_ai_draft_roundtrip_keywords_privacy_both_layouts(client,account,monkeyp
     assert estimate.status_code==200 and estimate.json()['usd']>0 and not calls
     task=wait_task(client,client.post('/api/resumes/optimize',json={**body,'mode':'custom'}))
     assert task['status']=='completed',task
-    draft=task['result'];assert len(calls)==3 and draft['data']['source_checked']
+    draft=task['result'];assert len(calls)==4 and draft['data']['source_checked']
     assert 'authorized_us' not in json.dumps(calls) and 'sponsorship_now' not in json.dumps(calls)
     assert all('Worked unrelated' not in b for r in draft['data']['catalog'] for i,b in enumerate(r['bullets']) if i in draft['data']['content'].get(r['id'],[]))
     req={**body,'draft_id':draft['id'],'headline':draft['data']['headline'],'content':draft['data']['content'],'experience_ids':draft['data']['experience_ids']}
@@ -118,7 +118,7 @@ def test_ai_draft_roundtrip_keywords_privacy_both_layouts(client,account,monkeyp
         doc=Document(io.BytesIO(word));assert doc.styles['Normal'].font.size.pt==10.5
         assert documents.docx_pages(word)==1
         assert 'Data Science | Python & SQL' in client.get('/api/resumes/'+rid+'/export/txt').text
-    assert len(calls)==3 # saving, selecting, rendering and downloading make no API requests
+    assert len(calls)==4 # saving, selecting, rendering and downloading make no API requests
     backup=client.get('/api/account/export').json()
     assert any(r['kind']=='resume_draft' for r in backup['records'])
     assert client.post('/api/account/import',files={'file':('backup.json',json.dumps(backup).encode(),'application/json')}).status_code==200
@@ -180,7 +180,7 @@ def test_user_edits_and_stale_source_preservation(client,account,monkeypatch):
     saved=client.post('/api/resumes',json=req);assert saved.status_code==200,saved.text
     text=client.get('/api/resumes/'+saved.json()['id']+'/export/txt').text
     assert 'Business Analytics | Python' in text and 'Used Python to analyze demand' in text
-    assert len(calls)==3
+    assert len(calls)==4
     source=next(r for r in rows if r['id']==project['id'])
     client.put('/api/experience/'+source['id'],json={**source['data'],'description':'Changed source content after the AI draft.'})
     assert client.post('/api/resumes',json=req).status_code==409
@@ -269,7 +269,7 @@ def test_date_citations_reach_independent_audit_from_confirmed_headers(client,ac
     calls=mock_model(monkeypatch,mutate,audit=audit)
     task=wait_task(client,client.post('/api/resumes/optimize',json=body))
     assert task['status']=='completed',task
-    assert task['result']['data']['source_checked'] and len(calls)==3
+    assert task['result']['data']['source_checked'] and len(calls)==4
 
 
 @pytest.mark.parametrize('foreign_record',[False,True])

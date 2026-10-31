@@ -154,8 +154,14 @@ def resume_plain(data):
         if not section['entries']: continue
         lines += ['',section['title'].upper()]
         for entry in section['entries']:
-            lines += [' | '.join(filter(None,[clean(entry.get('title')),clean(entry.get('details')) or ' | '.join(filter(None,[clean(entry.get('organization')),clean(entry.get('dates'))]))]))]
-            lines += ['- '+clean(b) for b in entry.get('bullets',[]) if clean(b)]
+            heading=' | '.join(filter(None,[clean(entry.get('title')),clean(entry.get('details')) or ' | '.join(filter(None,[clean(entry.get('organization')),clean(entry.get('dates'))]))]))
+            bullets=[clean(b) for b in entry.get('bullets',[]) if clean(b)]
+            if entry.get('category')=='skills' and data.get('schema_version',0)>=3:
+                values=', '.join(bullets);title=clean(entry.get('title'))
+                suffix=values[len(title):] if len(bullets)==1 and title and values.startswith(title) else ': '+values if values else ''
+                lines.append(heading+suffix)
+            else:
+                lines.append(heading);lines.extend('- '+b for b in bullets)
             lines.append('')
     return '\n'.join(lines).strip()+'\n'
 
@@ -277,9 +283,14 @@ def export_resume(data, format):
         story.append(Paragraph(escape(block['title']),heading_style))
         for entry in block['entries']:
             text=' | '.join(filter(None,[clean(entry['title']),clean(entry.get('details')) or ' | '.join(filter(None,[clean(entry.get('organization')),clean(entry.get('dates'))]))]))
-            story.append(Paragraph(escape(text),entry_style))
-            for bullet in entry.get('bullets',[]):
-                if clean(bullet): story.append(Paragraph('• '+escape(clean(bullet)).replace('\n','<br/>'),bullet_style))
+            bullets=[clean(b) for b in entry.get('bullets',[]) if clean(b)]
+            if entry.get('category')=='skills' and data.get('schema_version',0)>=3:
+                values=', '.join(bullets);title=clean(entry.get('title'))
+                suffix=values[len(title):] if len(bullets)==1 and title and values.startswith(title) else ': '+values if values else ''
+                story.append(Paragraph('<b>'+escape(text)+'</b>'+escape(suffix),normal))
+            else:
+                story.append(Paragraph(escape(text),entry_style))
+                for bullet in bullets:story.append(Paragraph('• '+escape(bullet).replace('\n','<br/>'),bullet_style))
             story.append(Spacer(1,3))
     SimpleDocTemplate(buffer,pagesize=letter,leftMargin=57.6,rightMargin=57.6,topMargin=50.4,bottomMargin=50.4,title='Resume',author='').build(story)
     return buffer.getvalue(),'application/pdf'

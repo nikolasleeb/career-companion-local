@@ -15,8 +15,8 @@ def fingerprint(snapshot,ids=None):
 def estimate(snapshot,mode,profile):
     option=ai_settings.resolve(profile,mode)
     count=max(1000,(len(json.dumps(snapshot))+3)//4)
-    stages=[ai_settings.estimate(option['model'],option['reasoning_effort'],count+extra,out,service_tier=option['service_tier']) for extra,out in ((2000,2200),(3500,4500),(5000,3500),(7000,1500))]
-    return {**option,'usd':round(sum(v['usd'] for v in stages),6) if all(v['usd'] is not None for v in stages) else None,'input_tokens':sum(v['input_tokens'] for v in stages),'answer_tokens':11700,'assumed_reasoning_tokens':sum(v['assumed_reasoning_tokens'] for v in stages),'pricing_date':stages[0]['pricing_date'],'note':'Planning estimate for evidence strategy, drafting, one optional layout pass and final auditing. No automatic paid retries.'}
+    stages=[ai_settings.estimate(option['model'],option['reasoning_effort'],count+extra,out,service_tier=option['service_tier'],max_output_tokens=profile.get('ai_max_output_tokens') or None) for extra,out in ((2000,2200),(3500,4500),(5000,4500),(6500,3000),(7000,1500))]
+    return {**option,'usd':round(sum(v['usd'] for v in stages),6) if all(v['usd'] is not None for v in stages) else None,'input_tokens':sum(v['input_tokens'] for v in stages),'answer_tokens':15700,'assumed_reasoning_tokens':sum(v['assumed_reasoning_tokens'] for v in stages),'pricing_date':stages[0]['pricing_date'],'note':'Planning estimate for evidence strategy, drafting, editorial review, one optional measured layout correction and final auditing (at most five model requests). No automatic paid retries.'}
 
 
 def apply(snapshot,draft,overrides=None):
@@ -26,9 +26,12 @@ def apply(snapshot,draft,overrides=None):
     omissions={r['record_id']:r['reason'] for r in draft.get('omissions',[])}
     known={v['item_id'] for s in result['sections'] for e in s['entries'] for v in e['content_items']}
     if any(k not in known or not isinstance(v,str) or not v.strip() or len(v)>1800 for k,v in overrides.items()):raise ServiceError('A draft edit is empty, too long, or no longer refers to available content.')
+    order={choice['record_id']:n for n,choice in enumerate(draft['entries'])}
     for section in result['sections']:
         for entry in section['entries']:
             choice=choices.get(entry['source_id'],{});items={i['item_id']:i for i in choice.get('items',[])}
+            if choices:entry['resume_order']=order.get(entry['source_id'],len(order))
+            item_order={item['item_id']:n for n,item in enumerate(choice.get('items',[]))}
             entry['selection_reason']=choice.get('reason',omissions.get(entry['source_id'],'Not recommended for this role. Available for manual selection.'))
             entry['priority']=max([i['priority'] for i in items.values()] or [0])
             for index,item in enumerate(entry['content_items']):
@@ -36,6 +39,7 @@ def apply(snapshot,draft,overrides=None):
                 # A later accepted Suggested edit takes precedence over an earlier AI rewrite.
                 base=draft.get('baseline',{}).get(item['item_id'],item['original'])
                 text=proposed.get('text',item['text']) if item['text']==base else item['text']
+                if choices:item['resume_order']=item_order.get(item['item_id'],len(item_order))
                 item.update({'text':overrides.get(item['item_id'],text),'priority':proposed.get('priority',0),'reason':proposed.get('reason',entry['selection_reason'])})
                 if item['item_id'] in overrides:item['user_locked']=True
                 entry['bullets'][index]=item['text']
@@ -83,7 +87,7 @@ def validate(output,snapshot,records):
             number_source=original+'\n'+'\n'.join(r.get('dates','') for r in source.get('source_refs',[]))
             if ai.numeric_facts(item['text'])-ai.numeric_facts(number_source):raise ServiceError('An AI rewrite introduced a number absent from its source. The previous draft is intact.')
             if source['field'] in ('skill','certification','gpa','course','education_detail','honors','url','tools') and ai.normalized(item['text'])!=ai.normalized(original):raise ServiceError('The AI changed a skill, course, credential, or structured fact. Retry optimization.')
-            if re.search(r'\b(no|not|never|without)\b',source['text'],re.I) and not re.search(r'\b(no|not|never|without)\b',item['text'],re.I):raise ServiceError('An AI rewrite removed a source limitation.')
+            if __import__('app.resume_strategy',fromlist=['limitation_removed']).limitation_removed(source['text'],item['text']):raise ServiceError('An AI rewrite removed a source limitation.')
         if entry['category']=='project' and not any(items[i['item_id']]['field'] in ('description','contribution','accomplishment') for i in choice['items']):raise ServiceError('A recommended project needs at least one descriptive item.')
     if not output['entries']:raise ServiceError('OpenAI returned an empty draft. Your current selection is intact.')
     def evidence(rows):

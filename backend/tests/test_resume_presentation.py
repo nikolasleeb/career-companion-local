@@ -80,6 +80,15 @@ def test_existing_draft_can_update_presentation_locally_without_altering_old_rev
     state=guided.state(user,state['id']);body=request(state);body.compact_skills=True
     changed=guided.render(user,state['id'],WorkingRender(expected_version=state['data']['version'],request_token='clean-skills',resume=body))
     assert changed['current']['id']!=head and changed['current']['data']['snapshot']['compact_skills']
-    assert len(calls)==3 # Only the original mocked build and audit.
+    assert len(calls)==4 # Only the original planning, draft, editorial review and audit.
     assert db.get(user,head,'resume_revision')['data']==old
     assert changed['current']['data']['snapshot']['experience_ids']==state['current']['data']['snapshot']['experience_ids']
+
+
+@pytest.mark.parametrize('format',['txt','docx','pdf'])
+def test_single_named_credential_is_not_duplicated_in_any_export(format):
+ data=fixture_data();entry=data['sections'][0]['entries'][1];entry['certification_items']=entry['certification_items'][:1];entry['title']='Example Cloud Practitioner';entry['bullets']=entry['bullets'][:1];entry['content_items']=entry['content_items'][:1];data['sections'][0]['entries']=[entry]
+ raw,_=documents.export_resume(data,format)
+ text=raw.decode() if format=='txt' else '\n'.join(p.text for p in Document(io.BytesIO(raw)).paragraphs) if format=='docx' else '\n'.join(p.extract_text() for p in PdfReader(io.BytesIO(raw)).pages)
+ assert text.count('Example Cloud Practitioner')==1
+ assert 'Expires 2028-01-29' in text

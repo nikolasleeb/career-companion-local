@@ -20,8 +20,28 @@ def catalog(snapshot,analysis=None):
         for entry in section['entries']:
             # Header facts are applicant evidence too; dates are not content items.
             header={key:entry.get(key,'') for key in ('details','dates','start_date','end_date','expected_graduation','relationship_context')}
+            if 'resume_order' in entry:header['resume_order']=entry['resume_order']
             rows.append({**header,'reviewed_answer_sources':copy.deepcopy(entry.get('reviewed_answer_sources',[])),'id':entry['source_id'],'title':entry['title'],'category':entry['category'],'organization':entry.get('organization',''),'bullets':entry['bullets'],'items':entry.get('content_items',[]),'priority':entry.get('priority',rank(entry['title']+' '+' '.join(entry['bullets']),job)+(30 if entry['source_id'] in recommended else 0)+(10 if entry['category']=='education' else 0)),'reason':entry.get('selection_reason',recommended.get(entry['source_id'],'Manual content from your confirmed Profile.'))})
     return rows
+
+def chronological_key(entry):
+    """Use only stated dates; no missing end date is inferred to mean current."""
+    category=entry.get('category')
+    value=(entry.get('expected_graduation') if category=='education' else '') or entry.get('end_date') or entry.get('dates') or entry.get('start_date') or ''
+    if re.search(r'\b(?:present|current|ongoing)\b',value,re.I):return (10000,12)
+    years=list(re.finditer(r'\b(?:19|20|21)\d{2}\b',value))
+    if not years:return (-1,-1)
+    last=years[-1];year=int(last.group());month=0
+    names=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+    before=value[max(0,last.start()-16):last.start()].strip(' /-')
+    for n,name in enumerate(names,1):
+        if re.search(r'\b'+name+r'[a-z]*\.?$',before,re.I):month=n;break
+    iso=re.match(r'[-/](0?[1-9]|1[0-2])(?:\D|$)',value[last.end():])
+    if iso:month=int(iso.group(1))
+    numeric=re.search(r'(0?[1-9]|1[0-2])[/]$',value[:last.start()])
+    if numeric:month=int(numeric.group(1))
+    return year,month
+
 
 def select(snapshot,content,ids):
     result=copy.deepcopy(snapshot)
@@ -32,6 +52,15 @@ def select(snapshot,content,ids):
             entry['bullets']=[v for i,v in enumerate(entry['bullets']) if i in allowed and v.strip()]
             entry['content_items']=[v for i,v in enumerate(entry.get('content_items',[])) if i in allowed and v['text'].strip()]
         section['entries']=[e for e in section['entries'] if e['bullets'] or e['category']=='education']
+        # Selection indices refer to the stable source catalog. Order only the filtered document.
+        if section['entries'] and all(e.get('category') in ('employment','education') for e in section['entries']):
+            section['entries'].sort(key=chronological_key,reverse=True)
+        else:
+            section['entries'].sort(key=lambda e:e.get('resume_order',10**6))
+        for entry in section['entries']:
+            if any('resume_order' in i for i in entry['content_items']):
+                entry['content_items'].sort(key=lambda i:i.get('resume_order',10**6))
+                entry['bullets']=[i['text'] for i in entry['content_items']]
     from . import linked_project_evidence
     linked_project_evidence.deduplicate(result)
     linked_project_evidence.validate_selected(result)
