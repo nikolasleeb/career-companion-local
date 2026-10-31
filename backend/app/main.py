@@ -1,5 +1,5 @@
 from . import work_style_summary,work_preferences,knowledge_assistant,personalized_jobs,chat_visuals,skills
-from . import home
+from . import home, readiness
 from . import interview_practice
 from . import profile_import
 import asyncio
@@ -167,7 +167,7 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('resume','resume_guided','resume_optimize','resume_fit','cover_letter','analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('resume','resume_guided','resume_optimize','resume_fit','cover_letter','analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     atomic_token=task_atomic.bind(user,task_id)
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
@@ -199,7 +199,7 @@ def start_task(user,kind,work,inputs=None,cleanup=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -376,12 +376,13 @@ work_style_summary.install(app,start_task,require_ai)
 openai_connection_test.install(app,start_task)
 app.include_router(skills.router)
 knowledge_assistant.install(app,start_task,require_ai)
+readiness.install(app,start_task,require_ai)
 personalized_jobs.install(app,start_task,require_ai)
 chat_visuals.install(app,start_task,require_ai)
 @app.get('/api/ai-actions/{token}')
 def foreground_status(token:str,user=Depends(auth.current)):
     with db.connect() as c:
-        for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test') ORDER BY created_at DESC",(user['id'],)):
+        for r in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind IN ('knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness') ORDER BY created_at DESC",(user['id'],)):
             payload=json.loads(r['result'] or '{}');inputs=payload.get('_task_inputs',payload.get('inputs',{}))
             if inputs.get('request_token')==token:return {'task_id':r['id'],'status':r['status']}
     raise HTTPException(404,'No saved action was found. This lookup makes no AI request.')
@@ -514,7 +515,7 @@ def remove_record(entity_id:str,user=Depends(auth.current)):
     if not record: raise HTTPException(404,'Record not found.')
     blocker=interview_practice.removal_blocker(user['id'],record) or application_documents.removal_blocker(user['id'],record)
     if blocker:raise HTTPException(409,blocker)
-    if record['kind'] in knowledge_assistant.KINDS or record['kind']=='chat_image':raise HTTPException(409,'Delete the complete conversation from its chat history to preserve references.')
+    if record['kind'] in knowledge_assistant.KINDS|readiness.KINDS or record['kind']=='chat_image':raise HTTPException(409,'Delete the complete conversation from its chat history to preserve references.')
     if record['kind']=='usage_event':raise HTTPException(409,'Cost history is preserved until account deletion.')
     if record['kind'] in ('onboarding','profile_answer','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts'):raise HTTPException(409,'Archive reviewed answers to preserve their source history.')
     if record['kind'] in ('job','analysis','resume','resume_draft','resume_revision','resume_conversation','application','cover_workspace','cover_revision','cover_letter','search'):onboarding.require_complete(user['id'])
@@ -1230,7 +1231,8 @@ async def preparation(body:PrepRequest,user=Depends(auth.current)):
     require_ai(user['id']);job=require(user['id'],body.job_id,'job') if body.job_id else {'data':{'title':'Profile-based learning','description':''}}
     if job['data'].get('description_incomplete'):raise ServiceError('This provider supplied only a description snippet. Edit the posting with its full text or import the full posting before tailoring.')
     if body.analysis_id: require(user['id'],body.analysis_id,'analysis')
-    async def work(): return db.save(user['id'],'prep',{**(await ai.prepare(user['id'],job['data'],body.selected_topics if body.selected_topics is not None else body.confirmed_gaps,body.mode)),'job_id':body.job_id,'analysis_id':body.analysis_id})
+    if body.readiness_report_id:readiness.report_handoff(body.readiness_report_id,user['id'])
+    async def work(): return db.save(user['id'],'prep',{**(await ai.prepare(user['id'],job['data'],body.selected_topics if body.selected_topics is not None else body.confirmed_gaps,body.mode)),'job_id':body.job_id,'analysis_id':body.analysis_id,'readiness_report_id':body.readiness_report_id,**({'source_snapshot':[{'record_id':body.readiness_report_id,'kind':'generated_readiness'}]} if body.readiness_report_id else {})})
     return start_task(user['id'],'preparation',work)
 
 @app.post('/api/interviews')
@@ -1310,14 +1312,14 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS={'profile_personalization','coach_plan_progress','career_explorer_search','career_explorer_review','application_offer','saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS=readiness.KINDS|{'profile_personalization','coach_plan_progress','career_explorer_search','career_explorer_review','application_offer','saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
     onboarding.status(user['id'])
     cost_history.recover(user['id'])
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
-    records=[r for kind in BACKUP_KINDS for r in db.list_entities(user['id'],kind)]
+    records=readiness.backup_records(user['id'],[r for kind in BACKUP_KINDS for r in db.list_entities(user['id'],kind)])
     record_ids={r['id'] for r in records}
     from . import project_relations
     for record in records:project_relations.backup_markers(record['data'],record_ids)
@@ -1375,6 +1377,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             career_coach.validate_backup(record,kinds,by_id)
             interview_practice.validate_backup(record,kinds,by_id,payload.get('files',{}))
             knowledge_assistant.validate_backup(record,kinds)
+            readiness.validate_backup(record,kinds,by_id)
             personalized_jobs.validate_backup(record,kinds)
             chat_visuals.validate_backup(record,kinds)
             if record['kind']=='work_preferences':work_preferences.Change.model_validate({k:v for k,v in {**record['data'],'expected_revision':record['data']['revision']}.items() if k in work_preferences.Change.model_fields})
@@ -1530,7 +1533,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             current_work=work_preferences.read(user['id'])
             restored_work=current_work if current_work.get('summary') or current_work['preferences'] else remap(record['data'])
             db.save(user['id'],'work_preferences',{**restored_work,'use_for_ai':False,'coach_report_access':False,'reviewed':False,'revision':current_work['revision']+1},work_preferences.identity(user['id']))
-        elif record['kind'] in career_coach.KINDS or record['kind'] in interview_practice.KINDS or record['kind'] in knowledge_assistant.KINDS or record['kind'] in ('personalized_search','chat_image'):
+        elif record['kind'] in readiness.KINDS or record['kind'] in career_coach.KINDS or record['kind'] in interview_practice.KINDS or record['kind'] in knowledge_assistant.KINDS or record['kind'] in ('personalized_search','chat_image'):
             restored=remap(record['data'])
             if record['kind']=='interview_session':restored['use_work_styles']=False
             saved=db.save(user['id'],record['kind'],restored,ids[record['id']],restoring=True)

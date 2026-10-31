@@ -70,6 +70,9 @@ def init():
         application_agent.init(c)
         from . import task_atomic
         task_atomic.init(c)
+        from . import readiness_runtime
+        readiness_runtime.init(c)
+        c.execute("UPDATE cc_readiness_reservations SET state='unknown' WHERE state='dispatching'")
         c.execute("UPDATE tasks SET status='interrupted',error='The application restarted. Your saved inputs remain available; retry the action.',updated_at=? WHERE status IN ('queued','running','cancelling')", (now(),))
         c.execute('DELETE FROM cc_task_stage')
         c.execute("UPDATE entities SET payload=json_set(payload,'$.state','interrupted','$.error','Server restarted. Completed review batches are saved; explicitly resume remaining work.'),updated_at=? WHERE kind='ai_job_match' AND json_extract(payload,'$.state') IN ('queued','running')",(now(),))

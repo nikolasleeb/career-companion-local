@@ -17,6 +17,8 @@ class IncompleteResponse(ServiceError):
         super().__init__(message+' No partial result was saved. Your inputs and previous results remain available; try a lower reasoning level or less repeated Profile text.')
 
 _context=ContextVar('account_ai_context',default=None)
+# Optional per-action admission policy, including nested research requests.
+_request_policy=ContextVar('account_ai_request_policy',default=None)
 
 def set_user_context(user,task_id='',process='other',operation=''):
     return _context.set({'user_id':user,'task_id':task_id,'process':process,'operation':operation,'profile':dict(db.settings(user)),'key':credentials.effective(user)})
@@ -44,27 +46,34 @@ async def call_api(body,retry_allowed=True):
     # Explicit Standard avoids inheriting a more expensive project-level tier.
     body={'service_tier':'default',**body}
     if 'max_output_tokens' in body:body['max_output_tokens']=output_limit(body['max_output_tokens'])
+    policy=_request_policy.get()
+    if policy:retry_allowed=False
     # Reasoning-heavy comparisons can outlast the old 150-second read limit.
     # Transport timeouts are ambiguous: do not automatically repeat a paid POST.
     async with httpx.AsyncClient(timeout=httpx.Timeout(480,connect=15), trust_env=False) as client:
         for attempt in range(2):
             context=_context.get() or {}
+            reservation=policy.reserve(body) if policy else None
             event=cost_history.begin(context,body)
             try:
                 task_progress.provider_wait()
                 response = await client.post('https://api.openai.com/v1/responses', headers={'Authorization':'Bearer '+api_key}, json=body)
             except httpx.TimeoutException:
+                if policy:policy.finish(reservation,None)
                 cost_history.finish(context.get('user_id'),event,body,status='unknown')
                 raise ServiceError('The OpenAI request timed out. It may have incurred usage, so it was not automatically sent again. Your saved inputs and previous results remain available; wait before retrying.') from None
             except httpx.HTTPError:
+                if policy:policy.finish(reservation,None)
                 cost_history.finish(context.get('user_id'),event,body,status='unknown')
                 raise ServiceError('The connection to OpenAI was interrupted. The request was not automatically sent again. Your saved inputs and previous results remain available; check your connection before retrying.') from None
             except asyncio.CancelledError:
+                if policy:policy.finish(reservation,None)
                 cost_history.finish(context.get('user_id'),event,body,status='unknown')
                 raise
             task_progress.provider_done()
             try: result = response.json()
             except ValueError: result = None
+            if policy:policy.finish(reservation,result,response.status_code)
             recorded=cost_history.finish(context.get('user_id'),event,body,result,response.status_code,status='unknown' if result is None else None)
             if recorded and isinstance(result,dict):result['_next_step_usage_event_id']=recorded['id']
             if response.status_code >= 400:

@@ -10,7 +10,7 @@ Use a fictional, reviewed Profile and an already authorized pilot account. If de
 | 2:10–3:00 | Open a recommendation's Profile evidence and source excerpts. Contrast original guidance with a fetched source and its date. | Grounding, attribution and evaluation of limitations |
 | 3:00–3:45 | Ask for a smaller first step or a free alternative. Inspect the proposed changes and explicitly update the roadmap. Mark one activity in progress. | Interactive coaching, saved versions and actionable next steps |
 | 3:45–4:20 | Demonstrate Stop using a fictional delayed provider, then reopen the completed chat from Your chats. Show its roadmap and progress are intact. | Account-owned persistence and complete workflow |
-| 4:20–5:00 | Show the usage ledger and discuss testing. State that keyword/alias retrieval is implemented; semantic embeddings and autonomous agents are proposed extensions. | Technical understanding, truthful scope and completeness |
+| 4:20–5:00 | Show the usage ledger and discuss testing. State that keyword/alias retrieval is implemented. Show Career Readiness for the separate bounded SDK agent; Action Plans retains its fixed pipeline. Semantic embeddings remain a proposed extension. | Technical understanding, truthful scope and completeness |
 
 Architecture to show: **Reviewed Profile + goal → scoped retrieval + current public sources → structured response → evidence checks → saved chat and roadmap.**
 

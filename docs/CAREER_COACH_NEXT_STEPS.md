@@ -1,6 +1,6 @@
 # Prioritized AI improvements after Career Coach v1
 
-These are proposals, not implemented capabilities. They can use the existing account-owned OpenAI connection; an extra AI provider is not inherently required.
+Career Readiness now implements the bounded career-direction/readiness agent separately from Action Plans, using the OpenAI Python Agents SDK; see [Career Readiness](CAREER-READINESS.md). The remaining ideas below are proposals, not claims of implemented capabilities. They can use the existing account-owned OpenAI connection; an extra AI provider is not inherently required.
 
 | Priority | Improvement | Implementation approach | Evidence of success |
 |---|---|---|---|

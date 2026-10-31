@@ -86,8 +86,8 @@ def validate_chunks(chunks):
  if not isinstance(chunks,list) or len(chunks)>36:raise ValueError()
  seen=set()
  for s in chunks:
-  if not isinstance(s,dict) or not isinstance(s.get('chunk_id'),str) or s['chunk_id'] in seen or not safe_url(s.get('url','')):raise ValueError()
-  if not isinstance(s.get('text'),str) or len(s['text'])>1800 or not isinstance(s.get('title'),str):raise ValueError()
-  if s.get('kind') not in ('curated','fetched','occupation'):raise ValueError()
+  if not isinstance(s,dict) or not isinstance(s.get('chunk_id'),str) or s['chunk_id'] in seen or (s.get('kind')!='readiness' and not safe_url(s.get('url',''))):raise ValueError()
+  if not isinstance(s.get('text'),str) or len(s['text'])>(10800 if s.get('kind')=='readiness' else 1800) or not isinstance(s.get('title'),str):raise ValueError()
+  if s.get('kind') not in ('curated','fetched','occupation','readiness'):raise ValueError()
   seen.add(s['chunk_id'])
  return chunks

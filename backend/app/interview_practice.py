@@ -29,6 +29,7 @@ class Setup(StrictModel):
  job_id:str=Field(default='',max_length=64)
  application_id:str=Field(default='',max_length=64)
  notes:str=Field(default='',max_length=12000)
+ readiness_report_id:str=Field(default='',max_length=64)
  document_ids:list[str]=Field(default_factory=list,max_length=4)
  language:Literal['Python','JavaScript','TypeScript','Java','C++','C#','SQL']='Python'
  use_work_styles:bool=False
@@ -132,6 +133,11 @@ def session(id:str,user=Depends(owner)):return detail(user,id)
 @router.post('/sessions')
 def create(body:Setup,user=Depends(owner)):
  data=body.model_dump(exclude={'guide_question_id'});posting={}
+ if body.readiness_report_id:
+  from . import readiness
+  shared=readiness.report_handoff(body.readiness_report_id,user)
+  data['readiness_source']={'record_id':body.readiness_report_id,'kind':'generated_readiness','label':shared['label']}
+
  starter=interview_guides.starter(body.kind,body.guide_question_id) if body.guide_question_id else None
  if body.kind=='coding' and body.use_work_styles:raise HTTPException(422,'Work Styles is not used in coding practice.')
  if body.use_work_styles and not work_preferences.context(user)['preferences']:raise HTTPException(422,'Enable and save your approved Work Styles summary in Profile first.')
@@ -205,6 +211,11 @@ def context(user,s,focus=''):
  for source in catalog:
   source['updated_at']=records.get(source['record_id'],{}).get('updated_at','')
  d=s['data']
+ if d.get('readiness_report_id'):
+  from . import readiness,coach_access
+  report=readiness.owned(user,d['readiness_report_id'],'readiness_report')
+  if not coach_access.source_allowed(user,report['data']['source_snapshot']):raise ServiceError('Readiness source sharing changed. Remove the readiness link or start fresh practice with current context.')
+  catalog.extend(passages('readiness:'+report['id'],report['id'],'generated_readiness','Generated readiness guidance, not qualifications',json.dumps(report['data']['reply']),6))
  if d['kind']!='coding' and (__import__('app.personalization',fromlist=['read']).read(user).get('explicit') or d.get('use_work_styles')):
   w=work_preferences.context(user)
   if w['preferences']:catalog.append({'source_id':'work-summary:'+str(w['revision']),'record_id':work_preferences.identity(user),'kind':'work_summary','label':'Approved Work Styles summary · self-description, not qualifications','text':' '.join(w['preferences'])[:6000]})
@@ -415,7 +426,7 @@ def validate_backup(record,kinds,by_id,files):
   if record['id'] not in files or not d.get('filename','').lower().endswith('.pdf') or len(d.get('text',''))>1000000:raise ValueError()
  if kind=='interview_session':
   Setup.model_validate({k:d[k] for k in Setup.model_fields if k in d})
-  for key,expected in [('job_id','job'),('application_id','application')]:
+  for key,expected in [('job_id','job'),('application_id','application'),('readiness_report_id','readiness_report')]:
    if d.get(key) and kinds.get(d[key])!=expected:raise ValueError()
   for id in d['document_ids']:
    if kinds.get(id)!='document' or by_id[id]['data'].get('purpose')!='interview_prep':raise ValueError()
