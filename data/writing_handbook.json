@@ -1,0 +1,465 @@
+{
+  "reviewed_at": "2026-10-29",
+  "note": "Follow the employer’s instructions first. Career Companion’s one-page resume exports and cover letter length target are app choices; source recommendations depend on their audience. Formatting and keyword coverage cannot guarantee an interview.",
+  "sections": [
+    {
+      "id": "resume",
+      "title": "Resume essentials",
+      "description": "Help a reader find the experience that matters for this opportunity.",
+      "blocks": [
+        {
+          "title": "Choose evidence before wording",
+          "text": "Read the posting and identify the work you would be doing. Choose experiences that show related tools, tasks, decisions, or skills. A detailed master record helps you find useful material without putting everything on every resume.",
+          "source_ids": [
+            "target",
+            "harvard"
+          ],
+          "checklist": [
+            "Select relevant experience from paid work, coursework, projects, or volunteering.",
+            "Describe what you actually did; a desired qualification is not evidence that you have it."
+          ]
+        },
+        {
+          "title": "Give each section a clear job",
+          "text": "Use familiar headings such as Education, Experience, Projects, and Skills. Put the most relevant material where it is easy to find. Recent graduates may give education and projects more space; experienced applicants may lead with relevant employment.",
+          "source_ids": [
+            "format",
+            "mit"
+          ],
+          "checklist": []
+        },
+        {
+          "title": "Write specific bullets",
+          "text": "Start with an accurate action, then add what you worked on, the method or tool, and useful context. Include an outcome when you can support it. A clear description of useful work is stronger than an invented percentage.",
+          "source_ids": [
+            "experience",
+            "harvard"
+          ],
+          "checklist": [
+            "Name your individual contribution, especially in a team project.",
+            "Include quantities only when you can explain where they came from.",
+            "Replace vague adjectives with actions the reader can understand."
+          ]
+        },
+        {
+          "title": "Make projects and limited experience useful",
+          "text": "Use a project’s purpose, your role, the methods you used, and what you produced to explain its relevance. Label coursework and team projects clearly. Part-time work can demonstrate useful responsibilities even when the job title differs from your target role.",
+          "source_ids": [
+            "experience",
+            "mit"
+          ],
+          "checklist": []
+        },
+        {
+          "title": "Tailor honestly",
+          "text": "Use the employer’s terminology where it accurately describes your work. Explain unfamiliar terminology when necessary. Select and clarify your experience without changing dates, inflating proficiency, or claiming ownership of a team’s entire result.",
+          "source_ids": [
+            "target",
+            "experience"
+          ],
+          "checklist": []
+        }
+      ],
+      "checklist": {
+        "title": "Before you move on",
+        "items": [
+          "Can a reader quickly see why you selected these experiences?",
+          "Does each claim describe something you could discuss in an interview?",
+          "Are your contribution, dates, tools, and qualifications accurate?"
+        ]
+      }
+    },
+    {
+      "id": "cover",
+      "title": "Cover letter essentials",
+      "description": "Add a reason, a connection, and the context a resume leaves out.",
+      "blocks": [
+        {
+          "title": "Decide what the cover letter adds",
+          "text": "Follow the posting’s requirements. A useful cover letter explains why this opportunity interests you and develops a relevant example. If it is optional, consider what useful context you can add. Avoid filling a page simply to repeat your resume.",
+          "source_ids": [
+            "cover",
+            "harvard"
+          ],
+          "checklist": []
+        },
+        {
+          "title": "Opening: name the opportunity and your reason",
+          "text": "Identify the role and explain a specific, genuine reason for your interest. Connect that interest to the work or organization using information you have checked. Avoid generic praise or enthusiasm that does not sound like you.",
+          "source_ids": [
+            "cover",
+            "harvard"
+          ],
+          "checklist": []
+        },
+        {
+          "title": "Body: develop one or two relevant examples",
+          "text": "Choose an example that helps explain your potential contribution. Add context about a challenge, your decision, or how you worked with others. Connect that experience to what the role needs, using details you can substantiate.",
+          "source_ids": [
+            "eller",
+            "harvard"
+          ],
+          "checklist": [
+            "Explain the situation briefly, then focus on your action.",
+            "Add meaning or context beyond the resume bullet.",
+            "Keep team achievements and your own work distinct."
+          ]
+        },
+        {
+          "title": "Closing: finish clearly",
+          "text": "Thank the reader and express interest in discussing the opportunity. Check the employer name, role title, recipient, and contact details. Use a concise professional closing rather than repeating every qualification.",
+          "source_ids": [
+            "cover",
+            "eller"
+          ],
+          "checklist": []
+        },
+        {
+          "title": "Keep your voice",
+          "text": "Use AI to organize or edit your own material, then review the wording yourself. Read the cover letter aloud. Replace generic claims with a specific connection and remove any sentence that overstates your experience.",
+          "source_ids": [
+            "harvard",
+            "cover"
+          ],
+          "checklist": []
+        }
+      ],
+      "checklist": {
+        "title": "A useful cover letter answers",
+        "items": [
+          "Why this particular role or organization?",
+          "Which experience shows a relevant contribution?",
+          "What does this add beyond my resume?"
+        ]
+      }
+    },
+    {
+      "id": "formatting",
+      "title": "Formatting & final checks",
+      "description": "Make the document easy to read, then check the file you will actually send.",
+      "blocks": [
+        {
+          "title": "Use a readable layout",
+          "text": "A simple single-column resume with recognizable headings is a practical starting point. Keep type readable, spacing consistent, and essential contact details in the document body. Use paragraph breaks in a cover letter. Follow any employer file-format instructions.",
+          "source_ids": [
+            "format",
+            "parser"
+          ],
+          "checklist": []
+        },
+        {
+          "title": "Check consistency and truthful keywords",
+          "text": "Use consistent dates, tense, punctuation, and naming for tools. Include relevant terms naturally where they match your actual experience. Keyword repetition cannot substitute for evidence.",
+          "source_ids": [
+            "experience",
+            "eller"
+          ],
+          "checklist": []
+        },
+        {
+          "title": "Understand what parsing can and cannot tell you",
+          "text": "Some parsers struggle with columns, tables, graphics, text boxes, or contact details in headers. Inspect extracted text where available and check the original file too. Successful parsing does not establish qualification or guarantee an interview.",
+          "source_ids": [
+            "parser",
+            "format"
+          ],
+          "checklist": []
+        },
+        {
+          "title": "When recommendations differ",
+          "text": "Match advice to its audience and purpose. Eller recommends one page for undergraduate resumes; CareerOneStop allows one or two depending on experience. Choose for the application and follow employer instructions. Font preferences and sample layouts are conventions, not universal hiring requirements.",
+          "source_ids": [
+            "eller",
+            "format"
+          ],
+          "checklist": []
+        }
+      ],
+      "checklist": {
+        "title": "Before sending",
+        "items": [
+          "Proofread names, contact details, dates, spelling, and the role title.",
+          "Open the exported file and inspect every page for wrapping, spacing, and clipped text.",
+          "Check that links work and the text is selectable.",
+          "Confirm the requested file type and required application documents."
+        ]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "id": "eller",
+      "title": "Resume and cover letter samples & templates",
+      "publisher": "University of Arizona · Eller",
+      "document_type": "Guide, PDF samples & Word templates",
+      "audience": "Undergraduate business students",
+      "summary": "Study a complete resume and cover letter, then use the editable templates as a starting point. Some formatting conventions are specific to Eller.",
+      "url": "https://eller.arizona.edu/programs/undergraduate/professional-development/career-preparation/resume-cover-letter",
+      "short_title": "Eller’s guide",
+      "reviewed_at": "2026-10-29",
+      "links": [
+        {
+          "label": "Browse Eller samples & editable templates",
+          "url": "https://eller.arizona.edu/programs/undergraduate/professional-development/career-preparation/resume-cover-letter"
+        }
+      ]
+    },
+    {
+      "id": "mit",
+      "title": "Samples across career interests",
+      "publisher": "MIT CAPD",
+      "document_type": "Resume & cover letter sample collection",
+      "audience": "Students and PhD-level job seekers across fields",
+      "summary": "Compare how applicants at different experience levels organize their material. Look for useful structure rather than copying another person’s claims.",
+      "url": "https://capd.mit.edu/resources/sample-resumes/",
+      "short_title": "MIT’s samples",
+      "reviewed_at": "2026-10-29",
+      "links": [
+        {
+          "label": "Browse MIT resume & cover letter samples",
+          "url": "https://capd.mit.edu/resources/sample-resumes/"
+        }
+      ]
+    },
+    {
+      "id": "harvard",
+      "title": "Create impactful resumes and cover letters",
+      "publisher": "Harvard Mignone Center",
+      "document_type": "Guide & downloadable samples",
+      "audience": "Harvard Extension School students; broader writing principles",
+      "summary": "Explore tailoring, active language, readable presentation, and letters that connect experience to a particular opportunity.",
+      "url": "https://careerservices.fas.harvard.edu/resources/hes-create-impactful-resumes-and-cover-letters/",
+      "short_title": "Harvard’s writing guide",
+      "reviewed_at": "2026-10-29",
+      "links": [
+        {
+          "label": "Read Harvard’s writing guide",
+          "url": "https://careerservices.fas.harvard.edu/resources/hes-create-impactful-resumes-and-cover-letters/"
+        }
+      ]
+    },
+    {
+      "id": "experience",
+      "title": "Describe your work experience",
+      "publisher": "CareerOneStop",
+      "document_type": "Resume guide article",
+      "audience": "Job seekers at different experience levels",
+      "summary": "Choose relevant responsibilities and accomplishments, and add context that helps a reader understand the work.",
+      "url": "https://cloudfront.careeronestop.org/JobSearch/Resumes/ResumeGuide/work-experience.aspx",
+      "short_title": "CareerOneStop: experience",
+      "reviewed_at": "2026-10-29",
+      "links": [
+        {
+          "label": "Read CareerOneStop: experience",
+          "url": "https://cloudfront.careeronestop.org/JobSearch/Resumes/ResumeGuide/work-experience.aspx"
+        }
+      ]
+    },
+    {
+      "id": "target",
+      "title": "Build a master record and tailor it",
+      "publisher": "CareerOneStop",
+      "document_type": "Resume guide article",
+      "audience": "Veterans transitioning to civilian work; adaptable master-record approach",
+      "summary": "Keep a detailed record of experience and draw from it for each opportunity. Military-transition examples have a specific audience.",
+      "url": "https://cloudfront.careeronestop.org/Veterans/JobSearch/ResumesAndApplications/target-your-resume.aspx",
+      "short_title": "CareerOneStop: tailoring",
+      "reviewed_at": "2026-10-29",
+      "links": [
+        {
+          "label": "Read CareerOneStop: tailoring",
+          "url": "https://cloudfront.careeronestop.org/Veterans/JobSearch/ResumesAndApplications/target-your-resume.aspx"
+        }
+      ]
+    },
+    {
+      "id": "format",
+      "title": "Choose a clear resume format",
+      "publisher": "CareerOneStop",
+      "document_type": "Formatting guide",
+      "audience": "General job seekers",
+      "summary": "Review layouts, section headings, spacing, and length recommendations that depend on your experience.",
+      "url": "https://cloudfront.careeronestop.org/JobSearch/Resumes/ResumeGuide/formatting.aspx",
+      "short_title": "CareerOneStop: formatting",
+      "reviewed_at": "2026-10-29",
+      "links": [
+        {
+          "label": "Read CareerOneStop: formatting",
+          "url": "https://cloudfront.careeronestop.org/JobSearch/Resumes/ResumeGuide/formatting.aspx"
+        }
+      ]
+    },
+    {
+      "id": "cover",
+      "title": "Plan a purposeful cover letter",
+      "publisher": "CareerOneStop",
+      "document_type": "Article & cover letter template",
+      "audience": "General job seekers",
+      "summary": "Decide when a cover letter is useful and plan a brief introduction, relevant highlights, and a professional close.",
+      "url": "https://cloudfront.careeronestop.org/JobSearch/Resumes/cover-letters.aspx",
+      "short_title": "CareerOneStop: cover letters",
+      "reviewed_at": "2026-10-29",
+      "links": [
+        {
+          "label": "Read CareerOneStop: cover letters",
+          "url": "https://cloudfront.careeronestop.org/JobSearch/Resumes/cover-letters.aspx"
+        }
+      ]
+    },
+    {
+      "id": "parser",
+      "title": "Understand resume parsing limitations",
+      "publisher": "Greenhouse Support",
+      "document_type": "Product support article",
+      "audience": "Greenhouse Recruiting users; applicants considering parser readability",
+      "summary": "Learn which document features can interfere with Greenhouse’s parser. Parsing is data extraction, separate from a hiring decision.",
+      "url": "https://support.greenhouse.io/hc/en-us/articles/200989175-Unsuccessful-resume-parse",
+      "short_title": "Greenhouse: resume parsing",
+      "reviewed_at": "2026-10-29",
+      "links": [
+        {
+          "label": "Read Greenhouse: resume parsing",
+          "url": "https://support.greenhouse.io/hc/en-us/articles/200989175-Unsuccessful-resume-parse"
+        }
+      ]
+    }
+  ],
+  "passages": [
+    {
+      "id": "experience-specific",
+      "resource_id": "experience",
+      "section": "How to write dynamic work descriptions",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "Choose responsibilities and accomplishments that relate to the target work. Explain the task, its context, the people served, and any supported outcome. Use relevant employer terminology where it accurately describes your experience. Numbers can clarify scale or impact when you have them; they should come from the applicant’s evidence. For limited work history, earlier or less directly related jobs can still demonstrate useful skills. The article suggests several short bullets per job; this is guidance to adapt, not an obligation to fill a quota."
+    },
+    {
+      "id": "experience-excerpt",
+      "resource_id": "experience",
+      "section": "How to write dynamic work descriptions",
+      "page": null,
+      "content_kind": "original_excerpt",
+      "text": "Use specifics."
+    },
+    {
+      "id": "target-master",
+      "resource_id": "target",
+      "section": "Your master resume; Your targeted resumes",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "A master resume records a detailed history of work, internships, volunteering, training, credentials, and accomplishments. A targeted resume selects from that record for one role. The full record can be many pages while an application version is shorter. The source is written for military-to-civilian transitions; that audience must not be inferred about a user who asks a general resume question. Its broader approach is to keep a comprehensive record and select the most relevant evidence for each employer."
+    },
+    {
+      "id": "format-layout",
+      "resource_id": "format",
+      "section": "Common resume styles; Layout",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "CareerOneStop distinguishes chronological, functional, and combination formats. A detailed work history can help readers interpret skills; a skills-only format may obscure context. A clean single-column layout, recognizable headings, and consistent spacing make information easier to find. The article recommends one or two pages depending on the amount of experience. This differs from Eller’s one-page undergraduate recommendation and Career Companion’s one-page resume exports; audience and employer requirements determine which advice applies."
+    },
+    {
+      "id": "format-excerpt",
+      "resource_id": "format",
+      "section": "Layout",
+      "page": null,
+      "content_kind": "original_excerpt",
+      "text": "Resume length should be 1-2 pages."
+    },
+    {
+      "id": "cover-purpose",
+      "resource_id": "cover",
+      "section": "When should I include a cover letter?; How do I write a good cover letter?",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "Write a cover letter when the employer requests it. When optional, the article recommends considering how it can explain a particular interest or provide useful context. It describes a brief letter, approximately 200–400 words in three or four short paragraphs, as a workable approach rather than a universal requirement. Include a greeting and contact information, introduce the opportunity, develop relevant highlights and motivation, and end professionally. If emailing a resume, the message body can sometimes serve this purpose, subject to employer instructions."
+    },
+    {
+      "id": "cover-voice",
+      "resource_id": "cover",
+      "section": "Can I use AI to write my cover letters?; Cover letter template",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "AI may help create a draft, but the applicant should edit it to reflect their own experience, interest, and voice. The body should develop relevant highlights rather than reuse every resume statement. Explain a specific connection to the employer. The closing thanks the reader and invites a response. Review the result for accuracy and follow the requested submission format."
+    },
+    {
+      "id": "eller-writing",
+      "resource_id": "eller",
+      "section": "Strengthen Your Resume; Cover Letter Development",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "Eller’s undergraduate business guidance distinguishes naming technical tools from demonstrating interpersonal skills through actions. A cover letter should explain interest and develop specific experience relevant to the position. The opening introduces the purpose, the body connects experience to the opportunity, and the closing expresses appreciation. The page offers PDF samples and editable Word templates for resumes and cover letters, including separate admissions and employment contexts."
+    },
+    {
+      "id": "eller-format",
+      "resource_id": "eller",
+      "section": "Resume Checklist; Cover Letter Checklist",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "Eller recommends a one-page undergraduate resume and readable basic fonts. Its cover letter checklist also specifies a maximum of one page and expresses a preference for Times New Roman. These are institutional conventions for its audience. They do not establish universal font or page-count rules for every profession. Compare CareerOneStop’s allowance of one or two resume pages depending on experience, and follow the employer’s instructions when supplied."
+    },
+    {
+      "id": "eller-excerpt",
+      "resource_id": "eller",
+      "section": "Cover Letter Checklist — Format",
+      "page": null,
+      "content_kind": "original_excerpt",
+      "text": "Times New Roman preferred"
+    },
+    {
+      "id": "harvard-tailoring",
+      "resource_id": "harvard",
+      "section": "Create a Strong Resume; Resume language",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "The Harvard Extension School guide emphasizes presenting skills, experience, and impact that the particular employer values. All prior work need not directly match the target role; the selection and explanation should make its relevance clear. Use specific, active, factual language that is easy to scan. Keep organization consistent and review how formatting survives conversion to PDF. These are writing principles, not a promise of interview selection."
+    },
+    {
+      "id": "harvard-letter",
+      "resource_id": "harvard",
+      "section": "Cover letters",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "Connect relevant skills or experience to a specific organization and position. The cover letter offers room to explain why the selected experience matters and why this opportunity interests the applicant. Read sample documents for organization and presentation; do not import another applicant’s achievements as your own. The source is a Harvard Extension School career guide, so examples should be adapted to the applicant’s field and situation."
+    },
+    {
+      "id": "harvard-excerpt",
+      "resource_id": "harvard",
+      "section": "Resume language",
+      "page": null,
+      "content_kind": "original_excerpt",
+      "text": "Specific rather than general"
+    },
+    {
+      "id": "mit-samples",
+      "resource_id": "mit",
+      "section": "Sample resumes and cover letters",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "MIT CAPD’s sample collection covers multiple career interests and experience levels, including undergraduates and people at PhD level. A sample outside the reader’s exact field may still offer a useful organizational approach. Use the collection to compare how education, projects, and experience are presented. Sample credentials, metrics, and accomplishments belong to the example applicant. These passages describe the collection; they do not reproduce or claim to have indexed the full contents of every linked PDF."
+    },
+    {
+      "id": "parser-limitations",
+      "resource_id": "parser",
+      "section": "What can cause an unsuccessful resume parse?; Resume formatting issues",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "Greenhouse describes parsing as extracting information into candidate fields. Failures may be partial, and a resume may remain attached even when fields are not populated. Formatting such as columns, graphics, tables, headers, footers, or text boxes can interfere with extraction. Product-specific behavior must not be generalized to every applicant tracking system. A parsing failure is not evidence that the employer rejected an applicant. Check the file and any populated fields; a keyword overlap number is not a universal ATS score."
+    },
+    {
+      "id": "parser-size",
+      "resource_id": "parser",
+      "section": "The resume file is too large",
+      "page": null,
+      "content_kind": "editorial_summary",
+      "text": "Greenhouse’s support article states that its parser cannot parse resumes larger than 2.5 MB. This is a documented product limit at review time, not a universal submission limit for all employers or applicant tracking systems. Employer instructions and the actual application’s accepted format and file-size limits should be checked separately."
+    },
+    {
+      "id": "parser-excerpt",
+      "resource_id": "parser",
+      "section": "The resume file is too large",
+      "page": null,
+      "content_kind": "original_excerpt",
+      "text": "Greenhouse Recruiting can't parse resumes larger than 2.5MB."
+    }
+  ]
+}

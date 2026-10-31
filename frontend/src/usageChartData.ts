@@ -20,3 +20,9 @@ export function periodLabel(key:string,bucket:string,start='',end=''){
 }
 
 export function tokenTotalText(row:UsageBucket){return tokenMissing(row)&&!recordedTokens(row)?'Token counts not reported':tokenText(recordedTokens(row),tokenMissing(row))+' recorded tokens';}
+
+// Calendar periods are categories: endpoints receive a full column too.
+export function periodColumns(keys:string[],width:number){
+ const step=width/Math.max(1,keys.length);
+ return keys.map((key,index)=>({key,left:index*step,right:index===keys.length-1?width:(index+1)*step,center:(index+.5)*step}));
+}
