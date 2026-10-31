@@ -17,8 +17,10 @@ def env(client,account,monkeypatch):
     project=record(category='project',title='Roadway review prototype',description='Built an on-device prototype using local language models and retrieval.',contribution='Initially tested the prototype on approximately 10 roadway documents.',linked_employment_ids=[intern['id'],contractor['id']])
     job=db.save(user,'job',{'title':'Analyst','description':'Analyze data using Python.','company':'Fictional Employer'})
     session=guided.start(user,ConversationStart(job_id=job['id']))
-    def render(snapshot):return {**copy.deepcopy(snapshot),'layout':{'pages':1,'validated':True},'artifacts':{'pdf':'fictional-pdf','docx':'fictional-docx'}}
+    def render(snapshot):return {**copy.deepcopy(snapshot),'layout':{'pages':1,'validated':True},'artifacts':{'pdf':'eA==','docx':'eA=='}}
     monkeypatch.setattr(resume_layout,'render',render)
+    from app import resume_quality
+    monkeypatch.setattr(resume_quality,'document',lambda snapshot:{'text':'Fictional rendered text','checks':{'pages':1}})
     monkeypatch.setattr(resume_builder,'fit',lambda snap,rows,*args,**kw:{'omitted':[],'experience_ids':[r['id'] for r in rows if r['items'] or r['category']=='education'],'content':{r['id']:list(range(len(r['items']))) for r in rows}})
     return user,intern,contractor,project,job,session
 
@@ -149,6 +151,7 @@ def test_provider_payload_preserves_project_provenance_and_permissions(env,monke
     calls=[]
     async def model(schema,payload,*a,**kw):
         calls.append(payload)
+        if schema.__name__=='ResumeQualityReview':return {'strengths':[],'findings':[],'next_actions':[]},{'estimated_token_cost_usd':0}
         if schema.__name__=='DraftAudit':return {'approved':True,'issues':[]},{'estimated_token_cost_usd':0}
         from resume_strategy_fixtures import strategy as plan, composition
         if schema.__name__=='ResumeStrategy':return plan(payload),{'estimated_token_cost_usd':0}
@@ -156,7 +159,7 @@ def test_provider_payload_preserves_project_provenance_and_permissions(env,monke
         return payload['proposal'],{'estimated_token_cost_usd':0}
     monkeypatch.setattr(ai,'structured',model)
     asyncio.run(optimization.create(user,snapshot,None,'economy'))
-    assert len(calls)==4
+    assert len(calls)==5
     facts=[f for f in calls[0]['professional_evidence']['facts'] if f['record_id']==project['id'] and f['field']!='header']
     assert len(facts)==2
     assert all(intern['id'] in f['allowed_destinations'] for f in facts)
@@ -174,7 +177,7 @@ def test_source_fingerprint_and_selected_version_survive_local_render(env):
     body=ResumeRequest(job_id=job['id'],experience_ids=snap['experience_ids'],content=content,headline=snap['headline'])
     rendered=guided.render(user,state['id'],WorkingRender(expected_version=state['data']['version'],request_token='local-edit',resume=body))
     assert rendered['current']['data']['snapshot']['linked_project_placements']==snap['linked_project_placements']
-    assert db.get(user,old,'resume_revision')['data']['snapshot']==snap|{'artifacts':{'pdf':'fictional-pdf','docx':'fictional-docx'}}
+    assert db.get(user,old,'resume_revision')['data']['snapshot']==snap|{'artifacts':{'pdf':'eA==','docx':'eA=='}}
 
 
 def test_backup_remaps_placement_sources_and_preserves_frozen_history(env,client):

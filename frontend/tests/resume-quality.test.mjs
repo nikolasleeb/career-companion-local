@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+const source=readFileSync(new URL('../src/ResumeQualityPanel.tsx',import.meta.url),'utf8');
+const fn=source.slice(source.indexOf('export function hasRefinementText'));
+const code=ts.transpileModule(fn,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const {hasRefinementText}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('empty markers cannot enable a paid refinement',()=>{for(const s of ['','  ','• ','-\n•\n1. '])assert.equal(hasRefinementText(s),false);});
+test('separate requests, paragraph prose and continuation text remain valid',()=>{for(const s of ['• Keep my headline\n• Shorten my first bullet','Plain prose.','• First\n  continued'])assert(hasRefinementText(s));});

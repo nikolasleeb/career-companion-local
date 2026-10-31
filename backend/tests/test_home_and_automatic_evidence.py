@@ -38,12 +38,15 @@ def test_automatic_payload_source_labels_privacy_and_model_choice(client,account
     calls=[]
     async def model(schema,payload,*a,**kw):
         calls.append(payload)
+        if schema.__name__=='ResumeQualityReview':return {'strengths':[],'findings':[],'next_actions':[]},{'estimated_token_cost_usd':0}
         if schema.__name__=='DraftAudit':return {'approved':True,'issues':[]},{'estimated_token_cost_usd':0}
         fact=next(f for f in payload['professional_evidence']['facts'] if f['record_id']==p['id'] and f['field']=='description')
         if schema.__name__=='ResumeStrategy':return {'focus':'Scenario tooling','rationale':'Applied tool development.','priorities':[{'id':'tools','text':'Develop tools','posting_quote':'Develop scenario tools.','kind':'responsibility','evidence':'direct','source_ids':[fact['id']],'reason':'Reviewed tool project.','essential':True}],'constraints':[]},{'estimated_token_cost_usd':0}
         return {'headline':'','headline_evidence':[],'keywords':[],'omissions':[],'entries':[{'record_id':job['id'],'reason':'Relevant project under its linked role','items':[{'source_ids':[fact['id']],'text':fact['text'],'priority':80,'reason':'Relevant tool'}]}]},{'estimated_token_cost_usd':0}
     from app import resume_layout
-    monkeypatch.setattr(ai,'structured',model);monkeypatch.setattr(resume_layout,'render',lambda snap:{**copy.deepcopy(snap),'layout':{'pages':1,'issues':[]},'artifacts':{}})
+    monkeypatch.setattr(ai,'structured',model);monkeypatch.setattr(resume_layout,'render',lambda snap:{**copy.deepcopy(snap),'layout':{'pages':1,'issues':[]},'artifacts':{'pdf':'eA=='}})
+    from app import resume_quality
+    monkeypatch.setattr(resume_quality,'document',lambda snapshot:{'text':'Fictional rendered text','checks':{'pages':1}})
     result=asyncio.run(optimization.create(u,snapshot,None,'economy'))['data']
     assert result['experience_ids']==[job['id']]
     wire=json.dumps(calls);assert 'PRIVATE_GOALS_SENTINEL' not in wire and 'authorized_us' not in wire

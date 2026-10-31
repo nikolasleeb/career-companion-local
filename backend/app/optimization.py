@@ -15,8 +15,8 @@ def fingerprint(snapshot,ids=None):
 def estimate(snapshot,mode,profile):
     option=ai_settings.resolve(profile,mode)
     count=max(1000,(len(json.dumps(snapshot))+3)//4)
-    stages=[ai_settings.estimate(option['model'],option['reasoning_effort'],count+extra,out,service_tier=option['service_tier'],max_output_tokens=profile.get('ai_max_output_tokens') or None) for extra,out in ((2000,2200),(3500,4500),(5000,4500),(6500,3000),(7000,1500))]
-    return {**option,'usd':round(sum(v['usd'] for v in stages),6) if all(v['usd'] is not None for v in stages) else None,'input_tokens':sum(v['input_tokens'] for v in stages),'answer_tokens':15700,'assumed_reasoning_tokens':sum(v['assumed_reasoning_tokens'] for v in stages),'pricing_date':stages[0]['pricing_date'],'note':'Planning estimate for evidence strategy, drafting, editorial review, one optional measured layout correction and final auditing (at most five model requests). No automatic paid retries.'}
+    stages=[ai_settings.estimate(option['model'],option['reasoning_effort'],count+extra,out,service_tier=option['service_tier'],max_output_tokens=profile.get('ai_max_output_tokens') or None) for extra,out in ((2000,2200),(3500,4500),(5000,4500),(7000,2000),(7000,4500),(6500,3000),(9000,4000),(7000,1500))]
+    return {**option,'usd':round(sum(v['usd'] for v in stages),6) if all(v['usd'] is not None for v in stages) else None,'input_tokens':sum(v['input_tokens'] for v in stages),'answer_tokens':26200,'assumed_reasoning_tokens':sum(v['assumed_reasoning_tokens'] for v in stages),'pricing_date':stages[0]['pricing_date'],'note':'Planning estimate for evidence strategy, drafting, editorial review, isolated quality review, one optional repair, one measured layout correction, blinded comparison and final auditing (at most eight model requests). No automatic paid retries.'}
 
 
 def apply(snapshot,draft,overrides=None):
@@ -241,6 +241,8 @@ def constrain(output,sources,current,feedback):
         if rid not in selected:continue
         source_items={i['item_id']:i for i in available[rid]['content_items']}
         choice=proposed.get(rid,{'record_id':rid,'reason':'Kept from your current draft.','items':[]})
+        if rid in old and rid not in changed_records and not (feedback.get('change_selection') and rid in records):
+            choice={**choice,'reason':old[rid].get('selection_reason') or 'Kept from your current draft.'}
         new_items={i['item_id']:i for i in choice['items']}
         previous={i['item_id']:i for i in old.get(rid,{}).get('content_items',[])}
         ids=set(previous)&set(source_items)
@@ -256,6 +258,8 @@ def constrain(output,sources,current,feedback):
             else:items.append({'item_id':key,'text':prior['text'],'priority':max(1,prior.get('priority',80)),'reason':'Preserved from your reviewed working draft.'})
         if items or available[rid]['category']=='education':result.append({**choice,'items':items})
     output['entries']=result
+    if not feedback.get('change_selection'):
+        output['omissions']=[]  # A wording request does not regenerate selection explanations.
     if not feedback.get('change_headline'):
         output['headline']=current.get('headline','')
         output['headline_evidence']=current.get('optimization',{}).get('headline_evidence',output['headline_evidence'])

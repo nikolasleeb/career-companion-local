@@ -34,7 +34,7 @@ def text_lines(pdf):
     for page_number,page in enumerate(tree.findall('.//{*}page'),1):
         for line in page.findall('.//{*}line'):
             text=' '.join(w.text or '' for w in line.findall('{*}word'))
-            if text.strip():lines.append({'page':page_number,'text':text,'tokens':words(text),'width':float(line.get('xMax','0'))-float(line.get('xMin','0'))})
+            if text.strip():lines.append({'page':page_number,'text':text,'tokens':words(text),'width':float(line.get('xMax','0'))-float(line.get('xMin','0')),'outside_page':float(line.get('xMin','0'))<0 or float(line.get('yMin','0'))<0 or float(line.get('xMax','0'))>float(page.get('width','0')) or float(line.get('yMax','0'))>float(page.get('height','0'))})
     return lines
 
 def wrapped_items(pdf,snapshot):

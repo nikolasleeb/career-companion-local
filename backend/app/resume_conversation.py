@@ -1,5 +1,5 @@
 """Persistent, account-owned guided builder with immutable rendered revisions."""
-from . import project_sources,project_context,task_progress,linked_project_evidence
+from . import project_sources,project_context,task_progress,linked_project_evidence,resume_quality
 import asyncio
 import base64
 import copy
@@ -162,21 +162,26 @@ def begin(user,id,version,token=None,message=None,preparation=None):
         if message:data['last_message_input']=message;data['messages'].append({'id':db.uid(),'role':'user','text':message,'created_at':db.now()})
     return mutate(user,id,version,change)
 
-def save_revision(user,id,version,snapshot,catalog,summary,token,usage=None,source_snapshot=None,draft_id=None):
+def save_revision(user,id,version,snapshot,catalog,summary,token,usage=None,source_snapshot=None,draft_id=None,quality_only=False):
+    snapshot=copy.deepcopy(snapshot)
     revision_id=db.uid()
     def change(data,c):
         # Both revision and head update commit together. Late results cannot replace a newer head.
         if token!=data['workspace_token']:raise HTTPException(409,'A newer preview request superseded this result.')
+        resume_quality.invalidate(snapshot)
         value={'conversation_id':id,'job_id':data['job_id'],'parent_id':data['current_revision_id'],'snapshot':snapshot,'catalog':catalog,'summary':summary,'request_token':token,'usage':usage,'draft_id':draft_id,'source_snapshot':source_snapshot,'project_snapshot_ids':list(data.get('project_snapshot_ids',[]))}
         write(c,user,'resume_revision',value,revision_id)
         data['revision_ids'].append(revision_id);data['current_revision_id']=revision_id;data.pop('workspace_request',None)
         if snapshot.get('optimization',{}).get('user_constraints') is not None:
             data['user_constraints']=copy.deepcopy(snapshot['optimization']['user_constraints'])
-        if usage:
+        if usage and not quality_only:
             data['approved_record_ids']=[];data.pop('pending_feedback',None)
             pending=data.pop('pending_revision_message_id',None)
             for message in data['messages']:
-                if message['id']==pending:message['revision_status']='applied'
+                if message['id']==pending:
+                    message['revision_status']='applied'
+                    for result in message.get('request_results',[]):
+                        if result['status']=='pending':result['status']='updated'
             data.pop('last_message_input',None)
         if usage:data['messages'].append({'id':db.uid(),'role':'assistant','text':summary,'usage':usage,'created_at':db.now()})
     mutate(user,id,version,change)
@@ -238,7 +243,9 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
     analysis=require(user,data['analysis_id'],'analysis')['data'] if data.get('analysis_id') else None
     feedback={'fit_one_page':data.get('one_page_requested',False),**(feedback or {}),'approved_record_ids':data['approved_record_ids']}
     feedback['user_constraints']=copy.deepcopy(data.get('user_constraints',{}))
-    feedback['user_messages']=[m['text'] for m in data.get('messages',[]) if m['role']=='user'][-30:]
+    feedback['user_messages']=([m['text'] for m in data.get('messages',[]) if m['role']=='user'][-30:] if not current or feedback.get('refresh_linked_evidence') else [])
+    # Ordinary refinements receive sanitized actionable instructions only. The
+    # classifier's raw mixed batch stays in history, outside the writing prompt.
     if current and (feedback.get('refresh_linked_evidence') or not current['snapshot'].get('automatic_linked_evidence')):
         affected=[e['source_id'] for s in snapshot['sections'] for e in s['entries'] if feedback.get('refresh_linked_evidence') or e['category']=='project' or any(i.get('project_source') for i in e['content_items'])]
         feedback.update(change_selection=True,target_record_ids=affected)
@@ -248,8 +255,10 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
     if prepared and prepared.headline is not None and prepared.headline!=db.settings(user).get('headline',''):feedback['prepared_headline']=prepared.headline
     draft=await optimization.create(user,snapshot,analysis,mode,feedback,guided=True,current=current['snapshot'] if current else None)
     result=draft['data'];rendered=result['rendered_snapshot'];rendered['draft_id']=draft['id']
-    rendered['optimization']={k:result.get(k) for k in ('ai','audit_ai','planning_ai','editorial_ai','actual_cost_usd','headline_evidence','keywords','source_checked','strategy','user_constraints')}
-    usage={k:result.get(k) for k in ('ai','audit_ai','planning_ai','editorial_ai','layout_ai','actual_cost_usd')};usage['comparison_ai']=comparison_usage
+    if current and 'quality_review' not in result and current['snapshot'].get('optimization',{}).get('quality_review'):
+        result['quality_review']=copy.deepcopy(current['snapshot']['optimization']['quality_review'])
+    rendered['optimization']={k:result.get(k) for k in ('ai','audit_ai','planning_ai','editorial_ai','actual_cost_usd','headline_evidence','keywords','source_checked','strategy','user_constraints','quality_review')}
+    usage={k:result.get(k) for k in ('ai','audit_ai','planning_ai','editorial_ai','layout_ai','quality_ai','repair_ai','actual_cost_usd')};usage['comparison_ai']=comparison_usage
     if comparison_usage and usage['actual_cost_usd'] is not None:usage['actual_cost_usd']+=comparison_usage.get('estimated_token_cost_usd') or 0
     summary='Built your first tailored draft and updated its actual PDF. Review the headline, wording, and included content.'
     if current:
@@ -267,17 +276,70 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
     updated=save_revision(user,id,version,rendered,result['catalog'],summary,token,usage,snapshot,draft['id'])
     return updated
 
+def request_items(text):
+    marker=re.compile(r'^\s*(?:[•●▪*-]|\d+[.)])\s*(.*)$')
+    items=[]
+    for line in text.splitlines():
+        match=marker.match(line)
+        if match:
+            if match.group(1).strip():items.append(match.group(1).strip())
+        elif line.strip():
+            if items:items[-1]+='\n'+line.strip()
+            else:items.append(line.strip())
+    if len(items)>40:raise ServiceError('Send up to 40 requests together.')
+    return [{'request_id':'R'+str(n+1),'text':value} for n,value in enumerate(items)]
+
+
+def request_results(output,items,proposals):
+    supplied=output.get('request_results',[])
+    if supplied:
+        if {r['request_id'] for r in supplied}!={r['request_id'] for r in items} or len(supplied)!=len(items):raise ServiceError('The response did not account for each request. Your previous draft remains intact.')
+    elif len(items)>1:raise ServiceError('The response did not account for each request. Your message is saved.')
+    else:
+        supplied=[{'request_id':items[0]['request_id'],'status':'awaiting_approval' if proposals else 'updated' if output['action']=='revise' else 'needs_clarification','explanation':output['message'],'instruction':output.get('revision_instruction','')}]
+    results=copy.deepcopy(supplied);by_id={r['request_id']:r['text'] for r in items}
+    for r in results:
+        r['text']=by_id[r['request_id']]
+        # A request containing new facts cannot also be dispatched as writing instructions.
+        if any(any((f.get('value',f['user_quote']) in r['text'] or f['user_quote'] in r['text']) for f in p['fields']) for p in proposals):
+            r.update(status='awaiting_approval',instruction='')
+        if r['status']=='updated' and not r['instruction'].strip():r.update(status='not_applied',explanation='No actionable wording instruction was supplied.')
+    active=[r for r in results if r['status']=='updated']
+    for r in active:
+        # Compatibility for old single-action interpreters. New typed results
+        # always carry their own scope, including explicit false/empty values.
+        for key,default in [('target_item_ids',[]),('target_record_ids',[]),('change_headline',False),('change_selection',False),('template','unchanged')]:
+            r.setdefault(key,output.get(key,default) if len(active)==1 else default)
+    orders={r.get('template') for r in active if r.get('template') in ('education','experience')}
+    if len(orders)>1:
+        for r in active:
+            if r.get('template') in orders:r.update(status='needs_clarification',instruction='',explanation='Choose one section order; these requests conflict.')
+    return results
+
+
+def actionable_feedback(output,results):
+    active=[r for r in results if r['status']=='updated']
+    output['target_item_ids']=list(dict.fromkeys(i for r in active for i in r.get('target_item_ids',[])))
+    output['target_record_ids']=list(dict.fromkeys(i for r in active for i in r.get('target_record_ids',[])))
+    output['change_headline']=any(r.get('change_headline') for r in active)
+    output['change_selection']=any(r.get('change_selection') for r in active)
+    output['template']=next((r['template'] for r in active if r.get('template') in ('education','experience')),'unchanged')
+    output['revision_instruction']='\n'.join(r['instruction'] for r in active)
+    return output
+
+
 async def send(user,id,body):
+    items=request_items(body.text)
+    if not items:raise ServiceError('Write at least one request; empty bullet markers are not a request.')
     record=begin(user,id,body.expected_version,message=body.text);data=record['data'];version=data['version']
     records=profile_answers.records(user);current=require(user,data['current_revision_id'],'resume_revision')['data'] if data.get('current_revision_id') else None
     job=require(user,data['job_id'],'job');criteria=job_parser.criteria(job['data'])+role_alignment.catalog(job['data'])
     analysis=(db.get(user,data.get('analysis_id'),'analysis') or {}).get('data',{})
     materials=project_sources.context(user,data)
     task_progress.stage('reviewing')
-    output,meta=await ai.structured(ResumeChatOutput,{'task':'''Continue a focused resume conversation. Consider saved project analyses automatically, but only as context for posting-specific questions, never confirmed applicant facts. Put project-specific follow-ups in project_questions with exact project_context_ids from that context; put only other questions in questions. Reuse already confirmed answers and ask at most three questions total. Ask concrete, nonrepeated questions about actual contributions, audience, methods or outcomes; explain relevance. Never ask for invented metrics. Distinguish facts from wording/layout instructions. New factual details must be proposals, NEVER used in a revision before explicit human approval. Each field value must be an EXACT contiguous excerpt of the latest user message, with user_quote containing it. For narrative fields only (description, contribution, accomplishments), also provide suggested_value as polished professional wording: fix grammar, remove repetition, organize actions, methods and supported outcomes. Expand only explanations already supported by that exact quote. Never invent tools, numbers, outcomes, validation success or personal ownership. Preserve uncertainty, incomplete work, team boundaries and intent versus measured results. Keep raw value and user_quote unchanged. Provide an editing_note explaining changes and up to three optional improvement_suggestions asking for useful missing details; never insert those missing details as facts. Do not polish structured or private authorization fields. Use an existing record_id only for the same role/project; empty record_id creates a separate record. Allowed narrative fields: description, contribution, accomplishments, tools, relevant_courses, honors; structured fields use the supplied Profile schema. Authorization is category authorization, fields us_citizen/authorized_us/sponsorship_now/sponsorship_future with yes/no/unsure values. Citizenship is distinct from work authorization. Direct eligibility questions to private Profile settings; do not ask them in the professional-experience question group. No proposals for ordinary shortening/emphasis/layout requests. For actionable wording feedback action=revise, identify exact target item and record IDs; preserve unrelated text/selection. Set change_selection only when requested; change_headline only when requested. Set template=education or experience only if the user requests that section ordering; otherwise unchanged. A question-only response action=question leaves draft unchanged. Do not repeat questions already asked. revision_instruction contains only wording/layout instructions, never unapproved factual assertions.''','unreviewed_project_material_for_questions_only':materials,'submitted_question_answers':body.question_answers,'latest_user_message':body.text,'messages':data['messages'][-30:],'previous_questions':data.get('asked_questions',data['questions']),'proposals':data['proposals'],'criterion_catalog':criteria,'duty_alignment':role_alignment.rows(analysis,job['data']),'question_rules':'Use unresolved duty and qualification evidence to ask specific nonrepeated questions. Ask what the user personally did, how, for whom, and what outcome is supported. Already reviewed stories are in confirmed_profile. Reuse facts already present there; do not propose duplicate copies as new facts. Never infer a lack of experience; never ask for invented metrics or external research.','confirmed_profile':[{'id':r['id'],'data':r['data']} for r in records if r['data'].get('confirmed')],'current_draft':public(current),'profile_fields':list(ExperienceItem.model_fields)},body.mode,retry_allowed=False)
+    output,meta=await ai.structured(ResumeChatOutput,{'task':'''Continue a focused resume conversation. Consider saved project analyses automatically, but only as context for posting-specific questions, never confirmed applicant facts. Put project-specific follow-ups in project_questions with exact project_context_ids from that context; put only other questions in questions. Reuse already confirmed answers and ask at most three questions total. Ask concrete, nonrepeated questions about actual contributions, audience, methods or outcomes; explain relevance. Never ask for invented metrics. Distinguish facts from wording/layout instructions. New factual details must be proposals, NEVER used in a revision before explicit human approval. Each field value must be an EXACT contiguous excerpt of the latest user message, with user_quote containing it. For narrative fields only (description, contribution, accomplishments), also provide suggested_value as polished professional wording: fix grammar, remove repetition, organize actions, methods and supported outcomes. Expand only explanations already supported by that exact quote. Never invent tools, numbers, outcomes, validation success or personal ownership. Preserve uncertainty, incomplete work, team boundaries and intent versus measured results. Keep raw value and user_quote unchanged. Provide an editing_note explaining changes and up to three optional improvement_suggestions asking for useful missing details; never insert those missing details as facts. Do not polish structured or private authorization fields. Use an existing record_id only for the same role/project; empty record_id creates a separate record. Allowed narrative fields: description, contribution, accomplishments, tools, relevant_courses, honors; structured fields use the supplied Profile schema. Authorization is category authorization, fields us_citizen/authorized_us/sponsorship_now/sponsorship_future with yes/no/unsure values. Citizenship is distinct from work authorization. Direct eligibility questions to private Profile settings; do not ask them in the professional-experience question group. No proposals for ordinary shortening/emphasis/layout requests. For actionable wording feedback action=revise, identify exact target item and record IDs; preserve unrelated text/selection. Set change_selection only when requested; change_headline only when requested. Set template=education or experience only if the user requests that section ordering; otherwise unchanged. A question-only response action=question leaves draft unchanged. Do not repeat questions already asked. revision_instruction contains only wording/layout instructions, never unapproved factual assertions.''','unreviewed_project_material_for_questions_only':materials,'submitted_question_answers':body.question_answers,'latest_user_message':body.text,'request_items':items,'batch_rules':'Account for EVERY request_id exactly once in request_results. updated means an actionable supported wording/layout instruction, already_satisfied needs no change, awaiting_approval contains new facts, needs_clarification includes conflicting/ambiguous requests, not_applied explains a blocked change. Supply sanitized instruction and its exact target_item_ids, target_record_ids, change_headline, change_selection and template scope only for updated requests. Each request scope must describe only that individual change; deferred requests have empty/false/unchanged scope. Never include unapproved facts or conflicting instructions. Compatible edits may proceed even when another request requires factual approval. Do not mark a request updated merely for acknowledging it.','messages':data['messages'][-30:],'previous_questions':data.get('asked_questions',data['questions']),'proposals':data['proposals'],'criterion_catalog':criteria,'duty_alignment':role_alignment.rows(analysis,job['data']),'question_rules':'Use unresolved duty and qualification evidence to ask specific nonrepeated questions. Ask what the user personally did, how, for whom, and what outcome is supported. Already reviewed stories are in confirmed_profile. Reuse facts already present there; do not propose duplicate copies as new facts. Never infer a lack of experience; never ask for invented metrics or external research.','confirmed_profile':[{'id':r['id'],'data':r['data']} for r in records if r['data'].get('confirmed')],'current_draft':public(current),'profile_fields':list(ExperienceItem.model_fields)},body.mode,retry_allowed=False)
     allowed_records={r['id']:r for r in records};criterion_ids={r['id'] for r in criteria}
     known_items={i['item_id'] for r in (current or {}).get('catalog',[]) for i in r['items']}
-    if set(output['target_item_ids'])-known_items or set(output['target_record_ids'])-set(allowed_records):raise ServiceError('The feedback referred to unavailable content. Your message is saved; retry with the item name.')
     proposals=[]
     for proposal in output['proposals']:
         rid=proposal['record_id'];old=allowed_records.get(rid)
@@ -300,11 +362,20 @@ async def send(user,id,body):
         project_context.bind_proposal(user,data,item,'resume')
         proposals.append(item)
     project_questions=[{'text':q['text'],'reason':'Clarify this project for the posting','criterion_id':None,'project_refs':project_context.references(q['project_context_ids'],materials)} for q in output.get('project_questions',[])]
-    revising=bool(current and output['action']=='revise' and not proposals)
-    output['fit_one_page']=resume_layout.one_page_request(body.text) or data.get('one_page_requested',False)
+    results=request_results(output,items,proposals)
+    actionable_feedback(output,results)
+    if set(output['target_item_ids'])-known_items or set(output['target_record_ids'])-set(allowed_records):raise ServiceError('The feedback referred to unavailable content. Your message is saved; retry with the item name.')
+    actionable=[r for r in results if r['status']=='updated']
+    revising=bool(current and actionable)
+    if not current:
+        for r in actionable:r.update(status='not_applied',explanation='Build a first draft before requesting wording changes.')
+    output['revision_instruction']='\n'.join(r['instruction'] for r in actionable)
+    for r in results:
+        if revising and r['status']=='updated':r['status']='pending'
+    output['fit_one_page']=resume_layout.one_page_request(output['revision_instruction']) or data.get('one_page_requested',False)
     assistant_id=db.uid()
     def append(d,c):
-        d['messages'].append({'id':assistant_id,'role':'assistant','text':output['message'],'created_at':db.now(),'usage':{'ai':meta,'actual_cost_usd':meta.get('estimated_token_cost_usd')},**({'revision_status':'pending'} if revising else {})})
+        d['messages'].append({'id':assistant_id,'role':'assistant','text':output['message'],'created_at':db.now(),'request_results':results,'usage':{'ai':meta,'actual_cost_usd':meta.get('estimated_token_cost_usd')},**({'revision_status':'pending'} if revising else {})})
         if revising:d['pending_revision_message_id']=assistant_id
         if output['fit_one_page']:d['one_page_requested']=True
         seen={q['text'].strip().casefold() for q in d.get('asked_questions',d['questions'])}
@@ -315,12 +386,12 @@ async def send(user,id,body):
         d['proposals']+=proposals;d.pop('last_message_input',None)
         if revising and output.get('revision_instruction'):
             constraints=d.setdefault('user_constraints',{})
-            constraints.setdefault('instructions',[]).append({'instruction':output['revision_instruction'],'user_quote':body.text,'message_id':d['messages'][-2]['id']})
+            constraints.setdefault('instructions',[]).append({'instruction':output['revision_instruction'],'user_quote':'\n'.join(r['text'] for r in actionable),'message_id':d['messages'][-2]['id']})
             constraints['instructions']=constraints['instructions'][-20:]
         if proposals or revising:d['pending_feedback']={k:output.get(k) for k in ('revision_instruction','target_item_ids','target_record_ids','change_headline','change_selection','template','fit_one_page')}
     updated=mutate(user,id,version,append)
     if revising:
-        try:return await build(user,id,updated['data']['version'],body.mode,feedback=output)
+        try:return await build(user,id,updated['data']['version'],body.mode,feedback={k:output.get(k) for k in ('revision_instruction','target_item_ids','target_record_ids','change_headline','change_selection','template','fit_one_page')})
         except (Exception,asyncio.CancelledError):
             # Retain the interpreted request and mark its response as unapplied, without
             # changing the current revision or overwriting a concurrent successful head.
@@ -331,7 +402,10 @@ async def send(user,id,body):
                     saved=db.decode(row)['data']
                     if saved.get('pending_revision_message_id')==assistant_id:
                         for message in saved['messages']:
-                            if message['id']==assistant_id:message['revision_status']='failed'
+                            if message['id']==assistant_id:
+                                message['revision_status']='failed'
+                                for result in message.get('request_results',[]):
+                                    if result['status']=='pending':result.update(status='not_applied',explanation='The revision did not save. The previous PDF is still current.')
                         saved['last_message_input']=body.text;saved['version']+=1
                         write(c,user,'resume_conversation',saved,id)
             raise
@@ -455,10 +529,12 @@ def finalize(user,id,body):
     if value['conversation_id']!=id:raise HTTPException(409,'That revision belongs to another posting.')
     def change(data,c):
         if data['current_revision_id']!=revision['id'] or data['workspace_token']!=value['request_token']:raise HTTPException(409,'The preview is no longer current. Render and review the latest revision before saving.')
+        if resume_quality.acknowledgment_required(snapshot) and not body.quality_warning_acknowledged:raise HTTPException(409,'Acknowledge the quality warning for this exact revision before saving. Review the specific changes still needed.')
         if snapshot['layout']['pages']!=1 or not snapshot['layout']['validated']:raise HTTPException(409,'Shorten this draft to one page before saving employer downloads.')
         saved=value.get('finalized_resume_id')
         if not saved:
             snapshot.update({'conversation_id':id,'revision_id':revision['id'],'title':resume_data.resume_title(snapshot.get('posting_snapshot'),snapshot.get('title') or 'Resume',snapshot.get('name') or '')})
+            snapshot['quality_warning_acknowledged']=bool(body.quality_warning_acknowledged)
             saved=write(c,user,'resume',snapshot);value['finalized_resume_id']=saved;write(c,user,'resume_revision',value,revision['id'])
         data['last_saved_resume_id']=saved
     record=mutate(user,id,body.expected_version,change)
@@ -474,7 +550,7 @@ def estimate(user,id,mode):
     # Reserve one layout pass plus chat; approved new facts also require reassessment.
     multiplier=2 if data['profile_dirty'] else 1
     base['usd']=round(base['usd']+extra['usd']*multiplier,6) if base['usd'] is not None and extra['usd'] is not None else None
-    base['note']='Planning estimate for chat, evidence strategy, drafting, final source/coverage check, one editorial review, and at most one measured layout correction (up to five optimization requests). Approved facts may add a comparison refresh. No automatic paid retries. A question-only reply costs less; actual usage is shown afterward. Local previews, saving and downloads make no provider requests.'
+    base['note']='Planning estimate for chat, evidence strategy, drafting, final source/coverage check, editorial and isolated quality reviews, one optional repair, one measured layout correction and a blinded comparison (up to eight optimization requests). Approved facts may add a comparison refresh. No automatic paid retries. A question-only reply costs less; actual usage is shown afterward. Local previews, saving and downloads make no provider requests.'
     return base
 
 
@@ -491,7 +567,7 @@ def adopt(user,id,body):
     token=db.uid();record=begin(user,id,body.expected_version,token)
     proposal=optimization.apply(snapshot,draft)
     rendered=resume_layout.render(resume_builder.select(proposal,draft['content'],draft['experience_ids']))
-    rendered['optimization']={k:draft.get(k) for k in ('ai','audit_ai','planning_ai','editorial_ai','actual_cost_usd','headline_evidence','keywords','source_checked','strategy','user_constraints')}
+    rendered['optimization']={k:draft.get(k) for k in ('ai','audit_ai','planning_ai','editorial_ai','actual_cost_usd','headline_evidence','keywords','source_checked','strategy','user_constraints','quality_review')}
     return save_revision(user,id,record['data']['version'],rendered,resume_builder.catalog(proposal),'Opened a historical AI draft as a new working revision. Review its current PDF before saving.',token,source_snapshot=snapshot,draft_id=body.draft_id)
 
 
@@ -539,3 +615,33 @@ def place_project_evidence(user,id,body):
     linked_project_evidence.checked(user,choices)  # Recheck sources after potentially slow local rendering.
     token=db.uid();record=begin(user,id,body.expected_version,token)
     return save_revision(user,id,record['data']['version'],rendered,resume_builder.catalog(full),'Applied reviewed linked-project placements. No AI request. Review the updated PDF before saving.',token,source_snapshot=full,draft_id=None)
+
+
+def quality_estimate(user,id,mode):
+    data=require(user,id,'resume_conversation')['data']
+    if not data.get('current_revision_id'):raise HTTPException(409,'Build a draft before reviewing quality.')
+    revision=require(user,data['current_revision_id'],'resume_revision')['data']
+    return resume_quality.estimate(revision['snapshot'],mode,db.settings(user))
+
+
+async def recheck_quality(user,id,body):
+    from . import personalization,resume_strategy
+    data=require(user,id,'resume_conversation')['data']
+    if data['version']!=body.expected_version or data.get('current_revision_id')!=body.revision_id:raise HTTPException(409,'Review the current revision before rechecking quality.')
+    if data.get('workspace_request'):raise HTTPException(409,'Render the pending edits before rechecking quality.')
+    revision=require(user,body.revision_id,'resume_revision')['data']
+    if revision['conversation_id']!=id:raise HTTPException(409,'Choose a revision from this conversation.')
+    snapshot=copy.deepcopy(revision['snapshot']);before=source(user,data)
+    if job_parser.posting_hash(before['posting_snapshot'])!=job_parser.posting_hash(snapshot['posting_snapshot']):raise HTTPException(409,'The posting changed. Optimize for the current posting before rechecking.')
+    signature=resume_strategy.signature(before);privacy=personalization.request_version(user)
+    record=begin(user,id,body.expected_version,body.request_token)
+    review=None;usage=[];note=''
+    try:
+        review,meta=await resume_quality.review(snapshot,body.mode);usage.append(meta)
+    except ServiceError as exc:note='Quality review unavailable: '+str(exc)
+    personalization.check_request(user,privacy)
+    fresh=source(user,data)
+    if resume_strategy.signature(fresh)!=signature or job_parser.posting_hash(fresh['posting_snapshot'])!=job_parser.posting_hash(snapshot['posting_snapshot']):raise ServiceError('Sources changed during quality review; the previous revision remains intact.')
+    snapshot.setdefault('optimization',{})['quality_review']=resume_quality.stamp(snapshot,review,usage,note)
+    cost=sum(m.get('estimated_token_cost_usd') or 0 for m in usage) if usage and all(m.get('estimated_token_cost_usd') is not None for m in usage) else None
+    return save_revision(user,id,record['data']['version'],snapshot,revision['catalog'],'Rechecked draft quality. Document bytes and factual-validation status are unchanged.',body.request_token,{'quality_ai':usage,'actual_cost_usd':cost},revision.get('source_snapshot'),revision.get('draft_id'),quality_only=True)

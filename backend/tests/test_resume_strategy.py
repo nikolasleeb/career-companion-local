@@ -125,19 +125,22 @@ def provider(monkeypatch,scenario,mutate=None):
    # Fictional controlled selection: useful substantive work, not bookkeeping.
    rid=scenario[3]['energy']['id'];value['entries']=[e for e in value['entries'] if e['record_id']!=rid];value['omissions']=[{'record_id':rid,'reason':'Cloud architecture and stakeholder work better demonstrate this digital track.'}]
    if mutate:mutate(value)
+  elif schema.__name__=='ResumeQualityReview':value={'strengths':['Relevant supported examples.'],'findings':[],'next_actions':[]}
   elif schema.__name__=='DraftAudit':value={'approved':True,'issues':[]}
   else:value=payload['proposal']
   return value,{'model':'fictional','estimated_token_cost_usd':.001}
  monkeypatch.setattr(ai,'structured',model)
  def render(snap):return {**copy.deepcopy(snap),'layout':{'pages':1,'validated':True,'issues':[]},'artifacts':{'pdf':'eA==','docx':'eA=='}}
  monkeypatch.setattr(resume_layout,'render',render)
+ from app import resume_quality
+ monkeypatch.setattr(resume_quality,'document',lambda snap:{'text':'\n'.join(i['text'] for e in strategy.entries(snap).values() for i in e['content_items']),'checks':{'pages':1}})
  return calls
 
 
 def test_shell_like_selection_explanation_and_local_render_are_free(scenario,monkeypatch):
  calls=provider(monkeypatch,scenario);user,job,session,rows=scenario
  result=asyncio.run(guided.build(user,session['id'],session['data']['version'],'economy'))
- assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','DraftAudit']
+ assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','ResumeQualityReview','DraftAudit']
  snap=result['current']['data']['snapshot'];included=set(snap['experience_ids'])
  assert rows['cloud']['id'] in included and rows['energy']['id'] not in included
  assert snap['optimization']['strategy']['focus'] and snap['optimization']['strategy']['priorities'][0]['included']
@@ -172,7 +175,7 @@ def test_backup_import_remaps_composed_sources_and_detaches_missing_history(scen
  refs=[ref for e in strategy.entries(imported['data']['snapshot']).values() for i in e['content_items'] for ref in i.get('source_refs',[])]
  assert refs and all(ref['record_id']!=old_source for ref in refs)
  assert all(db.get(user,ref['record_id'],'experience') for ref in refs)
- assert len(calls)==4
+ assert len(calls)==5
  # A historical missing record can be imported read-only, but cannot become current evidence.
  ref={'source_id':'a'*24,'record_id':'deleted-source','quote':'Former reviewed source.','supporting_details':[]}
  value={'source_refs':[ref]};strategy.backup_markers(value,set());assert ref['unavailable_record']

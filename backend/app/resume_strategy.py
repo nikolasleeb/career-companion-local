@@ -9,7 +9,7 @@ import hashlib
 import json
 import re
 from . import ai, db, guidance, job_parser, resume_builder, resume_layout, task_progress
-from .models import ResumeStrategy, ResumeComposition, DraftAudit, OptimizationOutput
+from .models import ResumeStrategy, ResumeComposition, DraftAudit, OptimizationOutput, ResumeRepairResolution
 from .network import ServiceError
 
 VERSION=3
@@ -252,7 +252,21 @@ def selection(snapshot):
 def coverage(plan,final):
     selected={r['source_id'] for e in entries(final).values() for i in e['content_items'] for r in i.get('source_refs',[])}
     selected.update(digest([rid,'header'])[:24] for rid in entries(final))
-    return [{**p,'included_source_ids':sorted(selected&set(p['source_ids'])),'included':bool(selected&set(p['source_ids']))} for p in plan['priorities']]
+    return [{**p,**({'semantic_checked':False,'coverage_explanation':''} if 'semantic_checked' in p else {}),'included_source_ids':sorted(selected&set(p['source_ids'])),'included':bool(selected&set(p['source_ids']))} for p in plan['priorities']]
+
+
+def audited_coverage(coverage,audit):
+    checks=audit.get('coverage',[])
+    if not checks:return coverage  # Legacy audit snapshots remain readable.
+    by_id={c['priority_id']:c for c in checks}
+    if len(by_id)!=len(checks) or set(by_id)!={p['id'] for p in coverage}:raise ServiceError('The final coverage review used incomplete or unknown priorities. Your previous draft remains intact.')
+    result=[]
+    for priority in coverage:
+        check=by_id[priority['id']]
+        if check['demonstrated'] and not priority['included']:raise ServiceError('The final coverage review claimed unselected evidence. Your previous draft remains intact.')
+        if priority['essential'] and not check['demonstrated']:raise ServiceError('The final wording does not demonstrate essential supported evidence. Your previous draft remains intact.')
+        result.append({**priority,'included':check['demonstrated'],'semantic_checked':True,'coverage_explanation':check['explanation']})
+    return result
 
 
 def explanation(plan,final,omitted):
@@ -357,6 +371,93 @@ Use the measured line counts to shorten dense bullets and dangling words before 
     editorial_sources={r['source_id'] for values in output['composed_items'].values() for i in values for r in i['source_refs']}
     if editorial_sources&set(rules.get('excluded_source_ids',[])) or any(set(lock.get('source_ids',[]))-editorial_sources for lock in rules['locked_items'].values()):
         raise ServiceError('The editorial review changed your protected evidence choices. Your previous draft remains intact.')
+    from . import resume_quality
+    rendered,output,_=await fit_candidate(snapshot,analysis,output,rules,plan,evidence,mode)
+    original=copy.deepcopy(rendered);original_output=copy.deepcopy(output)
+    quality_usage=[];quality_result=None;quality_note='';repair_meta=None;comparison_meta=None
+    try:
+        quality_result,review_meta=await resume_quality.review(rendered,mode);quality_usage.append(review_meta)
+    except ServiceError as exc:
+        quality_note='Independent review unavailable: '+str(exc)
+    # The critic gets no Profile/history. Only this writer receives its critique,
+    # together with the same confirmed source catalog and protected choices.
+    repair_attempted=bool(quality_result and any(f['material'] for f in quality_result['findings']))
+    if repair_attempted:
+        task_progress.stage('resume_quality_repair')
+        try:
+            repair,repair_meta=await ai.structured(ResumeComposition,{
+                'task': 'Make ONE targeted repair addressing material independent-review findings. Use only confirmed evidence. Keep good content and protected headline/exclusions/wording. Do not invent missing qualifications. Preserve approximate quantities, intent, individual contribution, role/time boundaries and all essential supported priorities. Return complete entries with canonical source_ids. Minor preferences need no rewrite. Leave unresolved missing evidence as a question, not a new claim.',
+                'critique':quality_result,'current_resume':map_source_ids(rendered_without_artifacts(rendered),to_alias),
+                'professional_evidence':model_evidence,'strategy':map_source_ids(plan,to_alias),
+                'user_constraints':map_source_ids(rules,to_alias),'posting':snapshot.get('posting_snapshot',{}),
+                'source_id_rules':'Use only F-prefixed fact IDs; headers render automatically.'
+            },mode,instructions=RULES,retry_allowed=False)
+            repair=map_source_ids(repair,aliases)
+            if 'headline' in rules:repair['headline']=rules['headline']
+            if not snapshot.get('use_professional_headline',True):repair['headline']='';repair['headline_evidence']=[]
+            repaired=enforce_constraints(retain_posting_skills(materialize(repair,evidence,snapshot),evidence,snapshot,rules,plan),rules)
+            if current and repair['headline']==current.get('headline'):repaired['headline_evidence']=copy.deepcopy(current.get('optimization',{}).get('headline_evidence',repaired['headline_evidence']))
+            rendered,output,_=await fit_candidate(snapshot,analysis,repaired,rules,plan,evidence,mode)
+            quality_note='One targeted repair was attempted.'
+        except ServiceError as exc:
+            rendered=copy.deepcopy(original);output=copy.deepcopy(original_output)
+            quality_note='The targeted repair could not be used; the original candidate was retained. '+str(exc)
+    rendered,output,layout_meta=await fit_candidate(snapshot,analysis,output,rules,plan,evidence,mode,allow_layout=True)
+    if quality_result and resume_quality.content_hash(rendered)!=resume_quality.content_hash(original):
+        try:
+            chosen,quality_result,comparison_meta,reason=await resume_quality.compare(original,rendered,mode)
+            quality_usage.append(comparison_meta)
+            if chosen is original:output=original_output
+            rendered=chosen;quality_note+=' Blinded comparison: '+reason
+        except ServiceError as exc:
+            # A changed candidate has no usable quality approval. Keep the reviewed
+            # original; cancellation still propagates and never publishes output.
+            rendered=original;output=original_output
+            quality_note+=' Comparison unavailable; retained the original candidate. '+str(exc)
+    quality_review=resume_quality.stamp(rendered,quality_result,quality_usage,quality_note)
+    quality_review['repair']=ResumeRepairResolution(attempted=repair_attempted,
+        outcome=('revised' if resume_quality.content_hash(rendered)!=resume_quality.content_hash(original) else 'retained_original') if repair_attempted else 'not_needed',
+        explanation=quality_note[:4000]).model_dump()
+    expanded=install(snapshot,output['composed_items'])
+    cov=coverage(plan,rendered)
+    selected_choices=[{'record_id':rid,'reason':e.get('selection_reason','Selected for this posting.'),'items':[{k:i[k] for k in ('item_id','text','priority','reason')} for i in e['content_items']]} for rid,e in entries(rendered).items()]
+    final_output={**output,'entries':selected_choices}
+    optimization.validate(final_output,expanded,records)
+    resume_quality.check_document(rendered)
+    task_progress.stage('checking')
+    audit,audit_meta=await ai.structured(DraftAudit,{'task':'''Audit the FINAL fitted resume, not the initial selection. Check EVERY claim against its cited source_ids in professional_evidence. Each composed bullet may combine its cited passages from ONE original experience only. Reject invented tools, facts, numbers, impact, seniority or ownership; source/date attribution errors; team work made individual; intent made a measured outcome; loss of material uncertainty; unsupported headline or keyword claims; repeated accomplishments; excluded claims or other user-constraint violations. Return one coverage entry for EVERY final_coverage priority, using its exact id as priority_id, demonstrated based on the actual final wording, and a concise explanation. A selected source ID alone does not prove demonstration. Nonessential coverage mismatches belong in coverage with demonstrated=false, not in issues and not as a reason for approved=false. approved and issues assess factual support, attribution, protected choices and missing essential supported priorities. Confirm included evidence actually demonstrates the mapped priority: quote presence alone is insufficient. Reject missing essential supported priorities. A priority mapped as transferable may cover only part of a duty: do not demand full equivalence if the resume accurately describes that narrower experience and the mapping explains its limits. Relevant plain-language paraphrases are allowed; structured facts are exact. Reject factual misrepresentation, missing essential supported coverage, attribution errors and explicit user-constraint violations. Do NOT reject a deliberate omission of a nonessential role, credential or project merely because you would prefer it. Relevant named coursework is legitimate evidence; course codes and assignment-administration details are bookkeeping. Do not turn subjective editorial preferences into factual failures. Read complete education headers together with their dates and expected_graduation metadata: an expected graduation date clearly marks an in-progress degree; do not demand that the degree title repeat that label. A professional-focus headline may summarize multiple separately cited experiences without implying a held job or industry role. Ordinary confirmed skills and communication experience need no independent credential or measured metric. Do not reject supported paraphrases merely for using different concise words. Return approved=true and an empty issues list when no concrete material problem remains. Put only actual final problems in issues, never speculative concerns or self-corrected reasoning. If you conclude that the claims match the sources and no material unsupported claim exists, approve the draft. Return short issues, no rewrite.''','final_resume':rendered_without_artifacts(rendered),'strategy':plan,'final_coverage':cov,'professional_evidence':evidence,'user_constraints':rules,'keywords':final_output['keywords']},mode,instructions=RULES,retry_allowed=False)
+    if not audit['approved'] or audit['issues']:raise ServiceError('The final resume check could not approve this draft. '+' '.join(audit['issues'][:3])+' Your previous draft and Profile are intact.')
+    cov=audited_coverage(cov,audit)
+    personalization.check_request(user,request_version)
+    # Re-read only this account's professional sources; reject changes before publishing.
+    fresh=resume_conversation.source(user,{'job_id':snapshot['job_id'],'analysis_id':snapshot.get('analysis_id')})
+    if signature(fresh)!=initial_signature or job_parser.posting_hash(fresh['posting_snapshot'])!=job_parser.posting_hash(snapshot['posting_snapshot']):raise ServiceError('Your Profile evidence or relationships changed during optimization. The previous draft remains intact; optimize again with current sources.')
+    included=set(entries(rendered));omitted=[{'record_id':rid,'title':e['title'],'reason':next((o['reason'] for o in output['omissions'] if o['record_id']==rid),'Omitted after measured fitting to retain stronger distinct evidence.')} for rid,e in entries(snapshot).items() if rid not in included]
+    summary=explanation(plan,rendered,omitted)
+    summary['priorities']=cov
+    summary['omitted_keyword_suggestions']=omitted_keywords
+    summary['editorial_reviewed']=True
+    summary['editorial_method']='Reviewed employer relevance, strongest evidence order, concise writing and actual rendered layout before final source auditing.'
+    composed={rid:copy.deepcopy(e['content_items']) for rid,e in entries(rendered).items()}
+    # Generated item IDs and provenance travel with immutable snapshots and catalogs.
+    final_output.update(composed_items=composed,strategy=summary,user_constraints=rules,planning_ai=planning_meta,ai=meta,audit_ai=audit_meta,editorial_ai=editorial_meta,layout_ai=layout_meta,quality_review=quality_review,quality_ai=quality_usage,repair_ai=repair_meta,
+        source_fingerprint=optimization.fingerprint(snapshot),source_signature=initial_signature,posting_hash=job_parser.posting_hash(snapshot['posting_snapshot']),
+        job_id=snapshot.get('job_id'),analysis_id=snapshot.get('analysis_id'),schema_version=VERSION,source_checked=True,writing_guidance=writing)
+    costs=[m for m in (planning_meta,meta,editorial_meta,layout_meta,audit_meta,repair_meta,*quality_usage) if m]
+    final_output['actual_cost_usd']=None if ('unavailable' in quality_note.lower() or 'could not be used' in quality_note.lower()) else round(sum(m['estimated_token_cost_usd'] or 0 for m in costs),6) if all(m.get('estimated_token_cost_usd') is not None for m in costs) else None
+    full=optimization.apply(install(snapshot,composed),final_output)
+    final_output['catalog']=resume_builder.catalog(full,analysis)
+    final_output.update(selection_for_catalog(full,rendered));final_output['omitted']=omitted
+    rendered['writing_guidance']=writing
+    if guided:final_output['rendered_snapshot']=rendered
+    task_progress.stage('saving')
+    return db.save(user,'resume_draft',final_output)
+
+
+
+async def fit_candidate(snapshot,analysis,output,rules,plan,evidence,mode,allow_layout=False):
+    from . import optimization
+    output=copy.deepcopy(output);records=optimization.evidence_sources(snapshot)
     expanded=install(snapshot,output['composed_items'])
     # Keyword suggestions are optional metadata. Publish only verified suggestions.
     output['keywords']=[k for k in output['keywords'] if ai.valid_quote(k['job_quote'],snapshot['posting_snapshot']['description']) and ai.valid_quote(k['term'],k['job_quote']) and all(e['record_id'] in records and any(ai.valid_quote(e['quote'],t) for t in optimization.source_texts(records[e['record_id']])) for e in k['evidence'])]
@@ -377,7 +478,7 @@ Use the measured line counts to shorten dense bullets and dangling words before 
     target_ids={issue['item_id'] for issue in rendered['layout'].get('issues',[]) if issue.get('item_id') in writable}
     if rendered['layout']['pages']>1:
         target_ids.update(i['item_id'] for e in entries(selected).values() for i in e['content_items'] if i['field'] in NARRATIVE and i['item_id'] not in locked)
-    if target_ids:
+    if allow_layout and target_ids:
         task_progress.stage('layout')
         current_entries=[{'record_id':rid,'reason':e.get('selection_reason','Relevant evidence.'),'items':[{k:i[k] for k in ('item_id','text','priority','reason')} for i in e['content_items']]} for rid,e in entries(selected).items()]
         correction,layout_meta=await ai.structured(OptimizationOutput,{
@@ -418,35 +519,7 @@ Use the measured line counts to shorten dense bullets and dangling words before 
     if rendered['layout']['pages']!=1:raise ServiceError('Essential evidence and your protected choices do not fit one readable page. Shorten or unlock content; the previous draft is intact.')
     cov=coverage(plan,rendered)
     if any(p['essential'] and not p['included'] for p in cov):raise ServiceError('Fitting removed essential qualification evidence. Your previous draft remains intact; review the source choices before retrying.')
-    selected_choices=[{'record_id':rid,'reason':e.get('selection_reason','Selected for this posting.'),'items':[{k:i[k] for k in ('item_id','text','priority','reason')} for i in e['content_items']]} for rid,e in entries(rendered).items()]
-    final_output={**output,'entries':selected_choices}
-    optimization.validate(final_output,expanded,records)
-    task_progress.stage('checking')
-    audit,audit_meta=await ai.structured(DraftAudit,{'task':'''Audit the FINAL fitted resume, not the initial selection. Check EVERY claim against its cited source_ids in professional_evidence. Each composed bullet may combine its cited passages from ONE original experience only. Reject invented tools, facts, numbers, impact, seniority or ownership; source/date attribution errors; team work made individual; intent made a measured outcome; loss of material uncertainty; unsupported headline or keyword claims; repeated accomplishments; excluded claims or other user-constraint violations. Confirm included evidence actually demonstrates the mapped priority: quote presence alone is insufficient. Reject missing essential supported priorities. A priority mapped as transferable may cover only part of a duty: do not demand full equivalence if the resume accurately describes that narrower experience and the mapping explains its limits. Relevant plain-language paraphrases are allowed; structured facts are exact. Reject factual misrepresentation, missing essential supported coverage, attribution errors and explicit user-constraint violations. Do NOT reject a deliberate omission of a nonessential role, credential or project merely because you would prefer it. Relevant named coursework is legitimate evidence; course codes and assignment-administration details are bookkeeping. Do not turn subjective editorial preferences into factual failures. Read complete education headers together with their dates and expected_graduation metadata: an expected graduation date clearly marks an in-progress degree; do not demand that the degree title repeat that label. A professional-focus headline may summarize multiple separately cited experiences without implying a held job or industry role. Ordinary confirmed skills and communication experience need no independent credential or measured metric. Do not reject supported paraphrases merely for using different concise words. Return approved=true and an empty issues list when no concrete material problem remains. Put only actual final problems in issues, never speculative concerns or self-corrected reasoning. If you conclude that the claims match the sources and no material unsupported claim exists, approve the draft. Return short issues, no rewrite.''','final_resume':rendered_without_artifacts(rendered),'strategy':plan,'final_coverage':cov,'professional_evidence':evidence,'user_constraints':rules,'keywords':final_output['keywords']},mode,instructions=RULES,retry_allowed=False)
-    if not audit['approved'] or audit['issues']:raise ServiceError('The final resume check could not approve this draft. '+' '.join(audit['issues'][:3])+' Your previous draft and Profile are intact.')
-    personalization.check_request(user,request_version)
-    # Re-read only this account's professional sources; reject changes before publishing.
-    fresh=resume_conversation.source(user,{'job_id':snapshot['job_id'],'analysis_id':snapshot.get('analysis_id')})
-    if signature(fresh)!=initial_signature or job_parser.posting_hash(fresh['posting_snapshot'])!=job_parser.posting_hash(snapshot['posting_snapshot']):raise ServiceError('Your Profile evidence or relationships changed during optimization. The previous draft remains intact; optimize again with current sources.')
-    included=set(entries(rendered));omitted=[{'record_id':rid,'title':e['title'],'reason':next((o['reason'] for o in output['omissions'] if o['record_id']==rid),'Omitted after measured fitting to retain stronger distinct evidence.')} for rid,e in entries(snapshot).items() if rid not in included]
-    summary=explanation(plan,rendered,omitted)
-    summary['omitted_keyword_suggestions']=omitted_keywords
-    summary['editorial_reviewed']=True
-    summary['editorial_method']='Reviewed employer relevance, strongest evidence order, concise writing and actual rendered layout before final source auditing.'
-    composed={rid:copy.deepcopy(e['content_items']) for rid,e in entries(rendered).items()}
-    # Generated item IDs and provenance travel with immutable snapshots and catalogs.
-    final_output.update(composed_items=composed,strategy=summary,user_constraints=rules,planning_ai=planning_meta,ai=meta,audit_ai=audit_meta,editorial_ai=editorial_meta,layout_ai=layout_meta,
-        source_fingerprint=optimization.fingerprint(snapshot),source_signature=initial_signature,posting_hash=job_parser.posting_hash(snapshot['posting_snapshot']),
-        job_id=snapshot.get('job_id'),analysis_id=snapshot.get('analysis_id'),schema_version=VERSION,source_checked=True,writing_guidance=writing)
-    costs=[m for m in (planning_meta,meta,editorial_meta,layout_meta,audit_meta) if m]
-    final_output['actual_cost_usd']=round(sum(m['estimated_token_cost_usd'] or 0 for m in costs),6) if all(m.get('estimated_token_cost_usd') is not None for m in costs) else None
-    full=optimization.apply(install(snapshot,composed),final_output)
-    final_output['catalog']=resume_builder.catalog(full,analysis)
-    final_output.update(selection_for_catalog(full,rendered));final_output['omitted']=omitted
-    rendered['writing_guidance']=writing
-    if guided:final_output['rendered_snapshot']=rendered
-    task_progress.stage('saving')
-    return db.save(user,'resume_draft',final_output)
+    return rendered,output,layout_meta
 
 
 def rendered_without_artifacts(value):

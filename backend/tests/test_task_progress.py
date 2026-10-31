@@ -94,10 +94,10 @@ def test_real_guided_pipeline_reports_draft_layout_audit_and_local_stages(env,cl
     completed=get_task(identity,user={'id':user})
     assert completed['status']=='completed',completed
     assert completed['result']['current']
-    assert observed==[('ResumeStrategy','resume_planning'),('ResumeComposition','drafting'),('ResumeComposition','resume_editorial'),('OptimizationOutput','layout'),('DraftAudit','checking')]
-    assert len(calls)==5 # Planning, composition, editorial review, one correction and audit; progress adds no requests.
+    assert observed==[('ResumeStrategy','resume_planning'),('ResumeComposition','drafting'),('ResumeComposition','resume_editorial'),('ResumeQualityReview','resume_quality'),('OptimizationOutput','layout'),('DraftAudit','checking')]
+    assert len(calls)==6 # Planning, composition, editorial review, one correction and audit; progress adds no requests.
     codes=[v['code'] for v in completed['progress']['history']]+[completed['progress']['code']]
-    assert codes==['starting','preparing','resume_planning','drafting','rendering','resume_editorial','rendering','layout','rendering','checking','saving']
+    assert codes==['starting','preparing','resume_planning','drafting','rendering','resume_editorial','rendering','resume_quality','rendering','layout','rendering','checking','saving']
 
 
 def test_manual_build_reports_only_local_work(env,client):

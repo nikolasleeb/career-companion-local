@@ -142,4 +142,4 @@ def test_high_reasoning_planner_has_bounded_automatic_allowance(scenario,monkeyp
  monkeypatch.setattr(ai,'structured',capture);monkeypatch.setattr(ai,'effort',lambda mode:'high')
  asyncio.run(guided.build(scenario[0],scenario[2]['id'],scenario[2]['data']['version'],'economy'))
  assert seen[0]==('ResumeStrategy',32000)
- assert len(seen)==4
+ assert len(seen)==5

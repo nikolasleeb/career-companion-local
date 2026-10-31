@@ -550,9 +550,50 @@ class OptimizationOutput(StrictModel):
     entries: list[DraftEntry]
     keywords: list[DraftKeyword]
 
+class ResumeCoverageCheck(StrictModel):
+    priority_id: str
+    demonstrated: bool
+    explanation: str = Field(max_length=1000)
+
 class DraftAudit(StrictModel):
     approved: bool
     issues: list[str]
+    coverage: list[ResumeCoverageCheck] = Field(default_factory=list,max_length=24,description='Assess every final_coverage priority when supplied. Otherwise return an empty list. Coverage gaps are separate from factual issues; required supported priorities remain mandatory.')
+
+class ResumeQualityFinding(StrictModel):
+    kind: Literal['writing','selection','presentation','evidence_gap']
+    material: bool
+    issue: str = Field(min_length=1,max_length=800)
+    resume_quote: str = Field(max_length=1800)
+    posting_quote: str = Field(max_length=1800)
+    action: str = Field(min_length=1,max_length=800)
+
+class ResumeQualityReview(StrictModel):
+    strengths: list[str] = Field(max_length=5)
+    findings: list[ResumeQualityFinding] = Field(max_length=8)
+    next_actions: list[str] = Field(max_length=3)
+
+class ResumeQualityComparison(StrictModel):
+    preferred: Literal['a','b','tie']
+    reason: str = Field(max_length=1200)
+    a: ResumeQualityReview
+    b: ResumeQualityReview
+
+class ResumeRepairResolution(StrictModel):
+    attempted: bool
+    outcome: Literal['not_needed','revised','retained_original']
+    explanation: str = Field(max_length=4000)
+
+class ResumeRequestResult(StrictModel):
+    request_id: str
+    status: Literal['updated','already_satisfied','awaiting_approval','needs_clarification','not_applied']
+    explanation: str = Field(max_length=800)
+    instruction: str = Field(max_length=1800)
+    target_item_ids: list[str] = Field(default_factory=list,max_length=100)
+    target_record_ids: list[str] = Field(default_factory=list,max_length=40)
+    change_headline: bool = False
+    change_selection: bool = False
+    template: Literal['education','experience','unchanged'] = 'unchanged'
 
 class ResumePriority(StrictModel):
     id: str
@@ -627,7 +668,9 @@ class ResumeChatOutput(StrictModel):
     target_record_ids: list[str]
     change_headline: bool
     change_selection: bool
+    template: Literal['education','experience','unchanged'] = 'unchanged'
     project_questions: list[ProjectFollowup] = Field(default_factory=list,max_length=3)
+    request_results: list[ResumeRequestResult] = Field(default_factory=list,max_length=40)
 
 
 class ConversationStart(StrictModel):
@@ -684,6 +727,11 @@ class RevisionAction(StrictModel):
 
 class FinalizeRevision(RevisionAction):
     reviewed: Literal[True]
+    quality_warning_acknowledged: bool = False
+
+class ResumeQualityRequest(RevisionAction):
+    request_token: str = Field(min_length=1,max_length=100)
+    mode: Literal['economy','deep','custom'] = 'economy'
 
 class LegacyDraftLoad(StrictModel):
     expected_version:int=Field(ge=0)

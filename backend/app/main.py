@@ -196,7 +196,7 @@ def start_task(user,kind,work,inputs=None,cleanup=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness','resume_guided') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -958,6 +958,16 @@ def resume_conversation_get(entity_id:str,user=Depends(auth.current)):
 def resume_conversation_estimate(entity_id:str,mode:str='economy',user=Depends(auth.current)):
     if mode not in ('economy','deep','custom'):raise HTTPException(400,'Choose a valid AI mode.')
     return resume_conversation.estimate(user['id'],entity_id,mode)
+
+@app.get('/api/resume-conversations/{entity_id}/quality-review/estimate')
+def resume_quality_estimate(entity_id:str,mode:Literal['economy','deep','custom']='economy',user=Depends(auth.current)):
+    return resume_conversation.quality_estimate(user['id'],entity_id,mode)
+
+@app.post('/api/resume-conversations/{entity_id}/quality-review')
+async def resume_quality_recheck(entity_id:str,body:ResumeQualityRequest,user=Depends(auth.current)):
+    resume_conversation.require(user['id'],entity_id,'resume_conversation');require_ai(user['id'])
+    async def work():return await resume_conversation.recheck_quality(user['id'],entity_id,body)
+    return start_task(user['id'],'resume_guided',work,{'operation':'quality-review','conversation_id':entity_id,**body.model_dump()})
 
 @app.post('/api/resume-conversations/{entity_id}/build')
 async def resume_conversation_build(entity_id:str,body:GuidedBuild,manual:bool=False,user=Depends(auth.current)):
