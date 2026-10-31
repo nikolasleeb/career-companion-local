@@ -1,5 +1,5 @@
 """Public source search and account-owned decisions. No provider keys enter records."""
-import asyncio,hashlib,json,re
+import asyncio,hashlib,json,re,logging
 from collections import defaultdict
 from datetime import datetime,timezone,timedelta
 from urllib.parse import urlparse
@@ -11,6 +11,13 @@ from . import role_catalog,provider_connections,public_job_feeds as feeds,job_fi
 TECH=role_catalog.GROUPS['Tech & Data']
 ALIASES=role_catalog.ALIASES
 VERSION=role_catalog.VERSION+3000
+
+def source_failed(label,error):
+    # External feed failures must not cancel healthy sources. Never log response
+    # bodies, credentials, account data, or an exception message from a provider.
+    logging.getLogger(__name__).warning("Job source %s failed (%s)",label,type(error).__name__)
+    return {'source':label,'status':'error','message':'This source could not be read. Other sources are retained; check source coverage or Settings before starting another search.'}
+
 
 def words(value):return re.findall(r'[^\W_]+',value.casefold(),re.UNICODE)
 def title_match(title,query,levels=None):
@@ -157,9 +164,9 @@ async def _discover(user,request,*,execution='manual'):
             if label in stopped:return
             try:
                 rows=await asyncio.wait_for(fn(),60);jobs.extend(rows);statuses.append({'source':label,'status':'ok' if rows else 'empty','message':f'{len(rows)} results before preference checks. Source pages are bounded; this is not a complete market index.'})
-            except (ServiceError,asyncio.TimeoutError) as e:
+            except Exception as e:
                 if any(code in str(e) for code in ('HTTP 401','HTTP 403','HTTP 429')):stopped.add(label)
-                statuses.append({'source':label,'status':'error','message':str(e) if isinstance(e,ServiceError) else 'Source timed out. Retry later; other results are retained.'})
+                statuses.append(source_failed(label,e))
     task_progress.stage('searching_jobs')
     calls=[];employer_calls=[]
     async def board_search(board):
@@ -169,13 +176,13 @@ async def _discover(user,request,*,execution='manual'):
                 rows,meta=await asyncio.wait_for(feeds.employer(board,refresh=request.refresh,request=request),60)
                 jobs.extend(v for v in rows if title_match(v.get('title',''),queries,chosen_levels))
                 statuses.append({'source':label,'status':'stale' if meta['stale'] else 'incomplete' if meta.get('partial') else 'ok' if rows else 'empty','last_success':meta['last_success'],'snapshot_revision':meta['revision'],'message':f"{board['company']}: {len(rows)} public postings{' (bounded query; incomplete inventory)' if meta.get('partial') else ''}; {'cached' if meta['cached'] else 'refreshed'}. "+meta['error']})
-            except (ServiceError,asyncio.TimeoutError):statuses.append({'source':label,'status':'error','message':board['company']+': public feed unavailable. Other sources are retained.'})
+            except Exception as error:statuses.append(source_failed(label,error))
     async def community_search():
         async with sem:
             try:
                 rows,meta=await feeds.community(refresh=request.refresh,queries=queries,levels=chosen_levels);jobs.extend(rows)
                 statuses.append({'source':'github:open-jobs-data','status':'stale' if meta['stale'] else 'ok' if rows else 'empty','last_success':meta['last_success'],'snapshot_at':meta['snapshot_at'],'message':f"open-jobs-data: {len(rows)} community metadata records. Employer requirements require review. "+meta['error']})
-            except (ServiceError,asyncio.TimeoutError):statuses.append({'source':'github:open-jobs-data','status':'error','message':'Community snapshot unavailable; other sources are retained.'})
+            except Exception as error:statuses.append(source_failed('github:open-jobs-data',error))
     for source in dict.fromkeys(request.sources):
         if source in ('greenhouse','ashby','lever','official'):
             chosen=[b for b in boards if b['provider']==source]

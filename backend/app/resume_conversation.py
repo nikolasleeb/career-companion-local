@@ -351,7 +351,7 @@ def approve(user,id,body):
             links=profile_answers.validate_links(c,user,body.experience_ids) if body.experience_ids is not None else []
             selected_project=next((id for id in links if profile_answers.owned_experience(c,user,id)['data']['category']=='project'),'')
             target=project_context.destination(c,user,proposal,selected_project or body.evidence_experience_id,body.evidence_expected_updated_at,body.keep_standalone)
-            rid=target['id'] if target else '';proposal['applied_record_id']=rid;proposal['category']='project';proposal['experience_ids']=links or [rid]
+            rid=target['id'] if target else '';proposal['applied_record_id']=rid;proposal['category']='project';proposal['experience_ids']=[rid]+[link for link in links if link!=rid]
             data['approved_record_ids']=list(dict.fromkeys(data['approved_record_ids']+([rid] if rid else [])))
         else:
             existing=db.decode(c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='experience'",(rid,user)).fetchone()) if rid else None
