@@ -5,7 +5,7 @@ type Panel={id:string;label:string;content:React.ReactNode};
 export function SettingsTabs({accountId,panels,localPanel}:{accountId:string;panels:Panel[];localPanel?:React.ReactNode}){
  const choices=localPanel?[...panels,{id:'app',label:'App & storage',content:localPanel}]:panels;
  const key='career-settings-tab:'+accountId;
- const initial=()=>{try{const id=sessionStorage.getItem(key)||'ai';return choices.some(p=>p.id===id)?id:'ai';}catch{return 'ai';}};
+ const initial=()=>{try{const id=sessionStorage.getItem(key)||'connections';return choices.some(p=>p.id===id)?id:'connections';}catch{return 'connections';}};
  const [requested,setRequested]=useRouteTab('settings',initial()),active=choices.some(p=>p.id===requested)?requested:'connections',[visited,setVisited]=useState(()=>new Set([active]));const list=useRef<HTMLDivElement>(null);
  useEffect(()=>setVisited(v=>new Set([...v,active])),[active]);
  function select(id:string){if(!choices.some(p=>p.id===id))return;setRequested(id);setVisited(v=>new Set([...v,id]));try{sessionStorage.setItem(key,id);}catch{}}
