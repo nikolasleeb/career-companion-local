@@ -62,8 +62,8 @@ test('card actions distinguish running, reviewed, draft and unanalyzed materials
  assert.deepEqual(projectMaterialsStatus(materialsLibrary,'a',['https://github.com/example/a']),{label:'View analysis',status:'Materials analyzed'});
  assert.equal(projectMaterialsStatus(materialsLibrary,'b').status,'Analysis running');
  assert.equal(projectMaterialsStatus({...materialsLibrary,tasks:[]},'b').label,'View analysis');
- assert.equal(projectMaterialsStatus(materialsLibrary,'new').label,'Analyze project with OpenAI');
- assert.equal(projectMaterialsStatus(materialsLibrary,'a',['https://github.com/example/changed']).label,'Analyze project with OpenAI');
+ assert.equal(projectMaterialsStatus(materialsLibrary,'new').label,'Add project materials…');
+ assert.equal(projectMaterialsStatus(materialsLibrary,'a',['https://github.com/example/changed']).label,'Add project materials…');
 });
 
 test('other materials retain orphaned or non-project source history after a Profile record is removed',()=>{assert.deepEqual(scopedProjectLibrary(materialsLibrary,'',['a']).snapshots.map(r=>r.id),['two','other']);});
@@ -119,10 +119,10 @@ test('a failed or interrupted attempt offers retry unless successful findings ar
  const base={snapshots:[{id:'selected',data:{experience_id:'project',source_id:'source'}}],sources:[],analyses:[],drafts:[]};
  for(const status of ['failed','interrupted']){
   const library={...base,tasks:[{snapshot_id:'selected',status}]};
-  assert.deepEqual(projectMaterialsStatus(library,'project'),{label:'Retry analysis with OpenAI',status:'Previous attempt '+status});
+  assert.deepEqual(projectMaterialsStatus(library,'project'),{label:'Review project materials…',status:'Previous attempt '+status});
   assert.deepEqual(projectMaterialsStatus({...library,analyses:[{data:{snapshot_id:'selected'}}]},'project'),{label:'View analysis',status:'Materials analyzed'});
  }
- assert.deepEqual(projectMaterialsStatus({...base,tasks:[]},'project'),{label:'Analyze project with OpenAI',status:'Files saved'});
+ assert.deepEqual(projectMaterialsStatus({...base,tasks:[]},'project'),{label:'Add project materials…',status:''});
 });
 const {projectFailureMessage}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 test('historical output-limit errors refer to the previous attempt and current allowance',()=>{

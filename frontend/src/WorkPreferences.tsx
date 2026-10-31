@@ -1,3 +1,4 @@
+import {confirmAction,requestText} from './WorkspaceDialog';
 import React,{useEffect,useRef,useState} from 'react';
 import {foregroundAction,pendingAction,recoverAction,clearUnconfirmed} from './foregroundAction';
 import './profileSummaries.css';
@@ -26,10 +27,10 @@ export function WorkPreferences({api,onAssessment}:{api:any;onAssessment?:()=>vo
  }
  async function save(e:React.FormEvent){
   e.preventDefault();if(count>250||proposal)return;setBusy(true);setError('');
-  try{const r=await api('/profile/work-preferences','PUT',{expected_revision:saved.revision,summary:draft,use_for_ai:saved.use_for_ai,coach_report_access:false,reviewed,assessment_id:saved.assessment.assessment_id||'',generation_task_id:generation});load(r);setGeneration('');setProposal(null);setNotes('');setMessage('Work Styles summary saved. Personalization is managed at the top of Profile.');window.dispatchEvent(new Event('career-context-updated'));}
+  try{const r=await api('/profile/work-preferences','PUT',{expected_revision:saved.revision,summary:draft,use_for_ai:saved.use_for_ai,coach_report_access:false,reviewed,assessment_id:saved.assessment.assessment_id||'',generation_task_id:generation});load(r);setGeneration('');setProposal(null);setNotes('');setMessage('Work Styles summary saved. Personalization is managed in Profile’s Personalization tab.');window.dispatchEvent(new Event('career-context-updated'));}
   catch(e){setError((e as Error).message);}finally{setBusy(false);}
  }
- function acceptProposal(){if(draft!==saved.summary&&draft&&!window.confirm('Replace the unsaved paragraph with this AI draft?'))return;change(proposal.summary);setGeneration(proposal.task_id);setProposal(null);}
+ async function acceptProposal(){if(draft!==saved.summary&&draft&&!(await confirmAction({title:'Replace current draft?',message:'Replace the unsaved paragraph with this AI draft?',confirmLabel:'Replace draft',cancelLabel:'Cancel',danger:false})))return;change(proposal.summary);setGeneration(proposal.task_id);setProposal(null);}
  const count=draft.trim()?draft.trim().split(/\s+/).length:0,locked=busy||pending||recover;
  return <section className="panel work-preference-profile"><div className="section-header"><h2>{onAssessment?'Work Styles':'Summary & AI guidance'}</h2><span className="tag">Reviewed summary only</span></div>
  {!saved&&!error&&<p role="status">Loading your summary…</p>}
@@ -52,7 +53,7 @@ export function WorkPreferences({api,onAssessment}:{api:any;onAssessment?:()=>vo
   </section>
   <form className="work-summary-sharing" onSubmit={save}><fieldset disabled={locked||!!proposal}><legend>Save summary</legend>
    <label className="check-line"><input type="checkbox" checked={reviewed} disabled={!draft.trim()} onChange={e=>setReviewed(e.target.checked)}/>I reviewed this summary and it accurately describes how I may work.</label>
-   <p className="small muted">Sharing is managed in Personalization at the top of Profile. Only this reviewed summary can reach other features; it never establishes qualifications. Saving the summary does not change your sharing setting.</p>
+   <p className="small muted">Sharing is managed in the Personalization tab in Profile. Only this reviewed summary can reach other features; it never establishes qualifications. Saving the summary does not change your sharing setting.</p>
    <button type="submit" className="button primary" disabled={count>250||!reviewed||!draft.trim()&&(enabled||!saved.summary&&!saved.use_for_ai)}>{busy?'Saving…':'Save reviewed summary'}</button>
   </fieldset>{proposal&&<p className="small muted">Choose Use this draft or Keep my current summary above before saving.</p>}</form>
  </>}

@@ -1,4 +1,5 @@
-import {useAppRoute,patchRoute,routeNow,routeGuard} from './appRoute';
+import {confirmAction} from './WorkspaceDialog';
+import {useAppRoute,patchRoute,routeNow,routeGuard,setRoute} from './appRoute';
 import {OfferDetails} from './OfferDetails';
 import React,{useEffect,useId,useRef,useState} from 'react';
 import {ApplicationDocuments} from './ApplicationDocuments';
@@ -11,7 +12,7 @@ type Call=(path:string,method?:string,body?:any)=>Promise<any>;
 const tabs:[Tab,string][]=[['overview','Overview'],['documents','Documents'],['activity','Activity']];
 const empty=()=>({job_id:'',title:'',company:'',url:'',posting_snapshot:{description:''},resume_ids:[],submitted_resume_id:'',status:'preparing',applied_date:'',history:[],interviews:[],notes:'',archived:false,attachments:[]});
 export function ApplicationDetails({record,close,initialSubmitted=false,initialTab='overview',workspace,call,refresh,statuses}: {record?:Entity;close:()=>void;initialSubmitted?:boolean;initialTab?:Tab;workspace:Record<string,Entity[]>;call:Call;refresh:()=>Promise<void>;statuses:Record<string,string>}){
- const approvedClose=useRef(false),navigationView=useRef(routeNow().view);
+ const approvedClose=useRef(false),navigationView=useRef(routeNow().view),navigationPending=useRef(false);
  const keepEditing=useRef<HTMLButtonElement>(null);const [confirmClose,setConfirmClose]=useState(false);
  const dialog=useRef<HTMLDialogElement>(null),titleInput=useRef<HTMLInputElement>(null),tabButtons=useRef<HTMLButtonElement[]>([]),body=useRef<HTMLDivElement>(null);const uid=useId();
  const [saved,setSaved]=useState<Entity|undefined>(record),[baseline,setBaseline]=useState<any>(()=>structuredClone(record?.data||empty()));
@@ -21,16 +22,16 @@ export function ApplicationDetails({record,close,initialSubmitted=false,initialT
  const [offerBusy,setOfferBusy]=useState(false),[offerEditing,setOfferEditing]=useState(false);
  const dirty=applicationDirty(baseline,draft),locked=saving||fileBusy||offerBusy||confirmClose;
  const latest=useRef({draft,baseline});latest.current={draft,baseline};
- useEffect(()=>{dialog.current?.showModal();return()=>dialog.current?.close();},[]);
+ useEffect(()=>{const origin=document.activeElement as HTMLElement;dialog.current?.showModal();dialog.current?.querySelector<HTMLButtonElement>('[aria-label="Close application details"]')?.focus();return()=>{dialog.current?.close();if(origin?.isConnected)origin.focus({preventScroll:true});};},[]);
  useEffect(()=>{if(confirmClose)keepEditing.current?.focus();},[confirmClose]);
  useEffect(()=>{if(!success)return;const timer=setTimeout(()=>setSuccess(''),4000);return()=>clearTimeout(timer);},[success]);
  useEffect(()=>{function beforeUnload(e:BeforeUnloadEvent){if(dirty||fileEditing||offerEditing){e.preventDefault();e.returnValue='';}}window.addEventListener('beforeunload',beforeUnload);return()=>window.removeEventListener('beforeunload',beforeUnload);},[dirty,fileEditing,offerEditing]);
- function requestClose(){if(locked)return;if(dirty||fileEditing||offerEditing){setConfirmClose(true);return;}close();}
+ async function requestClose(){if(locked)return;if(!(dirty||fileEditing||offerEditing)||await confirmAction({title:'Discard unsaved edits?',message:'Unsaved application and offer edits will be discarded. Uploaded files remain saved.',confirmLabel:'Discard edits',cancelLabel:'Keep editing',danger:true})){approvedClose.current=true;close();}}
  function edit(changes:any){setDraft((old:any)=>({...old,...changes}));setSuccess('');if(!conflict)setError('');}
  async function filesChanged(remote:Entity){const state=latest.current;if(applicationConflicts(state.baseline,state.draft,remote.data).length){setConflict(true);setError('Another window changed fields you were editing. Your pending edits are kept. Reload saved changes before saving.');}setDraft(mergeApplicationDraft(state.baseline,state.draft,remote.data));setBaseline(structuredClone(remote.data));setSaved(remote);await refresh();}
  const navRoute=useAppRoute();
  useEffect(()=>{if(navRoute.view===navigationView.current)setTab(['overview','documents','activity'].includes(navRoute.tab||'')?navRoute.tab as Tab:initialTab);},[navRoute.tab]);
- useEffect(()=>routeGuard(next=>{const id=saved?.id||'new';if(approvedClose.current||routeNow().view!==navigationView.current||(next.view===navigationView.current&&next.item===id))return true;if(saving||fileBusy||offerBusy){setError('Finish the current save or file action before leaving.');return false;}return !(dirty||fileEditing||offerEditing)||window.confirm('Discard unsaved application and offer edits and navigate away?');}),[dirty,fileEditing,offerEditing,saving,fileBusy,offerBusy,saved?.id]);
+ useEffect(()=>routeGuard(next=>{const id=saved?.id||'new';if(approvedClose.current||routeNow().view!==navigationView.current||(next.view===navigationView.current&&next.item===id))return true;if(saving||fileBusy||offerBusy){setError('Finish the current save or file action before leaving.');return false;}if(!(dirty||fileEditing||offerEditing))return true;if(navigationPending.current)return false;navigationPending.current=true;void confirmAction({title:'Leave this editor?',message:'Unsaved application and offer edits will be discarded. Uploaded files remain saved.',confirmLabel:'Discard edits and leave',cancelLabel:'Keep editing',danger:true}).then(ok=>{navigationPending.current=false;if(ok){approvedClose.current=true;close();setRoute(next);}});return false;}),[dirty,fileEditing,offerEditing,saving,fileBusy,offerBusy,saved?.id]);
  function chooseTab(value:Tab){patchRoute(navigationView.current,{tab:value});setTab(value);body.current?.scrollTo({top:0});}
  function tabKey(event:React.KeyboardEvent,index:number){const key=event.key;if(!['ArrowLeft','ArrowRight','Home','End'].includes(key))return;event.preventDefault();const next=key==='Home'?0:key==='End'?tabs.length-1:(index+(key==='ArrowLeft'?-1:1)+tabs.length)%tabs.length;chooseTab(tabs[next][0]);tabButtons.current[next]?.focus();}
  async function save(event:React.FormEvent){event.preventDefault();if(locked||fileEditing||conflict)return;
@@ -40,7 +41,7 @@ export function ApplicationDetails({record,close,initialSubmitted=false,initialT
   try{const payload=applicationSavePayload(baseline,draft,eventDate);const value=await call('/applications'+(saved?'/'+saved.id+'?expected_updated_at='+encodeURIComponent(saved.updated_at):''),saved?'PUT':'POST',payload);if(!saved)patchRoute('applications',{item:value.id},true);setSaved(value);setBaseline(structuredClone(value.data));setDraft(structuredClone(value.data));setEventDate('');setDateTouched(false);setSuccess('Changes saved.');await refresh();}
   catch(e){setError((e as Error).message);setConflict((e as any).status===409);}finally{setSaving(false);}
  }
- async function reloadSaved(){if(!saved||locked)return;if(!window.confirm('Reload saved application changes? Unsaved application edits will be discarded; uploaded files remain saved.'))return;setSaving(true);try{const value=await call('/applications/'+saved.id);setSaved(value);setBaseline(structuredClone(value.data));setDraft(structuredClone(value.data));setEventDate('');setDateTouched(false);setConflict(false);setError('');await refresh();}catch(e){setError((e as Error).message);}finally{setSaving(false);}}
+ async function reloadSaved(){if(!saved||locked)return;if(!(await confirmAction({title:'Reload saved application?',message:'Unsaved application edits will be discarded; uploaded files remain saved.',confirmLabel:'Reload saved changes',cancelLabel:'Keep my edits'})))return;setSaving(true);try{const value=await call('/applications/'+saved.id);setSaved(value);setBaseline(structuredClone(value.data));setDraft(structuredClone(value.data));setEventDate('');setDateTouched(false);setConflict(false);setError('');await refresh();}catch(e){setError((e as Error).message);}finally{setSaving(false);}}
  function removeHistory(index:number){edit({history:draft.history.filter((_:any,i:number)=>i!==index)});setEditHistory(null);}
  function removeInterview(index:number){edit({interviews:draft.interviews.filter((_:any,i:number)=>i!==index)});setEditInterview(null);}
  const documentCount=draft.resume_ids.length+(draft.attachments||[]).filter((a:any)=>a.kind==='cover_letter'||!workspace.document.find(d=>d.id===a.record_id)?.data.resume_id).length;

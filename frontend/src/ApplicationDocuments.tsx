@@ -1,3 +1,4 @@
+import {confirmAction,requestText} from './WorkspaceDialog';
 import React,{useEffect,useRef,useState} from 'react';
 import {DocumentActionMenu} from './DocumentActionMenu';
 import {relevantResumes} from './applicationDetailsState';
@@ -30,7 +31,7 @@ export function ApplicationDocuments({application,documents,resumes=[],coverLett
  async function promote(){const doc=eligible.find(d=>d.id===existing);if(!doc)return;await act(doc.id,async()=>{await accept(await call('/applications/'+application.id+'/documents/'+doc.id+'/use-as-resume','POST',{expected_updated_at:doc.updated_at}));setChooseExisting(false);setExisting('');},'File is now a resume version. Choose Use as submitted if this is the version you sent.');}
  const fileActions=(doc:RecordValue)=>({
   onRename:async(name:string)=>{return await act(doc.id,async()=>{const updated=await call('/applications/'+application.id+'/documents/'+doc.id,'PUT',{display_name:name});setSavedDocs(old=>unique([...old,updated]));await onChange(await call('/applications/'+application.id));},'File renamed and saved.');},
-  onRemove:()=>{if(window.confirm('Permanently remove “'+doc.data.display_name+'”? Saved application edits are separate.'))void act(doc.id,async()=>{const app=await call('/applications/'+application.id+'/documents/'+doc.id,'DELETE');setRemoved(old=>[...old,doc.id]);fileEdit(doc.id,false);await onChange(app);},'File removed.');},
+  onRemove:async ()=>{if((await confirmAction({title:'Remove file?',message:'Permanently remove “'+doc.data.display_name+'”? Saved application edits are separate.',confirmLabel:'Remove file',cancelLabel:'Cancel',danger:true})))void act(doc.id,async()=>{const app=await call('/applications/'+application.id+'/documents/'+doc.id,'DELETE');setRemoved(old=>[...old,doc.id]);fileEdit(doc.id,false);await onChange(app);},'File removed.');},
   onDownload:()=>void act(doc.id,async()=>downloadFile('/applications/'+application.id+'/documents/'+doc.id+'/download',doc.data.filename),'Download ready.')
  });
  function storedRow(doc:RecordValue){return <FileRow status={message.id===doc.id?message.text:''} key={doc.id} name={doc.data.display_name} meta={categories[doc.data.category]+' · '+fileInfo(doc)} disabled={blocked} onFileEdit={editing=>fileEdit(doc.id,editing)} {...fileActions(doc)}/>;}

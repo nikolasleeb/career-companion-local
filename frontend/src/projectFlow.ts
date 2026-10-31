@@ -50,8 +50,8 @@ export function projectMaterialsStatus(library:any,experienceId:string,urls:stri
  if(pending)return {label:'View analysis',status:'Analysis running'};
  if(snapshot&&scoped.analyses.some((r:any)=>r.data.snapshot_id===snapshot.id))return {label:'View analysis',status:'Materials analyzed'};
  if(draft&&draft.data.status==='reviewed')return {label:'View analysis',status:'Analysis reviewed'};
- if(task&&['failed','interrupted'].includes(task.status))return {label:'Retry analysis with OpenAI',status:'Previous attempt '+task.status};
- return {label:'Analyze project with OpenAI',status:snapshot?'Files saved':''};
+ if(task&&['failed','interrupted'].includes(task.status))return {label:'Review project materials…',status:'Previous attempt '+task.status};
+ return {label:snapshot?.data.files?.length?'Review project materials…':'Add project materials…',status:snapshot?.data.files?.length?'Files saved · not analyzed':''};
 }
 
 // Refreshing or adding material must not recheck files the user excluded.
