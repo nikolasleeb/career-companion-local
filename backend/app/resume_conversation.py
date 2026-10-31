@@ -498,6 +498,7 @@ def render(user,id,body):
     full['decisions']=[d.model_dump() for d in body.resume.decisions]
     full['template']=body.resume.template
     full['compact_skills']=body.resume.compact_skills
+    full['separate_certifications']=True
     if current and current['snapshot'].get('optimization'):full['optimization']=copy.deepcopy(current['snapshot']['optimization'])
     order=['education','employment','project','volunteering','coursework','skills'] if body.resume.template=='education' else ['employment','project','volunteering','education','coursework','skills']
     full['sections'].sort(key=lambda s:next((order.index(e['category']) for e in s['entries']),99))

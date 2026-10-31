@@ -14,9 +14,9 @@ def certificate(row):
 
 
 def display(data):
-    if not data.get('compact_skills'):return data
+    if not data.get('compact_skills') and not data.get('separate_certifications'):return data
     result=copy.deepcopy(data)
-    for section in result.get('sections',[]):
+    for section in result.get('sections',[]) if data.get('compact_skills') else []:
         for entry in section.get('entries',[]):
             if entry.get('category')!='skills':continue
             if certifications.is_group(entry):
@@ -28,4 +28,16 @@ def display(data):
             else:
                 items=entry.get('content_items',[])
                 entry['bullets']=[RATING.sub('',value) if not items or n>=len(items) or items[n].get('field')=='skill' else value for n,value in enumerate(entry.get('bullets',[]))]
+    if result.get('separate_certifications'):
+        sections=[];certificates=[]
+        for section in result.get('sections',[]):
+            regular=[]
+            for entry in section.get('entries',[]):
+                if entry.get('category')=='skills' and certifications.is_group(entry):certificates.append(entry)
+                else:regular.append(entry)
+            if regular or section['title']!='Certifications':sections.append({**section,'entries':regular})
+        if certificates:
+            position=next((n+1 for n,s in enumerate(sections) if s['title']=='Skills'),len(sections))
+            sections.insert(position,{'title':'Certifications','entries':certificates})
+        result['sections']=sections
     return result

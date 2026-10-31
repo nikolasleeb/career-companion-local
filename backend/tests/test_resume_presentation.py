@@ -92,3 +92,51 @@ def test_single_named_credential_is_not_duplicated_in_any_export(format):
  text=raw.decode() if format=='txt' else '\n'.join(p.text for p in Document(io.BytesIO(raw)).paragraphs) if format=='docx' else '\n'.join(p.extract_text() for p in PdfReader(io.BytesIO(raw)).pages)
  assert text.count('Example Cloud Practitioner')==1
  assert 'Expires 2028-01-29' in text
+
+
+def test_separate_certifications_are_idempotent_and_preserve_source_metadata():
+ data=fixture_data();data['separate_certifications']=True;before=copy.deepcopy(data)
+ display=resume_presentation.display(data)
+ assert [s['title'] for s in display['sections']]==['Skills','Certifications']
+ assert len(display['sections'][0]['entries'])==1
+ assert display['sections'][1]['entries'][0]['bullets'][0]=='Example Cloud Practitioner · Expires 2028-01-29'
+ assert resume_presentation.display(display)==display and data==before
+
+
+@pytest.mark.parametrize('format',['txt','docx','pdf'])
+def test_certifications_have_distinct_heading_and_unbolded_official_name(format,tmp_path):
+ data=fixture_data();data['separate_certifications']=True
+ entry=data['sections'][0]['entries'][1];entry['title']='Example Cloud Practitioner'
+ entry['certification_items']=entry['certification_items'][:1];entry['bullets']=entry['bullets'][:1];entry['content_items']=entry['content_items'][:1]
+ raw,_=documents.export_resume(data,format)
+ if format=='txt':text=raw.decode()
+ elif format=='docx':
+  doc=Document(io.BytesIO(raw));text='\n'.join(p.text for p in doc.paragraphs)
+  credential=next(p for p in doc.paragraphs if 'Example Cloud Practitioner' in p.text)
+  assert all(not r.bold for r in credential.runs)
+ else:
+  pdf=PdfReader(io.BytesIO(raw));assert len(pdf.pages)==1;text='\n'.join(p.extract_text() for p in pdf.pages)
+  (tmp_path/'certifications.pdf').write_bytes(raw)
+ assert 'CERTIFICATIONS' in text.upper() and 'SKILLS' in text.upper()
+ assert text.count('Example Cloud Practitioner')==1 and 'Expires 2028-01-29' in text
+ assert 'PRIVATE-CREDENTIAL-ID' not in text
+
+
+def test_historical_artifact_bytes_remain_unchanged():
+ import base64
+ data=fixture_data();data['artifacts']={'pdf':base64.b64encode(b'previous historical PDF').decode()}
+ assert documents.export_resume(data,'pdf')[0]==b'previous historical PDF'
+ assert 'separate_certifications' not in data
+
+
+def test_application_pdf_has_certifications_heading_and_readable_one_page(tmp_path):
+ import base64
+ from app import resume_layout
+ data=fixture_data();data['separate_certifications']=True
+ rendered=resume_layout.render(data)
+ raw=base64.b64decode(rendered['artifacts']['pdf']);(tmp_path/'application-certifications.pdf').write_bytes(raw)
+ pdf=PdfReader(io.BytesIO(raw));assert len(pdf.pages)==1
+ text=pdf.pages[0].extract_text()
+ assert 'Certifications' in text and text.count('Example Cloud Practitioner')==1
+ assert 'Expires 2028-01-29' in text and rendered['layout']['validated']
+ assert rendered['layout']['body_font_pt']==10.5

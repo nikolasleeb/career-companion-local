@@ -307,3 +307,22 @@ def test_manual_selection_cannot_repeat_a_source_in_raw_and_composed_bullets(sce
  e=strategy.entries(expanded)[rid];original=next(i for i in e['content_items'] if i['item_id']==fact['item_id']);generated=e['content_items'][-1]
  minimal={'sections':[{'entries':[{**e,'content_items':[original,generated],'bullets':[original['text'],generated['text']]}]}]}
  with pytest.raises(ServiceError,match='same reviewed fact'):linked_project_evidence.validate_selected(minimal)
+
+
+def test_all_composition_stages_use_owner_constrained_contract(scenario,monkeypatch):
+ calls=provider(monkeypatch,scenario);original=ai.structured;schemas=[]
+ async def constrained(schema,payload,*args,**kwargs):
+  value,meta=await original(schema,payload,*args,**kwargs)
+  if schema.__name__=='ResumeComposition':
+   schemas.append(schema)
+   for entry in value['entries']:
+    for item in entry['items']:item.pop('item_id',None)
+   value=schema.model_validate(value).model_dump()
+   assert payload['professional_evidence']['source_groups']
+  return value,meta
+ monkeypatch.setattr(ai,'structured',constrained)
+ user,_,session,rows=scenario
+ result=asyncio.run(guided.build(user,session['id'],session['data']['version'],'economy'))
+ assert result['current'] and len(schemas)==2 and schemas[0] is schemas[1]
+ assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','ResumeQualityReview','DraftAudit']
+ assert result['current']['data']['snapshot']['separate_certifications']

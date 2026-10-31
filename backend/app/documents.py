@@ -156,7 +156,9 @@ def resume_plain(data):
         for entry in section['entries']:
             heading=' | '.join(filter(None,[clean(entry.get('title')),clean(entry.get('details')) or ' | '.join(filter(None,[clean(entry.get('organization')),clean(entry.get('dates'))]))]))
             bullets=[clean(b) for b in entry.get('bullets',[]) if clean(b)]
-            if entry.get('category')=='skills' and data.get('schema_version',0)>=3:
+            if data.get('separate_certifications') and section['title']=='Certifications':
+                lines.extend(bullets)
+            elif entry.get('category')=='skills' and data.get('schema_version',0)>=3:
                 values=', '.join(bullets);title=clean(entry.get('title'))
                 suffix=values[len(title):] if len(bullets)==1 and title and values.startswith(title) else ': '+values if values else ''
                 lines.append(heading+suffix)
@@ -209,7 +211,8 @@ def export_resume(data, format):
             for entry in block['entries']:
                 modern=data.get('schema_version',0)>=4
                 p=doc.add_paragraph();p.paragraph_format.keep_with_next=True
-                p.add_run(clean(entry['title'])).bold=True
+                certificate_entry=data.get('separate_certifications') and block['title']=='Certifications'
+                if not certificate_entry:p.add_run(clean(entry['title'])).bold=True
                 if modern:
                     p.paragraph_format.space_after=Pt(1)
                     employer=' · '.join(filter(None,[clean(entry.get('organization')),clean(entry.get('location'))]))
@@ -234,7 +237,8 @@ def export_resume(data, format):
                 if data.get('schema_version',0)>=3 and entry.get('category')=='skills':
                     if entry.get('bullets'):
                         values=', '.join(clean(v) for v in entry['bullets'])
-                        if len(entry['bullets'])==1 and values.startswith(clean(entry['title'])):
+                        if certificate_entry:p.add_run(values)
+                        elif len(entry['bullets'])==1 and values.startswith(clean(entry['title'])):
                             # A single credential already names itself in its heading.
                             p.add_run(values[len(clean(entry['title'])):])
                         else:p.add_run(': '+values)
@@ -284,7 +288,9 @@ def export_resume(data, format):
         for entry in block['entries']:
             text=' | '.join(filter(None,[clean(entry['title']),clean(entry.get('details')) or ' | '.join(filter(None,[clean(entry.get('organization')),clean(entry.get('dates'))]))]))
             bullets=[clean(b) for b in entry.get('bullets',[]) if clean(b)]
-            if entry.get('category')=='skills' and data.get('schema_version',0)>=3:
+            if data.get('separate_certifications') and block['title']=='Certifications':
+                for value in bullets:story.append(Paragraph(escape(value),normal))
+            elif entry.get('category')=='skills' and data.get('schema_version',0)>=3:
                 values=', '.join(bullets);title=clean(entry.get('title'))
                 suffix=values[len(title):] if len(bullets)==1 and title and values.startswith(title) else ': '+values if values else ''
                 story.append(Paragraph('<b>'+escape(text)+'</b>'+escape(suffix),normal))
