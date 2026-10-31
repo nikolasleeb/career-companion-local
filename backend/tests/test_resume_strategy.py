@@ -96,6 +96,44 @@ def test_compatible_sources_can_make_one_traceable_bullet(scenario):
  assert 'approximately' in value['text']
 
 
+def test_mixed_structured_and_narrative_group_uses_separate_exact_sources(scenario):
+ user,_,_,rows=scenario;row=rows['project'];rid=row['id']
+ db.save(user,'experience',{**row['data'],'tools':'Python, SQL'},rid)
+ snap=source(scenario);facts=[f for f in strategy.catalog(snap)['facts'] if f['record_id']==rid and f['field'] in ('tools','description','contribution')]
+ result=compose(snap,rid,[{'source_ids':[f['id'] for f in facts],'text':'Deployed the Python service and reduced review time by 75%.','priority':90,'reason':'Selected technical evidence.'}])
+ values=result['composed_items'][rid]
+ assert [v['text'] for v in values]==[f['text'] for f in facts]
+ assert all(len(v['source_refs'])==1 and v['source_refs'][0]['record_id']==rid for v in values)
+ assert any('approximately 10' in v['text'] for v in values)
+ assert any('intended' in v['text'] for v in values)
+ assert any('teammate' in v['text'] for v in values)
+ assert all('75%' not in v['text'] and 'Deployed' not in v['text'] for v in values)
+
+
+def test_structured_group_keeps_each_skill_and_rejects_duplicate_ids(scenario):
+ snap=source(scenario);rid=scenario[3]['skill']['id'];facts=[f for f in strategy.catalog(snap)['facts'] if f['record_id']==rid and f['field']=='skill']
+ item={'source_ids':[f['id'] for f in facts],'text':'Invented skill summary','priority':80,'reason':'Relevant skills.'}
+ values=compose(snap,rid,[item])['composed_items'][rid]
+ assert [v['text'] for v in values]==[f['text'] for f in facts]
+ with pytest.raises(ServiceError,match='repeated evidence'):
+  compose(snap,rid,[{**item,'source_ids':item['source_ids']+[facts[0]['id']]}])
+
+
+@pytest.mark.parametrize('case',['other_origin','wrong_destination','header','unavailable','reused'])
+def test_mixed_group_still_enforces_source_boundaries(scenario,case):
+ user,_,_,rows=scenario;rid=rows['project']['id']
+ db.save(user,'experience',{**rows['project']['data'],'tools':'Python, SQL'},rid)
+ snap=source(scenario);facts=strategy.catalog(snap)['facts']
+ selected=[f for f in facts if f['record_id']==rid and f['field'] in ('tools','description')]
+ item={'source_ids':[f['id'] for f in selected],'text':'Combined selection','priority':80,'reason':'Relevant.'};items=[item]
+ if case=='other_origin':item['source_ids'].append(next(f['id'] for f in facts if f['record_id']==rows['cloud']['id'] and f['field']=='description'))
+ if case=='wrong_destination':rid=rows['energy']['id']
+ if case=='header':item['source_ids'].append(next(f['id'] for f in facts if f['record_id']==rid and f['field']=='header'))
+ if case=='unavailable':item['source_ids'].append('other-account-source')
+ if case=='reused':items.append(bullet(selected[0]))
+ with pytest.raises(ServiceError):compose(snap,rid,items)
+
+
 def test_header_qualifications_count_without_repeating_degree_as_bullet(scenario):
  snap=source(scenario);rid=scenario[3]['degree']['id'];fid=strategy.digest([rid,'header'])[:24]
  plan={'priorities':[{'id':'degree','source_ids':[fid]}]}
@@ -146,6 +184,26 @@ def test_shell_like_selection_explanation_and_local_render_are_free(scenario,mon
  assert snap['optimization']['strategy']['focus'] and snap['optimization']['strategy']['priorities'][0]['included']
  assert all(i.get('source_refs') for e in strategy.entries(snap).values() for i in e['content_items'])
  before=len(calls);guided.state(user,result['id']);assert len(calls)==before
+
+
+def test_mixed_source_group_finishes_without_retrying_paid_stages(scenario,monkeypatch):
+ user,_,session,rows=scenario;rid=rows['cloud']['id']
+ db.save(user,'experience',{**rows['cloud']['data'],'tools':'AWS, Spark'},rid)
+ calls=provider(monkeypatch,scenario);original=ai.structured
+ async def grouped(schema,payload,*args,**kwargs):
+  value,meta=await original(schema,payload,*args,**kwargs)
+  if schema.__name__=='ResumeComposition':
+   tool=next(f for f in payload['professional_evidence']['facts'] if f['record_id']==rid and f['field']=='tools')
+   entry=next(e for e in value['entries'] if e['record_id']==rid)
+   entry['items']=[i for i in entry['items'] if tool['id'] not in i['source_ids']]
+   entry['items'][0]['source_ids'].append(tool['id'])
+  return value,meta
+ monkeypatch.setattr(ai,'structured',grouped)
+ result=asyncio.run(guided.build(user,session['id'],session['data']['version'],'economy'))
+ assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','ResumeQualityReview','DraftAudit']
+ values=strategy.entries(result['current']['data']['snapshot'])[rid]['content_items']
+ assert any(i['field']=='tools' and i['text']=='Tools: AWS, Spark' for i in values)
+ assert all(len(i['source_refs'])==1 for i in values if i['field']=='tools')
 
 
 def test_mid_request_source_change_preserves_prior_records(scenario,monkeypatch):

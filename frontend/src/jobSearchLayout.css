@@ -77,3 +77,8 @@
 
 .location-picker-options .location-group-heading {font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:#f5f8fc;border-bottom:1px solid #d7dfeb;margin:0 0 3px;padding:7px 10px;}
 .location-picker-options [role=group]+[role=group] {margin-top:8px;}
+
+/* Align the saved-search selector and its review action, excluding the label. */
+.job-result-actions>label {margin:0;}
+.job-result-actions select {height:44px;min-height:44px;box-sizing:border-box;margin:8px 0 0;}
+.job-result-actions>.button {height:44px;min-height:44px;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;}
