@@ -61,6 +61,16 @@ class ProjectCourseLink(StrictModel):
     education_id: str = Field(min_length=1,max_length=64)
     course: str = Field(min_length=1,max_length=4000)
 
+class CourseItem(StrictModel):
+    id: str = Field(min_length=1,max_length=64,pattern=r'^[a-zA-Z0-9_-]+$')
+    title: str = Field(min_length=1,max_length=300)
+    status: Literal['completed','in_progress','planned','unspecified'] = 'unspecified'
+    aliases: list[Annotated[str,Field(max_length=300)]] = Field(default_factory=list,max_length=30)
+
+class CourseReference(StrictModel):
+    education_id: str = Field(min_length=1,max_length=64)
+    course_id: str = Field(min_length=1,max_length=64)
+
 class ExperienceItem(StrictModel):
     unavailable_source_ids: list[str] = Field(default_factory=list,max_length=1000)
     source_references: list[ImportSourceReference] = Field(default_factory=list,max_length=400)
@@ -94,6 +104,7 @@ class ExperienceItem(StrictModel):
     gpa_scale: str = Field(default='',max_length=30)
     honors: str = Field(default='',max_length=3000)
     relevant_courses: str = Field(default='',max_length=4000)
+    course_items: list[CourseItem] = Field(default_factory=list,max_length=150)
     work_arrangement: Literal['','onsite','hybrid','remote'] = ''
     accomplishments: str = Field(default='',max_length=6000)
     project_url: str = Field(default='',max_length=2000)
@@ -882,6 +893,15 @@ class ProfileAnswerEdit(StrictModel):
     experience_updated_at:str=''
     values:dict[str,str]=Field(default_factory=dict,max_length=20)
     archived:bool=False
+    course_refs:list[CourseReference]|None=Field(default=None,max_length=10)
+
+class ProfileAnswerCreate(StrictModel):
+    title:str=Field(min_length=1,max_length=200)
+    text:str=Field(min_length=5,max_length=6000)
+    experience_ids:list[str]=Field(min_length=1,max_length=10)
+    course_refs:list[CourseReference]=Field(default_factory=list,max_length=10)
+    confirmed:bool=False
+    request_token:str=Field(min_length=1,max_length=100)
 
 class ApplicationWorkflow(StrictModel):
     step:Literal['resume','cover','agent']='resume'

@@ -93,6 +93,7 @@ def entry_snapshot(data,source_id,granular=False):
         elif value.startswith(('Major:','Minor:','Concentration:')):field='education_detail'
         elif value.startswith('Tools:'):field='tools'
         elif value.startswith('Project:'):field='url'
+        elif value.startswith('Coursework — ') and value in str(data.get('contribution','')):field='contribution'
         elif data.get('category')=='education':field='education_note'
         elif value in str(data.get('contribution','')):field='contribution'
         elif value in str(data.get('accomplishments','')) or value in field_bullets.get('accomplishments',[]):field='accomplishment'

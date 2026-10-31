@@ -75,6 +75,16 @@ def map_source_ids(value,mapping):
     if isinstance(value,dict):return {k:([mapping.get(v,v) for v in child] if k in ('source_ids','included_source_ids','excluded_source_ids') else map_source_ids(child,mapping)) for k,child in value.items()}
     return value
 
+def space_candidates(rendered,evidence,plan,rules):
+    """Relevant unselected facts for the existing editorial pass; never a paid loop."""
+    space=rendered.get('layout',{}).get('page_space',{})
+    if rendered.get('layout',{}).get('pages')!=1 or space.get('remaining_body_lines',0)<2:return []
+    used={ref['source_id'] for e in entries(rendered).values() for item in e.get('content_items',[]) for ref in item.get('source_refs',[])}
+    excluded=set(rules.get('excluded_source_ids',[]));priority={id for p in plan.get('priorities',[]) for id in p.get('source_ids',[])}
+    # Restrict suggestions to supported employer priorities; an empty page is not a relevance signal.
+    candidates=[f for f in evidence['facts'] if f['id'] in priority-used-excluded and f['field'] not in ('header','url','education_note')]
+    return sorted(candidates,key=lambda f:(f['field'] not in NARRATIVE,len(f['text'])))[:20]
+
 
 def validate_strategy(plan,evidence,posting,user_messages):
     known={f['id'] for f in evidence['facts']};seen=set()
@@ -358,6 +368,8 @@ Bullets should read as positive, precise contributions: action, useful technical
 Use the measured line counts to shorten dense bullets and dangling words before removing distinct important evidence. Font/margins/spacing stay fixed at 10.5-point body text. Keep all essential supported priorities and user_constraints, including chosen headline, exact locked wording and excluded source_ids. Headline should reflect the strongest evidence actually selected, not an unheld job title. Headers render automatically. Structured skills/courses/credentials must be selected separately from narrative passages by exact source IDs; the server owns their text. Return complete revised entries in intended order, source IDs for each bullet and specific reasons for omissions. Each source can appear once under one allowed destination. Combine only passages from the SAME original experience. Posting and guidance are not applicant facts. No hidden keywords or ATS score.""",
         'first_draft':map_source_ids(rendered_without_artifacts(rendered),to_alias),
         'measured_layout':rendered['layout'],
+        'useful_omitted_evidence':[{**f,'id':to_alias[f['id']]} for f in space_candidates(rendered,evidence,plan,rules)],
+        'page_space_instruction':'When remaining_body_lines is at least two, reconsider useful_omitted_evidence and ALL canonical facts for stronger distinct evidence or supported development of compressed bullets. Use the measured printable space, not the page margin. Keep a one-page readable result and all protected choices. Leave space when no relevant evidence fits; never pad. This is the existing single editorial pass, not permission for further requests.',
         'strategy':map_source_ids(plan,to_alias),
         'professional_evidence':model_evidence,
         'posting':snapshot.get('posting_snapshot',{}),

@@ -164,7 +164,7 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('resume','resume_guided','resume_optimize','resume_fit','cover_letter','analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('resume','resume_guided','resume_optimize','resume_fit','cover_letter','analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness','course_syllabus') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     atomic_token=task_atomic.bind(user,task_id)
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
@@ -196,7 +196,7 @@ def start_task(user,kind,work,inputs=None,cleanup=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness','resume_guided') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness','resume_guided','course_syllabus') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
@@ -352,6 +352,8 @@ def workspace(paged_jobs:bool=False,user=Depends(auth.current)):
     return result
 
 from . import project_routes
+from . import course_evidence
+course_evidence.install(app,start_task,require_ai)
 project_routes.install(app,start_task,require_ai)
 job_ai.install(app,start_task,require_ai)
 career_coach.install(app,start_task,require_ai)
@@ -391,6 +393,10 @@ def confirmed_profile_evidence(user=Depends(auth.current)):
 @app.get('/api/profile-answers')
 def profile_answer_list(user=Depends(auth.current)):
     return profile_answers.listing(user['id'])
+
+@app.post('/api/profile-answers')
+def profile_answer_create(body:ProfileAnswerCreate,user=Depends(auth.current)):
+    return profile_answers.create_manual(user['id'],body)
 
 @app.post('/api/profile-answers/review')
 def profile_answer_review(body:ProfileDraftReview,user=Depends(auth.current)):
@@ -606,7 +612,7 @@ class DocumentReview(StrictModel):
 @app.put('/api/documents/{entity_id}/review')
 def review_document(entity_id:str,body:DocumentReview,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'document')
-    if record['data'].get('purpose') in ('application','interview_prep','project_material'):raise HTTPException(400,'Review application resume text within its application.')
+    if record['data'].get('purpose') in ('application','interview_prep','project_material','course_syllabus'):raise HTTPException(400,'Review application resume text within its application.')
     return db.save(user['id'],'document',{**record['data'],'text':body.text,'reviewed':True,'source_text_corrected':True},entity_id)
 
 @app.post('/api/documents/{entity_id}/parse')
@@ -631,7 +637,7 @@ def parse_resume_document(entity_id:str,user=Depends(auth.current)):
 @app.get('/api/documents/{entity_id}/import-preview')
 def preview_resume_import(entity_id:str,user=Depends(auth.current)):
     document=require(user['id'],entity_id,'document')['data']
-    if document.get('purpose') in ('application','interview_prep','project_material'):raise HTTPException(400,'Application files are not Profile imports.')
+    if document.get('purpose') in ('application','interview_prep','project_material','course_syllabus'):raise HTTPException(400,'Application files are not Profile imports.')
     return profile_import.preview(document.get('resume_parse') or {},db.list_entities(user['id'],'experience'))
 
 @app.post('/api/documents/{entity_id}/import-resume')
@@ -646,7 +652,7 @@ def approve_resume_import(entity_id:str,body:ResumeImportApproval,user=Depends(a
         row=c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='document'",(entity_id,user['id'])).fetchone()
         if not row: raise HTTPException(404,'Document not found.')
         document=json.loads(row['payload'])
-        if document.get('purpose') in ('application','interview_prep','project_material'):raise HTTPException(400,'Application files are not Profile imports.')
+        if document.get('purpose') in ('application','interview_prep','project_material','course_syllabus'):raise HTTPException(400,'Application files are not Profile imports.')
         parsed=document.get('resume_parse') or {}
         if body.text_hash!=parsed.get('text_hash') or hashlib.sha256(document['text'].encode()).hexdigest()!=body.text_hash:
             raise HTTPException(409,'The source changed. Parse the updated text and review its suggestions again.')
@@ -1332,7 +1338,10 @@ def backup(user=Depends(auth.current)):
     record_ids={r['id'] for r in records}
     from . import project_relations
     for record in records:
+        if record['kind']=='experience' and record['data'].get('category') in ('education','coursework'):
+            record['data']['course_items']=[{k:v for k,v in item.items() if k in CourseItem.model_fields} for item in course_evidence.classes(record)]
         project_relations.backup_markers(record['data'],record_ids)
+        course_evidence.backup_markers(record,record_ids)
         resume_strategy.backup_markers(record['data'],record_ids)
     cached_jobs={r['id']:r for r in job_cache.decorate_records(user['id'],[r for r in records if r['kind']=='job'])}
     records=[cached_jobs.get(r['id'],r) for r in records]
@@ -1366,6 +1375,7 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         if len(setup_records)>1:raise ValueError()
         for record in records:
             if record['kind'] not in BACKUP_KINDS or not isinstance(record['data'],dict): raise ValueError()
+            course_evidence.validate_backup(record,kinds,by_id)
             career_explorer.validate_backup(record)
             if record['kind']=='onboarding':onboarding.validate_backup(record['data'])
             if record['kind']=='profile_personalization':
@@ -1407,6 +1417,9 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 if len(links)>10 or any(kinds.get(link)!='experience' and link not in data.get('unavailable_experience_ids',[]) for link in links):raise ValueError()
                 if data.get('scope',{}).get('job_id') and kinds.get(data['scope']['job_id'])!='job':raise ValueError()
                 for source in data['sources']:
+                    if source.get('builder') in ('manual_profile','course_syllabus'):
+                        if source.get('manual_review') is not True:raise ValueError()
+                        continue
                     if source.get('builder')=='interview':
                         if source.get('detached') is True and not source.get('conversation_id') and not source.get('attempt_id'):
                             if not isinstance(source.get('user_quote'),str) or not 5<=len(source['user_quote'])<=2000:raise ValueError()
@@ -1496,6 +1509,9 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 project_documents.validate_original(by_id[old]['data'],decoded[ids[old]])
             if by_id[old]['data'].get('purpose')=='certificate':
                 certifications.inspect_file(by_id[old]['data']['filename'],decoded[ids[old]])
+            if by_id[old]['data'].get('purpose')=='course_syllabus':
+                checked=course_evidence.extract_syllabus(by_id[old]['data']['filename'],decoded[ids[old]])
+                if hashlib.sha256(decoded[ids[old]]).hexdigest()!=by_id[old]['data'].get('sha256') or checked['text']!=by_id[old]['data'].get('text',''):raise ValueError('Changed syllabus source')
         for record in records:
             if record['kind'] in ('project_source','project_snapshot'):
                 for f in record['data'].get('available_files',record['data'].get('files',[])):

@@ -34,7 +34,7 @@ def text_lines(pdf):
     for page_number,page in enumerate(tree.findall('.//{*}page'),1):
         for line in page.findall('.//{*}line'):
             text=' '.join(w.text or '' for w in line.findall('{*}word'))
-            if text.strip():lines.append({'page':page_number,'text':text,'tokens':words(text),'width':float(line.get('xMax','0'))-float(line.get('xMin','0')),'outside_page':float(line.get('xMin','0'))<0 or float(line.get('yMin','0'))<0 or float(line.get('xMax','0'))>float(page.get('width','0')) or float(line.get('yMax','0'))>float(page.get('height','0'))})
+            if text.strip():lines.append({'page':page_number,'text':text,'tokens':words(text),'width':float(line.get('xMax','0'))-float(line.get('xMin','0')),'y_min':float(line.get('yMin','0')),'y_max':float(line.get('yMax','0')),'page_height':float(page.get('height','0')),'outside_page':float(line.get('xMin','0'))<0 or float(line.get('yMin','0'))<0 or float(line.get('xMax','0'))>float(page.get('width','0')) or float(line.get('yMax','0'))>float(page.get('height','0'))})
     return lines
 
 def wrapped_items(pdf,snapshot):
@@ -78,6 +78,15 @@ def inspect(pdf,snapshot):
                     break
     return issues[:12]
 
+def page_space(lines,body_line_pt=13.0,bottom_margin_pt=46.8):
+    """Remaining printable height, not the visually blank page margin."""
+    if not lines:return {'remaining_body_lines':0,'remaining_printable_pt':0,'measured':False}
+    last=max(line['page'] for line in lines);on_page=[line for line in lines if line['page']==last]
+    if any('y_max' not in line or 'page_height' not in line for line in on_page):return {'remaining_body_lines':0,'remaining_printable_pt':0,'measured':False}
+    bottom=max(line['y_max'] for line in on_page);height=on_page[0]['page_height']
+    remaining=max(0,height-bottom_margin_pt-bottom)
+    return {'remaining_body_lines':int(remaining//body_line_pt),'remaining_printable_pt':round(remaining,2),'last_content_y_pt':round(bottom,2),'printable_bottom_y_pt':round(height-bottom_margin_pt,2),'body_line_pt':body_line_pt,'measured':True}
+
 def render(snapshot):
     value=copy.deepcopy(snapshot);value.pop('artifacts',None);value['schema_version']=4
     pages,artifacts=resume_builder.render(value)
@@ -85,6 +94,6 @@ def render(snapshot):
     if pages!=1:
         longest=sorted([e for s in value['sections'] for e in s['entries']],key=lambda e:-sum(len(b) for b in e['bullets']))[:3]
         issues.insert(0,{'kind':'overflow','record_id':'','item_id':'','text':f'This draft fills {pages} pages. Review '+', '.join(e['title'] for e in longest)+'. Shorten content or omit lower-priority items before saving.'})
-    value['layout']={'pages':pages,'body_font_pt':10.5,'validated':pages==1,'issues':issues,'wrapped_items':wrapped_items(base64.b64decode(artifacts['pdf']),value),'renderer':'DOCX → PDF','format_version':4}
+    value['layout']={'pages':pages,'body_font_pt':10.5,'validated':pages==1,'issues':issues,'wrapped_items':wrapped_items(base64.b64decode(artifacts['pdf']),value),'page_space':page_space(text_lines(base64.b64decode(artifacts['pdf']))),'renderer':'DOCX → PDF','format_version':4}
     value['artifacts']=artifacts
     return value

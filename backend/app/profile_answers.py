@@ -44,6 +44,9 @@ def needs_link(user,data):
     if not links:return True
     from . import project_relations
     with db.connect() as c:
+        from . import course_evidence
+        try:course_evidence.validate_refs(c,user,data.get('course_refs',[]),links)
+        except HTTPException:return True
         for id in links:
             record=db.decode(c.execute("SELECT * FROM entities WHERE user_id=? AND id=? AND kind='experience'",(user,id)).fetchone())
             if not record or not record['data'].get('confirmed') or project_relations.unresolved(c,user,record['data']):return True
@@ -179,8 +182,15 @@ def records(user):
         if not record:continue
         full='\n'.join(str(v) for v in record['data'].values())
         text=a.get('text','');sources=a.get('sources',[])
+        if a.get('course_refs'):
+            from . import course_evidence
+            course_context=[]
+            for ref in a['course_refs']:
+                _,course=course_evidence.require_class(user,ref['education_id'],ref['course_id'])
+                course_context.append(course['title']+' ('+course['status'].replace('_',' ')+')')
+            text='Coursework — '+', '.join(course_context)+': '+text
         if text and norm(text) not in norm(full):record['data']['contribution']='\n'.join(filter(None,[record['data'].get('contribution',''),text]))
-        record['data'].setdefault('answer_sources',[]).append({'id':answer['id'],'version':a.get('version',1),'experience_ids':links,'linked_experiences':[{'id':id,'title':records[id]['data']['title']} for id in links if id in records],'association_note':'Use this fact once in its main context. Additional links indicate related work, not separate accomplishments.','text':text,'title':a.get('title','Supporting Detail'),'questions':[q.get('text','') for source in sources for q in source.get('questions',[])],'provenance':[{k:copy.deepcopy(v) for k,v in source.items() if k in ('builder','draft_id','snapshot_id','analysis_id','attempt_id','voice_id','commit','excerpts','user_quotes','reviewed_at','proposal_id','conversation_id','job_id','resume_id','project_refs')} for source in sources]})
+        record['data'].setdefault('answer_sources',[]).append({'id':answer['id'],'version':a.get('version',1),'experience_ids':links,'course_refs':a.get('course_refs',[]),'linked_experiences':[{'id':id,'title':records[id]['data']['title']} for id in links if id in records],'association_note':'Use this fact once in its main context. Additional links indicate related work, not separate accomplishments. Coursework is academic experience; preserve its stated course status.','text':text,'title':a.get('title','Supporting Detail'),'questions':[q.get('text','') for source in sources for q in source.get('questions',[])],'provenance':[{k:copy.deepcopy(v) for k,v in source.items() if k in ('builder','draft_id','snapshot_id','analysis_id','attempt_id','voice_id','commit','excerpts','user_quotes','reviewed_at','proposal_id','conversation_id','job_id','resume_id','project_refs','document_id','quote','topic','syllabus_sha256')} for source in sources]})
     for record in records.values():
         if record['data'].get('category')=='project':record['data']['related_jobs']=[{'id':id,'title':records[id]['data']['title'],'organization':records[id]['data'].get('organization','')} for id in record['data'].get('linked_employment_ids',[]) if id in records and records[id]['data'].get('category')=='employment']
     for record in records.values():
@@ -220,6 +230,8 @@ def edit(user,id,body):
         if data['version']!=body.expected_version:raise HTTPException(409,'This answer changed in another window. Reload before saving.')
         if not body.text.strip() or re.search(PRIVATE,body.text,re.I):raise HTTPException(400,'Keep authorization in private settings. Use a nonempty professional detail or motivation.')
         links=validate_links(c,user,body.experience_ids if body.experience_ids is not None else experience_ids(data) if body.experience_id==data.get('experience_id','') else [body.experience_id] if body.experience_id else [])
+        from . import course_evidence
+        course_refs=course_evidence.validate_refs(c,user,body.course_refs if body.course_refs is not None else data.get('course_refs',[]),links) if not body.archived else data.get('course_refs',[])
         if data['answer_kind']=='experience' and not body.archived:require_links(links)
         if data['answer_kind']=='motivation' and links:raise HTTPException(400,'Personal motivation stays scoped to its opportunity.')
         if data.get('backed_fields') and (links[0] if links else '')!=data.get('experience_id',''):raise HTTPException(400,'Keep the original main experience for Profile-backed facts.')
@@ -238,10 +250,31 @@ def edit(user,id,body):
                 from .resume_conversation import write as store
                 store(c,user,'experience',value,original['id']);data['backed_fields']=values
         data.setdefault('review_history',[]).append({'reviewed_at':db.now(),'source':'Profile editor','text':body.text.strip(),'values':body.values})
-        data['history'].append(old);data.update({'version':data['version']+1,'title':body.title,'text':body.text.strip(),'experience_id':links[0] if links else '','experience_ids':links,'status':'archived' if body.archived else 'confirmed'})
+        data['history'].append(old);data.update({'version':data['version']+1,'title':body.title,'text':body.text.strip(),'experience_id':links[0] if links else '','experience_ids':links,'course_refs':course_refs,'status':'archived' if body.archived else 'confirmed'})
         write(c,user,data,id)
-        if data['answer_kind']=='experience' and (data['text']!=old['text'] or data['status']!=old['status'] or experience_ids(data)!=experience_ids(old)):touch_resumes(c,user,None,data.get('experience_id') or id)
+        if data['answer_kind']=='experience' and (data['text']!=old['text'] or data['status']!=old['status'] or experience_ids(data)!=experience_ids(old) or data.get('course_refs',[])!=old.get('course_refs',[])):touch_resumes(c,user,None,data.get('experience_id') or id)
     return db.get(user,id,'profile_answer')
+
+def create_manual(user,body,connection=None,source=None):
+    """One explicitly confirmed detail, independent of any application or AI request."""
+    if not body.confirmed:raise HTTPException(422,'Review this detail and confirm its accuracy before saving.')
+    if not body.title.strip() or not body.text.strip() or re.search(PRIVATE,body.text,re.I):raise HTTPException(422,'Enter a professional detail; keep authorization information in private settings.')
+    def save(c):
+        from . import course_evidence
+        links=validate_links(c,user,body.experience_ids);require_links(links)
+        refs=course_evidence.validate_refs(c,user,body.course_refs,links)
+        id=key(user,'manual-profile:'+body.request_token)
+        previous=row(c,user,id)
+        if previous:
+            if previous['data']['title']!=body.title.strip() or previous['data']['text']!=body.text.strip() or experience_ids(previous['data'])!=links or previous['data'].get('course_refs',[])!=refs:raise HTTPException(409,'This save token belongs to another detail. Check the existing saved detail.')
+            return previous
+        target=owned_experience(c,user,links[0])
+        data={'version':1,'status':'confirmed','answer_kind':'experience','title':body.title.strip(),'text':body.text.strip(),'experience_id':links[0],'experience_ids':links,'course_refs':refs,'category':target['data']['category'],'record_context':{},'backed_fields':{},'scope':{},'sources':[source or {'builder':'manual_profile','reviewed_at':db.now(),'manual_review':True}],'history':[]}
+        write(c,user,data,id);touch_resumes(c,user,None,links[0])
+        return row(c,user,id)
+    if connection is not None:return save(connection)
+    with db.connect() as c:
+        c.execute('BEGIN IMMEDIATE');return save(c)
 
 
 def confirm_draft(user,body):

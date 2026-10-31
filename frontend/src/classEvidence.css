@@ -1,0 +1,11 @@
+.entry-supporting-details,.profile-classes,.class-syllabi{border-top:1px solid #ccd7e7;margin-top:1.4rem;padding-top:1.1rem;min-width:0}
+.entry-supporting-details h3,.profile-classes h3,.class-syllabi h3{margin:0}
+.linked-detail{border:1px solid #ccd7e7;border-radius:10px;padding:1rem;margin:.8rem 0;overflow-wrap:anywhere}
+.linked-detail p{margin:.65rem 0}.linked-detail h4{margin:.2rem 0 .75rem}
+.class-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:.65rem;margin-top:.7rem}
+.class-list .button{white-space:normal;text-align:left;align-items:flex-start;flex-direction:column;padding:.75rem 1rem}
+.class-list small,.class-links small{display:block;font-size:.82rem;color:#526174;font-weight:400}
+.class-links{margin:.9rem 0;padding:.8rem;border:1px solid #ccd7e7;border-radius:8px}.class-links .check-line{margin:.6rem 0}
+.syllabus-text{max-height:250px;overflow:auto}.syllabus-topic{border-top:1px solid #d9e1ec;padding:.8rem 0}
+.entry-supporting-details .section-header,.class-syllabi .section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem}
+.supporting-dialog{max-height:90vh;overflow-y:auto}.supporting-dialog .form-actions{flex-wrap:wrap}
