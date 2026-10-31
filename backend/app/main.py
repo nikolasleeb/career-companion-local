@@ -165,7 +165,7 @@ async def run_task(task_id,user,work):
     with db.connect() as c: c.execute("UPDATE tasks SET status='running',updated_at=? WHERE id=?",(db.now(),task_id))
     with db.connect() as c:
         row=c.execute('SELECT kind,result FROM tasks WHERE id=?',(task_id,)).fetchone()
-        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test') else None)
+        saved_inputs=(json.loads(row['result']).get('inputs') if row and row['result'] and row['kind'] in ('resume','resume_guided','resume_optimize','resume_fit','cover_letter','analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test') else None)
         task_inputs=(json.loads(row['result']).get('inputs') or {}) if row and row['result'] else {}
     atomic_token=task_atomic.bind(user,task_id)
     context_token=ai.set_user_context(user,task_id=task_id,process=row['kind'] if row else 'other',operation=str(task_inputs.get('operation',''))[:80])
@@ -339,6 +339,8 @@ def workspace(paged_jobs:bool=False,user=Depends(auth.current)):
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
     unlocked=onboarding.status(user['id'])['completed']
     result={kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] if unlocked or kind in ('experience','document','profile_answer','onboarding','prep','interview','assessment','assessment_progress') else [] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
+    from . import application_preparation
+    result['application']=application_preparation.decorate(user['id'],result['application'])
     result['profile_answer']=[{**row,'data':{**row['data'],'needs_related_experience':profile_answers.needs_link(user['id'],row['data'])}} for row in result['profile_answer']]
     result['search']=[job_results.public_search(user['id'],r) for r in result['search']]
     result['job']=job_cache.decorate_records(user['id'],result['job'])
@@ -730,6 +732,7 @@ async def import_url(body:ImportURL,user=Depends(auth.current)):
 async def analyze_job(body:AnalysisRequest,user=Depends(auth.current)):
     require_ai(user['id']);job=require(user['id'],body.job_id,'job')
     if job['data'].get('description_incomplete'):raise ServiceError('This provider supplied only a description snippet. Edit the posting with its full text or import the full posting before tailoring.')
+    applications.start(user['id'],job['id'])
     async def work():
         prepared=await posting_extraction.prepare_saved(user['id'],job,body.mode)
         task_progress.stage('comparing_profile')
@@ -794,6 +797,9 @@ async def analyze_document(file:UploadFile=File(...),mode:Literal['economy','dee
         data={**job,'title':overview['title'],'company':overview['company'],'structured_posting':overview}
         saved=db.save(user['id'],'job',data,job_id)
         if not compare_profile:return saved
+        # Keep the Preparing entry even if the atomic comparison fails or is stopped.
+        # The posting itself retains its existing atomic publication behavior.
+        with task_atomic.outside():applications.start(user['id'],saved['id'],recovering=True,posting=saved)
         task_progress.stage('comparing_profile')
         result=await ai.analyze(user['id'],saved['data'],mode)
         task_progress.stage('saving_comparison')
@@ -891,6 +897,7 @@ def create_resume(body:ResumeRequest,user=Depends(auth.current)):
 
 @app.post('/api/resumes/save')
 async def create_resume_task(body:ResumeRequest,user=Depends(auth.current)):
+    if body.job_id:applications.start(user['id'],body.job_id)
     async def work(): return await asyncio.to_thread(save_one_page,user['id'],body)
     return start_task(user['id'],'resume',work,body.model_dump())
 
@@ -907,6 +914,7 @@ async def fit_resume(body:ResumeRequest,user=Depends(auth.current)):
     snapshot=build_resume(user['id'],body.model_copy(update={'content':None}))
     analysis=require(user['id'],body.analysis_id,'analysis')['data'] if body.analysis_id else None
     rows=resume_builder.catalog(snapshot,analysis)
+    if body.job_id:applications.start(user['id'],body.job_id)
     async def work(): return await asyncio.to_thread(resume_builder.fit,snapshot,rows,{'experience_ids':body.experience_ids,'content':body.content} if body.content is not None else None)
     return start_task(user['id'],'resume_fit',work,body.model_dump())
 
@@ -930,12 +938,15 @@ async def optimize_resume(body:OptimizationRequest,user=Depends(auth.current)):
     analysis=require(user['id'],body.analysis_id,'analysis')['data'] if body.analysis_id else None
     if analysis and analysis.get('posting_hash') and analysis['posting_hash']!=job_parser.posting_hash(snapshot['posting_snapshot']):raise HTTPException(409,'The posting changed. Rerun its comparison before creating an AI draft.')
     if analysis and analysis.get('schema_version')!=3:raise HTTPException(409,'Rerun the historical comparison, or build without it, before creating an AI draft.')
+    applications.start(user['id'],body.job_id)
     async def work():return await optimization.create(user['id'],snapshot,analysis,body.mode,feedback)
     return start_task(user['id'],'resume_optimize',work,body.model_dump())
 
 @app.post('/api/resume-conversations')
 def resume_conversation_start(body:ConversationStart,user=Depends(auth.current)):
-    return resume_conversation.start(user['id'],body)
+    result=resume_conversation.start(user['id'],body)
+    applications.start(user['id'],body.job_id,recovering=True)
+    return result
 
 @app.get('/api/resume-conversations/{entity_id}')
 def resume_conversation_get(entity_id:str,user=Depends(auth.current)):
@@ -951,6 +962,8 @@ async def resume_conversation_build(entity_id:str,body:GuidedBuild,manual:bool=F
     resume_conversation.require(user['id'],entity_id,'resume_conversation')
     if not manual:
         resume_conversation.require_initial_comparison(user['id'],entity_id);require_ai(user['id'])
+    conversation=resume_conversation.require(user['id'],entity_id,'resume_conversation')
+    applications.start(user['id'],conversation['data']['job_id'],recovering=True)
     async def work():return await resume_conversation.build(user['id'],entity_id,body.expected_version,body.mode,body.decisions,body.template,manual=manual,preparation=body.preparation)
     return start_task(user['id'],'resume_guided',work,{'conversation_id':entity_id,**body.model_dump()})
 
@@ -1127,7 +1140,8 @@ def cover_export(entity_id:str,format:Literal['pdf','docx','txt'],user=Depends(a
 @app.get('/api/applications')
 def list_applications(user=Depends(auth.current)):
     applications.migrate(user['id'])
-    return db.list_entities(user['id'],'application')
+    from . import application_preparation
+    return application_preparation.decorate(user['id'],db.list_entities(user['id'],'application'))
 
 @app.get('/api/applications/dashboard')
 def application_dashboard(start:str='',end:str='',period:Literal['week','month']='week',timezone_name:str='UTC',include_archived:bool=False,user=Depends(auth.current)):

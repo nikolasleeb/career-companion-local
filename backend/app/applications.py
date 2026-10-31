@@ -42,9 +42,11 @@ def attach_resume(user, resume):
 
 def migrate(user):
     with LOCK:
-        if db.settings(user).get('applications_migrated'): return
-        for resume in reversed(db.list_entities(user,'resume')): attach_resume(user,resume)
-        db.update_settings(user,{'applications_migrated':True})
+        if not db.settings(user).get('applications_migrated'):
+            for resume in reversed(db.list_entities(user,'resume')): attach_resume(user,resume)
+            db.update_settings(user,{'applications_migrated':True})
+        from . import application_preparation
+        application_preparation.reconcile(user)
 
 def validate_links(user, data):
     if data.get('workflow'):validate_workflow(user,data,data['workflow'])
@@ -129,18 +131,18 @@ def dashboard(records, start='', end='', period='week', timezone_name='UTC', inc
     return {'counts':{k:counts[k] for k in ('preparing','submitted','active','interviewing','offers','closed')},'cohort_count':len(included),'applied_date_count':len(included)-len(added_ids),'added_date_ids':added_ids,'undated_ids':[r['id'] for r in visible if r['data']['status']!='preparing' and not r['data'].get('applied_date')],'missing_date_ids':missing,'chart_dates':dates,'paths':paths,'nodes':[{'id':k,'count':v} for k,v in nodes.items()],'links':[{'source':a,'target':b,'value':v} for (a,b),v in edges.items()],'submissions':[{'date':k,'count':v} for k,v in sorted(buckets.items())]}
 
 
-def start(user,job_id):
+def start(user,job_id,*,recovering=False,posting=None):
     """Explicitly starting a saved posting creates Preparing; never Applied."""
     from fastapi import HTTPException
     from .resume_conversation import write
-    job=db.get(user,job_id,'job')
-    if not job:raise HTTPException(404,'Saved posting not found.')
+    job=posting or db.get(user,job_id,'job')
+    if not job or job.get('user_id')!=user or job.get('id')!=job_id:raise HTTPException(404,'Saved posting not found.')
     with LOCK,db.connect() as c:
         c.execute('BEGIN IMMEDIATE')
         existing=next((db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind='application'",(user,)) if __import__('json').loads(r['payload']).get('job_id')==job_id or (job['data'].get('url') and __import__('app.integrations',fromlist=['posting_key']).posting_key(__import__('json').loads(r['payload']).get('url',''))==__import__('app.integrations',fromlist=['posting_key']).posting_key(job['data']['url']))),None)
         if existing:return existing
         from . import job_cache
-        if not job_cache.is_active(user,job_id):raise HTTPException(409,'This posting is expired or closed. Existing application history remains available.')
+        if not recovering and not job_cache.is_active(user,job_id):raise HTTPException(409,'This posting is expired or closed. Existing application history remains available.')
         data={'job_id':job_id,'posting_snapshot':job['data'],'title':job['data']['title'],'company':job['data'].get('company',''),'url':job['data'].get('url',''),'resume_ids':[],'submitted_resume_id':'','status':'preparing','applied_date':'','history':[],'interviews':[],'notes':'','archived':False,'attachments':[],'workflow':{'step':'resume','resume_id':'','cover_letter_id':'','cover_skipped':False}}
         id=write(c,user,'application',data)
     return db.get(user,id,'application')
