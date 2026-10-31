@@ -1,0 +1,63 @@
+/* One presentation width drives the panel, workspace and floating controls. */
+body.career-coach-open .app-shell{padding-right:var(--career-coach-width,480px)}
+body.career-coach-open .global-career-coach{width:var(--career-coach-width,480px)}
+body.career-coach-open .career-coach-controls{right:calc(var(--career-coach-width,480px) + 14px)}
+body.career-coach-open.career-coach-expanded .app-shell{padding-right:0}
+body.career-coach-expanded .career-coach-controls{display:none}
+body.coach-panel-resizing,body.coach-panel-resizing *{cursor:col-resize!important;user-select:none!important}
+.global-career-coach.adjustable-coach{min-width:0;min-height:0}
+.adjustable-coach [hidden]{display:none!important}
+.adjustable-coach .coach-resize-handle{position:absolute;top:0;bottom:0;left:-6px;width:12px;cursor:col-resize;touch-action:none;z-index:2;display:flex;align-items:center;justify-content:center}
+.coach-resize-handle span{height:42px;width:4px;border-radius:4px;background:#9aaec6;box-shadow:0 0 0 2px white}
+.adjustable-coach .coach-resize-handle:hover span,.adjustable-coach .coach-resize-handle:focus-visible span{background:#173b65;height:58px}
+.adjustable-coach>header{padding:16px 20px;gap:12px;align-items:center;flex-shrink:0;min-height:82px}
+.adjustable-coach .coach-panel-title{min-width:0;flex:1}
+.adjustable-coach .coach-panel-title strong{display:block;font-size:17px;line-height:1.35}
+.adjustable-coach .coach-panel-title small{font-size:12px;line-height:1.45;margin-top:4px}
+.adjustable-coach .coach-header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.adjustable-coach .text-button,.adjustable-coach .button,.adjustable-coach .coach-dock-tools>button{font-size:13px;line-height:1.4;min-height:36px;padding:8px 10px;margin:0;white-space:normal;border-radius:7px}
+.adjustable-coach .coach-header-actions>button{padding:7px;min-width:32px}
+.adjustable-coach .coach-dock-tools{padding:10px 20px;gap:6px;display:flex;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid #dce2eb}
+.adjustable-coach .coach-dock-tools>button:not(.button){background:transparent;border:1px solid transparent;color:inherit}
+.adjustable-coach .coach-dock-tools>button[aria-expanded=true]{background:#edf3fa;border-color:#bacbde}
+.adjustable-coach .coach-dock-body{flex:1;min-height:80px;display:flex;overflow:hidden}
+.adjustable-coach .dock-messages,.adjustable-coach .coach-drawer{flex:1;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:22px 24px}
+.adjustable-coach .dock-messages>*,.adjustable-coach .coach-drawer>*{width:100%;max-width:720px;margin-left:auto;margin-right:auto}
+.adjustable-coach .dock-messages>h2{font-size:22px;margin-top:12px;margin-bottom:10px;line-height:1.3}
+.adjustable-coach .dock-messages>p{font-size:14px;line-height:1.65;margin-bottom:18px}
+.adjustable-coach .dock-starters{display:flex;flex-wrap:wrap;gap:8px}
+.adjustable-coach .dock-starters .button{text-align:left;font-weight:500;background:#f4f7fb;box-shadow:none;border:1px solid #d6e0ed;padding:9px 12px}
+.adjustable-coach .dock-message{font-size:14px;line-height:1.7;padding:16px 18px;margin-top:0;margin-bottom:18px}
+.adjustable-coach .dock-message p{font-size:14px;line-height:1.7;margin:8px 0 12px}
+.adjustable-coach .dock-message strong{font-size:13px}
+.adjustable-coach .dock-message small{font-size:12px}
+.adjustable-coach .coach-drawer-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:20px}
+.adjustable-coach .coach-drawer-heading h2{font-size:19px;margin:0}
+.adjustable-coach .dock-history,.adjustable-coach .dock-context{max-height:none;margin:0;overflow:visible;font-size:13px}
+.adjustable-coach .dock-history-row{justify-content:space-between;align-items:flex-start;padding:12px 0}
+.adjustable-coach .dock-history-row>button:first-child{flex:1;text-align:left}
+.adjustable-coach .dock-source-choice{flex-wrap:wrap}
+.adjustable-coach .dock-source-choice span{flex-basis:100%}
+.adjustable-coach .dock-source-choice label{font-size:13px;min-height:32px}
+.adjustable-coach .coach-drawer label{font-size:13px;line-height:1.5}
+.adjustable-coach .coach-drawer input:not([type=checkbox]){min-height:40px;font-size:14px;margin-top:6px}
+.adjustable-coach .coach-conversation-name{margin-top:24px}
+.adjustable-coach .writing-coach-badge{font-size:13px;line-height:1.6;padding:12px 16px;margin:0 0 20px}
+.adjustable-coach .coach-composer-area{flex-shrink:0;max-height:50%;overflow:auto;border-top:1px solid #dce2eb;background:white}
+.adjustable-coach .dock-composer{padding:14px 20px;border:0;max-width:768px;margin:auto}
+.adjustable-coach .dock-composer label{font-size:12px;line-height:1.5;font-weight:600;margin:0;display:block}
+.adjustable-coach .dock-composer textarea{display:block;width:100%;min-height:64px;max-height: min(180px,25vh);padding:10px 12px;font-size:14px;font-weight:400;line-height:1.5;resize:none;margin:6px 0 10px;overflow-y:auto}
+.adjustable-coach .dock-composer .card-actions{margin:0 0 8px;gap:8px;display:flex;align-items:center}
+.adjustable-coach .dock-composer small,.adjustable-coach .coach-keyboard-hint{display:block;font-size:11px;line-height:1.45;color:#59687b}
+.adjustable-coach .coach-keyboard-hint{margin-top:4px}
+.adjustable-coach .dock-error,.adjustable-coach .dock-recovery{margin:0;padding:10px 20px;font-size:13px}
+.adjustable-coach .dock-recovery{display:flex;gap:8px;flex-wrap:wrap}
+.adjustable-coach.writing-help-panel .coach-composer-area{background:#f2f8f5}
+.adjustable-coach.writing-help-panel>header{gap:10px}
+.adjustable-coach.expanded-coach .coach-header-actions{flex-wrap:wrap;justify-content:flex-end}
+.adjustable-coach.expanded-coach .daily-spend-meter{font-size:11px;min-height:28px}
+@media(max-height:760px){.adjustable-coach>header{padding-top:10px;padding-bottom:10px;min-height:68px}.adjustable-coach .coach-dock-tools{padding-top:6px;padding-bottom:6px}.adjustable-coach .dock-composer{padding-top:10px;padding-bottom:10px}}
+
+.adjustable-coach .coach-request-status{margin:0;padding:10px 20px 0;font-size:13px;color:#415d7a}
+
+body.career-coach-open.career-coach-task-narrow .guided-workspace,body.career-coach-open.career-coach-task-narrow .cover-workspace{grid-template-columns:minmax(0,1fr)}
