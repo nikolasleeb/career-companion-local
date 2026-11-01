@@ -12,3 +12,10 @@
 .guided-editor.document-conversation>.resume-chat{padding:20px;border:1px solid var(--border,#d5deeb);border-radius:12px}
 .guided-builder>.resume-question-panel{margin:20px 0;padding:20px;border:1px solid var(--border,#d5deeb);border-radius:12px;background:var(--surface,#fff)}
 .resume-question-panel>.inline-questions{margin-top:16px}.resume-question-panel>.inline-questions>h4{font-size:1rem}
+
+.resume-question-panel.questions-open {border:2px solid #b60026;background:#fff5f6}
+.resume-question-panel.questions-ready {border:2px solid #25804d;background:#f0faf3}
+.resume-review-mode {margin-top:1rem;display:grid;gap:.75rem}
+.resume-review-mode label {display:flex;align-items:baseline;gap:.6rem}
+.resume-review-mode input {width:auto}
+.resume-run-recovery {border:1px solid #b8c6db;border-radius:8px;padding:1rem;margin-block:1rem}

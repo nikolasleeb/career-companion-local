@@ -262,6 +262,7 @@ class OpenAIKeyUpdate(StrictModel):
 
 class SettingsUpdate(StrictModel):
     document_models: dict[str,dict[str,str]] | None = None
+    resume_review_mode: Literal['standard','thorough'] | None = None
 
     @field_validator('document_models')
     @classmethod
@@ -288,7 +289,7 @@ class SettingsUpdate(StrictModel):
     authorized_us: Literal["", "yes", "no", "unsure"] | None = None
     sponsorship_now: Literal["", "yes", "no", "unsure"] | None = None
     sponsorship_future: Literal["", "yes", "no", "unsure"] | None = None
-    custom_model: Literal['gpt-6.1-sol','gpt-6-luna','gpt-5.6-sol','gpt-5.6-luna','gpt-5.6-terra'] | None = None
+    custom_model: Literal['gpt-6.1-terra','gpt-6.1-sol','gpt-6-luna','gpt-5.6-sol','gpt-5.6-luna','gpt-5.6-terra'] | None = None
     custom_reasoning: Literal['none','low','medium','high','xhigh','max'] | None = None
     custom_speed: Literal['standard','fast','ultrafast'] | None = None
     ai_max_output_tokens: int | None = Field(default=None,ge=0,le=128000,strict=True)
@@ -753,6 +754,10 @@ class LinkedEvidenceReview(StrictModel):
     placements: list[ProjectEvidencePlacement] = Field(max_length=300)
 
 class GuidedBuild(StrictModel):
+    optimization_mode: Literal['standard','thorough'] | None = None
+    continue_run_id: str = Field(default='',max_length=100)
+    acknowledge_unknown_usage: bool = False
+    start_new_run: bool = False
     request_token: str = Field(default='',max_length=100)
     skip_questions: bool = False
     refresh_linked_evidence: bool = False
@@ -968,3 +973,9 @@ class ProfileDraftReview(StrictModel):
     experience_id:str=''
     experience_ids:list[str] | None=Field(default=None,max_length=10)
     category:Literal['education','employment','project','volunteering','skills','coursework']='project'
+
+class ResumeCombinedReview(StrictModel):
+    audit: DraftAudit
+    quality: ResumeQualityReview
+    affected_record_ids: list[str] = Field(default_factory=list,max_length=40)
+    headline_change: bool = False

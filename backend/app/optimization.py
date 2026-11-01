@@ -16,8 +16,10 @@ def estimate(snapshot,mode,settings):
     from . import document_models
     opt=document_models.options(settings,mode)
     count=max(1500,len(json.dumps(snapshot))//4+7000)
-    stages=[document_models.estimate(settings,role,count,answer,mode) for role,answer in [('writer',4000),('writer',6000),('reviewer',2000),('writer',6000),('reviewer',2000),('writer',3000),('writer',2000),('writer',1200)]]
-    return {**opt,'usd':round(sum(v['usd'] for v in stages),6) if all(v['usd'] is not None for v in stages) else None,'pricing_date':ai_settings.PRICE_DATE,'note':'Planning maximum for evidence planning, drafting, independent review, one writer revision, final independent check, bounded layout correction and source validation. No automatic paid retries.'}
+    workflow=settings.get('resume_review_mode','standard')
+    stage_roles=[('writer',6000),('reviewer',4000),('writer',6000),('reviewer',4000)] if workflow=='standard' else [('writer',4000),('writer',6000),('reviewer',2000),('writer',6000),('reviewer',2000),('writer',3000),('writer',2000),('writer',1200)]
+    stages=[document_models.estimate(settings,role,count,answer,mode) for role,answer in stage_roles]
+    return {**opt,'usd':round(sum(v['usd'] for v in stages),6) if all(v['usd'] is not None for v in stages) else None,'pricing_date':ai_settings.PRICE_DATE,'note':'Standard maximum: one Writer draft and isolated combined review (2 requests); material issues allow one targeted Writer correction and final Reviewer (4 total). Local layout fitting. No automatic paid retries.' if workflow=='standard' else 'Thorough review maximum:8 requests using each assigned Writer/Reviewer setting. No automatic paid retries.'}
 
 
 def apply(snapshot,draft,overrides=None):
@@ -107,7 +109,10 @@ def validate(output,snapshot,records):
     return output
 
 async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=None):
-    from . import resume_strategy
+    from . import resume_strategy,resume_runs
+    if resume_runs.current() and resume_runs.read(user,resume_runs.current()['id'])['data']['optimization_mode']=='standard':
+        from . import resume_standard
+        return await resume_standard.create(user,snapshot,analysis,mode,feedback,guided,current)
     if current is None or (feedback or {}).get('refresh_linked_evidence'):
         return await resume_strategy.create(user,snapshot,analysis,mode,feedback,guided,current)
     snapshot=resume_strategy.restore(snapshot,current)

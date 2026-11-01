@@ -156,6 +156,8 @@ def state(user,id):
         if inputs.get('text') and len(messages)>=2 and messages[-1]['role']=='assistant' and messages[-2]['role']=='user' and messages[-2]['text']==inputs['text']:
             if 'revision_status' not in messages[-1]:messages[-1]['revision_status']='failed'
             result['data'].setdefault('last_message_input',inputs['text'])
+    from . import resume_runs
+    result['optimization_run']=resume_runs.projection(user,id)
     return result
 
 def require_initial_comparison(user,id):
@@ -186,6 +188,8 @@ def save_revision(user,id,version,snapshot,catalog,summary,token,usage=None,sour
         if token!=data['workspace_token']:raise HTTPException(409,'A newer preview request superseded this result.')
         resume_quality.invalidate(snapshot)
         value={'conversation_id':id,'job_id':data['job_id'],'parent_id':data['current_revision_id'],'snapshot':snapshot,'catalog':catalog,'summary':summary,'request_token':token,'usage':usage,'draft_id':draft_id,'source_snapshot':source_snapshot,'project_snapshot_ids':list(data.get('project_snapshot_ids',[]))}
+        from . import resume_runs
+        if resume_runs.current():value['review_run_id']=resume_runs.current()['id']
         write(c,user,'resume_revision',value,revision_id)
         data.pop('optimization_waiting',None)
         data['revision_ids'].append(revision_id);data['current_revision_id']=revision_id;data.pop('workspace_request',None)
@@ -201,10 +205,29 @@ def save_revision(user,id,version,snapshot,catalog,summary,token,usage=None,sour
                         if result['status']=='pending':result['status']='updated'
             data.pop('last_message_input',None)
         if usage:data['messages'].append({'id':db.uid(),'role':'assistant','text':summary,'usage':usage,'created_at':db.now()})
+    from . import resume_runs
+    if resume_runs.current():
+        # This proof is durable before the atomic head publish. Missing final heads
+        # are recoverable by replaying known outputs locally after a failed commit.
+        resume_runs.mark_final(revision_id,snapshot)
     mutate(user,id,version,change)
     return state(user,id)
 
-async def build(user,id,version,mode,decisions=None,template='education',feedback=None,manual=False,preparation=None,skip_questions=False):
+def persist_skips(user,id,version):
+    """An explicit free choice commits before the background task is created."""
+    with db.connect() as c:
+        if task_running(c,user,id):raise HTTPException(409,'Check the running document action before skipping questions.')
+    record=require(user,id,'resume_conversation')
+    if record['data']['version']!=version:raise HTTPException(409,'Reload the conversation before skipping questions.')
+    open_ids={q['id'] for q in profile_answers.stable_questions(record['data'],'resume') if q.get('status')=='open'}
+    if not open_ids:return version
+    def skip(data,c):
+        for q in profile_answers.stable_questions(data,'resume'):
+            if q['id'] in open_ids:q['status']='skipped'
+        profile_answers.sync_questions(data,'resume')
+    return mutate(user,id,version,skip)['data']['version']
+
+async def build(user,id,version,mode,decisions=None,template='education',feedback=None,manual=False,preparation=None,skip_questions=False,run_body=None):
     task_progress.stage('preparing')
     data=require(user,id,'resume_conversation')['data']
     if data['version']!=version:raise HTTPException(409,'Reload the conversation before building.')
@@ -224,6 +247,13 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
                 profile_answers.sync_questions(d,'resume')
             record=mutate(user,id,version,skip);data=record['data'];version=data['version']
         if pending:raise HTTPException(409,'Confirm or reject the pending Supporting Details before continuing.')
+
+    if run_body is not None and not manual:
+        from . import resume_runs
+        # Questions/skips above commit as part of the task, but never become facts.
+        async def generate():
+            return await build(user,id,version,mode,decisions,template,feedback,manual,preparation,True)
+        return await resume_runs.execute(user,id,run_body,generate)
 
     if data.get('workspace_request') and not empty_preparation(data):raise HTTPException(409,'Render or restore your retained local edits before requesting an AI revision.')
     prepared=preparation or (ResumeRequest.model_validate(data['workspace_request']) if empty_preparation(data) else None)
@@ -561,6 +591,8 @@ def restore(user,id,body):
 def finalize(user,id,body):
     revision=require(user,body.revision_id,'resume_revision');value=revision['data'];snapshot=copy.deepcopy(value['snapshot'])
     if value['conversation_id']!=id:raise HTTPException(409,'That revision belongs to another posting.')
+    from . import resume_runs
+    resume_runs.assert_final(user,revision)
     def change(data,c):
         if data['current_revision_id']!=revision['id'] or data['workspace_token']!=value['request_token']:raise HTTPException(409,'The preview is no longer current. Render and review the latest revision before saving.')
         if resume_quality.acknowledgment_required(snapshot) and not body.quality_warning_acknowledged:raise HTTPException(409,'Acknowledge the quality warning for this exact revision before saving. Review the specific changes still needed.')
@@ -581,12 +613,6 @@ def estimate(user,id,mode,settings=None):
     settings=settings if settings is not None else db.settings(user)
     base=optimization.estimate(snapshot,mode,settings);option=document_models.options(settings,mode)
     current=db.get(user,data.get('current_revision_id',''),'resume_revision') if data.get('current_revision_id') else None
-    context_size=len(json.dumps(snapshot))+len(json.dumps(data['messages'][-30:]))+len(json.dumps(data['proposals']))+len(json.dumps(public(current)))
-    extra=ai_settings.estimate(option['model'],option['reasoning_effort'],max(3000,context_size//4)+7000,4500,service_tier=option['service_tier'],max_output_tokens=settings.get('ai_max_output_tokens') or None)
-    # Reserve one layout pass plus chat; approved new facts also require reassessment.
-    multiplier=2 if data['profile_dirty'] else 1
-    base['usd']=round(base['usd']+extra['usd']*multiplier,6) if base['usd'] is not None and extra['usd'] is not None else None
-    base['note']='Planning estimate for chat, evidence strategy, drafting, final source/coverage check, editorial and isolated quality reviews, one optional repair, one measured layout correction and a blinded comparison (up to eight optimization requests). Approved facts may add a comparison refresh. No automatic paid retries. A question-only reply costs less; actual usage is shown afterward. Local previews, saving and downloads make no provider requests.'
     return base
 
 

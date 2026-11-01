@@ -65,23 +65,23 @@ async def call_api(body,retry_allowed=True):
                 task_progress.provider_wait()
                 response = await client.post('https://api.openai.com/v1/responses', headers={'Authorization':'Bearer '+api_key}, json=body)
             except httpx.TimeoutException:
-                if policy:policy.finish(reservation,None)
                 cost_history.finish(context.get('user_id'),event,body,status='unknown')
+                if policy:policy.finish(reservation,None)
                 raise ServiceError('The OpenAI request timed out. It may have incurred usage, so it was not automatically sent again. Your saved inputs and previous results remain available; wait before retrying.') from None
             except httpx.HTTPError:
-                if policy:policy.finish(reservation,None)
                 cost_history.finish(context.get('user_id'),event,body,status='unknown')
+                if policy:policy.finish(reservation,None)
                 raise ServiceError('The connection to OpenAI was interrupted. The request was not automatically sent again. Your saved inputs and previous results remain available; check your connection before retrying.') from None
             except asyncio.CancelledError:
-                if policy:policy.finish(reservation,None)
                 cost_history.finish(context.get('user_id'),event,body,status='unknown')
+                if policy:policy.finish(reservation,None)
                 raise
             task_progress.provider_done()
             try: result = response.json()
             except ValueError: result = None
-            if policy:policy.finish(reservation,result,response.status_code)
             recorded=cost_history.finish(context.get('user_id'),event,body,result,response.status_code,status='unknown' if result is None else None)
             if recorded and isinstance(result,dict):result['_next_step_usage_event_id']=recorded['id']
+            if policy:policy.finish(reservation,result,response.status_code)
             if response.status_code >= 400:
                 if retry_allowed and response.status_code in (429,500,502,503,504) and attempt==0 and error_code(result) not in QUOTA_CODES:
                     delay=retry_delay(response.headers)
@@ -132,6 +132,12 @@ def metadata(response, mode):
     return result
 
 async def structured(schema, payload, mode='economy', instructions=INSTRUCTIONS, *, files=None,retry_allowed=True,max_output_tokens=None):
+    from . import resume_runs
+    if resume_runs.current():
+        return await resume_runs.structured(schema,payload,mode,instructions,files,retry_allowed,max_output_tokens,lambda:_structured(schema,payload,mode,instructions,files=files,retry_allowed=False,max_output_tokens=max_output_tokens))
+    return await _structured(schema,payload,mode,instructions,files=files,retry_allowed=retry_allowed,max_output_tokens=max_output_tokens)
+
+async def _structured(schema, payload, mode='economy', instructions=INSTRUCTIONS, *, files=None,retry_allowed=True,max_output_tokens=None):
     schema_value=schema.model_json_schema()
     def strict(value):
         if isinstance(value,dict):

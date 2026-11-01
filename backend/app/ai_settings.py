@@ -1,12 +1,13 @@
 """Verified model options and transparent planning estimates, no provider calls."""
 from . import config
 
-PRICE_DATE='2026-10-23'
+PRICE_DATE='2026-11-01'
 SPEED_NAMES={'standard':'Standard','fast':'Fast','ultrafast':'Ultrafast'}
 EFFORTS=['none','low','medium','high','xhigh','max']
 # Planning assumptions, not measured reasoning-token predictions.
 REASONING_ALLOWANCE={'none':0,'low':1000,'medium':3000,'high':6000,'xhigh':10000,'max':16000}
 CATALOG={
+ 'gpt-6.1-terra':{'name':'Terra 6.1','input':1.,'cached_input':.05,'output':5.,'efforts':['none','low','medium','high','xhigh','max']},
  'gpt-6.1-sol':{'name':'Sol 6.1','input':2.,'cached_input':.1,'output':10.,'efforts':['low','medium','high','xhigh','max']},
  'gpt-6-luna':{'name':'Luna 6','input':.1,'cached_input':.01,'output':.5},
  'gpt-5.6-luna':{'name':'Luna 5.6','input':.2,'cached_input':.02,'output':1.2},

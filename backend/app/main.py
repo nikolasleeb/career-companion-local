@@ -547,6 +547,12 @@ def remove_record(entity_id:str,user=Depends(auth.current)):
         file=config.DATA_DIR/'uploads'/user['id']/entity_id
         file.unlink(missing_ok=True)
         combined_import.removed_source(user['id'],entity_id)
+    if record['kind']=='resume_conversation':
+        with db.connect() as c:
+            c.execute('BEGIN IMMEDIATE')
+            c.execute("DELETE FROM entities WHERE user_id=? AND kind='resume_run' AND json_extract(payload,'$.conversation_id')=?",(user['id'],entity_id))
+            c.execute('DELETE FROM entities WHERE id=? AND user_id=?',(entity_id,user['id']))
+        return {'ok':True}
     db.delete(user['id'],entity_id);return {'ok':True}
 
 @app.post('/api/jobs/import-document')
@@ -1003,8 +1009,22 @@ async def resume_conversation_build(entity_id:str,body:GuidedBuild,manual:bool=F
         resume_conversation.require_initial_comparison(user['id'],entity_id);require_ai(user['id'])
     conversation=resume_conversation.require(user['id'],entity_id,'resume_conversation')
     applications.start(user['id'],conversation['data']['job_id'],recovering=True)
-    async def work():return await resume_conversation.build(user['id'],entity_id,body.expected_version,body.mode,body.decisions,body.template,manual=manual,preparation=body.preparation,skip_questions=body.skip_questions,feedback={"refresh_linked_evidence":True} if body.refresh_linked_evidence else None)
-    return start_task(user['id'],'resume_guided',work,{'operation':'build?manual=true' if manual else 'build','conversation_id':entity_id,**body.model_dump()})
+    inputs={'operation':'build?manual=true' if manual else 'build','conversation_id':entity_id,**body.model_dump()}
+    version=body.expected_version
+    if body.skip_questions and not manual:
+        # Recover a lost start response BEFORE the free question mutation. Store
+        # original client inputs for token equality; execution uses its new version.
+        if body.request_token:
+            with db.connect() as c:
+                rows=c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind='resume_guided' ORDER BY created_at DESC",(user['id'],)).fetchall()
+            for row in rows:
+                saved=json.loads(row['result'] or '{}');original=saved.get('_task_inputs',saved.get('inputs',{}))
+                if original.get('request_token')==body.request_token:
+                    if original!=inputs:raise HTTPException(409,'This request token belongs to different inputs. Check its original result first.')
+                    return {'task_id':row['id'],'status':row['status']}
+        version=resume_conversation.persist_skips(user['id'],entity_id,version)
+    async def work():return await resume_conversation.build(user['id'],entity_id,version,body.mode,body.decisions,body.template,manual=manual,preparation=body.preparation,skip_questions=body.skip_questions,feedback={"refresh_linked_evidence":True} if body.refresh_linked_evidence else None,run_body=None if manual else body)
+    return start_task(user['id'],'resume_guided',work,inputs)
 
 @app.post('/api/resume-conversations/{entity_id}/messages')
 async def resume_conversation_send(entity_id:str,body:ConversationMessage,user=Depends(auth.current)):
@@ -1060,10 +1080,12 @@ def resume_conversation_finalize(entity_id:str,body:FinalizeRevision,user=Depend
 
 @app.get('/api/resume-revisions/{entity_id}/pages/{page}')
 def resume_revision_page(entity_id:str,page:int,user=Depends(auth.current)):
-    revision=resume_conversation.require(user['id'],entity_id,'resume_revision')['data']
-    snapshot=revision['snapshot']
+    from . import resume_runs
+    revision=db.get(user['id'],entity_id,'resume_revision')
+    checkpoint=revision is None
+    snapshot=resume_runs.preview_snapshot(user['id'],entity_id) if checkpoint else revision['data']['snapshot']
     if page<1 or page>snapshot['layout']['pages']:raise HTTPException(404,'Page not found.')
-    return Response(documents.pdf_preview(base64.b64decode(snapshot['artifacts']['pdf']),page),media_type='image/png',headers={'Cache-Control':'private, max-age=31536000, immutable'})
+    return Response(documents.pdf_preview(base64.b64decode(snapshot['artifacts']['pdf']),page),media_type='image/png',headers={'Cache-Control':'private, no-store' if checkpoint else 'private, max-age=31536000, immutable'})
 
 @app.get('/api/resume-drafts')
 def resume_drafts(job_id:str,user=Depends(auth.current)):
@@ -1364,7 +1386,7 @@ def demo(scenario:str,user=Depends(auth.current)):
     job=db.save(user['id'],'job',{'title':example['role'],'company':'Fictional classroom example','description':example['posting'],'url':''})
     return {'job':job,'message':'Fictional example loaded. This account now contains sample experience, not your real history.'}
 
-BACKUP_KINDS=readiness.KINDS|{'profile_personalization','coach_plan_progress','career_explorer_search','career_explorer_review','application_offer','saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
+BACKUP_KINDS=readiness.KINDS|{'profile_personalization','coach_plan_progress','career_explorer_search','career_explorer_review','application_offer','saved_career','interview_voice','interview_material','work_preferences','assistant_chat','assistant_message','assistant_research','personalized_search','chat_image','interview_message','interview_session','interview_question','interview_attempt','interview_research','career_goals','coach_chat','coach_message','coach_plan','coach_research','job_snapshot','ai_search','ai_job_match','usage_event','onboarding','project_source','project_snapshot','project_analysis','answer_draft','work_style','story_prompts','profile_answer','cover_workspace','cover_revision','cover_letter','resume_run','resume_conversation','resume_revision','resume_draft','experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','job_search_preferences','job_alert'}
 
 @app.get('/api/account/export')
 def backup(user=Depends(auth.current)):
@@ -1502,6 +1524,11 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 if data['snapshot']['job_id']!=data['job_id']:raise ValueError()
                 if any(kinds.get(row['id']) not in ('experience','profile_answer') for row in data['catalog']):raise ValueError()
                 if data.get('finalized_resume_id') and kinds.get(data['finalized_resume_id'])!='resume':raise ValueError()
+            if record['kind']=='resume_run':
+                if kinds.get(record['data'].get('conversation_id'))!='resume_conversation' or kinds.get(record['data'].get('job_id'))!='job':raise ValueError()
+                from . import resume_runs
+                inert=resume_runs.restore_value(record['data'])
+                if by_id[inert['conversation_id']]['data'].get('job_id')!=inert['job_id']:raise ValueError()
             if record['kind'] in ('cover_workspace','cover_revision','cover_letter'):
                 data=record['data'];CoverContent.model_validate(data['content'])
                 if kinds.get(data['job_id'])!='job':raise ValueError()
@@ -1627,6 +1654,9 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
             stamp=integrations.parse_date(record.get('created_at'))
             if stamp:
                 with db.connect() as c:c.execute('UPDATE entities SET created_at=? WHERE user_id=? AND id=?',(stamp.isoformat(),user['id'],saved['id']))
+        elif record['kind']=='resume_run':
+            from . import resume_runs
+            db.save(user['id'],'resume_run',resume_runs.restore_value(remap(record['data'])),ids[record['id']],restoring=True)
         elif record['kind']=='ai_job_match':db.save(user['id'],record['kind'],{**remap(record['data']),'state':'imported','error':'Imported review is read-only. Start a new review to use your current Profile.','profile_revision':'imported','in_flight':None},ids[record['id']])
         elif record['kind']!='onboarding':
             restored=remap(record['data'])

@@ -1,6 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
 
-export function ResumePreview({revision,pages,previous=false}:{revision:string;pages:number;previous?:boolean}){
+export function ResumePreview({revision,pages,previous=false,version=''}:{revision:string;pages:number;previous?:boolean;version?:string}){
  const viewport=useRef<HTMLDivElement>(null);
  const [zoom,setZoom]=useState<'page'|'width'|number>('page');
  const [space,setSpace]=useState({width:816,height:600});
@@ -25,7 +25,7 @@ export function ResumePreview({revision,pages,previous=false}:{revision:string;p
    <span className="small muted">Preview only · PDF size stays the same</span>
   </div>
   <div className="resume-preview-viewport" ref={viewport} tabIndex={0} role="region" aria-label="Resume PDF preview. Scroll to view zoomed pages.">
-   <div className="resume-preview-pages" style={{width}}>{Array.from({length:pages},(_,i)=><img className={'pdf-preview '+(previous?'preview-previous':'')} alt={'Working resume PDF, page '+(i+1)} src={'/api/resume-revisions/'+revision+'/pages/'+(i+1)} key={revision+':'+i}/>)}</div>
+   <div className="resume-preview-pages" style={{width}}>{Array.from({length:pages},(_,i)=><img className={'pdf-preview '+(previous?'preview-previous':'')} alt={'Working resume PDF, page '+(i+1)} src={'/api/resume-revisions/'+revision+'/pages/'+(i+1)+(version?'?v='+version:'')} key={revision+':'+i}/>)}</div>
   </div>
  </div>;
 }

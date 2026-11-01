@@ -21,6 +21,7 @@ def test_failed_build_recovery_exposes_only_action_intent(env,operation,refresh)
 def test_failed_full_build_retries_all_the_way_through_quality_review(env,client,monkeypatch):
  from app import main
  user,job,rows,session,calls=env;state=build(env);previous=state['current']['id'];raw=ai.structured
+ db.update_settings(user,{'resume_review_mode':'thorough'})
  monkeypatch.setattr(main,'require_ai',lambda *a:None);monkeypatch.setattr(guided,'require_initial_comparison',lambda *a:None)
  async def failure(schema,payload,*a,**kw):
   if schema.__name__=='ResumeStrategy':raise ServiceError('Fictional grouped-qualification failure.')
@@ -32,7 +33,7 @@ def test_failed_full_build_retries_all_the_way_through_quality_review(env,client
  recovered=guided.state(user,session['id']);assert recovered['current']['id']==previous
  assert recovered['failed_build_action']['body']['refresh_linked_evidence'] is True
  monkeypatch.setattr(ai,'structured',raw);before=len(calls)
- retried=wait_task(client,client.post(path,json={'expected_version':recovered['data']['version'],**recovered['failed_build_action']['body']}))
+ retried=wait_task(client,client.post(path,json={'expected_version':recovered['data']['version'],**recovered['failed_build_action']['body'],'continue_run_id':recovered['optimization_run']['id']}))
  assert retried['status']=='completed',retried
  names=[name for name,payload in calls[before:]]
  assert 'ResumeStrategy' in names and 'ResumeQualityReview' in names and names[-1]=='DraftAudit'

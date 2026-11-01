@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
+from typing import Literal
 from . import ai_settings, auth, db
 from .network import ServiceError
 
@@ -17,6 +18,7 @@ class ModelPair(BaseModel):
     model_config=ConfigDict(extra='forbid')
     writer:ModelChoice
     reviewer:ModelChoice
+    resume_review_mode:Literal['standard','thorough']|None=None
 
 def choice(value):
     return ai_settings.resolve({'custom_model':value['model'],'custom_reasoning':value['reasoning_effort'],'custom_speed':value.get('speed','standard')},'custom')
@@ -31,7 +33,11 @@ def validate(pair):
 
 def preview_settings(user,pair=None):
     settings=dict(db.settings(user))
-    if pair is not None:settings['document_models']=validate(pair.model_dump() if hasattr(pair,'model_dump') else pair)
+    if pair is not None:
+        value=pair.model_dump(exclude_none=True) if hasattr(pair,'model_dump') else dict(pair)
+        workflow=value.pop('resume_review_mode',None)
+        settings['document_models']=validate(value)
+        if workflow:settings['resume_review_mode']=workflow
     return settings
 
 def configured(settings):
@@ -56,13 +62,13 @@ router=APIRouter(prefix='/api/document-models',tags=['document models'])
 @router.get('')
 def get_models(user=Depends(auth.current)):
     settings=db.settings(user['id'])
-    return {'pair':settings.get('document_models'),'writer_default':ai_settings.resolve(settings),'catalog':ai_settings.public(settings)['catalog']}
+    return {'pair':settings.get('document_models'),'resume_review_mode':settings.get('resume_review_mode','standard'),'writer_default':ai_settings.resolve(settings),'catalog':ai_settings.public(settings)['catalog']}
 @router.put('')
 def save_models(body:ModelPair,user=Depends(auth.current)):
-    pair=body.model_dump()
+    pair=body.model_dump(exclude_none=True);workflow=pair.pop('resume_review_mode',None)
     try:validate(pair)
     except ServiceError as exc:raise HTTPException(422,str(exc)) from None
-    db.update_settings(user['id'],{'document_models':pair})
+    db.update_settings(user['id'],{'document_models':pair,**({'resume_review_mode':workflow} if workflow else {})})
     return get_models(user)
 
 

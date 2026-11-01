@@ -43,3 +43,9 @@ export function resumeRetryAction(last:any,failedBuild:any,freshBuild:any,form:a
  if(action.operation==='render')return {...action,body:{...action.body,resume:form}};
  return action;
 }
+
+export function strengthenStatus(session:any,save:{failed:boolean;saving:boolean}){
+ const active=(session?.data?.asked_questions||session?.data?.questions||[]).filter((q:any)=>q.status!=='superseded');
+ const completed=active.filter((q:any)=>!!q.answer?.trim()||['reviewed','answered','skipped'].includes(q.status)).length;
+ return {total:active.length,completed,ready:!save.failed&&!save.saving&&completed===active.length};
+}

@@ -363,6 +363,9 @@ async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=
             e['bullets']=[i['text'] for i in e['content_items']]
     task_progress.stage('rendering');rendered=await asyncio.to_thread(resume_layout.render,selected)
     from . import resume_quality
+    from . import resume_runs
+    if rendered.get('layout',{}).get('pages')==1 and rendered['layout'].get('validated'):
+        resume_quality.check_document(rendered);resume_runs.save_preview(rendered)
     quality_usage=[];quality_note='';quality_result=None
     try:
         quality_result,review_meta=await resume_quality.review(rendered,mode);quality_usage.append(review_meta)
@@ -453,7 +456,7 @@ async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=
 
 
 
-async def fit_candidate(snapshot,analysis,output,rules,plan,evidence,mode,allow_layout=False):
+async def fit_candidate(snapshot,analysis,output,rules,plan,evidence,mode,allow_layout=False,enforce_coverage=True):
     from . import optimization
     output=copy.deepcopy(output);records=optimization.evidence_sources(snapshot)
     expanded=install(snapshot,output['composed_items'])
@@ -509,6 +512,12 @@ async def fit_candidate(snapshot,analysis,output,rules,plan,evidence,mode,allow_
     for e in entries(selected).values():
         for i in e['content_items']:
             if any(set(lock.get('source_ids',[]))=={r['source_id'] for r in i.get('source_refs',[])} for lock in rules['locked_items'].values()):protected.add(i['item_id'])
+    # A selected credential must not disappear during measured local fitting.
+    # The Writer may omit unrelated credentials deliberately before selection.
+    for rid,e in entries(selected).items():
+        credentials=[i for i in e['content_items'] if i['field']=='certification']
+        if credentials:
+            protected_records.add(rid);protected.update(i['item_id'] for i in credentials)
     if rendered['layout']['pages']>1:
         task_progress.stage('fitting')
         fitted=await asyncio.to_thread(resume_layout.fit,selected,resume_builder.catalog(selected,analysis),selection(selected),protected,protected_records)
@@ -516,7 +525,10 @@ async def fit_candidate(snapshot,analysis,output,rules,plan,evidence,mode,allow_
         rendered=await asyncio.to_thread(resume_layout.render,selected)
     if rendered['layout']['pages']!=1:raise ServiceError('Essential evidence and your protected choices do not fit one readable page. Shorten or unlock content; the previous draft is intact.')
     cov=coverage(plan,rendered)
-    if any(p['essential'] and not p['included'] for p in cov):raise ServiceError('Fitting removed essential qualification evidence. Your previous draft remains intact; review the source choices before retrying.')
+    if enforce_coverage and any(p['essential'] and not p['included'] for p in cov):raise ServiceError('Fitting removed essential qualification evidence. Your previous draft remains intact; review the source choices before retrying.')
+    from . import resume_runs,resume_quality
+    resume_quality.check_document(rendered)
+    resume_runs.save_preview(rendered)
     return rendered,output,layout_meta
 
 

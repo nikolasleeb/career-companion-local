@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import ts from 'typescript';
 const code=ts.transpileModule(readFileSync(new URL('../src/resumeWorkflow.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
-const {editChosen,emptyPreparation,canAutoRender,wordingChanges,resumeNeedsClarification,resumeRetryAction}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+const {editChosen,emptyPreparation,canAutoRender,wordingChanges,resumeNeedsClarification,strengthenStatus,resumeRetryAction}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 test('only the exact committed wording is chosen; candidate edits need an explicit choice',()=>{
  assert.equal(editChosen(undefined,'Reworded','Reworded'),false);
  assert.equal(editChosen({action:'accept',text:'Reworded'},'Reworded','Reworded'),true);
@@ -61,4 +61,13 @@ test('local builds stay local on retry and unknown actions do not default to pai
 test('retry of a local render uses the current reviewed form and retains its token',()=>{
  const form={headline:'Current headline'};const retry=resumeRetryAction({operation:'render',asTask:true,body:{request_token:'same-token',resume:{}}},null,{},form);
  assert.equal(retry.body.resume,form);assert.equal(retry.body.request_token,'same-token');
+});
+
+test('Strengthen status ignores superseded prompts and distinguishes persisted answers from save failure',()=>{
+ const session={data:{asked_questions:[{status:'superseded'},{status:'answered'},{status:'skipped'},{status:'open',answer:'Saved original fact.'}]}};
+ assert.deepEqual(strengthenStatus(session,{failed:false,saving:false}),{total:3,completed:3,ready:true});
+ assert.equal(strengthenStatus(session,{failed:true,saving:false}).ready,false);
+ assert.equal(strengthenStatus(session,{failed:false,saving:true}).ready,false);
+ session.data.asked_questions.push({status:'open'});
+ assert.deepEqual(strengthenStatus(session,{failed:false,saving:false}),{total:4,completed:3,ready:false});
 });
