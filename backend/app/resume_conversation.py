@@ -23,8 +23,11 @@ def require(user,id,kind):
 
 def write(c,user,kind,data,id=None):
     id=id or db.uid();stamp=db.now()
-    row=c.execute('SELECT user_id,kind FROM entities WHERE id=?',(id,)).fetchone()
+    row=c.execute('SELECT user_id,kind,payload FROM entities WHERE id=?',(id,)).fetchone()
     if row and (row['user_id']!=user or row['kind']!=kind):raise HTTPException(404,'Record not found.')
+    from . import skill_details
+    if kind=='experience':data=skill_details.prepare(c,user,id,data,json.loads(row['payload']) if row else {})
+    if kind=='profile_answer' and data.get('status')!='archived':skill_details.validate_ref(c,user,data)
     if row:c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?',(json.dumps(data),stamp,id))
     else:c.execute('INSERT INTO entities VALUES(?,?,?,?,?,?)',(id,user,kind,json.dumps(data),stamp,stamp))
     from . import onboarding

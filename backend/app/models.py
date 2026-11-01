@@ -11,6 +11,7 @@ class Credentials(StrictModel):
     password: str = Field(min_length=10, max_length=200)
 
 class SkillItem(StrictModel):
+    id: str = Field(default='',max_length=100)
     name: str = Field(min_length=1,max_length=100)
     level: Literal['unknown','beginner','intermediate','advanced'] = 'unknown'
 
@@ -71,7 +72,25 @@ class CourseReference(StrictModel):
     education_id: str = Field(min_length=1,max_length=64)
     course_id: str = Field(min_length=1,max_length=64)
 
+class ProjectStatementScope(StrictModel):
+    kind: Literal['project','stages','unassigned'] = 'project'
+    stage_ids: list[str] = Field(default_factory=list,max_length=10)
+
+class ProjectStage(StrictModel):
+    id: str = Field(min_length=1,max_length=100)
+    parent_id: str = Field(min_length=1,max_length=64)
+    start_date: str = Field(default='',max_length=60)
+    end_date: str = Field(default='',max_length=60)
+
+class ProjectStatement(StrictModel):
+    id: str = Field(min_length=1,max_length=100)
+    text: str = Field(min_length=1,max_length=12000)
+    field: Literal['description','contribution','accomplishments'] = 'description'
+    scope: ProjectStatementScope = Field(default_factory=ProjectStatementScope)
+
 class ExperienceItem(StrictModel):
+    project_stages: list[ProjectStage] | None = Field(default=None,max_length=10)
+    project_statements: list[ProjectStatement] | None = Field(default=None,max_length=400)
     unavailable_source_ids: list[str] = Field(default_factory=list,max_length=1000)
     source_references: list[ImportSourceReference] = Field(default_factory=list,max_length=400)
     certification_items: list[CertificationItem] = Field(default_factory=list,max_length=100)

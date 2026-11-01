@@ -41,7 +41,11 @@ export async function requestJSON(path:string,method='GET',body?:unknown,csrf=''
  if(body instanceof Blob)headers['Content-Type']=body.type||'application/octet-stream';
  if(body!==undefined&&!(body instanceof FormData)&&!(body instanceof Blob))headers['Content-Type']='application/json';
  let response:Response;
- try{response=path==='/project-sources/upload-preview'&&method==='POST'&&body instanceof FormData?await uploadProjectPreview(body,headers,signal,onTransfer):await fetch('/api'+path,{method,headers,credentials:'same-origin',signal,body:body===undefined?undefined:body instanceof FormData||body instanceof Blob?body:JSON.stringify(body)});}
+ // A stalled status read must release the UI into recoverable unknown status.
+ // This deadline never applies to uploads or provider work running on the server.
+ const bounded=method==='POST'&&path==='/analyses'||method==='GET'&&/^\/tasks\/[^/?]+$/.test(path)&&path!=='/tasks/active';
+ const requestSignal=signal||(bounded?AbortSignal.timeout(30000):undefined);
+ try{response=path==='/project-sources/upload-preview'&&method==='POST'&&body instanceof FormData?await uploadProjectPreview(body,headers,requestSignal,onTransfer):await fetch('/api'+path,{method,headers,credentials:'same-origin',signal:requestSignal,body:body===undefined?undefined:body instanceof FormData||body instanceof Blob?body:JSON.stringify(body)});}
  catch{throw new ApiError('The connection to the app was interrupted. Your saved inputs remain available. Check the connection and try again.');}
  const accessExpired=()=>new ApiError('Your secure access verification expired. Reload the sign-in page to verify your email, then sign in again.',response.status===403?403:401,'access');
  // Access may return its HTML login page instead of the app's JSON response.
@@ -98,17 +102,17 @@ const pendingKey=(account:string,job:string)=>'next-step-comparison:'+account+':
 export function pendingComparison(account:string,job:string,storage:Storage=localStorage){
  try{const record=JSON.parse(storage.getItem(pendingKey(account,job))||'null');return record&&typeof record.token==='string'?record:null;}catch{return null;}
 }
-export async function comparisonTask(account:string,body:any,call:Call,storage:Storage=localStorage,wait=sleep){
+export async function comparisonTask(account:string,body:any,call:Call,storage:Storage=localStorage,wait=sleep,onUpdate?:(value:any)=>void){
  const key=pendingKey(account,body.job_id);
  const pending=pendingComparison(account,body.job_id,storage)||{token:crypto.randomUUID(),mode:body.mode};
  // Record the token before POST: even a lost start response can be recovered.
  storage.setItem(key,JSON.stringify(pending));
  if(!pending.id){
-  try{const initial=await call('/analyses','POST',{...body,mode:pending.mode,request_token:pending.token});if(typeof initial?.task_id!=='string'||!initial.task_id)throw new ApiError('The comparison start could not be confirmed. Check its status before starting another request.',502);pending.id=initial.task_id;storage.setItem(key,JSON.stringify(pending));}
-  catch(error){if(error instanceof ApiError&&error.status>=400&&error.status<500&&error.status!==429)storage.removeItem(key);throw error;}
+  try{const initial=await call('/analyses','POST',{...body,mode:pending.mode,request_token:pending.token});if(typeof initial?.task_id!=='string'||!initial.task_id)throw new ApiError('The comparison start could not be confirmed. Check its status before starting another request.',502);pending.id=initial.task_id;storage.setItem(key,JSON.stringify(pending));onUpdate?.({id:pending.id,status:initial.status||'queued',kind:'analysis',created_at:new Date().toISOString()});}
+  catch(error){if(error instanceof ApiError&&error.status>=400&&error.status<500&&![401,403,429].includes(error.status))storage.removeItem(key);throw error;}
  }
- try{const result=await pollTask(pending.id,call,wait,1200);storage.removeItem(key);return result;}
- catch(error){if(error instanceof ApiError&&[401,403,404,422,499].includes(error.status))storage.removeItem(key);throw error;}
+ try{const result=await pollTask(pending.id,call,wait,1200,onUpdate);storage.removeItem(key);return result;}
+ catch(error){if(error instanceof ApiError&&[404,422,499].includes(error.status))storage.removeItem(key);throw error;}
 }
 
 const projectKey=(account:string,snapshot:string)=>'next-step-project-task:'+account+':'+snapshot;

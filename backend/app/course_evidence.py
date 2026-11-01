@@ -48,6 +48,40 @@ class ClassEdit(StrictModel):
     title:str=Field(min_length=1,max_length=300)
     status:str=Field(pattern='^(completed|in_progress|planned|unspecified)$')
 
+class ClassAdd(StrictModel):
+    expected_updated_at:str
+    titles:list[str]=Field(min_length=1,max_length=150)
+
+def add_classes(user,parent,body):
+    """Append names atomically; materialize existing identities without replacing context."""
+    with db.connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        record=db.decode(c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='experience'",(parent,user)).fetchone())
+        if not record or record['data'].get('category')!='education':raise HTTPException(404,'Education not found.')
+        if record['updated_at']!=body.expected_updated_at:raise HTTPException(409,'This education changed. Your class selection is retained. Refresh the saved version, then try adding again.')
+        data=copy.deepcopy(record['data']);existing=classes(record)
+        known={name.strip().casefold() for item in existing for name in [item['title'],*item.get('aliases',[])]}
+        titles=[]
+        for value in body.titles:
+            title=value.strip()
+            if not title or len(title)>300 or re.search(r'[;\r\n]',title):raise HTTPException(422,'Use one class name per selection, up to 300 characters, without semicolons or line breaks.')
+            if title.casefold() not in known:titles.append(title);known.add(title.casefold())
+        combined=[*names(data),*titles]
+        if len('; '.join(combined))>4000:raise HTTPException(422,'This education’s class list exceeds 4,000 characters. Keep your selection and add fewer classes.')
+        data['relevant_courses']='; '.join(combined)
+        # Keep original saved metadata, and freeze any legacy projected IDs.
+        saved={v['id']:v for v in data.get('course_items',[])}
+        for item in existing:
+            saved.setdefault(item['id'],{k:item[k] for k in ('id','title','status','aliases')})
+        for title in titles:
+            item=CourseItem(id=identity(parent,title),title=title,status='unspecified',aliases=[]).model_dump();saved[item['id']]=item
+        if len(saved)>150:raise HTTPException(422,'This education supports up to 150 class records. Your selection is retained; choose fewer classes.')
+        data['course_items']=list(saved.values())
+        from .resume_conversation import write
+        if titles:write(c,user,'experience',data,parent);profile_answers.touch_resumes(c,user,None,parent)
+    record=db.get(user,parent,'experience')
+    return {'courses':classes(record),'added':len(titles),'expected_updated_at':record['updated_at']}
+
 def edit_class(user,parent,course,body):
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE')
@@ -156,6 +190,8 @@ def approve(user,id,body):
 def install(app,start_task,require_ai):
     @app.get('/api/profile-courses')
     def get_courses(user=Depends(auth.current)):return listing(user['id'])
+    @app.post('/api/profile-courses/{parent}/add')
+    def post_classes(parent:str,body:ClassAdd,user=Depends(auth.current)):return add_classes(user['id'],parent,body)
     @app.put('/api/profile-courses/{parent}/{course}')
     def put_course(parent:str,course:str,body:ClassEdit,user=Depends(auth.current)):return edit_class(user['id'],parent,course,body)
     @app.get('/api/profile-courses/{parent}/{course}/syllabi')

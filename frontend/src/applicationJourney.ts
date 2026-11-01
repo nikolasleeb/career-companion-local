@@ -1,5 +1,5 @@
-export type DocumentStage='posting'|'resume'|'letter'|'finish';
-export const documentStages:DocumentStage[]=['posting','resume','letter','finish'];
+export type DocumentStage='posting'|'comparison'|'resume'|'letter'|'finish';
+export const documentStages:DocumentStage[]=['posting','comparison','resume','letter','finish'];
 export function stageFor(view:string,stage?:string):DocumentStage{return documentStages.includes(stage as DocumentStage)?stage as DocumentStage:view==='cover'?'letter':view==='agent'?'finish':'posting';}
 export function selectedResume(workflow:any,remembered:string,submitted:string,resumes:any[]){return workflow?.resume_id||remembered||submitted||resumes[0]?.id||'';}
 export function nextApplicationAction(data:any,preparation?:any){

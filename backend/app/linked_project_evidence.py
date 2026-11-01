@@ -35,9 +35,10 @@ def candidates(user):
             if item['field'] not in NARRATIVE:continue
             targets = []
             for job in jobs:
+                if 'allowed_parent_ids' in item and job['source_id'] not in item['allowed_parent_ids']:continue
                 conflicts = [{'item_id':i['item_id'], 'text':i['original']} for i in job['content_items'] if i['field'] in NARRATIVE and overlaps(item['original'], i['original'])]
                 targets.append({'id':job['source_id'], 'title':job['title'], 'organization':job.get('organization',''), 'dates':job.get('dates',''), 'overlaps':conflicts, 'revision':records[job['source_id']]['updated_at']})
-            ref = {'project_id':rid, 'item_id':item['item_id'], 'field':item['field'], 'original':item['original'], 'project_title':data['title'], 'project_revision':record['updated_at'], 'reviewed_answer_sources':copy.deepcopy([a for a in data.get('answer_sources', []) if normalized(item['original']) in normalized(a.get('text','')) or normalized(a.get('text','')) and normalized(a['text']) in normalized(item['original'])])}
+            ref = {'project_id':rid, 'item_id':item['item_id'], 'field':item['field'], 'original':item['original'], 'project_title':data['title'], 'project_revision':record['updated_at'], **({k:copy.deepcopy(item[k]) for k in ('allowed_parent_ids','project_scope') if k in item}), 'reviewed_answer_sources':copy.deepcopy([a for a in data.get('answer_sources', []) if normalized(item['original']) in normalized(a.get('text','')) or normalized(a.get('text','')) and normalized(a['text']) in normalized(item['original'])])}
             # Any source, reviewed answer, role boundary or relationship change requires a new review.
             stamp = digest({'source':ref, 'reviewed_answers':data.get('answer_sources',[]), 'relationships':data.get('relationship_context', []), 'targets':targets})
             result.append({**ref, 'source_fingerprint':stamp, 'jobs':targets})
@@ -100,7 +101,7 @@ def apply(snapshot, reviewed):
         remember(pid)
         # An explicit review can refresh this specific item, without refreshing unrelated facts.
         project['content_items'] = [i for i in project['content_items'] if i['item_id'] != row['item_id']]
-        item = {'item_id':row['item_id'], 'field':row['field'], 'original':row['original'], 'text':wording.get((pid,row['item_id']),row['original']) if previous.get((pid,row['item_id']),{}).get('source_fingerprint')==row['source_fingerprint'] else row['original']}
+        item = {**{k:copy.deepcopy(row[k]) for k in ('allowed_parent_ids','project_scope') if k in row}, 'item_id':row['item_id'], 'field':row['field'], 'original':row['original'], 'text':wording.get((pid,row['item_id']),row['original']) if previous.get((pid,row['item_id']),{}).get('source_fingerprint')==row['source_fingerprint'] else row['original']}
         if choice['placement'] == 'project':project['content_items'].append(item)
         if choice['placement'] == 'employment':
             jid = choice['employment_id'];job = rows.get(jid)
@@ -157,6 +158,7 @@ def automatic(snapshot):
             if not target or target['category'] not in ('employment','education','coursework'):continue
             for item in project['content_items']:
                 if item['field'] not in NARRATIVE:continue
+                if 'allowed_parent_ids' in item and target_id not in item['allowed_parent_ids']:continue
                 ref={'project_id':pid,'item_id':item['item_id'],'original':item['original'],
                      'project_title':project['title'],'project_dates':project.get('dates',''),
                      'destination_id':target_id,'employment_id':target_id if target['category']=='employment' else '',

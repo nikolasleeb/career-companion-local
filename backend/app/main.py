@@ -54,6 +54,9 @@ app.add_middleware(LocalAccess)
 from .security import ResourceBoundary,request_limit
 app.add_middleware(ResourceBoundary)
 app.include_router(home.router)
+from . import profile_details,master_resume
+app.include_router(profile_details.router)
+app.include_router(master_resume.router)
 app.include_router(job_alerts.router)
 app.include_router(job_results.router)
 app.include_router(job_cache.router)
@@ -338,7 +341,8 @@ def workspace(paged_jobs:bool=False,user=Depends(auth.current)):
     applications.migrate(user['id']);profile_answers.migrate(user['id'])
     unlocked=onboarding.status(user['id'])['completed']
     result={kind:[applications.public(r) for r in db.list_entities(user['id'],kind)] if unlocked or kind in ('experience','document','profile_answer','onboarding','prep','interview','assessment','assessment_progress') else [] for kind in ['experience','document','job','analysis','resume','prep','interview','assessment','assessment_progress','board','search','application','cover_letter','profile_answer','onboarding']}
-    from . import application_preparation
+    from . import application_preparation,skill_details
+    result['experience']=[skill_details.decorate(r) for r in result['experience']]
     result['application']=application_preparation.decorate(user['id'],result['application'])
     result['profile_answer']=[{**row,'data':{**row['data'],'needs_related_experience':profile_answers.needs_link(user['id'],row['data'])}} for row in result['profile_answer']]
     result['search']=[job_results.public_search(user['id'],r) for r in result['search']]
@@ -508,7 +512,7 @@ def add_experience(body:ExperienceItem,user=Depends(auth.current)):
 def edit_experience(entity_id:str,body:ExperienceItem,user=Depends(auth.current)):
     old=require(user['id'],entity_id,'experience')['data']
     from . import project_relations
-    body=ExperienceItem.model_validate({**body.model_dump(),**{field:old.get(field,[]) for field in project_relations.FIELDS if field not in body.model_fields_set}})
+    body=ExperienceItem.model_validate({**body.model_dump(),**{field:old.get(field,[]) for field in (*project_relations.FIELDS,'project_stages','project_statements') if field not in body.model_fields_set}})
     certifications.validate_documents(user['id'],body.model_dump())
     return db.save(user['id'],'experience',{**body.model_dump(),'source_references':combined_import.edited_references(old,body.model_dump()),'unavailable_source_ids':old.get('unavailable_source_ids',[])},entity_id)
 
@@ -516,6 +520,10 @@ def edit_experience(entity_id:str,body:ExperienceItem,user=Depends(auth.current)
 def remove_record(entity_id:str,user=Depends(auth.current)):
     record=db.get(user['id'],entity_id)
     if not record: raise HTTPException(404,'Record not found.')
+    if record['kind']=='experience':
+        from . import project_structure
+        if any(entity_id in project_structure.parents(p['data']) for p in db.list_entities(user['id'],'experience') if p['data'].get('category')=='project' and p['data'].get('project_stages') is not None):
+            raise HTTPException(409,'Detach the projects from this entry before deleting it. Their statements and history will be preserved.')
     blocker=interview_practice.removal_blocker(user['id'],record) or application_documents.removal_blocker(user['id'],record)
     if blocker:raise HTTPException(409,blocker)
     if record['kind'] in knowledge_assistant.KINDS|readiness.KINDS or record['kind']=='chat_image':raise HTTPException(409,'Delete the complete conversation from its chat history to preserve references.')
@@ -1222,6 +1230,10 @@ def edit_application(entity_id:str,body:ApplicationInput,expected_updated_at:str
 @app.delete('/api/applications/{entity_id}')
 def delete_application(entity_id:str,user=Depends(auth.current)):
     record=require(user['id'],entity_id,'application')
+    if record['kind']=='experience':
+        from . import project_structure
+        if any(entity_id in project_structure.parents(p['data']) for p in db.list_entities(user['id'],'experience') if p['data'].get('category')=='project' and p['data'].get('project_stages') is not None):
+            raise HTTPException(409,'Detach the projects from this entry before deleting it. Their statements and history will be preserved.')
     blocker=interview_practice.removal_blocker(user['id'],record)
     if blocker:raise HTTPException(409,blocker)
     if any(a.get('kind')=='document' for a in record['data'].get('attachments',[])):raise HTTPException(409,'Remove uploaded files first, or archive this application to preserve its documents.')
@@ -1340,6 +1352,8 @@ def backup(user=Depends(auth.current)):
     for record in records:
         if record['kind']=='experience' and record['data'].get('category') in ('education','coursework'):
             record['data']['course_items']=[{k:v for k,v in item.items() if k in CourseItem.model_fields} for item in course_evidence.classes(record)]
+        from . import skill_details
+        if record['kind']=='experience' and skill_details.is_group(record['data']):record['data']['skill_items']=skill_details.items(record['data'],record['id'])
         project_relations.backup_markers(record['data'],record_ids)
         course_evidence.backup_markers(record,record_ids)
         resume_strategy.backup_markers(record['data'],record_ids)
@@ -1376,6 +1390,10 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         for record in records:
             if record['kind'] not in BACKUP_KINDS or not isinstance(record['data'],dict): raise ValueError()
             course_evidence.validate_backup(record,kinds,by_id)
+            from . import project_structure
+            project_structure.validate_backup(record,kinds,by_id)
+            from . import skill_details
+            skill_details.validate_backup(record,kinds,by_id)
             career_explorer.validate_backup(record)
             if record['kind']=='onboarding':onboarding.validate_backup(record['data'])
             if record['kind']=='profile_personalization':
@@ -1520,6 +1538,14 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
         ai_settings.validate_custom({**db.settings(user['id']),**profile})
         if profile.get('contact') and 'contact_reviewed' not in profile: profile['contact_reviewed']=False
     except (ValueError,KeyError,TypeError,ValidationError): raise ServiceError('This is not a supported Career Companion account backup. Nothing was imported.') from None
+    skill_ids={}
+    for record in records:
+        if record['kind']=='experience':
+            for item in skill_details.items(record['data'],record['id']):
+                identity=item['id']
+                if identity in ids or identity in skill_ids:raise ServiceError('Duplicate skill identity in backup. Nothing was imported.')
+                skill_ids[identity]=db.uid()
+    ids.update(skill_ids)
     def remap(value):
         if isinstance(value,str) and ':' in value and value.split(':',1)[0] in ids:return ids[value.split(':',1)[0]]+':'+value.split(':',1)[1]
         if isinstance(value,str): return 'library:'+ids[value[8:]] if value.startswith('library:') and value[8:] in ids else ids.get(value,value)

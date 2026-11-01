@@ -28,6 +28,9 @@ def scenario(client,account,monkeypatch):
  cloud=record(category='project',title='Transport weather data pipeline',description='Designed AWS ingestion pipelines using EC2, Lambda, S3 and Glue. Built a Spark workload for distributed data cleaning.',contribution='Owned cloud architecture while a teammate handled predictive analytics.',linked_education_ids=[degree['id']])
  energy=record(category='project',title='Energy demand analysis',description='Analyzed gasoline prices using Python.',contribution='Completed course ABC123 independently except PowerPoint proofreading by a teammate.')
  skill=record(category='skills',title='Programming',skill_items=[{'name':'Python'},{'name':'SQL'}])
+ from app import project_structure
+ approved=[{**v,'scope':{'kind':'project','stage_ids':[]}} for v in project_structure.statements(project['data'])]
+ project=db.save(user,'experience',{**project['data'],'project_stages':project_structure.stages(project['data']),'project_statements':approved},project['id'])
  job=db.save(user,'job',{'title':'Graduate Program','company':'Example Energy','description':POSTING})
  session=guided.start(user,ConversationStart(job_id=job['id']))
  return user,job,session,dict(degree=degree,intern=intern,contractor=contractor,project=project,cloud=cloud,energy=energy,skill=skill)

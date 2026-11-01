@@ -55,7 +55,11 @@ def decorate(user, records):
         conversation = next((row for row in entities['resume_conversation'] if row['data'].get('job_id') == job_id), None)
         revision = by_id.get((conversation or {}).get('data', {}).get('current_revision_id'))
         draft = next((row for row in entities['resume_draft'] if row['data'].get('job_id') == job_id), None)
-        if conversation or any(row['data'].get('job_id') == job_id for row in entities['analysis']):
+        if job_id in by_id:
+            state.update(label='Compare your Profile', stage='comparison', action_label='Continue to comparison')
+        if any(row['data'].get('job_id') == job_id for row in entities['analysis']):
+            state.update(label='Comparison ready to review', stage='comparison', action_label='Review comparison')
+        if conversation:
             state.update(label='Prepare resume', stage='resume', action_label='Continue resume')
         if draft or revision and not revision['data'].get('finalized_resume_id'):
             state.update(label='Draft ready to review', stage='resume', action_label='Review resume draft')
@@ -70,12 +74,12 @@ def decorate(user, records):
         latest = next((task for task in own if task['status'] in ACTIVE), None) or next(iter(own), None)
         if latest:
             letter = latest['kind'] == 'cover_letter'
-            stage = 'posting' if latest['kind'] == 'analysis' else 'letter' if letter else 'resume'
+            stage = 'comparison' if latest['kind'] == 'analysis' else 'letter' if letter else 'resume'
             completed = max((row['updated_at'] for kind in ('resume_revision', 'resume_draft', 'resume', 'cover_revision', 'cover_letter', 'analysis')
                              for row in entities[kind] if row['data'].get('job_id') == job_id), default='')
             if latest['status'] in ACTIVE:
                 label = ('Stopping preparation' if latest['status'] == 'cancelling' else
-                         'Comparing posting' if stage == 'posting' else
+                         'Comparing posting' if stage == 'comparison' else
                          'Cover letter generating' if letter else 'Resume generating')
                 state.update(state='working', label=label, stage=stage, action_label='View preparation progress')
             elif latest['status'] in FAILED and latest['updated_at'] > completed:

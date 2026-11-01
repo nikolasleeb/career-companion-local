@@ -89,15 +89,18 @@ def decode(row):
     result['data'] = json.loads(result.pop('payload'))
     return result
 
-def save(user, kind, data, entity_id=None, *, restoring=False):
+def save(user, kind, data, entity_id=None, *, restoring=False, expected_updated_at=None):
     entity_id = entity_id or uid()
     timestamp = now()
     with connect() as c:
         from . import saved_names
-        if kind in saved_names.CHAT_KINDS or kind=='prep' or restoring and kind=='interview_session':c.execute('BEGIN IMMEDIATE')
-        existing = c.execute('SELECT user_id,kind,payload FROM entities WHERE id=?', (entity_id,)).fetchone()
+        if kind in saved_names.CHAT_KINDS or kind in ('experience','prep') or restoring and kind=='interview_session':c.execute('BEGIN IMMEDIATE')
+        existing = c.execute('SELECT user_id,kind,payload,updated_at FROM entities WHERE id=?', (entity_id,)).fetchone()
         if existing and (existing['user_id'] != user or existing['kind'] != kind):
             raise ValueError('Record not found')
+        if expected_updated_at is not None and (not existing or existing['updated_at']!=expected_updated_at):
+            from fastapi import HTTPException
+            raise HTTPException(409,'This entry changed. Your draft is retained; reopen the current entry before saving again.')
         if kind in saved_names.CHAT_KINDS and (not existing or data.get('title')!=json.loads(existing['payload']).get('title')):
             data={**data,'title':saved_names.clean(data.get('title'))}
             if restoring:data['title']=saved_names.imported_title(c,user,kind,data['title'])
@@ -117,7 +120,12 @@ def save(user, kind, data, entity_id=None, *, restoring=False):
             if existing:
                 for field in project_relations.FIELDS:
                     if field not in data:data={**data,field:old.get(field,[])}
+            from . import skill_details
+            data=skill_details.prepare(c,user,entity_id,data,old,restoring=restoring)
             project_relations.validate(c,user,data,old,restoring=restoring)
+            from . import project_structure
+            data=project_structure.prepare(c,user,{**data,'_record_id':entity_id},old,restoring=restoring)
+            data.pop('_record_id',None)
         if existing:
             c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?', (json.dumps(data), timestamp, entity_id))
         else:

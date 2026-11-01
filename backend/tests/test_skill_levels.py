@@ -10,7 +10,10 @@ def test_skill_levels_survive_save_and_backup_without_changing_legacy(client,acc
     body={**legacy['data'],'skill_items':[{'name':'Python','level':'beginner'},{'name':'SQL','level':'intermediate'},{'name':'Git','level':'unknown'}],'tools':'Python, SQL, Git'}
     updated=client.put('/api/experience/'+legacy['id'],json=body)
     assert updated.status_code==200,updated.text
-    assert updated.json()['data']['skill_items']==body['skill_items']
+    saved=updated.json()['data']['skill_items']
+    assert [{k:v for k,v in row.items() if k!='id'} for row in saved]==body['skill_items']
+    assert len({row['id'] for row in saved})==len(saved)
+    assert all(row['id'] for row in saved)
     assert 'intermediate' in ai.experience_text(updated.json()['data'])
     backup=client.get('/api/account/export')
     assert backup.status_code==200

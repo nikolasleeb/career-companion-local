@@ -36,6 +36,34 @@ test('lost POST response reuses its token and original mode',async()=>{
  await comparisonTask('a',{job_id:'j',mode:'economy'},async(path,method,body)=>{if(method==='POST'){tokens.push(body.request_token);assert.equal(body.mode,'deep');return {task_id:'original'};}return {status:'completed',result:{id:'saved'}};},store,immediate);
  assert.equal(tokens[0],tokens[1]);
 });
+test('comparison reports queued, delayed, disconnected and completed status without duplicate starts',async()=>{
+ const store=storage(),updates=[];let posts=0,reads=0;
+ const value=await comparisonTask('account',{job_id:'job',mode:'deep'},async(path,method)=>{
+  if(method==='POST'){posts++;return {task_id:'original',status:'queued'};}
+  reads++;if(reads===2)throw new ApiError('Connection interrupted');
+  return reads<4?{id:'original',status:'running',progress:{label:'Comparing with your Profile',kind:'provider'}}:{id:'original',status:'completed',result:{id:'comparison'}};
+ },store,immediate,v=>updates.push(v));
+ assert.equal(value.id,'comparison');assert.equal(posts,1);assert.equal(updates[0].status,'queued');
+ assert.ok(updates.some(v=>v.connection_lost));assert.equal(updates.at(-1).status,'completed');assert.equal(pendingComparison('account','job',store),null);
+});
+test('authentication loss retains the original comparison task for a status-only recovery',async()=>{
+ for(const status of [401,403]){
+  const store=storage();
+  await assert.rejects(()=>comparisonTask('account',{job_id:'job',mode:'deep'},async(path,method)=>method==='POST'?{task_id:'original'}:Promise.reject(new ApiError('Sign in again',status)),store,immediate));
+  assert.equal(pendingComparison('account','job',store).id,'original');
+  const result=await comparisonTask('account',{job_id:'job',mode:'economy'},async(path,method)=>{assert.notEqual(method,'POST');return {status:'completed',result:{id:'saved'}};},store,immediate);
+  assert.equal(result.id,'saved');
+ }
+});
+test('comparison status reads and task starts have a deadline without timing out uploads',async()=>{
+ const oldFetch=globalThis.fetch,oldTimeout=AbortSignal.timeout;const deadlines=[],requests=[];
+ AbortSignal.timeout=ms=>{deadlines.push(ms);return new AbortController().signal;};
+ globalThis.fetch=async(path,options)=>{requests.push({path,options});return new Response('{}');};
+ try{
+  await requestJSON('/tasks/original');await requestJSON('/analyses','POST',{job_id:'job'});await requestJSON('/jobs/from-document','POST',new FormData());
+  assert.deepEqual(deadlines,[30000,30000]);assert.ok(requests[0].options.signal);assert.ok(requests[1].options.signal);assert.equal(requests[2].options.signal,undefined);
+ }finally{globalThis.fetch=oldFetch;AbortSignal.timeout=oldTimeout;}
+});
 test('failed and interrupted comparisons clear pending state for explicit retry',async()=>{
  for(const status of ['failed','interrupted']){
   const store=storage();await assert.rejects(()=>comparisonTask('a',{job_id:'j',mode:'deep'},async(path,method)=>method==='POST'?{task_id:'t'}:{status,error:'Your inputs are saved.'},store,immediate),/inputs are saved/);

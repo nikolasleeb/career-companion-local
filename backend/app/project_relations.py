@@ -51,6 +51,7 @@ def backup_markers(value,known):
  if isinstance(value,list):
   for row in value:backup_markers(row,known)
  elif isinstance(value,dict):
+  if set(value)=={'experience_id','skill_id'}:return # Validated separately as one individual skill.
   from .profile_answers import experience_ids
   if 'experience_ids' in value or value.get('experience_id'):
    value['unavailable_experience_ids']=[id for id in experience_ids(value) if id not in known]

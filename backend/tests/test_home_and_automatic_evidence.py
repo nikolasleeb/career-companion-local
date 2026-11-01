@@ -13,6 +13,8 @@ def test_automatic_relationships_keep_original_sources_and_one_location(client,a
     contractor=experience(u,category='employment',title='Contractor',description='Continued later testing.')
     edu=experience(u,category='education',title='MS',degree='MS',organization='Example University',relevant_courses='Data Systems')
     project=experience(u,category='project',title='Prototype',description='Built a local retrieval prototype.',contribution='Initially tested approximately 10 documents.',linked_employment_ids=[intern['id'],contractor['id']],linked_education_ids=[edu['id']],linked_courses=[{'education_id':edu['id'],'course':'Data Systems'}])
+    from app import project_structure
+    project=db.save(u,'experience',{**project['data'],'project_stages':project_structure.stages(project['data']),'project_statements':[{**v,'scope':{'kind':'project','stage_ids':[]}} for v in project_structure.statements(project['data'])]},project['id'])
     posting=db.save(u,'job',{'title':'Analyst','description':'Build and test data systems.'});session=guided.start(u,ConversationStart(job_id=posting['id']))
     before=db.get(u,project['id'],'experience');source=guided.source(u,session['data']);rows=linked.entries(source)
     original=rows[project['id']]['content_items'];assert len(original)==2
@@ -82,7 +84,8 @@ def test_home_bounded_continuation_plans_reviews_and_suggestions(client,account,
     db.save(u,'personalized_search',{'search_id':'saved','matches':[{'job_id':r} for r in (active['id'],closed['id'],apps[0]['data']['job_id'])],'checked_at':'2026-10-30T00:00:00Z'})
     before=stored(u);result=client.get('/api/home?visited='+apps[0]['id']).json()
     assert len(result['applications'])==4 and result['applications'][0]['id']==apps[0]['id']
-    assert result['applications'][0]['preparation']['stage']=='posting'
+    assert result['applications'][0]['preparation']['stage']=='comparison'
+    assert result['applications'][0]['preparation']['action_label']=='Continue to comparison'
     assert len(result['plans'])==1 and result['plans'][0]['id']==plan['id']
     assert result['plans'][0]['next_step']['text']=='Learn SQL' and result['plans'][0]['completed']==0
     assert result['suggestions']['jobs'][0]['id']==active['id'] and len(result['suggestions']['jobs'])==1

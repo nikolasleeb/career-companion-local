@@ -99,8 +99,10 @@ def entry_snapshot(data,source_id,granular=False):
         elif value in str(data.get('accomplishments','')) or value in field_bullets.get('accomplishments',[]):field='accomplishment'
         item_id=hashlib.sha256((str(data.get('title'))+'|'+str(data.get('organization'))+'|'+field+'|'+value).encode()).hexdigest()[:24]
         items.append({'item_id':item_id,'field':field,'original':value,'text':value})
-    return {**data,'source_id':source_id,'title':title,'dates':dates,'details':' | '.join(filter(None,details)),
+    result={**data,'source_id':source_id,'title':title,'dates':dates,'details':' | '.join(filter(None,details)),
             'organization':clean(data.get('organization')),'bullets':bullets,'content_items':items}
+    from . import project_structure
+    return project_structure.enrich_snapshot(result)
 
 
 def _filename_part(value):

@@ -33,10 +33,10 @@ def reminders(user):
     if imports:result.append({'text':f'Review {imports} pending Profile import(s).','tab':'upload'})
     pending=sum(not r['data'].get('confirmed') for r in records)
     details=sum(bool(r['data'].get('status')=='draft' or r['data'].get('needs_related_experience')) for r in db.list_entities(user,'profile_answer'))
-    if pending or details:result.append({'text':f'Review {pending} unconfirmed record(s) and {details} Supporting Detail(s).','tab':'resume'})
+    if pending or details:result.append({'text':f'Review {pending} unconfirmed record(s) and {details} Supporting Detail(s).','tab':'resume','item':next((r['id'] for r in records if not r['data'].get('confirmed')),'details')})
     with db.connect() as c:
         unresolved=[r for r in records if project_relations.unresolved(c,user,r['data'])]
-    if unresolved:result.append({'text':f'Resolve links for {len(unresolved)} Profile record(s).','tab':'resume'})
+    if unresolved:result.append({'text':f'Resolve links for {len(unresolved)} Profile record(s).','tab':'resume','item':unresolved[0]['id']})
     for r in records:
         d=r['data']
         if d.get('category') in ('employment','project') and not any(str(d.get(k,'')).strip() for k in ('description','contribution','accomplishments')):

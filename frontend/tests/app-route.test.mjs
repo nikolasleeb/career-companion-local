@@ -40,7 +40,7 @@ test('skill resource links retain a bounded topic and exact plan milestone refer
  assert.deepEqual(route.parseRoute('#/skills?topic='+encodeURIComponent('SQL\nsecret')),{view:'prep'});
  assert.equal(route.routeHash({view:'coach',item:'chat1',plan:'version2',milestone:'step:abc'}),'#/career-plans?item=chat1&plan=version2&milestone=step%3Aabc');
 });
-test('document stages and personalization deep links are explicit, bounded navigation fields',()=>{for(const stage of ['posting','resume','letter','finish'])assert.equal(route.parseRoute(route.routeHash({view:stage==='letter'?'cover':'tailor',job:'job',application:'app',stage})).stage,stage);assert.equal(route.parseRoute('#/resume?stage=unknown').stage,undefined);assert.deepEqual(route.parseRoute('#/profile?tab=personalization'),{view:'master',tab:'personalization'});});
+test('document stages and personalization deep links are explicit, bounded navigation fields',()=>{for(const stage of ['posting','comparison','resume','letter','finish'])assert.equal(route.parseRoute(route.routeHash({view:stage==='letter'?'cover':'tailor',job:'job',application:'app',stage})).stage,stage);assert.equal(route.parseRoute('#/resume?stage=unknown').stage,undefined);assert.deepEqual(route.parseRoute('#/profile?tab=personalization'),{view:'master',tab:'personalization'});});
 
 test('Home defaults without overriding explicit links or reload destinations',()=>{
  route.resetRoutes();location.hash='';route.initializeRoutes('home-user',true,{view:'tailor',jobId:'old'});assert.equal(route.routeNow().view,'home');

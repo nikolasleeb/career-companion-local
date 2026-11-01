@@ -45,7 +45,10 @@ def needs_link(user,data):
     from . import project_relations
     with db.connect() as c:
         from . import course_evidence
-        try:course_evidence.validate_refs(c,user,data.get('course_refs',[]),links)
+        try:
+            course_evidence.validate_refs(c,user,data.get('course_refs',[]),links)
+            from . import skill_details
+            skill_details.validate_ref(c,user,data)
         except HTTPException:return True
         for id in links:
             record=db.decode(c.execute("SELECT * FROM entities WHERE user_id=? AND id=? AND kind='experience'",(user,id)).fetchone())
@@ -160,14 +163,19 @@ def migrate(user):
         added=[db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind='profile_answer'",(user,)) if r['id'] not in previous and json.loads(r['payload']).get('answer_kind')=='experience']
         if added:touch_resumes(c,user,None,added[0]['data'].get('experience_id') or added[0]['id'])
 
-def confirmed(user):
+def confirmed(user,scoped=False):
+    from . import skill_details
+    known={r['id']:r for r in db.list_entities(user,'experience')}
     rows=[]
     for r in db.list_entities(user,'profile_answer'):
         data=r['data']
-        if data.get('status')!='confirmed' or needs_link(user,data):continue
+        if data.get('status')!='confirmed' or needs_link(user,data) or skill_details.pending(data,known):continue
         if data.get('backed_fields'):
             target=db.get(user,data.get('experience_id',''),'experience')
             if not target or not target['data'].get('confirmed') or any(str(value) not in str(target['data'].get(field,'')) for field,value in data['backed_fields'].items()):continue
+        if scoped and data.get('skill_ref'):
+            ref=data['skill_ref'];skill=next(v for v in skill_details.items(known[ref['experience_id']]['data'],ref['experience_id']) if v['id']==ref['skill_id'])
+            r=copy.deepcopy(r);r['data']['text']='Skill — '+skill['name']+': '+data['text'];r['data']['skill_name']=skill['name']
         rows.append(r)
     return rows
 
@@ -178,10 +186,17 @@ def records(user):
     for answer in confirmed(user):
         a=answer['data']
         if a.get('answer_kind')!='experience':continue
-        links=experience_ids(a);rid=links[0] if links else '';record=records.get(rid)
+        from . import skill_details
+        if skill_details.pending(a,records):continue
+        skill_ref=a.get('skill_ref')
+        links=experience_ids(a);rid=skill_ref['experience_id'] if skill_ref else links[0] if links else '';record=records.get(rid)
         if not record:continue
         full='\n'.join(str(v) for v in record['data'].values())
         text=a.get('text','');sources=a.get('sources',[])
+        if skill_ref:
+            skill=next((v for v in skill_details.items(record['data'],rid) if v['id']==skill_ref['skill_id']),None)
+            if not skill:continue
+            text='Skill — '+skill['name']+': '+text
         if a.get('course_refs'):
             from . import course_evidence
             course_context=[]
@@ -190,7 +205,16 @@ def records(user):
                 course_context.append(course['title']+' ('+course['status'].replace('_',' ')+')')
             text='Coursework — '+', '.join(course_context)+': '+text
         if text and norm(text) not in norm(full):record['data']['contribution']='\n'.join(filter(None,[record['data'].get('contribution',''),text]))
-        record['data'].setdefault('answer_sources',[]).append({'id':answer['id'],'version':a.get('version',1),'experience_ids':links,'course_refs':a.get('course_refs',[]),'linked_experiences':[{'id':id,'title':records[id]['data']['title']} for id in links if id in records],'association_note':'Use this fact once in its main context. Additional links indicate related work, not separate accomplishments. Coursework is academic experience; preserve its stated course status.','text':text,'title':a.get('title','Supporting Detail'),'questions':[q.get('text','') for source in sources for q in source.get('questions',[])],'provenance':[{k:copy.deepcopy(v) for k,v in source.items() if k in ('builder','draft_id','snapshot_id','analysis_id','attempt_id','voice_id','commit','excerpts','user_quotes','reviewed_at','proposal_id','conversation_id','job_id','resume_id','project_refs','document_id','quote','topic','syllabus_sha256')} for source in sources]})
+        record['data'].setdefault('answer_sources',[]).append({'id':answer['id'],'version':a.get('version',1),'experience_ids':links,'course_refs':a.get('course_refs',[]),**({'skill_ref':copy.deepcopy(skill_ref),'skill_name':skill['name']} if skill_ref else {}),'linked_experiences':[{'id':id,'title':records[id]['data']['title']} for id in links if id in records],'association_note':'Use this fact once in its main context. Additional links indicate related work, not separate accomplishments. Coursework is academic experience; preserve its stated course status.','text':text,'title':a.get('title','Supporting Detail'),'questions':[q.get('text','') for source in sources for q in source.get('questions',[])],'provenance':[{k:copy.deepcopy(v) for k,v in source.items() if k in ('builder','draft_id','snapshot_id','analysis_id','attempt_id','voice_id','commit','excerpts','user_quotes','reviewed_at','proposal_id','conversation_id','job_id','resume_id','project_refs','document_id','quote','topic','syllabus_sha256')} for source in sources]})
+    from . import project_structure
+    detail_index={r['id']:r['data'] for r in confirmed(user)}
+    for record in records.values():
+        if record['data'].get('category')=='project':
+            original=(db.get(user,record['id'],'experience') or record)['data']
+            record['data']['project_attribution']=[{'statement_id':v['id'],'text':v['text'],'scope':v['scope'],'allowed_parent_ids':project_structure.destinations(v['scope'],original)} for v in project_structure.statements(original)]
+            for a in record['data'].get('answer_sources',[]):
+                a['project_scope']=project_structure.scope_for_detail(detail_index[a['id']],record['id'],record['data'])
+                a['allowed_parent_ids']=project_structure.destinations(a['project_scope'],record['data'])
     for record in records.values():
         if record['data'].get('category')=='project':record['data']['related_jobs']=[{'id':id,'title':records[id]['data']['title'],'organization':records[id]['data'].get('organization','')} for id in record['data'].get('linked_employment_ids',[]) if id in records and records[id]['data'].get('category')=='employment']
     for record in records.values():
@@ -204,7 +228,7 @@ def records(user):
 def reusable(user,job_id,selected=()):
     """Motivation requires an explicit per-letter selection, even for the same company."""
     allowed=set(selected)
-    return [r for r in confirmed(user) if r['data']['answer_kind']=='experience' or r['id'] in allowed]
+    return [r for r in confirmed(user,scoped=True) if r['data']['answer_kind']=='experience' or r['id'] in allowed]
 
 def drafts(user):
     rows=[]
@@ -249,6 +273,8 @@ def edit(user,id,body):
                 value=ExperienceItem.model_validate(value).model_dump()
                 from .resume_conversation import write as store
                 store(c,user,'experience',value,original['id']);data['backed_fields']=values
+        if data.get('skill_ref') and data['skill_ref']['experience_id'] not in links:raise HTTPException(422,'Reassign this individual skill detail in its skill window before changing its group.')
+        data['project_scopes']={pid:scope for pid,scope in data.get('project_scopes',{}).items() if pid in links}
         data.setdefault('review_history',[]).append({'reviewed_at':db.now(),'source':'Profile editor','text':body.text.strip(),'values':body.values})
         data['history'].append(old);data.update({'version':data['version']+1,'title':body.title,'text':body.text.strip(),'experience_id':links[0] if links else '','experience_ids':links,'course_refs':course_refs,'status':'archived' if body.archived else 'confirmed'})
         write(c,user,data,id)
@@ -342,3 +368,14 @@ def confirm_application_answer(user,application,question,text,description='',con
             store(c,user,'profile_answer',value,id)
             touch_resumes(c,user,record_id=id)
     return db.get(user,id,'profile_answer')
+
+
+def project_attribution(user,data):
+    from . import project_structure
+    result=[]
+    for id in experience_ids(data):
+        row=db.get(user,id,'experience')
+        if not row or row['data'].get('category')!='project':continue
+        scope=project_structure.scope_for_detail(data,id,row['data'])
+        result.append({'project_id':id,'project_title':row['data']['title'],'scope':scope,'allowed_parent_ids':project_structure.destinations(scope,row['data']),'rule':'Attribute only to the named project or allowed parents. An unassigned statement never establishes work at a linked job or education stage.'})
+    return result

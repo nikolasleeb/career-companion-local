@@ -1,5 +1,5 @@
 """Private written interview sessions. Code is reviewed, never executed."""
-import asyncio,hashlib,json,re
+import asyncio,copy,hashlib,json,re
 from pathlib import Path
 from typing import Literal
 from fastapi import APIRouter,Depends,HTTPException,UploadFile,File
@@ -206,7 +206,7 @@ def manual(id:str,body:ManualQuestion,user=Depends(owner)):
  return detail(user,id)
 
 def context(user,s,focus=''):
- p=career_coach.profile(user,focus+' '+s['data']['role']+' '+s['data']['kind']);catalog=[{'source_id':v['id'],'record_id':v['record_id'],'kind':'profile','label':'Reviewed Profile · '+v['field'].replace('_',' '),'text':v['text']} for v in p['sources']]
+ p=career_coach.profile(user,focus+' '+s['data']['role']+' '+s['data']['kind']);catalog=[{'source_id':v['id'],'record_id':v['record_id'],'kind':'profile','label':'Reviewed Profile · '+v['field'].replace('_',' '),'text':v['text'],**{k:copy.deepcopy(v[k]) for k in ('project_scope','allowed_parent_ids') if k in v}} for v in p['sources']]
  records={r['id']:r for kind in ('experience','profile_answer') for r in db.list_entities(user,kind)}
  for source in catalog:
   source['updated_at']=records.get(source['record_id'],{}).get('updated_at','')

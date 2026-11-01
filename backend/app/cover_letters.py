@@ -26,6 +26,8 @@ INSTRUCTIONS=ai.INSTRUCTIONS.replace('Ask useful questions about qualification e
 
 INSTRUCTIONS += ' Selected Career Goals are ambitions, never qualifications or completed experience. Reviewed motivation may explain a career transition or interest only. Never imply a planned credential or career transition already happened.'
 
+INSTRUCTIONS+=' Project statements and reviewed details may be attributed only to their project or the explicit allowed_parent_ids in project_attribution. Unassigned statements never establish work during a linked job or education stage.'
+
 def source_resume(user,job_id,resume_id):
     job=require(user,job_id,'job');resume=require(user,resume_id,'resume');data=resume['data']
     linked=data.get('job_id')
@@ -65,18 +67,18 @@ def sources(data):
     for p in data.get('effective_context',data.get('context_proposals',[])):
         if p['status']=='approved':rows.append({'id':'answer:'+p['id'],'label':p['title']+' · reviewed answer','text':p['text'],'kind':p['kind'],'source_message_id':p['source_message_id'],'review_revision':p['review_revision']})
     for a in data.get('library_sources',[]):
-        rows.append({'id':'library:'+a['id'],'label':a['title']+' · reviewed Profile answer','text':a['text'],'version':a['version'],'experience_ids':a.get('experience_ids',[]),'association_note':'One shared fact; linked records indicate context, not separate accomplishments.'})
+        rows.append({'id':'library:'+a['id'],'label':a['title']+' · reviewed Profile answer','text':a['text'],'version':a['version'],'experience_ids':a.get('experience_ids',[]),'project_attribution':copy.deepcopy(a.get('project_attribution',[])),'association_note':'One shared fact; linked records indicate context, not separate accomplishments.'})
     return rows
 
 
 def effective_context(user,data):
-    effective=[];active_answers={r['id'] for r in profile_answers.confirmed(user)}
+    effective=[];active_answers={r['id']:r for r in profile_answers.confirmed(user,scoped=True)}
     from . import cover_goals
     for p in cover_goals.active_proposals(data):
         value=copy.deepcopy(p);answer=db.get(user,p.get('profile_answer_id',''),'profile_answer') if p.get('profile_answer_id') else None
         if answer:
             if answer['id'] not in active_answers:continue
-            value['text']=answer['data']['text'];value['library_version']=answer['data']['version']
+            value['text']=active_answers[answer['id']]['data']['text'];value['library_version']=answer['data']['version']
         effective.append(value)
     return effective
 
@@ -125,7 +127,7 @@ def begin(user,id,body,preserve_preview=False):
     token=body.request_token or db.uid()
     def change(data,c):
         data['effective_context']=effective_context(user,data)
-        data['library_sources']=[{'id':r['id'],'experience_ids':profile_answers.experience_ids(r['data']),**{k:copy.deepcopy(r['data'][k]) for k in ('title','text','version','answer_kind','sources')}} for r in profile_answers.reusable(user,data['job_id'],data.get('selected_answer_ids',[]))]
+        data['library_sources']=[{'id':r['id'],'experience_ids':profile_answers.experience_ids(r['data']),'project_attribution':profile_answers.project_attribution(user,r['data']),**{k:copy.deepcopy(r['data'][k]) for k in ('title','text','version','answer_kind','sources')}} for r in profile_answers.reusable(user,data['job_id'],data.get('selected_answer_ids',[]))]
         data.update({'request_token':token,'content':body.content.model_dump(),'instructions':body.instructions})
         if preserve_preview and data.get('current_revision_id'):
             current=db.get(user,data['current_revision_id'],'cover_revision')

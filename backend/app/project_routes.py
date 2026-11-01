@@ -12,6 +12,11 @@ from .network import ServiceError
 class SourceURL(StrictModel):
     url:str=Field(default='',max_length=2000)
     urls:list[str]=Field(default_factory=list,max_length=5)
+class WebsiteURLs(SourceURL):
+    experience_id:str=Field(default='',max_length=64)
+class LinkSave(StrictModel):
+    expected_updated_at:str
+    urls:list[str]=Field(max_length=5)
 class Selection(StrictModel):
     file_paths:list[str]=Field(min_length=1,max_length=30)
     experience_id:str=Field(default='',max_length=64)
@@ -82,6 +87,28 @@ def install(app,start_task,require_ai):
     @app.post('/api/project-sources/github')
     async def discover(body:SourceURL,user=Depends(auth.current)):
         return await sources.discover_links(user['id'],body.urls or [body.url])
+    @app.put('/api/experience/{id}/project-links')
+    def save_links(id:str,body:LinkSave,user=Depends(auth.current)):
+        from .profile_details import owned
+        from .resume_conversation import write
+        from . import profile_answers
+        with db.connect() as c:
+            c.execute('BEGIN IMMEDIATE');record=owned(c,user['id'],id)
+            if record['data'].get('category')!='project':raise HTTPException(404,'Project not found.')
+            if record['updated_at']!=body.expected_updated_at:raise HTTPException(409,'This project changed. Your links are retained. Refresh its saved version, review the links, and save again.')
+            data=record['data'];urls=project_uploads.links(body.urls)
+            data.update(project_urls=urls,project_url=urls[0] if urls else '')
+            write(c,user['id'],'experience',data,id);profile_answers.touch_resumes(c,user['id'],None,id)
+        return db.get(user['id'],id,'experience')
+    @app.post('/api/project-sources/website')
+    async def website(body:WebsiteURLs,user=Depends(auth.current)):
+        from . import project_websites
+        return await project_websites.discover(user['id'],body.urls or [body.url],body.experience_id)
+    @app.post('/api/project-sources/{id}/website-preview')
+    async def website_preview(id:str,body:Selection,user=Depends(auth.current)):
+        from . import project_websites
+        if body.experience_id:sources.require(user['id'],body.experience_id,'experience')
+        return await project_websites.preview(user['id'],id,body.file_paths)
     @app.post('/api/project-sources/{id}/refresh')
     async def refresh(id:str,user=Depends(auth.current)):
         old=sources.require(user['id'],id,'project_source')
@@ -231,7 +258,7 @@ def validate_backup(record,kinds,by_id):
     refs={'source_id':'project_source','snapshot_id':'project_snapshot','analysis_id':'project_analysis','experience_id':'experience','profile_answer_id':'profile_answer','prompt_id':'story_prompts','job_id':'job'}
     for key,target in refs.items():
         if data.get(key) and kinds.get(data[key])!=target and not (key=='experience_id' and data[key] in data.get('unavailable_experience_ids',[])):raise ValueError('Invalid project/reflection reference')
-    if kind=='project_source' and data.get('provider') in ('upload_preview','mixed'):
+    if kind=='project_source' and data.get('provider') in ('upload_preview','mixed','website'):
         files=data.get('available_files',[])
         if not 1<=len(files)<=3000:raise ValueError()
         if any(not sources.allowed(f['file_path']) or len(f['file_path'])>500 or ('text' in f and (not isinstance(f['text'],str) or len(f['text'].encode())>sources.MAX_FILE)) for f in files):raise ValueError()
@@ -244,6 +271,8 @@ def validate_backup(record,kinds,by_id):
         if sum(len(f['text'].encode()) for f in data['files'])>sources.MAX_TOTAL:raise ValueError()
     if kind in ('project_source','project_snapshot'):
         for file in data.get('files',[]) if kind=='project_snapshot' else data.get('available_files',[]):
+            from .project_websites import validate_file
+            validate_file(file)
             if not file.get('visual_needed'):continue
             original=by_id.get(file.get('visual_document_id'),{})
             if original.get('kind')!='document' or original.get('data',{}).get('purpose')!='project_material' or original['data'].get('sha256')!=file.get('original_sha256') or file.get('review_kind') not in ('pdf','image','file') or not isinstance(file.get('pages'),int) or not 0<=file['pages']<=100:raise ValueError('Invalid project original metadata')

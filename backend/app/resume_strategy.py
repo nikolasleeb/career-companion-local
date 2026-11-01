@@ -48,7 +48,9 @@ def catalog(snapshot):
             ref=item.get('project_source',{});origin=ref.get('project_id',rid);origin_item=ref.get('item_id',item['item_id'])
             original=ref.get('original',item['original']);parent=records.get(origin,e)
             allowed={origin,rid}
-            if parent['category']=='project':
+            if parent['category']=='project' and 'allowed_parent_ids' in item:
+                allowed={origin}|set(item['allowed_parent_ids'])
+            elif parent['category']=='project':
                 for link in parent.get('relationship_context',[]):
                     target=link.get('record_id') or link.get('id') or link.get('education_id')
                     if target in records and records[target]['category'] in ('employment','education','coursework'):allowed.add(target)

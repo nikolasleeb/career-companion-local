@@ -110,3 +110,7 @@ Profile → Career Goals separates one optional overall statement from specific 
 ## Career Readiness
 
 Resources → **Career Readiness** uses the OpenAI Python Agents SDK to explore directions, compare a reviewed shortlist, and assess preparation using sourced evidence. Ask follow-up questions or create a new assessment version when information changes. Proposed next steps connect to Action Plans, Skills, Interview Practice and Career Goals. Public research is optional and off by default; each explicit AI action uses your own key and an adjustable estimated spending ceiling. See [Career Readiness](docs/CAREER-READINESS.md) for evidence boundaries, costs and recovery.
+
+## Profile and master resume
+
+Manage classes on each education card, add them manually or from a locally parsed transcript, and keep Supporting Details with their individual skill or project. Project timelines appear only when a project spans multiple education or job entries. PDF and Word master exports share a snapshot and preserve the full reviewed content with nested coursework and project formatting. See [Profile](docs/PROFILE.md) and [Classes and website materials](docs/PROFILE-EDITOR-MATERIALS.md).

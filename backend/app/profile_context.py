@@ -6,7 +6,7 @@ import copy,hashlib,json,re
 from . import db,personalization
 
 FIELDS=('title','degree','major','minor','majors','minors','concentration','description','contribution','tools','relevant_courses','accomplishments','gpa','gpa_scale','honors','skill_items','certification_items')
-RULE='Relationships provide context, not additional qualifications or separate accomplishments. Reuse each Supporting Detail once.'
+RULE='Relationships provide context, not additional qualifications or separate accomplishments. Reuse each Supporting Detail once. Project statements may be attributed only to their allowed_parent_ids. An unassigned statement describes the project only, never a linked job or education stage. Individual skill details support only their named skill, never every skill in a group.'
 def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
 def relationships(records):
  catalog={r['id']:r for r in records}
@@ -50,8 +50,13 @@ def sources(user):
      chunk+='\n'+part if chunk else part
    if chunk:chunks.append(chunk)
    for i,part in enumerate(chunks):
-    result.append({'id':row['id']+':'+field+(':'+str(i) if len(chunks)>1 else ''),'record_id':row['id'],'field':field,'text':part,**extra})
+    result.append({'id':row['id']+':'+field+(':'+extra['statement_id'] if extra.get('statement_id') else '')+(':'+str(i) if len(chunks)>1 else ''),'record_id':row['id'],'field':field,'text':part,**extra})
+  from . import project_structure
+  if d.get('category')=='project':
+   for statement in project_structure.statements(original):
+    add(statement['field'],statement['text'],statement_id=statement['id'],project_scope=statement['scope'],allowed_parent_ids=project_structure.destinations(statement['scope'],original))
   for field in FIELDS:
+   if d.get('category')=='project' and field in project_structure.FIELDS:continue
    value=original.get(field)
    if field=='certification_items' and value:value=[{k:v[k] for k in ('name','issuer','earned_date','expiration_date','does_not_expire') if k in v} for v in certifications.rows(d)]
    if isinstance(value,(dict,list)):value=json.dumps(value,ensure_ascii=False)
@@ -62,7 +67,7 @@ def sources(user):
   add('context',json.dumps(info,ensure_ascii=False),context_only=True)
   for a in d.get('answer_sources',[]):
    text=job_ai.clean(a['text'])
-   if text:result.append({'id':a['id']+':answer','record_id':a['id'],'experience_id':row['id'],'experience_ids':a['experience_ids'],'field':'answer','text':text,'detail_version':a['version'],'provenance':copy.deepcopy(a['provenance'])})
+   if text:result.append({'id':a['id']+':answer','record_id':a['id'],'experience_id':row['id'],'experience_ids':a['experience_ids'],'field':'answer','text':text,'detail_version':a['version'],'provenance':copy.deepcopy(a['provenance']),**({k:copy.deepcopy(a[k]) for k in ('project_scope','allowed_parent_ids','skill_ref','skill_name') if k in a})})
  return result,rows
 def select(profile,query='',budget=18000):
  """All sources are eligible; only relevant passages and selected records' context travel."""

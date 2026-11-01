@@ -1,7 +1,7 @@
 import React,{useEffect,useId,useRef,useState} from 'react';
 import {BulletEdit,bulletDefault,bulletFormat,bulletSelection,bulletEnter,bulletBackspace,bulletInsert,editValue} from './bulletEditing';
 import './bulletTextarea.css';
-export function BulletTextarea({label,noun,value,onChange,maxLength,rows=3,placeholder='',disabled=false,defaultBullets}:{label:string;noun:'responsibility'|'accomplishment'|'request';value:string;onChange:(value:string)=>void;maxLength:number;rows?:number;placeholder?:string;disabled?:boolean;defaultBullets?:boolean}){
+export function BulletTextarea({label,noun,value,onChange,maxLength,rows=3,placeholder='',disabled=false,defaultBullets}:{label:string;noun:'responsibility'|'accomplishment'|'request'|'overview point'|'contribution';value:string;onChange:(value:string)=>void;maxLength:number;rows?:number;placeholder?:string;disabled?:boolean;defaultBullets?:boolean}){
  const uid=useId(),input=useRef<HTMLTextAreaElement>(null),[enabled,setEnabled]=useState(()=>defaultBullets??bulletDefault(value)),[error,setError]=useState(''),composing=useRef(false),changing=useRef(false),last=useRef(value),mode=useRef(enabled),compositionStart=useRef<number|null>(null);
  mode.current=enabled;
  useEffect(()=>{if(value!==last.current){last.current=value;setEnabled(bulletDefault(value));setError('');}},[value]);

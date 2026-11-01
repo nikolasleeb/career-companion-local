@@ -15,6 +15,9 @@ def env(client,account,monkeypatch):
     intern=record(category='employment',title='Business Intern',organization='Fictional Transport',start_date='2026-06',end_date='2026-08',description='Prepared sponsor demonstrations and recorded feedback.')
     contractor=record(category='employment',title='Research Contractor',organization='Fictional University',start_date='2026-08',description='Expanded review rules after the internship.')
     project=record(category='project',title='Roadway review prototype',description='Built an on-device prototype using local language models and retrieval.',contribution='Initially tested the prototype on approximately 10 roadway documents.',linked_employment_ids=[intern['id'],contractor['id']])
+    from app import project_structure
+    approved=[{**v,'scope':{'kind':'project','stage_ids':[]}} for v in project_structure.statements(project['data'])]
+    project=db.save(user,'experience',{**project['data'],'project_stages':project_structure.stages(project['data']),'project_statements':approved},project['id'])
     job=db.save(user,'job',{'title':'Analyst','description':'Analyze data using Python.','company':'Fictional Employer'})
     session=guided.start(user,ConversationStart(job_id=job['id']))
     def render(snapshot):return {**copy.deepcopy(snapshot),'layout':{'pages':1,'validated':True},'artifacts':{'pdf':'eA==','docx':'eA=='}}

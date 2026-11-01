@@ -138,7 +138,7 @@ def snapshot(user,source,files,excluded=None,experience_id=''):
 
 async def select(user,id,paths,experience_id=''):
     source=require(user,id,'project_source');data=source['data']
-    if data['provider'] not in ('github','upload_preview','mixed'):raise HTTPException(400,'Open the saved snapshot or choose a file-picker source.')
+    if data['provider'] not in ('github','upload_preview','mixed','website'):raise HTTPException(400,'Open the saved snapshot or choose a file-picker source.')
     if experience_id:require(user,experience_id,'experience')
     allowed_files={f['file_path']:f for f in data['available_files']}
     if not paths or len(paths)>30 or len(set(paths))!=len(paths) or set(paths)-allowed_files.keys():raise HTTPException(400,'Choose up to 30 different files from this source.')
@@ -151,8 +151,14 @@ async def select(user,id,paths,experience_id=''):
             if 'text' in info:
                 if sum(len(f['text'].encode()) for f in files)+len(info['text'].encode())>MAX_TOTAL:
                     excluded.append({'file_path':path,'reason':'2 MB extracted text limit'});continue
-                files.append({k:info[k] for k in ('file_path','text','truncated','sha256','archive','original_sha256','warnings','visual_needed','review_kind','visual_document_id','pages','mime') if k in info})
+                files.append({k:info[k] for k in ('file_path','text','truncated','sha256','archive','original_sha256','warnings','visual_needed','review_kind','visual_document_id','pages','mime','url','title','website_url','website_root','website_kind') if k in info})
                 continue
+            if info.get('website_url'):
+                from .project_websites import selected
+                file=await selected(info)
+                if sum(len(f['text'].encode()) for f in files)+len(file['text'].encode())>MAX_TOTAL:
+                    excluded.append({'file_path':path,'reason':'2 MB extracted text limit'});continue
+                files.append(file);continue
             repo=info.get('source_repo',data.get('repo',''))
             blob=await github('repos/'+repo+'/git/blobs/'+info['sha'])
             import base64

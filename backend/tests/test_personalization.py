@@ -39,7 +39,8 @@ def test_graph_and_bullets_reach_all_shared_consumers_without_duplicate_detail(c
  u=account['id'];degree,first,second,project,detail=graph(u)
  p=context.profile(u,'scenario stakeholder',30000);wire=json.dumps(p,ensure_ascii=False)
  assert 'Summer intern' in wire and 'Research contractor' in wire and 'Fictional MS' in wire
- assert any('• Automated scenario setup.\n  Preserved original files.' in s['text'] for s in p['sources'])
+ assert any('Automated scenario setup. Preserved original files.' in s['text'] and s.get('project_scope',{}).get('kind')=='unassigned' for s in p['sources'])
+ assert db.get(u,project['id'])['data']['description']=='• Automated scenario setup.\n  Preserved original files.\n• Integrated output processing.'
  facts=[s for s in p['sources'] if s['field']=='answer']
  assert len(facts)==1 and facts[0]['record_id']==detail['id'] and facts[0]['experience_ids']==[project['id'],first['id']]
  assert facts[0]['provenance'][0]['attempt_id']=='fictional-attempt'

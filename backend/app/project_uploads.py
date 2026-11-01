@@ -99,7 +99,7 @@ def combine(user,ids,urls,experience_id=''):
             saved=next((r for r in db.list_entities(user,'project_snapshot') if r['data'].get('source_id')==identity),None)
             if not saved:raise HTTPException(400,'This source has no saved readable files.')
             data={**data,'available_files':saved['data']['files']}
-        elif data['provider'] not in ('github','upload_preview','mixed'):raise HTTPException(400,'Choose a file-picker source.')
+        elif data['provider'] not in ('github','upload_preview','mixed','website'):raise HTTPException(400,'Choose a file-picker source.')
         for f in data.get('available_files',[]):
             entry=dict(f)
             entry.setdefault('size',len(entry.get('text','').encode()));entry.setdefault('suggested',True)

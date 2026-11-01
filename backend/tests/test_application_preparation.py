@@ -29,6 +29,7 @@ def test_comparison_creates_preparing_before_request_finishes(client,account,sam
     rows=client.get('/api/applications').json();assert len(rows)==1
     assert rows[0]['data']['status']=='preparing'
     assert rows[0]['preparation']['label']=='Comparing posting'
+    assert rows[0]['preparation']['stage']=='comparison'
     assert rows[0]['preparation']['task_id']==response.json()['task_id']
     released=True
     for _ in range(100):
@@ -36,6 +37,21 @@ def test_comparison_creates_preparing_before_request_finishes(client,account,sam
         time.sleep(.02)
     assert client.get('/api/applications').json()[0]['data']['status']=='preparing'
     assert len(client.get('/api/applications').json())==1
+
+
+def test_saved_posting_and_comparison_reopen_comparison_without_rewriting_documents(client,account,sample):
+    user=account['id'];app=applications.start(user,sample['id'])
+    state=application_preparation.decorate(user,[app])[0]['preparation']
+    assert state['stage']=='comparison' and state['action_label']=='Continue to comparison'
+    analysis=db.save(user,'analysis',{'job_id':sample['id'],'summary':'Saved comparison'})
+    state=application_preparation.decorate(user,[app])[0]['preparation']
+    assert state['stage']=='comparison' and state['action_label']=='Review comparison'
+    assert db.get(user,analysis['id'],'analysis')==analysis
+    for status in ('failed','cancelled','interrupted'):
+        tid=task(user,'analysis',status,{'job_id':sample['id']})
+        state=application_preparation.decorate(user,[app])[0]['preparation']
+        assert state['stage']=='comparison' and state['task_id']==tid
+        assert db.get(user,analysis['id'],'analysis')==analysis
 
 
 def test_workspace_start_is_visible_and_stable(client,account,sample):

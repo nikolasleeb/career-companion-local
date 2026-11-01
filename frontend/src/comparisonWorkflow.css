@@ -1,0 +1,10 @@
+.comparison-action{margin:20px 0 24px;min-width:0}
+.comparison-action-controls{display:flex;align-items:center;gap:20px}
+.comparison-action-controls>p{margin:0;max-width:560px}
+.comparison-action-controls>button{flex-shrink:0}
+.comparison-action .resume-task-progress{margin-top:16px}
+.comparison-step .comparison-opportunity{padding:14px 18px;margin-bottom:22px;background:#f3f6fa;border:1px solid var(--line,#d5deeb);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.comparison-opportunity p{margin:4px 0 0}
+.comparison-step>h2{scroll-margin-top:24px}
+.application-workflow.panel nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1200px){.comparison-action-controls{align-items:flex-start;flex-direction:column;gap:10px}}
