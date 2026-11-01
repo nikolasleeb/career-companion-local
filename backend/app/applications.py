@@ -64,7 +64,7 @@ def validate_links(user, data):
             continue
         letter=db.get(user,attachment['record_id'],'cover_letter')
         if not letter:raise ServiceError('Choose only your own saved cover letters.')
-        if letter['data']['job_id']!=data.get('job_id') or letter['data']['resume_id'] not in data.get('resume_ids',[]):raise ServiceError('A cover letter must match this posting and one of its attached resume versions.')
+        if letter['data']['job_id']!=data.get('job_id') or (letter['data'].get('source_kind','resume')=='resume' and letter['data']['resume_id'] not in data.get('resume_ids',[])):raise ServiceError('A cover letter must match this posting and one of its attached resume versions.')
     if data.get('url'):
         from .models import validate_link
         try: validate_link(data['url'])
@@ -170,10 +170,11 @@ def validate_workflow(user,data,workflow):
         if resume and not linked and resume['data'].get('analysis_id'):
             analysis=db.get(user,resume['data']['analysis_id'],'analysis');linked=(analysis or {}).get('data',{}).get('job_id')
         if not resume or linked!=data.get('job_id') or workflow['resume_id'] not in data.get('resume_ids',[]):raise ServiceError('Choose a saved resume attached to this posting.')
-    if workflow['step']!='resume' and not workflow['resume_id']:raise ServiceError('Save and review a resume before continuing to the cover letter.')
+    if workflow['cover_source']=='profile' and workflow['resume_id']:raise ServiceError('Choose Profile or a saved resume as the cover-letter source.')
+    if workflow['step']!='resume' and not workflow['resume_id'] and workflow['cover_source']!='profile':raise ServiceError('Choose a saved resume or explicitly continue using Profile.')
     if workflow['cover_letter_id']:
         letter=db.get(user,workflow['cover_letter_id'],'cover_letter')
-        if not letter or letter['data']['job_id']!=data.get('job_id') or letter['data']['resume_id']!=workflow['resume_id'] or not any(a['record_id']==letter['id'] for a in data.get('attachments',[])):raise ServiceError('Choose the cover letter saved for this exact resume version.')
+        if not letter or letter['data']['job_id']!=data.get('job_id') or letter['data']['resume_id']!=workflow['resume_id'] or letter['data'].get('source_kind','resume')!=workflow['cover_source'] or not any(a['record_id']==letter['id'] for a in data.get('attachments',[])):raise ServiceError('Choose the cover letter saved for this exact resume version.')
     if workflow['step']=='agent' and not (workflow['cover_skipped'] or workflow['cover_letter_id']):raise ServiceError('Save a cover letter or explicitly skip it before continuing.')
     if workflow['cover_skipped'] and workflow['cover_letter_id']:raise ServiceError('Choose a saved cover letter or skip it, rather than both.')
 
@@ -184,5 +185,5 @@ def select_saved_letter(user,letter):
         c.execute('BEGIN IMMEDIATE')
         record=next((db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind='application'",(user,)) if __import__('json').loads(r['payload']).get('job_id')==letter['data']['job_id']),None)
         if record:
-            record['data']['workflow']={'step':'cover','resume_id':letter['data']['resume_id'],'cover_letter_id':letter['id'],'cover_skipped':False}
+            record['data']['workflow']={'step':'cover','resume_id':letter['data']['resume_id'],'cover_source':letter['data'].get('source_kind','resume'),'cover_letter_id':letter['id'],'cover_skipped':False}
             write(c,user,'application',record['data'],record['id'])

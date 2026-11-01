@@ -1,7 +1,7 @@
+import {reportDocumentRecovery} from './documentRecovery';
 import React,{useEffect,useRef,useState} from 'react';
 import {ApiError,comparisonTask,pendingComparison,pollTask} from './apiClient';
 import {TaskStatus} from './taskProgress';
-import {TaskProgressBanner} from './TaskProgressBanner';
 import './comparisonWorkflow.css';
 
 type Props={account:string;job:string;mode:string;aiAvailable:boolean;hasEvidence:boolean;hasResult:boolean;preparation?:any;call:(path:string,method?:string,body?:any)=>Promise<any>;onResult:(value:any)=>void;refresh:()=>Promise<void>};
@@ -12,6 +12,7 @@ export function ComparisonAction({account,job,mode,aiAvailable,hasEvidence,hasRe
   const id=pendingComparison(account,job)?.id||(preparation?.stage==='comparison'&&preparation?.state==='working'?preparation.task_id:'');
   return id?{id,status:'unknown',connection_lost:true,kind:'analysis'}:null;
  });
+ useEffect(()=>{const scope='/analyses:'+job;reportDocumentRecovery(account,scope,status);return()=>reportDocumentRecovery(account,scope,null);},[account,job,status]);
  const latest=useRef(status);const running=useRef(false);
  const report=(value:TaskStatus)=>{latest.current=value;setStatus(value);};
  useEffect(()=>{
@@ -40,9 +41,10 @@ export function ComparisonAction({account,job,mode,aiAvailable,hasEvidence,hasRe
    void refresh().catch(()=>setRefreshError('Your comparison is saved and displayed. Other workspace information could not refresh.'));
   }
  }
+ useEffect(()=>{const recover=()=>{if(active(latest.current)&&!running.current)void start();};window.addEventListener('document-status-recheck',recover);return()=>window.removeEventListener('document-status-recheck',recover);},[account,job,mode]);
  return <div className="comparison-action">
   <div className="comparison-action-controls"><button type="button" className="button primary" disabled={busy||(!recover&&(!aiAvailable||!hasEvidence))} onClick={()=>void start()}>{busy?'Checking comparison…':recover?'Check comparison status':hasResult?'Run comparison again':'Compare profile to job'}</button><p className="small muted">{recover?'Check the existing request without starting another comparison.':'Uses your confirmed Profile and reviewed Supporting Details. AI processing can take several minutes.'}</p></div>
-  {active(status)&&<TaskProgressBanner task={status!} onStop={async()=>{if(latest.current?.id)report(await call('/tasks/'+encodeURIComponent(latest.current.id)+'/cancel','POST',{}));}}/>}
+
   {error&&<p className="inline-error" role="alert">{error} {hasResult?'Your previous comparison remains below.':''}</p>}
   {refreshError&&<div className="notice" role="status">{refreshError} <button type="button" className="text-button" onClick={()=>{void refresh().then(()=>setRefreshError('')).catch(()=>{});}}>Refresh workspace · no AI</button></div>}
  </div>;

@@ -17,7 +17,8 @@ def test_model_pair_owned_validated_and_does_not_replace_global_settings(client,
  assert client.put('/api/document-models',json=PAIR).status_code==200
  assert db.settings(account['id'])['document_models']==PAIR
  assert {k:v for k,v in db.settings(account['id']).items() if k!='document_models'}==before
- assert client.put('/api/document-models',json={**PAIR,'reviewer':PAIR['writer']}).status_code==422
+ assert client.put('/api/document-models',json={**PAIR,'reviewer':PAIR['writer']}).status_code==200
+ assert client.put('/api/document-models',json=PAIR).status_code==200
  assert client.put('/api/document-models',json={**PAIR,'writer':{**PAIR['writer'],'reasoning_effort':'none'}}).status_code==422
  assert db.settings(account['id'])['document_models']==PAIR
 

@@ -982,6 +982,10 @@ def resume_conversation_estimate(entity_id:str,mode:str='economy',user=Depends(a
     if mode not in ('economy','deep','custom'):raise HTTPException(400,'Choose a valid AI mode.')
     return resume_conversation.estimate(user['id'],entity_id,mode)
 
+@app.post('/api/resume-conversations/{entity_id}/estimate')
+def resume_estimate_preview(entity_id:str,body:document_models.ModelPair,mode:Literal['economy','deep','custom']='economy',user=Depends(auth.current)):
+    return resume_conversation.estimate(user['id'],entity_id,mode,document_models.preview_settings(user['id'],body))
+
 @app.get('/api/resume-conversations/{entity_id}/quality-review/estimate')
 def resume_quality_estimate(entity_id:str,mode:Literal['economy','deep','custom']='economy',user=Depends(auth.current)):
     return resume_conversation.quality_estimate(user['id'],entity_id,mode)
@@ -1128,6 +1132,10 @@ def cover_workspace(entity_id:str,user=Depends(auth.current)):
 @app.get('/api/cover-workspaces/{entity_id}/estimate')
 def cover_estimate(entity_id:str,mode:Literal['economy','deep','custom']='economy',user=Depends(auth.current)):
     return cover_letters.estimate(user['id'],entity_id,mode)
+
+@app.post('/api/cover-workspaces/{entity_id}/estimate')
+def cover_estimate_preview(entity_id:str,body:document_models.ModelPair,mode:Literal['economy','deep','custom']='economy',user=Depends(auth.current)):
+    return cover_letters.estimate(user['id'],entity_id,mode,document_models.preview_settings(user['id'],body))
 
 @app.post('/api/cover-workspaces/{entity_id}/generate')
 async def cover_generate(entity_id:str,body:CoverGenerate,user=Depends(auth.current)):
@@ -1496,7 +1504,11 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                 if data.get('finalized_resume_id') and kinds.get(data['finalized_resume_id'])!='resume':raise ValueError()
             if record['kind'] in ('cover_workspace','cover_revision','cover_letter'):
                 data=record['data'];CoverContent.model_validate(data['content'])
-                if kinds.get(data['job_id'])!='job' or kinds.get(data['resume_id'])!='resume':raise ValueError()
+                if kinds.get(data['job_id'])!='job':raise ValueError()
+                if data.get('source_kind','resume') not in ('profile','resume'):raise ValueError()
+                if data.get('source_kind','resume')=='profile':
+                    if data.get('resume_id'):raise ValueError()
+                elif kinds.get(data['resume_id'])!='resume':raise ValueError()
                 if record['kind']=='cover_workspace':
                     if any(kinds.get(i)!='cover_revision' for i in data['revision_ids']):raise ValueError()
                     if data.get('current_revision_id') and data['current_revision_id'] not in data['revision_ids']:raise ValueError()
@@ -1512,6 +1524,8 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                             if proposal.get(field) and kinds.get(proposal[field])!='experience':raise ValueError()
                 else:
                     if kinds.get(data['workspace_id'])!='cover_workspace':raise ValueError()
+                    origin=by_id[data['workspace_id']]['data']
+                    if any(data.get(k,'resume' if k=='source_kind' else '')!=origin.get(k,'resume' if k=='source_kind' else '') for k in ('job_id','resume_id','source_kind')):raise ValueError()
                     if data.get('finalized_letter_id') and kinds.get(data['finalized_letter_id'])!='cover_letter':raise ValueError()
             application_offers.validate_backup(record,kinds)
             if record['kind']=='application':
@@ -1527,9 +1541,10 @@ async def restore(file:UploadFile=File(...),user=Depends(auth.current)):
                     flow=ApplicationWorkflow.model_validate(application.workflow)
                     if flow.resume_id and flow.resume_id not in application.resume_ids:raise ValueError()
                     if flow.cover_letter_id and (kinds.get(flow.cover_letter_id)!='cover_letter' or not any(a.record_id==flow.cover_letter_id for a in application.attachments)):raise ValueError()
-                    if flow.step!='resume' and not flow.resume_id:raise ValueError()
+                    if flow.cover_source=='profile' and flow.resume_id:raise ValueError()
+                    if flow.step!='resume' and not flow.resume_id and flow.cover_source!='profile':raise ValueError()
                     if flow.step=='agent' and not (flow.cover_skipped or flow.cover_letter_id):raise ValueError()
-                    if flow.cover_letter_id and (by_id[flow.cover_letter_id]['data']['resume_id']!=flow.resume_id or by_id[flow.cover_letter_id]['data']['job_id']!=application.job_id):raise ValueError()
+                    if flow.cover_letter_id and (by_id[flow.cover_letter_id]['data']['resume_id']!=flow.resume_id or by_id[flow.cover_letter_id]['data']['job_id']!=application.job_id or by_id[flow.cover_letter_id]['data'].get('source_kind','resume')!=flow.cover_source):raise ValueError()
 
         career_explorer.validate_import(user['id'],records)
         for old,content in payload.get('files',{}).items():

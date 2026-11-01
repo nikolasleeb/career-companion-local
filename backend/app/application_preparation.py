@@ -64,11 +64,11 @@ def decorate(user, records):
         if draft or revision and not revision['data'].get('finalized_resume_id'):
             state.update(label='Draft ready to review', stage='resume', action_label='Review resume draft')
         # Explicit selected versions always take precedence over older draft work.
-        if flow.get('resume_id'):
+        if flow.get('resume_id') or flow.get('cover_source')=='profile' and flow.get('step') in ('cover','agent'):
             state.update(label='Prepare or skip letter', stage='letter', action_label='Prepare or skip letter')
             if flow.get('cover_letter_id') or flow.get('cover_skipped'):
                 state.update(label='Review finished documents', stage='finish', action_label='Review finished documents')
-            if flow['resume_id'] not in by_id:
+            if flow.get('resume_id') and flow['resume_id'] not in by_id:
                 state.update(state='attention', label='Needs attention', stage='resume', action_label='Choose a saved resume')
         own = grouped.get(job_id, [])
         latest = next((task for task in own if task['status'] in ACTIVE), None) or next(iter(own), None)

@@ -131,13 +131,24 @@ def mutate(user,id,version,change):
 
 
 def start(user,body):
-    resume,snapshot,posting=source_resume(user,body.job_id,body.resume_id)
+    kind=body.source_kind
+    if kind=='profile':
+        if body.resume_id:raise HTTPException(422,'Profile mode does not select a resume.')
+        posting=copy.deepcopy(require(user,body.job_id,'job')['data'])
+        from . import personalization
+        if not personalization.allowed(user):raise HTTPException(409,'Enable professional Profile sharing before using Profile as the cover-letter source.')
+        from . import resume_conversation
+        professional=resume_conversation.source(user,{'job_id':body.job_id,'analysis_id':None})
+        resume=None;snapshot={k:copy.deepcopy(professional.get(k,'' if k=='name' else [])) for k in ('name','contact_lines')}
+        snapshot.update(sections=[],origin='profile')
+    else:
+        resume,snapshot,posting=source_resume(user,body.job_id,body.resume_id)
     with db.connect() as c:
         c.execute('BEGIN IMMEDIATE')
-        existing=next((db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind='cover_workspace'",(user,)) if json.loads(r['payload'])['resume_id']==body.resume_id),None)
+        existing=next((db.decode(r) for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind='cover_workspace'",(user,)) if json.loads(r['payload']).get('resume_id','')==body.resume_id and json.loads(r['payload']).get('source_kind','resume')==kind and json.loads(r['payload'])['job_id']==body.job_id),None)
         if existing:id=existing['id']
         else:
-            data={'job_id':body.job_id,'resume_id':body.resume_id,'resume_saved_at':resume['created_at'],'resume_title':applications.public(resume)['data']['title'],'resume_snapshot':snapshot,'posting_snapshot':posting,'version':0,'content':CoverContent(letter_date=body.letter_date,subject='Application for '+posting.get('title','the position')).model_dump(),'instructions':'','messages':[],'revision_ids':[],'current_revision_id':None,'request_token':None}
+            data={'job_id':body.job_id,'resume_id':body.resume_id,'source_kind':kind,'resume_saved_at':resume['created_at'] if resume else '', 'resume_title':applications.public(resume)['data']['title'] if resume else 'Confirmed Profile','resume_snapshot':snapshot,'posting_snapshot':posting,'version':0,'content':CoverContent(letter_date=body.letter_date,subject='Application for '+posting.get('title','the position')).model_dump(),'instructions':'','messages':[],'revision_ids':[],'current_revision_id':None,'request_token':None}
             id=write(c,user,'cover_workspace',data)
     return state(user,id)
 
@@ -146,7 +157,7 @@ def state(user,id):
     record=require(user,id,'cover_workspace');data=record['data'];data['effective_context']=effective_context(user,data);data.setdefault('messages',[]);data.setdefault('questions',[]);data.setdefault('context_proposals',[]);data.setdefault('context_dirty',False);profile_answers.stable_questions(data,'cover');data['content']=CoverContent.model_validate(data['content']).model_dump();result=public(record)
     result['current']=public(require(user,data['current_revision_id'],'cover_revision')) if data.get('current_revision_id') else None
     result['history']=[{'id':r['id'],'created_at':r['created_at'],'summary':r['data']['summary']} for rid in data['revision_ids'] if (r:=db.get(user,rid,'cover_revision'))]
-    result['saved_versions']=[public(r) for r in db.list_entities(user,'cover_letter') if r['data'].get('resume_id')==data['resume_id']]
+    result['saved_versions']=[public(r) for r in db.list_entities(user,'cover_letter') if r['data'].get('workspace_id')==id or (r['data'].get('job_id')==data['job_id'] and r['data'].get('source_kind','resume')==data.get('source_kind','resume') and r['data'].get('resume_id')==data['resume_id'])]
     result['sources']=sources(data)
     result['current_sources']=sources({**data,'profile_sources':(result['current'] or {}).get('data',{}).get('profile_sources',[]),'effective_context':(result['current'] or {}).get('data',{}).get('approved_context',[]),'context_proposals':(result['current'] or {}).get('data',{}).get('approved_context',[]),'library_sources':(result['current'] or {}).get('data',{}).get('library_sources',[])})
     result['preview_stale']=bool(result['current'] and result['current']['data']['request_token']!=data['request_token'])
@@ -162,8 +173,13 @@ def begin(user,id,body,preserve_preview=False):
     cover_goals.validate_current(user,require(user,id,'cover_workspace')['data'])
     token=body.request_token or db.uid()
     stored=require(user,id,'cover_workspace')['data']
-    live_sources={r['id']:r for r in professional_sources(user,stored)} if stored.get('profile_sources') else {}
+    if stored.get('source_kind')=='profile':
+        from . import personalization
+        if not personalization.allowed(user):raise HTTPException(409,'Professional Profile sharing is off. Enable it before requesting a Profile-based cover letter. Your saved versions remain available.')
+    fresh_sources=professional_sources(user,stored) if stored.get('profile_sources') or stored.get('source_kind')=='profile' else []
+    live_sources={r['id']:r for r in fresh_sources}
     active_profile_sources=[copy.deepcopy(live_sources[r['id']]) for r in stored.get('profile_sources',[]) if r['id'] in live_sources and live_sources[r['id']]['text']==r['text']]
+    if stored.get('source_kind')=='profile' and not stored.get('current_revision_id'):active_profile_sources=fresh_sources
     def change(data,c):
         data['profile_sources']=copy.deepcopy(active_profile_sources)
         data['effective_context']=effective_context(user,data)
@@ -266,7 +282,7 @@ def commit_revision(user,workspace,token,content,layout,artifacts,evidence,summa
         if any(ref['source_id'].startswith('profile:') for paragraph in evidence for ref in paragraph['evidence']):
             if changed_professional_attribution(data.get('profile_sources',[]),professional_sources(user,data),evidence):
                 raise ServiceError('Your Profile source ownership, dates or allowed attribution changed during this revision. The previous saved version is preserved; optimize again using current evidence.')
-        value={'project_snapshot_ids':list(data.get('project_snapshot_ids',[])),'workspace_id':id,'job_id':data['job_id'],'resume_id':data['resume_id'],'resume_snapshot':data['resume_snapshot'],'posting_snapshot':data['posting_snapshot'],'title':title(data['resume_snapshot'],data['posting_snapshot']),'content':content,'layout':layout,'artifacts':artifacts,'evidence':evidence,'summary':summary,'usage':usage,'request_token':token,'approved_context':context_used,'writing_guidance':writing_guidance,'career_goal_selection':copy.deepcopy(data.get('career_goal_selection',{})),'library_sources':copy.deepcopy((parent or {}).get('data',{}).get('library_sources',[]) if approved_context is None else data.get('library_sources',[]))}
+        value={'project_snapshot_ids':list(data.get('project_snapshot_ids',[])),'workspace_id':id,'job_id':data['job_id'],'resume_id':data['resume_id'],'source_kind':data.get('source_kind','resume'),'resume_snapshot':data['resume_snapshot'],'posting_snapshot':data['posting_snapshot'],'title':title(data['resume_snapshot'],data['posting_snapshot']),'content':content,'layout':layout,'artifacts':artifacts,'evidence':evidence,'summary':summary,'usage':usage,'request_token':token,'approved_context':context_used,'writing_guidance':writing_guidance,'career_goal_selection':copy.deepcopy(data.get('career_goal_selection',{})),'library_sources':copy.deepcopy((parent or {}).get('data',{}).get('library_sources',[]) if approved_context is None else data.get('library_sources',[]))}
         if approved_context is not None:current['context_dirty']=False;current.pop('pending_context_feedback',None)
         value['profile_sources']=copy.deepcopy(data.get('profile_sources',[]))
         value['quality_review']=quality_review or {'status':'not_rechecked','note':'This revision changed after its independent review.'}
@@ -387,7 +403,7 @@ async def draft(user,workspace,token,body,feedback=None,chat_meta=None):
     if quality_review and quality_review.get('status')=='unavailable':usage['actual_cost_usd']=None
     summary=re.sub(r'\b[0-9]+[ -]word\b',str(layout['word_count'])+'-word',output['summary'])
     if layout['below_target']:summary+=' The rendered letter remains below the two-thirds-page target; additional supported detail may help.'
-    reply=feedback.get('reply','I updated the related paragraphs using your reviewed details.') if feedback else 'I built a source-checked letter from your selected saved resume. Tell me what you would like to change.'
+    reply=feedback.get('reply','I updated the related paragraphs using your reviewed details.') if feedback else 'I built a source-checked letter from your selected professional sources. Tell me what you would like to change.'
     messages=[{'id':db.uid(),'role':'assistant','text':reply,'created_at':db.now(),'usage':usage}]
     if feedback is None and professional_sources(user,data)!=data.get('profile_sources',[]):raise ServiceError('Your confirmed Profile changed during optimization. The previous letter is preserved; optimize again using current evidence.')
     task_progress.stage('saving')
@@ -399,14 +415,16 @@ async def send(user,id,body):
     return await context_send(user,id,body)
 
 
-def estimate(user,id,mode):
-    data=require(user,id,'cover_workspace')['data'];option=document_models.options(db.settings(user),mode)
+def estimate(user,id,mode,settings=None):
+    settings=settings if settings is not None else db.settings(user)
+    data=copy.deepcopy(require(user,id,'cover_workspace')['data']);option=document_models.options(settings,mode)
+    if data.get('source_kind')=='profile':data['profile_sources']=professional_sources(user,data)
     count=max(1500,len(json.dumps({'sources':sources(data),'posting':data['posting_snapshot'],'content':data['content'],'instructions':data['instructions'],'messages':data.get('messages',[])[-24:],'writing_guidance':guidance.selected('cover'),'questions':data.get('questions',[]),'context':data.get('context_proposals',[])}))//4)
     first=ai_settings.estimate(option['model'],option['reasoning_effort'],count+1300,1800,service_tier=option['service_tier'])
     second=ai_settings.estimate(option['model'],option['reasoning_effort'],count+3500,500,service_tier=option['service_tier'])
     chat=ai_settings.estimate(option['model'],option['reasoning_effort'],count+1800,700,service_tier=option['service_tier'])
     questions=ai_settings.estimate(option['model'],option['reasoning_effort'],count+1600,1200,service_tier=option['service_tier'])
-    extra=[document_models.estimate(db.settings(user),role,count+3500,out,mode) for role,out in [('reviewer',2000),('writer',1800),('reviewer',2000)]]
+    extra=[document_models.estimate(settings,role,count+3500,out,mode) for role,out in [('reviewer',2000),('writer',1800),('reviewer',2000)]]
     total=[first,second,*extra]
     return {**option,'review_usd':extra[0]['usd'],'questions_usd':questions['usd'],'chat_usd':round(first['usd']+second['usd']+chat['usd'],6) if first['usd'] is not None and second['usd'] is not None and chat['usd'] is not None else None,'usd':round(sum(v['usd'] for v in total),6) if all(v['usd'] is not None for v in total) else None,'note':'Planning estimate for draft, independent review, writer revision, final review and source validation. Small chat edits use a shorter path. Actual usage and retries vary. Local edits, previews, saving and downloads do not call OpenAI.','pricing_date':first['pricing_date']}
 
@@ -422,7 +440,7 @@ def restore(user,id,body):
 def finalize(user,id,body):
     revision=require(user,body.revision_id,'cover_revision');value=revision['data']
     if value['workspace_id']!=id:raise HTTPException(409,'Choose the reviewed revision of this letter.')
-    require(user,value['resume_id'],'resume')
+    if value.get('source_kind','resume')=='resume':require(user,value['resume_id'],'resume')
     review=value.get('quality_review')
     if review and review.get('status')!='ready' and not body.quality_warning_acknowledged:raise HTTPException(409,'Acknowledge the incomplete review or remaining findings for this exact cover-letter revision.')
     def change(data,c):
@@ -439,8 +457,8 @@ def finalize(user,id,body):
 
 
 def attach(user,letter):
-    data=letter['data'];resume=require(user,data['resume_id'],'resume')
-    applications.attach_resume(user,resume)
+    data=letter['data']
+    if data.get('source_kind','resume')=='resume':applications.attach_resume(user,require(user,data['resume_id'],'resume'))
     with applications.LOCK:
         record=next((r for r in db.list_entities(user,'application') if r['data'].get('job_id')==data['job_id']),None)
         if not record:return

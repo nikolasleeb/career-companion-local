@@ -813,7 +813,8 @@ class CoverContent(StrictModel):
 
 class CoverStart(StrictModel):
     job_id:str
-    resume_id:str
+    resume_id:str=''
+    source_kind:Literal['resume','profile']='resume'
     letter_date:str=''
     _date=field_validator('letter_date')(classmethod(lambda cls,v:ApplicationEvent.valid_date(v)))
 
@@ -943,6 +944,7 @@ class ApplicationWorkflow(StrictModel):
     resume_id:str=''
     cover_letter_id:str=''
     cover_skipped:bool=False
+    cover_source:Literal['resume','profile']='resume'
 
 class ApplicationStart(StrictModel):
     job_id:str

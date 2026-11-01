@@ -26,13 +26,17 @@ def validate(pair):
         for value in pair.values():
             ModelChoice.model_validate(value)
             choice(value)
-        if pair['writer']['model']==pair['reviewer']['model']:raise ValueError('Choose different Writer and Reviewer models.')
     except (ValueError,KeyError) as exc:raise ServiceError(str(exc)) from None
     return pair
 
+def preview_settings(user,pair=None):
+    settings=dict(db.settings(user))
+    if pair is not None:settings['document_models']=validate(pair.model_dump() if hasattr(pair,'model_dump') else pair)
+    return settings
+
 def configured(settings):
     try:return validate(settings.get('document_models') or {})
-    except ServiceError:raise ServiceError('Choose and save separate Writer and Reviewer models before using the document optimizer.') from None
+    except ServiceError:raise ServiceError('Choose and save Writer and Reviewer settings before using the document optimizer.') from None
 
 def options(settings,mode=None):
     pair=settings.get('document_models')

@@ -24,7 +24,12 @@ export async function documentTask(account:string,path:string,body:any,call:Call
   storage.removeItem(key);return result;
  }catch(error){
   if(terminal||error instanceof ApiError&&!error.transient&&![401,403].includes(error.status))storage.removeItem(key);
-  else report({id:pending.id,status:'unknown',connection_lost:true,created_at:pending.created_at});
+  else {
+   // A free owned-token lookup can identify an accepted start even when its
+   // response was lost. Never create or repeat a paid action in this branch.
+   if(!pending.id){try{const known=await call('/document-models/tasks/status?request_token='+encodeURIComponent(pending.token));if(known?.task_id){pending.id=known.task_id;storage.setItem(key,JSON.stringify(pending));}}catch{}}
+   report({id:pending.id,status:'unknown',connection_lost:true,created_at:pending.created_at});
+  }
   throw error;
  }
 }

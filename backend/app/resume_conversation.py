@@ -575,12 +575,14 @@ def finalize(user,id,body):
     saved=require(user,record['data']['last_saved_resume_id'],'resume');applications.attach_resume(user,saved)
     return state(user,id)
 
-def estimate(user,id,mode):
+def estimate(user,id,mode,settings=None):
     data=require(user,id,'resume_conversation')['data'];snapshot=source(user,data)
-    base=optimization.estimate(snapshot,mode,db.settings(user));option=ai_settings.resolve(db.settings(user),mode)
+    from . import document_models
+    settings=settings if settings is not None else db.settings(user)
+    base=optimization.estimate(snapshot,mode,settings);option=document_models.options(settings,mode)
     current=db.get(user,data.get('current_revision_id',''),'resume_revision') if data.get('current_revision_id') else None
     context_size=len(json.dumps(snapshot))+len(json.dumps(data['messages'][-30:]))+len(json.dumps(data['proposals']))+len(json.dumps(public(current)))
-    extra=ai_settings.estimate(option['model'],option['reasoning_effort'],max(3000,context_size//4)+7000,4500,service_tier=option['service_tier'])
+    extra=ai_settings.estimate(option['model'],option['reasoning_effort'],max(3000,context_size//4)+7000,4500,service_tier=option['service_tier'],max_output_tokens=settings.get('ai_max_output_tokens') or None)
     # Reserve one layout pass plus chat; approved new facts also require reassessment.
     multiplier=2 if data['profile_dirty'] else 1
     base['usd']=round(base['usd']+extra['usd']*multiplier,6) if base['usd'] is not None and extra['usd'] is not None else None

@@ -1,5 +1,5 @@
 import type {TaskStatus} from './taskProgress';
-export type ProcessingEntry=TaskStatus&{id:string;request?:boolean;settled?:boolean;serial:number;label?:string;presentation?:'coach'};
+export type ProcessingEntry=TaskStatus&{id:string;request?:boolean;settled?:boolean;serial:number;label?:string;path?:string;presentation?:'coach'};
 const active=(s:string)=>['queued','running','cancelling','unknown'].includes(s);
 export function actionLabel(path:string){
  if(path.includes('/profile-review/actions'))return 'Reviewing Explore Occupations Profile connections';
@@ -55,7 +55,7 @@ export class ProcessingStore{
  disconnected(){for(const [id,value] of this.records)if(!value.request||value.settled)this.records.set(id,{...value,connection_lost:true,status:'unknown',checked_at:value.checked_at||new Date().toISOString()});this.emit();}
  async request(path:string,method:string,call:(onTransfer:(value:{loaded:number;total:number;sent:boolean})=>void)=>Promise<any>){
   const epoch=this.epoch,write=method!=='GET'&&method!=='HEAD',id='request:'+String(++this.serial),stamp=new Date().toISOString();
-  if(write&&!path.endsWith('/cancel')&&!backgroundLocalRequest(path,method)){this.records.set(id,{id,presentation:path.startsWith('/knowledge-coach/')?'coach':undefined,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:path==='/project-sources/upload-preview'?'upload':path==='/project-sources/combine'?'local':/^\/project-sources\/[^/]+\/select$/.test(path)?'source_preparation':'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
+  if(write&&!path.endsWith('/cancel')&&!backgroundLocalRequest(path,method)){this.records.set(id,{id,path,presentation:path.startsWith('/knowledge-coach/')?'coach':undefined,request:true,status:'running',created_at:stamp,serial:this.serial,progress:{code:'request',label:actionLabel(path),kind:path==='/project-sources/upload-preview'?'upload':path==='/project-sources/combine'?'local':/^\/project-sources\/[^/]+\/select$/.test(path)?'source_preparation':'request',started_at:stamp,stage_started_at:stamp}});this.emit();}
   try{
    const value=await call(transfer=>{
     if(epoch!==this.epoch||path!=='/project-sources/upload-preview')return;

@@ -9,3 +9,4 @@ test('comparison is a distinct recoverable step between Posting and Resume',()=>
  assert.equal(stageFor('tailor','comparison'),'comparison');
  assert.deepEqual(nextApplicationAction({status:'preparing',job_id:'job'},{stage:'comparison',action_label:'Check comparison status'}),{stage:'comparison',label:'Check comparison status'});
 });
+test('explicit Profile cover source preserves no-resume choice and preparation destination',()=>{assert.equal(selectedResume({cover_source:'profile',step:'cover'},'remembered','submitted',[{id:'unselected'}]),'');assert.equal(nextApplicationAction({status:'preparing',job_id:'job',workflow:{step:'cover',cover_source:'profile'}}).stage,'letter');assert.equal(nextApplicationAction({status:'preparing',job_id:'job',workflow:{step:'agent',cover_source:'profile',cover_skipped:true}}).stage,'finish');});
