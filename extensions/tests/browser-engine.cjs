@@ -37,6 +37,22 @@ const root=path.resolve(__dirname,'../fixtures'),engine=path.resolve(__dirname,'
   assert.equal((await write('Email','fictional@example.test')).ok,true);assert.equal((await write('City','Fixture City')).ok,true);checks++;
   assert.equal((await write('Password','forbidden')).ok,false);assert.equal((await write('I acknowledge','Yes')).ok,false);assert.equal(await page.locator('#consent').isChecked(),false);checks++;
   assert.equal((await page.evaluate(()=>CareerCompanionDOM.next())).ok,false);assert.notEqual(await page.locator('body').getAttribute('data-advanced'),'yes');assert.equal(await page.locator('#existing').inputValue(),'Unknown');checks++;
+  await open('mapping.html');const mapped=await inspect();
+  assert.deepEqual(mapped.fields.filter(f=>f.label==='School').map(f=>[f.section,f.repeat_index]),[['education',0],['education',1]]);checks++;
+  assert.deepEqual(mapped.fields.filter(f=>f.label.startsWith('As of today')).map(f=>f.repeat_index),[0,1]);checks++;
+  assert.equal(mapped.fields.find(f=>f.label==='Job Title *').section,'employment');assert.equal(mapped.fields.find(f=>f.label==='Start Date *').control,'month');checks++;
+  assert.equal(mapped.fields.find(f=>f.label.startsWith('Legally authorized')).section,'');checks++;
+  assert.equal(mapped.fields.find(f=>f.label==='Country *').has_value,false);assert.equal((await write('Country *','United States')).ok,true);checks++;
+  const legal=(await inspect()).fields.find(f=>f.label==='First name (legal) *').id;
+  assert.equal((await page.evaluate(id=>CareerCompanionDOM.write(id,'Avery'),legal)).ok,false);assert.equal(await page.locator('#legal').inputValue(),'Unknown');checks++;
+  assert.equal((await page.evaluate(id=>CareerCompanionDOM.write(id,'Avery',{replacePlaceholder:true}),legal)).ok,true);checks++;
+  const chosen=(await inspect()).fields.find(f=>f.label==='First name (legal) *').id;assert.equal((await page.evaluate(id=>CareerCompanionDOM.write(id,'Different',{replacePlaceholder:true}),chosen)).ok,false);checks++;
+  const school=(await inspect()).fields.find(f=>f.label==='School').id;assert.equal((await page.evaluate(id=>CareerCompanionDOM.write(id,'Fixture University'),school)).ok,true);assert.equal(await page.locator('#school0').inputValue(),'Fixture University');checks++;
+  assert.equal((await write('Start Date *','2026-08')).ok,true);assert.equal(await page.locator('#start').inputValue(),'2026-08');checks++;
+  assert.equal(await page.locator('#auth').inputValue(),'');assert.equal(await page.locator('#consent').isChecked(),false);assert.equal((await page.evaluate(()=>CareerCompanionDOM.next())).ok,false);checks++;
+  await page.setContent(`<label>School<div id="wrapped" role="combobox" aria-label="School" aria-haspopup="listbox"><span id="selected">Select an option</span></div></label><script>document.querySelector('#wrapped').onclick=()=>{if(document.querySelector('#results'))return;let list=document.createElement('div');list.id='results';list.role='listbox';let query=document.createElement('input');query.setAttribute('aria-controls','results');query.oninput=()=>{list.innerHTML='';if(query.value==='Fixture University'){let opt=document.createElement('div');opt.role='option';opt.textContent=query.value;opt.onclick=()=>{document.querySelector('#selected').textContent=opt.textContent;list.remove();query.remove();};list.append(opt);}};document.body.append(query,list);document.querySelector('#wrapped').setAttribute('aria-controls','results');};</script>`);await page.addScriptTag({path:engine});
+  const wrapped=await inspect();assert.equal(wrapped.fields.length,1);assert.equal(wrapped.fields[0].has_value,false);assert.equal(wrapped.metadata.manual_fields.length,0);checks++;
+  assert.equal((await write('School','Fixture University')).ok,true);assert.equal(await page.locator('#selected').innerText(),'Fixture University');checks++;
   await open('native.html');await page.locator('button').evaluate(x=>x.textContent='Next and submit application');assert.equal((await page.evaluate(()=>CareerCompanionDOM.next())).ok,false);checks++;
   await browser.close();console.log(type.name()+': passed fictional controls, edits, changed options, boundaries, repeated/dynamic fields, navigation and uploads');
  }}finally{server.close();}

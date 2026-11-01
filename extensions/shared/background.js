@@ -57,7 +57,7 @@ async function drive(){
     if(latest.version!==run.version||['paused','stopped','failed'].includes(latest.state))throw Error('Run paused or changed. Review Career Companion.');
     if(await tabOrigin(c.employerTab)!==c.employerOrigin)throw Error('Website origin changed. Renew activation.');
     if(stopRequested)break;
-    const result=await execute(c.employerTab,(id,value)=>globalThis.CareerCompanionDOM.write(id,value),[item.id,item.value]);
+    const result=await execute(c.employerTab,(id,value,replace)=>globalThis.CareerCompanionDOM.write(id,value,{replacePlaceholder:replace}),[item.id,item.value,!!item.replace_placeholder]);
     item.value='';
     // A receipt is metadata only. Count once after DOM readback, then reconcile
     // against the server version if a reply is lost or the worker restarts.

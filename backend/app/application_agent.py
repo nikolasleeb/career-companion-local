@@ -8,7 +8,7 @@ from typing import Literal
 from urllib.parse import urlsplit
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import Field, field_validator
-from . import auth, config, db, private_answers, private_profile
+from . import auth, config, db, private_answers, private_profile, application_values
 from .models import StrictModel
 
 STATES=('disconnected','scanning','filling','advancing','needs_input','paused','ready_for_final_review','stopped','failed')
@@ -67,7 +67,7 @@ class FieldInfo(StrictModel):
     label: str = Field(max_length=500)
     description: str = Field(default='',max_length=1500)
     context: str = Field(default='',max_length=1000)
-    control: Literal['text','email','tel','url','number','date','textarea','select','radio','checkbox','combobox','file','unsupported']
+    control: Literal['text','email','tel','url','number','date','month','textarea','select','radio','checkbox','combobox','file','unsupported']
     autocomplete: str = Field(default='',max_length=100)
     options: list[str] = Field(default_factory=list,max_length=private_answers.MAX_OPTIONS)
     has_value: bool = False
@@ -184,16 +184,7 @@ def local_value(user,field,application):
     if private_answers.classify(field.label,field.description,field.context) in private_answers.REVIEW_CATEGORIES|{'family_connection'}:return None
     if field.control=='checkbox':return private_answers.match(user,field.label,field.options,application,field.description,field.context)
     if PRIVATE.search(' '.join((field.label,field.description,field.context))):return private_answers.match(user,field.label,field.options,application,field.description,field.context)
-    mapping={'name':'name','full name':'name','email':'email','email address':'email','preferred email':'email','confirm email':'email','confirm email address':'email','phone':'phone','phone number':'phone','city':'city','state':'state','country':'country','linkedin':'linkedin','linkedin profile':'linkedin','website':'website','portfolio website':'website'}
-    auto={'name':'name','email':'email','tel':'phone','address-level2':'city','address-level1':'state','country-name':'country','url':'website'}
-    key=('github' if label in ('github','github profile','github url','github profile url','github link','github profile link') else None) if re.search(r'\bgithub\b',label) else auto.get(field.autocomplete) or mapping.get(label)
-    value=settings.get(key,'') if key else ''
-    if field.section:
-        rows=[r['data'] for r in reversed(db.list_entities(user,'experience')) if r['data'].get('confirmed') and r['data'].get('category')==field.section]
-        if field.repeat_index<len(rows):
-            row=rows[field.repeat_index]
-            key=({'school':'organization','school name':'organization','university':'organization','degree':'degree','major':'major','field of study':'major','start date':'start_date','end date':'end_date'} if field.section=='education' else {'employer':'organization','company':'organization','company name':'organization','job title':'title','title':'title','start date':'start_date','end date':'end_date'}).get(label)
-            value=row.get(key,'') if key else ''
+    value=application_values.automatic(user,field)
     if not value:
         for saved in db.list_entities(user,'profile_answer'):
             a=saved['data']
@@ -298,18 +289,21 @@ def scan(id:str,body:Scan,user=Depends(auth.current)):
     with db.connect() as c:once={r['id']:private_answers.unseal(user['id'],r['id'],r['ciphertext']) for r in c.execute('SELECT * FROM cc_run_answers WHERE user_id=? AND run_id=?',(user['id'],id))}
     for f in body.fields:
         protected=bool(BOUNDARY.search(' '.join((f.label,f.description,f.context))))
-        if f.id in existing:
-            run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'private':False,'reason':'existing_value','manual_only':True})
+        if f.id in existing and not protected and f.id not in manual:
+            replacement=next((v['value'] for v in once.values() if v.get('replace_placeholder') and v['question']==f.label and v['options']==f.options and v.get('description','')==f.description and v.get('context','')==f.context and v.get('section','')==f.section and v.get('repeat_index',0)==f.repeat_index),None)
+            if replacement and run['writes']+len(writes)<300:
+                writes.append({'id':f.id,'value':replacement,'replace_placeholder':True});continue
+            run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'private':False,'reason':'existing_value','section':f.section,'repeat_index':f.repeat_index,'manual_only':False})
             continue
         if f.has_value:continue
         if f.id in manual or protected:
             run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'private':bool(PRIVATE.search(f.label)),'reason':'manual_handoff','manual_only':True})
             continue
         category=private_answers.category_for(user['id'],f.label,f.description,f.context)
-        saved=next((v['value'] for v in once.values() if v['question']==f.label and v['options']==f.options and v.get('description','')==f.description and v.get('context','')==f.context),None)
+        saved=next((v['value'] for v in once.values() if v['question']==f.label and v['options']==f.options and v.get('description','')==f.description and v.get('context','')==f.context and v.get('section','')==f.section and v.get('repeat_index',0)==f.repeat_index),None)
         value=None if category=='family_connection' else saved or (None if category in private_answers.REVIEW_CATEGORIES else local_value(user['id'],f,application))
         if value is None or f.control in ('file','unsupported'):
-            run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':f.options,'control':f.control,'required':f.required,'private':bool(category or PRIVATE.search(' '.join((f.label,f.description,f.context)))),'private_category':category,'reason':'family_connection_manual' if category=='family_connection' else 'manual_handoff' if f.control=='file' else 'review_required'})
+            run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':f.options,'control':f.control,'required':f.required,'private':bool(category or PRIVATE.search(' '.join((f.label,f.description,f.context)))),'private_category':category,'section':f.section,'repeat_index':f.repeat_index,'reason':'family_connection_manual' if category=='family_connection' else 'manual_handoff' if f.control=='file' else 'review_required'})
         elif run['writes']+len(writes)<300:writes.append({'id':f.id,'value':value})
     run['plan_ids']=[w['id'] for w in writes]
     run['plan_fields']=[{'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'reason':'validation','manual_only':True} for f in body.fields if f.id in run['plan_ids']]
@@ -321,7 +315,13 @@ def question_suggestions(id:str,question_id:str,user=Depends(auth.current)):
     if run['session_hash']!=session_hash(user) or run['expires']<=time.time() or run['state'] in TERMINAL:raise HTTPException(403,'Run is not available for review.')
     q=next((q for q in run['unresolved'] if q['id']==question_id),None)
     if not q:raise HTTPException(404,'Unresolved question not found.')
-    result=private_profile.suggestions(user['id'],q,owned(user['id'],run['application_id'],'application'))
+    application=owned(user['id'],run['application_id'],'application')
+    result=private_profile.suggestions(user['id'],q,application) if q.get('private') else {'suggestions':[], 'requires_review':True}
+    if not q.get('manual_only') and not q.get('private'):
+        f=FieldInfo(**{k:v for k,v in q.items() if k in FieldInfo.model_fields})
+        result['suggestions']+=application_values.candidates(user['id'],f)
+    if q.get('private'):
+        result['suggestions']+=application_values.authorization_suggestions(user['id'],q)
     return {**result,'run_version':run['version']}
 
 @router.post('/runs/{id}/progress')
@@ -381,7 +381,7 @@ def review_answer(id:str,body:ReviewedAnswer,user=Depends(auth.current)):
         a=body.private_answer
         if not a or a.question!=q['label'] or a.options!=q['options'] or a.description!=q.get('description','') or a.context!=q.get('context','') or a.value!=body.value:raise HTTPException(422,'Review the exact question, choices and scope before saving.')
         private_answers.save(user['id'],a)
-    answer_id=db.uid();ciphertext=private_answers.seal(user['id'],answer_id,{'question':q['label'],'options':q['options'],'description':q.get('description',''),'context':q.get('context',''),'value':body.value})
+    answer_id=db.uid();ciphertext=private_answers.seal(user['id'],answer_id,{'question':q['label'],'options':q['options'],'description':q.get('description',''),'context':q.get('context',''),'section':q.get('section',''),'repeat_index':q.get('repeat_index',0),'replace_placeholder':q.get('reason')=='existing_value','value':body.value})
     with db.connect() as c:c.execute('INSERT INTO cc_run_answers VALUES(?,?,?,?)',(answer_id,user['id'],id,ciphertext))
     run['unresolved']=[x for x in run['unresolved'] if x['id']!=q['id']]
     return persist(user['id'],run,body.expected_version)

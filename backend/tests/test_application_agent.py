@@ -490,7 +490,8 @@ def test_mixed_registration_fills_in_order_then_lists_manual_items(client,accoun
     result=response.json()
     assert [w['id'] for w in result['writes']]==['f1','f3','f5']
     assert [q['label'] for q in result['run']['unresolved']]==['First name (legal)','Password','I acknowledge']
-    assert all(q['manual_only'] for q in result['run']['unresolved'])
+    assert not result['run']['unresolved'][0]['manual_only']
+    assert all(q['manual_only'] for q in result['run']['unresolved'][1:])
     state=result['run']
     progress={**c,'origin':r['allowed_origin'],'tab_id':12,'expected_version':state['version'],'state':'needs_input','write_ids':['f1','f3','f5']}
     done=client.post('/api/application-agent/runs/'+r['id']+'/progress',json=progress)
@@ -533,3 +534,89 @@ def test_failed_readback_names_the_field_for_manual_review(client,account):
     assert response.status_code==200,response.text
     assert response.json()['unresolved'][0]['label']=='Preferred email'
     assert response.json()['unresolved'][0]['manual_only']
+
+
+def test_saved_profile_dropdown_month_and_entry_mappings(client,account):
+    from app import application_values as values
+    user=account['id']
+    with db.connect() as c:c.execute('UPDATE users SET settings=? WHERE id=?',(json.dumps({'name':'Avery Chen','country':'US','state':'VA'}),user))
+    education=db.save(user,'experience',{'category':'education','title':'M.S. in Data Science','organization':'Fixture University','confirmed':True,'degree':'Master of Science (MS)','major':'Data Science','start_date':'August 2025','expected_graduation':'May 2027'})
+    job=db.save(user,'experience',{'category':'employment','title':'Research Associate','organization':'Fixture Lab','confirmed':True,'start_date':'August 2026','end_date':'Present'})
+    app={'id':'fictional','data':{}}
+    def value(label,**kw):return agent.local_value(user,agent.FieldInfo(**field(label=label,**kw)),app)
+    assert value('Country *',control='select',options=['United States','Canada'])=='United States'
+    assert value('State *',control='select',options=['Virginia','California'])=='Virginia'
+    assert value('Education Level',section='education',control='select',options=["Bachelor's Degree","Master’s Degree"])=='Master’s Degree'
+    assert value('Primary Major/Program',section='education',control='combobox')=='Data Science'
+    assert value('Start Date *',section='employment',control='month')=='2026-08'
+    assert value('Current Job? *',section='employment',control='select',options=['Yes','No'])=='Yes'
+    assert value('Job Title *',section='employment')=='Research Associate'
+    assert value('As of today, have you completed this degree/program?',section='education',control='select',options=['Yes','No'])=='No'
+    assert value('Address line 1 *') is None
+    assert value('Do you have or plan to pursue a CPA license?',control='select',options=['Yes','No']) is None
+    assert value('First name (legal) *') is None
+    assert values.candidates(user,agent.FieldInfo(**field(label='First name (legal) *')))[0]['value']=='Avery'
+    assert values.candidates(user,agent.FieldInfo(**field(label='Last name *')))[0]['value']=='Chen'
+    assert values.month_value('August 2026','date') is None
+    assert values.option_value('Data Science',['Data Science and Analytics'],'major') is None
+    assert education['id'] and job['id']
+
+
+def test_ambiguous_entries_are_offered_not_guessed(client,account):
+    from app import application_values as values
+    for title in ('Fictional Analyst','Fictional Engineer'):
+        db.save(account['id'],'experience',{'category':'employment','title':title,'organization':'Fixture','confirmed':True})
+    db.save(account['id'],'experience',{'category':'employment','title':'Unconfirmed','confirmed':False})
+    f=agent.FieldInfo(**field(label='Job Title *'))
+    assert values.automatic(account['id'],f) is None
+    assert {v['value'] for v in values.candidates(account['id'],f)}=={'Fictional Analyst','Fictional Engineer'}
+    assert values.candidates('other-account',f)==[]
+
+
+def test_authorization_settings_suggested_only_after_owned_review(client,account):
+    from app import private_profile
+    with db.connect() as c:private_profile.update_settings(c,account['id'],{'authorized_us':'yes','sponsorship_now':'no','sponsorship_future':'no'})
+    r,connection,_=run(client,account['id'])
+    fields=[field(label='Legally authorized to work in US? *',control='select',options=['Yes','No']),field('f1','Will you now or in the future require sponsorship for employment visa status?',control='select',options=['Yes','No'])]
+    response=scan(client,r,connection,fields).json();assert response['writes']==[]
+    for q in response['run']['unresolved']:
+        response=client.get('/api/application-agent/runs/'+r['id']+'/questions/'+q['id']+'/suggestions')
+        assert response.status_code==200 and response.json()['suggestions']
+        assert response.json()['requires_review'] is True
+    with db.connect() as c:assert c.execute('SELECT COUNT(*) FROM cc_ai_requests').fetchone()[0]==0
+
+
+def test_reviewed_placeholder_replacement_is_exact_and_repeat_scoped(client,account):
+    with db.connect() as c:c.execute('UPDATE users SET settings=? WHERE id=?',(json.dumps({'name':'Avery Chen'}),account['id']))
+    r,connection,_=run(client,account['id'])
+    f=field(label='First name (legal) *',has_value=True)
+    response=scan(client,r,connection,[f],metadata={'version':3,'review_existing':['f0']}).json()
+    q=response['run']['unresolved'][0];assert not q['manual_only'];assert not response['writes']
+    suggested=client.get('/api/application-agent/runs/'+r['id']+'/questions/f0/suggestions').json()
+    assert suggested['suggestions'][0]['value']=='Avery'
+    reviewed=client.post('/api/application-agent/runs/'+r['id']+'/answers',json={'question_id':'f0','value':'Avery','decision':'once','expected_version':response['run']['version']})
+    assert reviewed.status_code==200,reviewed.text
+    resumed=client.post('/api/application-agent/runs/'+r['id']+'/control',json={'action':'resume','expected_version':reviewed.json()['version']}).json()
+    response=scan(client,resumed,connection,[f],metadata={'version':3,'review_existing':['f0']}).json()
+    assert response['writes']==[{'id':'f0','value':'Avery','replace_placeholder':True}]
+
+
+def test_repeated_review_answers_do_not_leak_to_other_entries(client,account):
+    r,connection,_=run(client,account['id'])
+    fields=[field(label='Job Title',section='employment',repeat_index=0),field('f1','Job Title',section='employment',repeat_index=1)]
+    response=scan(client,r,connection,fields).json()
+    reviewed=client.post('/api/application-agent/runs/'+r['id']+'/answers',json={'question_id':'f0','value':'Fixture first job','decision':'once','expected_version':response['run']['version']}).json()
+    resumed=client.post('/api/application-agent/runs/'+r['id']+'/control',json={'action':'resume','expected_version':reviewed['version']}).json()
+    response=scan(client,resumed,connection,fields).json()
+    assert response['writes']==[{'id':'f0','value':'Fixture first job'}]
+    assert [q['id'] for q in response['run']['unresolved']]==['f1']
+
+
+def test_saved_address_alias_suggestion_requires_review_and_is_account_scoped(client,account):
+    from app import application_values as values
+    a=answer(category='additional',question='Street address',options=[],value='100 Fictional Avenue',scope='account')
+    assert client.post('/api/private-application-answers',json=a).status_code==200
+    f=agent.FieldInfo(**field(label='Address line 1 *'))
+    assert values.automatic(account['id'],f) is None
+    assert values.candidates(account['id'],f)[0]['value']=='100 Fictional Avenue'
+    assert values.candidates('other-account',f)==[]

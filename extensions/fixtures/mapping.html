@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>Fictional mapping form</title>
+<form><div class="section-title">Personal information</div>
+<label>First name (legal) *<input id="legal" value="Unknown"></label>
+<label>Country *<select id="country"><option value="placeholder">Select a country</option><option value="US">United States</option><option value="CA">Canada</option></select></label>
+<div class="section-title">Education History</div>
+<div class="entry"><label>As of today, have you completed this degree/program?<select><option value="">Select an option</option><option>Yes</option><option>No</option></select></label><label>School<input id="school0" role="combobox" aria-controls="schools" autocomplete="off"></label><label>Education Level<select><option value="">Select an option</option><option>Master's Degree</option><option>Bachelor's Degree</option></select></label><label>Primary Major/Program<select><option value="">Select an option</option><option>Data Science</option></select></label></div>
+<div class="entry"><label>As of today, have you completed this degree/program?<select><option value="">Select an option</option><option>Yes</option><option>No</option></select></label><label>School<input id="school1"></label><label>Education Level<select><option value="">Select an option</option><option>Bachelor's Degree</option></select></label></div>
+<div class="section-title">Work Experience</div><div class="entry"><label>Employer<input></label><label>Job Title *<input></label><label>Current Job? *<select><option value="">Select an option</option><option>Yes</option><option>No</option></select></label><label>Start Date *<input id="start" type="month"></label></div>
+<div class="section-title">Immigration information</div><label>Legally authorized to work in US? *<select id="auth"><option value="">Select an option</option><option>Yes</option><option>No</option></select></label>
+<label>Password<input type="password" id="password"></label><label>I acknowledge<input id="consent" type="checkbox"></label><button>Continue</button></form>
+<script>
+document.querySelector('#school0').addEventListener('input',e=>{const query=e.target.value;setTimeout(()=>{let list=document.querySelector('#schools');if(!list){list=document.createElement('div');list.id='schools';list.role='listbox';document.body.append(list);}list.innerHTML='';if(query==='Fixture University'){let option=document.createElement('div');option.role='option';option.textContent='Fixture University';option.onclick=()=>{e.target.value=option.textContent;list.remove();};list.append(option);}},80);});
+</script>
