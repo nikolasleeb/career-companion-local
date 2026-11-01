@@ -589,6 +589,9 @@ def restore(user,id,body):
     return state(user,id)
 
 def finalize(user,id,body):
+    if getattr(body,'checkpoint_id',''):
+        from . import resume_runs
+        return resume_runs.finalize_checkpoint(user,id,body)
     revision=require(user,body.revision_id,'resume_revision');value=revision['data'];snapshot=copy.deepcopy(value['snapshot'])
     if value['conversation_id']!=id:raise HTTPException(409,'That revision belongs to another posting.')
     from . import resume_runs

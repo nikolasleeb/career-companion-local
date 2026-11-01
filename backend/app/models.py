@@ -780,6 +780,12 @@ class FinalizeRevision(RevisionAction):
     reviewed: Literal[True]
     quality_warning_acknowledged: bool = False
 
+class FinalizeResumeRevision(FinalizeRevision):
+    revision_id: str = ''
+    checkpoint_id: str = Field(default='',max_length=100)
+    checkpoint_version: str = Field(default='',max_length=40)
+    incomplete_review_acknowledged: bool = False
+
 class ResumeQualityRequest(RevisionAction):
     request_token: str = Field(min_length=1,max_length=100)
     mode: Literal['economy','deep','custom'] = 'economy'

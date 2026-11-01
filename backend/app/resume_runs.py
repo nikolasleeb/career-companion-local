@@ -59,7 +59,7 @@ def projection(user,conversation):
   state='unknown' if any(s.get('status') in ('dispatching','unknown') for s in d.get('stages',[])) else 'cancelled' if task and task['status']=='cancelled' else 'interrupted'
  stages=[{k:s.get(k) for k in ('name','schema','role','status','started_at','finished_at','duration_seconds','usage','model','reasoning_effort','speed','estimated_token_cost_usd','error')} for s in d.get('stages',[])]
  preview=d.get('preview') or {};raw=(preview.get('artifacts') or {}).get('pdf')
- return {'id':record['id'],'status':state,'continue_inputs':{k:copy.deepcopy(d.get('inputs',{}).get(k)) for k in ('mode','decisions','template','preparation','refresh_linked_evidence','optimization_mode') if k in d.get('inputs',{})},'optimization_mode':d.get('optimization_mode','standard'),'requests_used':d.get('requests_used',0),'request_limit':d.get('request_limit',4),'stages':stages,'message':d.get('message',''),'deadline_at':d.get('deadline_at'),'preview_id':record['id'] if raw else '', 'preview_version':hashlib.sha256(raw.encode()).hexdigest()[:20] if raw else '', 'preview_pages':preview.get('layout',{}).get('pages',0),'can_continue':state in ('paused','unknown','interrupted','cancelled') and not d.get('restored'),'unknown_usage_acknowledgement_required':state=='unknown','factual_ready':bool(final and d.get('approved_pdf_sha256')),'final_revision_id':final['id'] if final else ''}
+ return {'id':record['id'],'status':state,'continue_inputs':{k:copy.deepcopy(d.get('inputs',{}).get(k)) for k in ('mode','decisions','template','preparation','refresh_linked_evidence','optimization_mode') if k in d.get('inputs',{})},'optimization_mode':d.get('optimization_mode','standard'),'requests_used':d.get('requests_used',0),'request_limit':d.get('request_limit',4),'stages':stages,'message':d.get('message',''),'deadline_at':d.get('deadline_at'),'preview_id':record['id'] if raw else '', 'preview_version':hashlib.sha256(raw.encode()).hexdigest()[:20] if raw else '', 'preview_pages':preview.get('layout',{}).get('pages',0),'manual_finalize_available':bool(raw and preview.get('layout',{}).get('pages')==1 and preview.get('layout',{}).get('validated') and not d.get('restored') and state not in ('running','completed','user_finalized') and (not task or task['status'] not in ('queued','running','cancelling'))),'manually_finalized':state=='user_finalized','can_continue':state in ('paused','unknown','interrupted','cancelled') and not d.get('restored'),'unknown_usage_acknowledgement_required':state=='unknown','factual_ready':bool(final and d.get('approved_pdf_sha256')),'final_revision_id':final['id'] if final else ''}
 
 def preview_snapshot(user,id):
  record=read(user,id)
@@ -159,7 +159,7 @@ async def execute(user,conversation,body,work):
   if record['data'].get('status')=='unknown' and not body.acknowledge_unknown_usage:raise HTTPException(409,'Acknowledge possible provider usage before retrying the unknown stage.')
  else:
   previous=projection(user,conversation)
-  if previous and previous['status']!='completed' and not body.start_new_run:return resume_conversation.state(user,conversation)
+  if previous and previous['status'] not in ('completed','user_finalized') and not body.start_new_run:return resume_conversation.state(user,conversation)
   if previous and previous['status']=='unknown' and not body.acknowledge_unknown_usage:raise HTTPException(409,'Acknowledge the previous unknown provider usage before starting another optimization.')
   mode=info['optimization_mode'];value={'schema_version':VERSION,'conversation_id':conversation,'job_id':parent['data']['job_id'],'fingerprint':signature,'inputs':info,'task_id':task,'optimization_mode':mode,'status':'running','requests_used':0,'request_limit':4 if mode=='standard' else 8,'stages':[],'created_at':db.now()}
   with task_atomic.outside(),db.connect() as c:
@@ -217,3 +217,52 @@ def restore_value(value):
     if key in usage[detail]:row['usage'][detail]={key:integer(usage[detail][key],10**12)}
   history.append(row)
  return {'schema_version':VERSION,'conversation_id':conversation,'job_id':job,'optimization_mode':mode,'status':'imported','restored':True,'message':'Imported optimization history. Start a fresh optimization to use current verified sources.','requests_used':used,'request_limit':limit,'stages':history}
+
+def finalize_checkpoint(user,conversation,body):
+ """Save the exact owned PDF after explicit human review, without claiming AI approval."""
+ from io import BytesIO
+ from pypdf import PdfReader
+ from . import resume_conversation as guided,resume_quality,resume_builder,resume_data,applications
+ if not body.incomplete_review_acknowledged:raise HTTPException(409,'Acknowledge that the AI review is incomplete before finalizing this preview.')
+ if body.revision_id:raise HTTPException(400,'Choose a revision or a saved checkpoint, not both.')
+ with db.connect() as c:
+  c.execute('BEGIN IMMEDIATE')
+  parent=db.decode(c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='resume_conversation'",(conversation,user)).fetchone())
+  record=db.decode(c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='resume_run'",(body.checkpoint_id,user)).fetchone())
+  if not parent or not record or record['data'].get('conversation_id')!=conversation or record['data'].get('job_id')!=parent['data'].get('job_id'):raise HTTPException(404,'Saved resume preview not found for this application.')
+  run=record['data'];data=parent['data'];snapshot=copy.deepcopy(run.get('preview') or {})
+  latest_row=next((r for r in c.execute("SELECT * FROM entities WHERE user_id=? AND kind='resume_run' ORDER BY created_at DESC",(user,)) if json.loads(r['payload']).get('conversation_id')==conversation),None)
+  if not latest_row or latest_row['id']!=record['id'] or run.get('restored'):raise HTTPException(409,'This preview is no longer the current saved optimization. Reopen the current preview.')
+  raw=(snapshot.get('artifacts') or {}).get('pdf','');version=hashlib.sha256(raw.encode()).hexdigest()[:20] if raw else ''
+  if not version or version!=body.checkpoint_version:raise HTTPException(409,'The preview changed. Review the exact current PDF before finalizing.')
+  for task in c.execute("SELECT id,result FROM tasks WHERE user_id=? AND kind='resume_guided' AND status IN ('queued','running','cancelling')",(user,)):
+   inputs=json.loads(task['result'] or '{}');inputs=inputs.get('_task_inputs',inputs.get('inputs',{}))
+   if task['id']==run.get('task_id') or inputs.get('conversation_id')==conversation:raise HTTPException(409,'Stop the active optimization or wait for it to finish before finalizing this saved preview.')
+  saved=run.get('manual_resume_id');revision=run.get('manual_revision_id')
+  if saved and revision and data.get('current_revision_id')==revision:
+   if not c.execute("SELECT 1 FROM entities WHERE id=? AND user_id=? AND kind='resume'",(saved,user)).fetchone():raise HTTPException(409,'The saved resume is unavailable.')
+  else:
+   if data['version']!=body.expected_version:raise HTTPException(409,'This conversation changed. Reload and review the current preview before finalizing.')
+   if run.get('manual_resume_id'):raise HTTPException(409,'A newer draft replaced this finalized preview. Review the current draft instead.')
+   if snapshot.get('job_id')!=data['job_id'] or snapshot.get('layout',{}).get('pages')!=1 or not snapshot.get('layout',{}).get('validated'):raise HTTPException(409,'This preview has not passed local one-page document checks.')
+   if run.get('status') in ('ready','completed'):raise HTTPException(409,'Use the reviewed current revision to finalize this completed optimization.')
+   try:
+    pdf=base64.b64decode(raw,validate=True)
+    valid_pdf=pdf.startswith(b'%PDF-') and len(PdfReader(BytesIO(pdf)).pages)==1
+   except Exception:valid_pdf=False
+   if not valid_pdf:raise HTTPException(409,'This preview is not a valid one-page PDF.')
+   resume_quality.check_document(snapshot)
+   stamp=db.now();revision=db.uid();token=db.uid()
+   optimization=snapshot.setdefault('optimization',{});optimization['source_checked']=False;optimization['review_pending']=True
+   optimization['manual_review']={'reviewed_at':stamp,'checkpoint_id':record['id'],'preview_version':version,'ai_review_completed':False,'run_status':run.get('status'),'review_message':run.get('message','')}
+   optimization['quality_review']=resume_quality.stamp(snapshot,reason='AI review incomplete. You finalized this exact saved preview after manual review.')
+   snapshot.update(conversation_id=conversation,revision_id=revision,quality_warning_acknowledged=True,title=resume_data.resume_title(snapshot.get('posting_snapshot'),snapshot.get('title') or 'Resume',snapshot.get('name') or ''))
+   saved=guided.write(c,user,'resume',snapshot)
+   value={'conversation_id':conversation,'job_id':data['job_id'],'parent_id':data.get('current_revision_id'),'snapshot':snapshot,'catalog':resume_builder.catalog(snapshot),'summary':'Finalized by you from the saved preview. AI review remains incomplete; no AI request was made.','request_token':token,'usage':None,'source_snapshot':copy.deepcopy(snapshot),'draft_id':None,'finalized_resume_id':saved,'project_snapshot_ids':list(data.get('project_snapshot_ids',[]))}
+   guided.write(c,user,'resume_revision',value,revision)
+   data.update(current_revision_id=revision,workspace_token=token,last_saved_resume_id=saved,version=data['version']+1);data['revision_ids'].append(revision);data.pop('workspace_request',None);data.pop('optimization_waiting',None)
+   guided.write(c,user,'resume_conversation',data,conversation)
+   run.update(status='user_finalized',manual_resume_id=saved,manual_revision_id=revision,manual_preview_version=version,manual_finalized_at=stamp)
+   guided.write(c,user,'resume_run',run,record['id'])
+ applications.attach_resume(user,guided.require(user,saved,'resume'))
+ return guided.state(user,conversation)

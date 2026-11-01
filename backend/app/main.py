@@ -1075,7 +1075,7 @@ def resume_conversation_restore(entity_id:str,body:RevisionAction,user=Depends(a
     return resume_conversation.restore(user['id'],entity_id,body)
 
 @app.post('/api/resume-conversations/{entity_id}/finalize')
-def resume_conversation_finalize(entity_id:str,body:FinalizeRevision,user=Depends(auth.current)):
+def resume_conversation_finalize(entity_id:str,body:FinalizeResumeRevision,user=Depends(auth.current)):
     return resume_conversation.finalize(user['id'],entity_id,body)
 
 @app.get('/api/resume-revisions/{entity_id}/pages/{page}')
