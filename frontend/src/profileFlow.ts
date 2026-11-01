@@ -1,6 +1,6 @@
 import {answerExperienceIds} from './answerReview';
 // Profile presentation state only. Completion always comes from the server.
-export const profilePanes=['personal','education','employment','project','volunteering','skills','eligibility'];
+export const profilePanes=['personal','education','employment','project','volunteering','skills','certifications','eligibility'];
 export type StoryScope={experienceId?:string;standalone?:boolean};
 export type ProfileState={version:1;view:'resume'|'stories';scope:StoryScope;open:string[];returnY:number};
 export function firstUnfinished(sections:any[]){return ['education','coursework','employment','project','volunteering','skills'].find(id=>sections.some(s=>s.id===id&&!['complete','empty'].includes(s.status)))||'';}

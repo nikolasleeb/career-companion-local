@@ -1,5 +1,7 @@
 """Account-owned classes and syllabus context. Coverage is never applicant experience."""
 import asyncio,copy,hashlib,json,re
+from datetime import datetime,timezone
+from zoneinfo import ZoneInfo,ZoneInfoNotFoundError
 from pathlib import Path
 from fastapi import Depends,File,UploadFile,HTTPException
 from fastapi.responses import FileResponse
@@ -14,13 +16,45 @@ def names(data):
 
 def identity(parent,title):return hashlib.sha256((parent+':course:'+title.strip().casefold()).encode()).hexdigest()[:32]
 
-def classes(record):
+def account_today(user=None,now=None):
+    # Match the account's configured day boundary; no setting means UTC.
+    name=(db.settings(user).get('usage_timezone') if user else None) or 'UTC'
+    try:zone=ZoneInfo(name)
+    except (ValueError,ZoneInfoNotFoundError):raise HTTPException(422,'Choose a valid day-boundary timezone.') from None
+    return (now or datetime.now(timezone.utc)).astimezone(zone).date()
+
+def completion_date(data):
+    from .graduation_defaults import interval
+    value=data.get('end_date') or data.get('expected_graduation')
+    span=interval(value)
+    return span[1] if span else None
+
+def prepare(data,previous=None):
+    """Old editors cannot erase established per-course override metadata."""
+    if data.get('category') not in ('education','coursework'):return data
+    old={v['id']:v for v in (previous or {}).get('course_items',[])}
+    for item in data.get('course_items',[]):
+        value=copy.deepcopy(item);before=old.get(value['id'],{})
+        if value.get('status_override') is None and before.get('status_override') is not None:
+            value['status_override']=before['status_override']
+        if before and value.get('status')!=before.get('status'):
+            value['status_override']=True
+        old[value['id']]=value
+    return {**data,'course_items':list(old.values())} if old else data
+
+def classes(record,effective=True,today=None):
     data=record['data'];saved=data.get('course_items',[]);result=[]
+    ended=completion_date(data) if data.get('category')=='education' else None
+    complete=bool(effective and ended and ended<(today or account_today(record.get('user_id'))))
     titles=names(data) if data.get('category')=='education' else [data['title']] if data.get('category')=='coursework' else []
     for title in titles:
         item=next((v for v in saved if title.casefold() in [v['title'].casefold(),*[a.casefold() for a in v.get('aliases',[])]]),None)
         item=copy.deepcopy(item) if item else {'id':identity(record['id'],title),'title':title,'status':'unspecified','aliases':[]}
         if any(v['id']==item['id'] for v in result):continue
+        if effective:
+            inherited=complete and item.get('status','unspecified')=='unspecified' and item.get('status_override') is not True
+            item['status_source']='education_dates' if inherited else 'explicit' if item.get('status_override') or item.get('status')!='unspecified' else 'unspecified'
+            if inherited:item['status']='completed'
         result.append({**item,'education_id':record['id'],'school':data.get('organization',''),'education_title':data.get('title',''),'confirmed':data.get('confirmed',False),'parent_updated_at':record['updated_at']})
     return result
 
@@ -59,7 +93,7 @@ def add_classes(user,parent,body):
         record=db.decode(c.execute("SELECT * FROM entities WHERE id=? AND user_id=? AND kind='experience'",(parent,user)).fetchone())
         if not record or record['data'].get('category')!='education':raise HTTPException(404,'Education not found.')
         if record['updated_at']!=body.expected_updated_at:raise HTTPException(409,'This education changed. Your class selection is retained. Refresh the saved version, then try adding again.')
-        data=copy.deepcopy(record['data']);existing=classes(record)
+        data=copy.deepcopy(record['data']);existing=classes(record,effective=False)
         known={name.strip().casefold() for item in existing for name in [item['title'],*item.get('aliases',[])]}
         titles=[]
         for value in body.titles:
@@ -93,7 +127,7 @@ def edit_class(user,parent,course,body):
         if not title or re.search(r'[;\n]',title):raise HTTPException(422,'Use one class name without semicolons or line breaks.')
         if any(v['id']!=course and v['title'].casefold()==title.casefold() for v in classes(record)):raise HTTPException(409,'This class is already listed for that education.')
         data=record['data'];aliases=list(dict.fromkeys([*old.get('aliases',[]),old['title']])) if title!=old['title'] else old.get('aliases',[])
-        item=CourseItem(id=course,title=title,status=body.status,aliases=aliases[-30:]).model_dump()
+        item=CourseItem(id=course,title=title,status=body.status,status_override=True,aliases=aliases[-30:]).model_dump()
         data['course_items']=[v for v in data.get('course_items',[]) if v['id']!=course]+[item]
         if data['category']=='education':data['relevant_courses']='; '.join(title if v.casefold() in [old['title'].casefold(),*[a.casefold() for a in aliases]] else v for v in names(data))
         else:data['title']=title

@@ -34,7 +34,7 @@ def test_selected_goals_require_motivation_review_and_revoke_future_context(clie
     state=review(user,state,'I am exploring data engineering because I enjoy building reliable pipelines.')
     assert any(r.get('kind')=='motivation' for r in state['sources'])
     assert not calls
-    state=asyncio.run(letters.generate(user,state['id'],CoverGenerate(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']))))
+    state=asyncio.run(letters.generate(user,state['id'],CoverGenerate(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),skip_questions=True)))
     assert any(r.get('kind')=='motivation' for r in calls[0][1]['saved_resume_sources'])
     old_revision=copy.deepcopy(db.get(user,state['current']['id'],'cover_revision'))
     assert old_revision['data']['career_goal_selection']['enabled']

@@ -43,7 +43,8 @@ export async function requestJSON(path:string,method='GET',body?:unknown,csrf=''
  let response:Response;
  // A stalled status read must release the UI into recoverable unknown status.
  // This deadline never applies to uploads or provider work running on the server.
- const bounded=method==='POST'&&path==='/analyses'||method==='GET'&&/^\/tasks\/[^/?]+$/.test(path)&&path!=='/tasks/active';
+ const documentAction=method==='POST'&&/^\/(resume-conversations|cover-workspaces)\/[^/]+\/(build|messages|message|approve|quality-review|generate|context\/review|answers\/review|questions|render)(?:\?|$)/.test(path);
+ const bounded=documentAction||method==='POST'&&path==='/analyses'||method==='GET'&&path.startsWith('/document-models/tasks/status?')||method==='GET'&&/^\/tasks\/[^/?]+$/.test(path)&&path!=='/tasks/active';
  const requestSignal=signal||(bounded?AbortSignal.timeout(30000):undefined);
  try{response=path==='/project-sources/upload-preview'&&method==='POST'&&body instanceof FormData?await uploadProjectPreview(body,headers,requestSignal,onTransfer):await fetch('/api'+path,{method,headers,credentials:'same-origin',signal:requestSignal,body:body===undefined?undefined:body instanceof FormData||body instanceof Blob?body:JSON.stringify(body)});}
  catch{throw new ApiError('The connection to the app was interrupted. Your saved inputs remain available. Check the connection and try again.');}

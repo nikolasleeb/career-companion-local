@@ -112,11 +112,8 @@ def save(user, kind, data, entity_id=None, *, restoring=False, expected_updated_
         if kind=='experience':
             from . import project_relations
             old=json.loads(existing['payload']) if existing else {}
-            if existing and old.get('course_items'):
-                # Older editors omit this additive metadata. Keep stable identities.
-                courses={v['id']:v for v in old['course_items']}
-                courses.update({v['id']:v for v in data.get('course_items',[])})
-                data={**data,'course_items':list(courses.values())}
+            from . import course_evidence
+            data=course_evidence.prepare(data,old)
             if existing:
                 for field in project_relations.FIELDS:
                     if field not in data:data={**data,field:old.get(field,[])}

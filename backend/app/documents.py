@@ -176,6 +176,7 @@ def export_resume(data, format):
     data=resume_presentation.display(data)
     buffer = io.BytesIO()
     if format=='docx':
+        modern_format=data.get('document_format_version',0)>=5
         doc = Document()
         section = doc.sections[0]
         section.page_width,section.page_height = Inches(8.5), Inches(11)
@@ -189,13 +190,22 @@ def export_resume(data, format):
             style.font.size=Pt(10.5 if key in ('Normal','List Bullet') else 12 if key.startswith('Heading') else 21)
             style.paragraph_format.space_after=Pt(2 if data.get('schema_version',0)>=2 else 5)
             style.paragraph_format.line_spacing=1.03 if data.get('schema_version',0)>=4 else 1 if data.get('schema_version',0)>=2 else 1.1
+        if modern_format:
+            section.top_margin=section.bottom_margin=Inches(.48)
+            section.left_margin=section.right_margin=Inches(.6)
+            doc.styles['Title'].font.size=Pt(19)
         # Override theme colors and the built-in title paragraph border.
         title=doc.add_paragraph(clean(data.get('name')) or 'Resume','Title')
         title.paragraph_format.space_after=Pt(6)
         for ppr in (title._p.get_or_add_pPr(),doc.styles['Title'].element.get_or_add_pPr()):
             for border in list(ppr.findall(qn('w:pBdr'))): ppr.remove(border)
+        if modern_format:
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            title.alignment=WD_ALIGN_PARAGRAPH.CENTER
+            for run in title.runs:run.bold=True
         if clean(data.get('headline')):
             headline=doc.add_paragraph(clean(data['headline']))
+            if modern_format:headline.alignment=WD_ALIGN_PARAGRAPH.CENTER
             if data.get('schema_version',0)>=4:
                 headline.paragraph_format.space_after=Pt(4)
                 for run in headline.runs:run.bold=True;run.font.size=Pt(11)
@@ -204,21 +214,27 @@ def export_resume(data, format):
             bullets.left_indent=Inches(.18);bullets.first_line_indent=Inches(-.13)
             bullets.space_after=Pt(3)
         for contact in data.get('contact_lines',str(data.get('contact','')).splitlines()):
-            if clean(contact): doc.add_paragraph(clean(contact))
+            if clean(contact):
+                line=doc.add_paragraph(clean(contact))
+                if modern_format:line.alignment=WD_ALIGN_PARAGRAPH.CENTER
         for block in data['sections']:
             if not block['entries']: continue
-            heading=doc.add_paragraph(block['title'],'Heading 1'); heading.paragraph_format.space_before=Pt(7 if data.get('schema_version',0)>=2 else 13)
+            heading=doc.add_paragraph(block['title'].upper() if modern_format else block['title'],'Heading 1'); heading.paragraph_format.space_before=Pt(7 if data.get('schema_version',0)>=2 else 13)
             for entry in block['entries']:
                 modern=data.get('schema_version',0)>=4
                 p=doc.add_paragraph();p.paragraph_format.keep_with_next=True
                 certificate_entry=data.get('separate_certifications') and block['title']=='Certifications'
                 if not certificate_entry:p.add_run(clean(entry['title'])).bold=True
+                if modern_format and clean(entry.get('dates')):
+                    from .resume_presentation import display_dates
+                    p.paragraph_format.tab_stops.add_tab_stop(Inches(7.3),WD_TAB_ALIGNMENT.RIGHT)
+                    p.add_run('\t'+display_dates(entry['dates']))
                 if modern:
                     p.paragraph_format.space_after=Pt(1)
                     employer=' · '.join(filter(None,[clean(entry.get('organization')),clean(entry.get('location'))]))
                     arrangement={'onsite':'On-site','hybrid':'Hybrid','remote':'Remote'}.get(entry.get('work_arrangement'),'')
                     if arrangement:employer+=' · '+arrangement if employer else arrangement
-                    dates=clean(entry.get('dates'))
+                    dates='' if modern_format else clean(entry.get('dates'))
                     if employer or dates:
                         metadata=doc.add_paragraph();metadata.paragraph_format.space_after=Pt(2)
                         metadata.paragraph_format.keep_with_next=bool(entry.get('bullets'))

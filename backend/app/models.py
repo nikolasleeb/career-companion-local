@@ -66,6 +66,7 @@ class CourseItem(StrictModel):
     id: str = Field(min_length=1,max_length=64,pattern=r'^[a-zA-Z0-9_-]+$')
     title: str = Field(min_length=1,max_length=300)
     status: Literal['completed','in_progress','planned','unspecified'] = 'unspecified'
+    status_override: bool | None = None
     aliases: list[Annotated[str,Field(max_length=300)]] = Field(default_factory=list,max_length=30)
 
 class CourseReference(StrictModel):
@@ -260,6 +261,17 @@ class OpenAIKeyUpdate(StrictModel):
         return SecretStr(key)
 
 class SettingsUpdate(StrictModel):
+    document_models: dict[str,dict[str,str]] | None = None
+
+    @field_validator('document_models')
+    @classmethod
+    def valid_document_models(cls,value):
+        if value is not None:
+            from . import document_models
+            try:document_models.validate(value)
+            except Exception as exc:raise ValueError(str(exc)) from None
+        return value
+
     daily_spend_warning_usd: float | None = Field(default=None,ge=0,le=1000000,allow_inf_nan=False)
     usage_timezone: str | None = Field(default=None,max_length=100)
 
@@ -708,12 +720,14 @@ class ConversationStart(StrictModel):
     analysis_id: str | None = None
 
 class ConversationMessage(StrictModel):
+    request_token: str = Field(default='',max_length=100)
     question_answers:list[dict]=Field(default_factory=list,max_length=30)
     text: str = Field(min_length=1,max_length=12000)
     mode: Literal['economy','deep','custom'] = 'economy'
     expected_version: int = Field(ge=0)
 
 class FactApproval(StrictModel):
+    request_token: str = Field(default='',max_length=100)
     proposal_id: str
     expected_version: int = Field(ge=0)
     action: Literal['approve','reject']
@@ -739,6 +753,8 @@ class LinkedEvidenceReview(StrictModel):
     placements: list[ProjectEvidencePlacement] = Field(max_length=300)
 
 class GuidedBuild(StrictModel):
+    request_token: str = Field(default='',max_length=100)
+    skip_questions: bool = False
     refresh_linked_evidence: bool = False
     preparation: ResumeRequest | None = None
     expected_version: int = Field(ge=0)

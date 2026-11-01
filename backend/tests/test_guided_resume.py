@@ -52,7 +52,7 @@ def test_first_draft_preview_finalize_exact_artifacts_and_tracker(env):
     assert len(session['data']['questions'])<=3 and not calls
     assert guided.start(user,ConversationStart(job_id=job['id']))['id']==session['id']
     state=build(env);rev=state['current'];assert rev['data']['snapshot']['headline']=='Data Science | Python & SQL'
-    assert rev['data']['snapshot']['layout']['pages']==1 and len(calls)==5
+    assert rev['data']['snapshot']['layout']['pages']==1 and len(calls)==6
     assert db.list_entities(user,'resume')==[] and db.list_entities(user,'application')==[]
     assert state['data']['questions']==session['data']['questions'] # Skipping does not discard unanswered prompts.
     assert 'artifacts' not in json.dumps(state)
@@ -66,12 +66,12 @@ def test_first_draft_preview_finalize_exact_artifacts_and_tracker(env):
     assert len(db.list_entities(user,'application'))==1
     assert db.list_entities(user,'application')[0]['data']['status']=='preparing'
     guided.finalize(user,state['id'],FinalizeRevision(revision_id=rev['id'],expected_version=finalized['data']['version'],reviewed=True))
-    assert len(db.list_entities(user,'resume'))==1 and len(calls)==5
+    assert len(db.list_entities(user,'resume'))==1 and len(calls)==6
 
 def test_local_headline_preview_and_restore(env):
     user,job,rows,session,calls=env;state=build(env);original=state['current']['id'];body=request(state);body.headline='Analysis and stakeholder communication'
     changed=guided.render(user,state['id'],WorkingRender(expected_version=state['data']['version'],request_token='new',resume=body))
-    assert changed['current']['id']!=original and len(calls)==5
+    assert changed['current']['id']!=original and len(calls)==6
     snapshot=db.get(user,changed['current']['id'],'resume_revision')['data']['snapshot']
     word=Document(io.BytesIO(base64.b64decode(snapshot['artifacts']['docx'])))
     assert body.headline in '\n'.join(p.text for p in word.paragraphs)
@@ -246,7 +246,7 @@ def test_onepage_layout_can_shorten_previously_rewritten_narrative(env,monkeypat
         assert doc.styles['Normal'].font.size.pt==10.5
         assert doc.styles['List Bullet'].paragraph_format.space_after.pt==3
         assert doc.styles['Normal'].paragraph_format.line_spacing==pytest.approx(1.03,abs=.001)
-        assert doc.sections[0].left_margin.inches==.7
+        assert doc.sections[0].left_margin.inches==.6
 
 
 def test_real_pdf_wrapping_is_measured_for_wording_corrections(env):
@@ -280,7 +280,7 @@ def resume_builder_catalog(snapshot):
     return catalog(snapshot)
 
 
-def test_approved_facts_refresh_comparison_on_next_build_only(env,monkeypatch):
+def test_approved_facts_feed_optimizer_without_hidden_paid_comparison(env,monkeypatch):
     user,job,rows,session,calls=env;p=proposal(env,rid=rows[1]['id']);original_model=ai.structured
     chat_mock(monkeypatch,response([p]));state=asyncio.run(guided.send(user,session['id'],ConversationMessage(text=p['fields'][0]['value'],expected_version=0)))
     state=guided.approve(user,state['id'],FactApproval(proposal_id=state['data']['proposals'][0]['id'],expected_version=state['data']['version'],action='approve',update_draft=False))
@@ -296,8 +296,8 @@ def test_approved_facts_refresh_comparison_on_next_build_only(env,monkeypatch):
         out.update({'ai':META,'retrieved':records});refreshed.append(True);return out
     monkeypatch.setattr(ai,'analyze',analyze);monkeypatch.setattr(ai,'structured',original_model)
     state=asyncio.run(guided.build(user,state['id'],state['data']['version'],'economy'))
-    assert refreshed==[True] and not state['data']['profile_dirty']
-    analysis=db.get(user,state['data']['analysis_id'],'analysis');assert analysis['data']['score']['value']==100
+    assert refreshed==[] and not state['data']['profile_dirty']
+    assert not db.list_entities(user,'analysis')
     assert any(p['fields'][0]['value'] in i['original'] for r in state['current']['data']['catalog'] for i in r['items'])
 
 
@@ -419,7 +419,7 @@ def test_one_editorial_layout_pass_then_final_audit(env,monkeypatch):
         return [{'kind':'dangling_words','item_id':item['item_id'],'record_id':entry['source_id'],'text':'A short carryover line.'}]
     monkeypatch.setattr(resume_layout,'inspect',dangling)
     state=build(env)
-    assert [name for name,p in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','ResumeQualityReview','OptimizationOutput','DraftAudit']
+    assert [name for name,p in calls]==['ResumeStrategy','ResumeComposition','ResumeQualityReview','ResumeComposition','OptimizationOutput','ResumeQualityReview','DraftAudit']
     assert state['current']['data']['usage']['layout_ai'] and state['current']['data']['snapshot']['layout']['pages']==1
 
 
@@ -463,7 +463,7 @@ def test_empty_preparation_recovers_after_reload_without_provider_dispatch(env):
 def test_empty_preparation_ai_build_keeps_edits_and_does_not_retry_provider(env):
     user,job,rows,session,calls=env;body,item=empty_workspace(env);state=retain_empty(env,body)
     result=asyncio.run(guided.build(user,state['id'],state['data']['version'],'economy'))
-    assert len(calls)==5 # Planning, drafting, editorial review and audit; no comparison or retry.
+    assert len(calls)==6 # Planning, drafting, editorial review and audit; no comparison or retry.
     assert result['current']['data']['snapshot']['headline']==body.headline
     assert calls[0][1]['user_constraints']['locked_items'][item['item_id']]['text']==body.overrides[item['item_id']]
     assert 'workspace_request' not in result['data']
@@ -478,7 +478,7 @@ def test_failed_first_build_keeps_preparation_for_explicit_retry(env,monkeypatch
     saved=guided.state(user,session['id']);assert not saved['current'] and saved['data']['workspace_request']==body.model_dump()
     monkeypatch.setattr(optimization,'create',original)
     result=asyncio.run(guided.build(user,session['id'],saved['data']['version'],'economy'))
-    assert result['current'] and len(calls)==5
+    assert result['current'] and len(calls)==6
 
 @pytest.mark.parametrize('change',['foreign_job','foreign_analysis','unknown_override','selection'])
 def test_first_build_preparation_validates_before_provider(env,change):

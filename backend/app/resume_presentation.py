@@ -41,3 +41,15 @@ def display(data):
             sections.insert(position,{'title':'Certifications','entries':certificates})
         result['sections']=sections
     return result
+
+
+def display_dates(value):
+    """Expand known months without inventing missing month/day precision."""
+    from datetime import date
+    def expand(match):
+        try:return date(int(match[1]),int(match[2]),1).strftime('%B %Y')
+        except ValueError:return match[0]
+    text=re.sub(r'(?<!\d)(\d{4})-(\d{2})(?:-\d{2})?(?!\d)',expand,str(value))
+    for index,month in enumerate(('January','February','March','April','May','June','July','August','September','October','November','December'),1):
+        text=re.sub(r'\b'+month[:3]+r'\.?(?=\s+\d{4})',month,text,flags=re.I)
+    return text

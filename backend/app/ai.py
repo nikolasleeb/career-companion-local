@@ -27,7 +27,10 @@ def reset_user_context(token):
     _context.reset(token)
 
 def options(mode):
-    return ai_settings.resolve((_context.get() or {}).get('profile',{}),mode)
+    context=_context.get() or {}
+    from . import document_models
+    if context.get('process') in document_models.PROCESSES:return document_models.options(context.get('profile',{}),mode)
+    return ai_settings.resolve(context.get('profile',{}),mode)
 
 def effort(mode):
     return options(mode)['reasoning_effort']
@@ -40,7 +43,10 @@ def output_limit(automatic):
 
 async def call_api(body,retry_allowed=True):
     from .provider_errors import error_code, retry_delay, failure, QUOTA_CODES
-    api_key=(_context.get() or {}).get('key',config.OPENAI_KEY)
+    context=_context.get() or {}
+    from . import document_models
+    if context.get('process') in document_models.PROCESSES:document_models.configured(context.get('profile',{}))
+    api_key=context.get('key',config.OPENAI_KEY)
     if not api_key:
         raise ServiceError('Add your OpenAI API key in Settings to enable AI. Your saved materials and manual exports still work.')
     # Explicit Standard avoids inheriting a more expensive project-level tier.
@@ -115,6 +121,7 @@ def metadata(response, mode):
     usage = response.get('usage') or {}
     result={'model':response.get('model',options(mode)['model']),'mode':mode,'reasoning_effort':effort(mode), 'usage':{'input_tokens':usage.get('input_tokens',0),'output_tokens':usage.get('output_tokens',0),'total_tokens':usage.get('total_tokens',0),'reasoning_tokens':(usage.get('output_tokens_details') or {}).get('reasoning_tokens',0),'cached_input_tokens':(usage.get('input_tokens_details') or {}).get('cached_tokens',0)},'estimated_token_cost_usd':ai_settings.usage_cost(response.get('model',options(mode)['model']),usage),'pricing_date':ai_settings.PRICE_DATE,'generated_at':db.now()}
     cache=ai_settings.cache_counts(usage)
+    if options(mode).get('document_role'):result['document_role']=options(mode)['document_role']
     tier=response.get('service_tier') or options(mode)['service_tier']
     result.update(requested_service_tier=options(mode)['service_tier'],service_tier=tier,
                   estimated_token_cost_usd=ai_settings.usage_cost(result['model'],usage,service_tier=tier))

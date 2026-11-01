@@ -94,10 +94,10 @@ def test_real_guided_pipeline_reports_draft_layout_audit_and_local_stages(env,cl
     completed=get_task(identity,user={'id':user})
     assert completed['status']=='completed',completed
     assert completed['result']['current']
-    assert observed==[('ResumeStrategy','resume_planning'),('ResumeComposition','drafting'),('ResumeComposition','resume_editorial'),('ResumeQualityReview','resume_quality'),('OptimizationOutput','layout'),('DraftAudit','checking')]
-    assert len(calls)==6 # Planning, composition, editorial review, one correction and audit; progress adds no requests.
+    assert observed==[('ResumeStrategy','resume_planning'),('ResumeComposition','drafting'),('ResumeQualityReview','resume_quality'),('ResumeComposition','resume_editorial'),('OptimizationOutput','layout'),('ResumeQualityReview','document_final_check'),('DraftAudit','checking')]
+    assert len(calls)==7 # Planning, composition, editorial review, one correction and audit; progress adds no requests.
     codes=[v['code'] for v in completed['progress']['history']]+[completed['progress']['code']]
-    assert codes==['starting','preparing','resume_planning','drafting','rendering','resume_editorial','rendering','resume_quality','rendering','layout','rendering','checking','saving']
+    assert codes==['starting','preparing','resume_planning','drafting','rendering','resume_quality','resume_editorial','rendering','layout','rendering','document_final_check','checking','saving']
 
 
 def test_manual_build_reports_only_local_work(env,client):
@@ -108,7 +108,7 @@ def test_manual_build_reports_only_local_work(env,client):
     assert result['progress']['code']=='saving'
 
 
-def test_refresh_comparison_stage_only_runs_when_profile_changed(env,monkeypatch):
+def test_fresh_profile_evidence_does_not_trigger_hidden_comparison(env,monkeypatch):
     user,job,rows,session,calls=env
     state=guided.mutate(user,session['id'],session['data']['version'],lambda d,c:d.update(profile_dirty=True))
     identity=task(user)
@@ -118,8 +118,9 @@ def test_refresh_comparison_stage_only_runs_when_profile_changed(env,monkeypatch
     monkeypatch.setattr(ai,'analyze',compare)
     async def work():return await guided.build(user,session['id'],state['data']['version'],'economy')
     asyncio.run(run_task(identity,user,work))
-    result=get_task(identity,user={'id':user});assert result['status']=='failed' and result['progress']['code']=='comparison'
-    assert not calls
+    result=get_task(identity,user={'id':user});assert result['status']=='completed'
+    assert 'comparison' not in [p['code'] for p in result['progress']['history']]
+    assert calls
 
 
 def test_project_analysis_provider_progress_uses_the_real_request_boundary(account,monkeypatch):

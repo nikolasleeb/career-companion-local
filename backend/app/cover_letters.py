@@ -1,4 +1,4 @@
-from . import task_progress
+from . import task_progress,document_models,document_quality
 """Cover letters grounded in an exact, immutable saved employer resume."""
 import asyncio
 import base64
@@ -53,7 +53,7 @@ def title(snapshot,posting):
 
 def sources(data):
     """Only employer-visible selected resume content. Never full Profile entry fields."""
-    rows=[];snapshot=data['resume_snapshot']
+    rows=copy.deepcopy(data.get('profile_sources',[]));snapshot=data['resume_snapshot']
     if snapshot.get('origin')=='uploaded':
         for index,text in enumerate(snapshot['source_text'].splitlines()):
             if text.strip():rows.append({'id':f'resume:uploaded:{index}','label':'Reviewed uploaded resume','text':text.strip()})
@@ -69,6 +69,42 @@ def sources(data):
     for a in data.get('library_sources',[]):
         rows.append({'id':'library:'+a['id'],'label':a['title']+' · reviewed Profile answer','text':a['text'],'version':a['version'],'experience_ids':a.get('experience_ids',[]),'project_attribution':copy.deepcopy(a.get('project_attribution',[])),'association_note':'One shared fact; linked records indicate context, not separate accomplishments.'})
     return rows
+
+
+def professional_sources(user,data):
+    from . import resume_strategy,resume_conversation,personalization
+    if not personalization.allowed(user):return []
+    snapshot=resume_conversation.source(user,{'job_id':data['job_id'],'analysis_id':None})
+    evidence=resume_strategy.catalog(snapshot)
+    words=set(re.findall(r'[a-z]{3,}',data['posting_snapshot'].get('description','').lower()))
+    facts=evidence['facts']
+    facts=sorted(facts,key=lambda f:-len(words & set(re.findall(r'[a-z]{3,}',f['text'].lower()))))
+    rows=[];size=0
+    for fact in facts:
+        cost=len(fact['text'])+250
+        if size+cost>42000:continue
+        size+=cost
+        rows.append({'id':'profile:'+fact['id'],'label':fact['record_title']+' · confirmed Profile','text':fact['text'],'record_id':fact['record_id'],'category':fact['category'],'field':fact['field'],'allowed_destinations':fact['allowed_destinations'],'allowed_attribution':[r for r in evidence['records'] if r['record_id'] in fact['allowed_destinations']],'dates':fact['dates'],'source_revision':fact['revision']})
+    return rows
+
+
+def changed_professional_attribution(old_rows,live_rows,paragraphs):
+    used={ref['source_id'] for paragraph in paragraphs for ref in paragraph['evidence'] if ref['source_id'].startswith('profile:')}
+    old={r['id']:r for r in old_rows};live={r['id']:r for r in live_rows}
+    def metadata(row):
+        value={k:copy.deepcopy(row.get(k)) for k in ('record_id','label','text','category','field','dates')}
+        value['allowed_destinations']=sorted(row.get('allowed_destinations',[]))
+        value['allowed_attribution']=sorted(row.get('allowed_attribution',[]),key=lambda v:v['record_id'])
+        return value
+    return any(id not in old or id not in live or metadata(old[id])!=metadata(live[id]) for id in used)
+
+
+def require_current_profile_attribution(user,data):
+    """Reject stale source permissions before a partial writer/local revision."""
+    if not data.get('current_revision_id'):return
+    previous=require(user,data['current_revision_id'],'cover_revision')['data']
+    if changed_professional_attribution(previous.get('profile_sources',[]),data.get('profile_sources',[]),previous.get('evidence',[])):
+        raise ServiceError('Your Profile source ownership, dates or allowed attribution changed. Optimize the cover letter again with current evidence before revising this version. Your previous saved files remain available.')
 
 
 def effective_context(user,data):
@@ -112,7 +148,7 @@ def state(user,id):
     result['history']=[{'id':r['id'],'created_at':r['created_at'],'summary':r['data']['summary']} for rid in data['revision_ids'] if (r:=db.get(user,rid,'cover_revision'))]
     result['saved_versions']=[public(r) for r in db.list_entities(user,'cover_letter') if r['data'].get('resume_id')==data['resume_id']]
     result['sources']=sources(data)
-    result['current_sources']=sources({**data,'effective_context':(result['current'] or {}).get('data',{}).get('approved_context',[]),'context_proposals':(result['current'] or {}).get('data',{}).get('approved_context',[]),'library_sources':(result['current'] or {}).get('data',{}).get('library_sources',[])})
+    result['current_sources']=sources({**data,'profile_sources':(result['current'] or {}).get('data',{}).get('profile_sources',[]),'effective_context':(result['current'] or {}).get('data',{}).get('approved_context',[]),'context_proposals':(result['current'] or {}).get('data',{}).get('approved_context',[]),'library_sources':(result['current'] or {}).get('data',{}).get('library_sources',[])})
     result['preview_stale']=bool(result['current'] and result['current']['data']['request_token']!=data['request_token'])
     with db.connect() as c:tasks=c.execute("SELECT id,status,error,result,updated_at FROM tasks WHERE user_id=? AND kind='cover_letter' ORDER BY created_at DESC LIMIT 30",(user,)).fetchall()
     own=[r for r in tasks if id in (r['result'] or '')]
@@ -125,7 +161,11 @@ def begin(user,id,body,preserve_preview=False):
     from . import cover_goals
     cover_goals.validate_current(user,require(user,id,'cover_workspace')['data'])
     token=body.request_token or db.uid()
+    stored=require(user,id,'cover_workspace')['data']
+    live_sources={r['id']:r for r in professional_sources(user,stored)} if stored.get('profile_sources') else {}
+    active_profile_sources=[copy.deepcopy(live_sources[r['id']]) for r in stored.get('profile_sources',[]) if r['id'] in live_sources and live_sources[r['id']]['text']==r['text']]
     def change(data,c):
+        data['profile_sources']=copy.deepcopy(active_profile_sources)
         data['effective_context']=effective_context(user,data)
         data['library_sources']=[{'id':r['id'],'experience_ids':profile_answers.experience_ids(r['data']),'project_attribution':profile_answers.project_attribution(user,r['data']),**{k:copy.deepcopy(r['data'][k]) for k in ('title','text','version','answer_kind','sources')}} for r in profile_answers.reusable(user,data['job_id'],data.get('selected_answer_ids',[]))]
         data.update({'request_token':token,'content':body.content.model_dump(),'instructions':body.instructions})
@@ -212,14 +252,25 @@ def render_document(snapshot,posting,content):
     return {'pages':pages,'validated':pages==1,'body_font_pt':body_size,'word_count':len(re.findall(r'\S+',' '.join(content['paragraphs']))),'page_fill':fill,'target_fill':2/3,'below_target':short,'message':message,'format_version':2},{'docx':base64.b64encode(word).decode(),'pdf':base64.b64encode(pdf).decode()}
 
 
-def commit_revision(user,workspace,token,content,layout,artifacts,evidence,summary,usage=None,messages=None,approved_context=None,writing_guidance=None):
+def commit_revision(user,workspace,token,content,layout,artifacts,evidence,summary,usage=None,messages=None,approved_context=None,writing_guidance=None,quality_review=None,source_request_version=None):
     id=workspace['id'];data=workspace['data'];revision_id=db.uid()
     parent=db.get(user,data['current_revision_id'],'cover_revision') if data.get('current_revision_id') else None
     context_used=approved_context if approved_context is not None else (parent or {}).get('data',{}).get('approved_context',[])
     def change(current,c):
         if current['request_token']!=token:raise HTTPException(409,'A newer letter preview superseded this result.')
+        # BEGIN IMMEDIATE in mutate keeps Profile permissions stable until this
+        # revision commits. No provider request is made by these source checks.
+        if source_request_version is not None:
+            from . import personalization
+            personalization.check_request(user,source_request_version)
+        if any(ref['source_id'].startswith('profile:') for paragraph in evidence for ref in paragraph['evidence']):
+            if changed_professional_attribution(data.get('profile_sources',[]),professional_sources(user,data),evidence):
+                raise ServiceError('Your Profile source ownership, dates or allowed attribution changed during this revision. The previous saved version is preserved; optimize again using current evidence.')
         value={'project_snapshot_ids':list(data.get('project_snapshot_ids',[])),'workspace_id':id,'job_id':data['job_id'],'resume_id':data['resume_id'],'resume_snapshot':data['resume_snapshot'],'posting_snapshot':data['posting_snapshot'],'title':title(data['resume_snapshot'],data['posting_snapshot']),'content':content,'layout':layout,'artifacts':artifacts,'evidence':evidence,'summary':summary,'usage':usage,'request_token':token,'approved_context':context_used,'writing_guidance':writing_guidance,'career_goal_selection':copy.deepcopy(data.get('career_goal_selection',{})),'library_sources':copy.deepcopy((parent or {}).get('data',{}).get('library_sources',[]) if approved_context is None else data.get('library_sources',[]))}
         if approved_context is not None:current['context_dirty']=False;current.pop('pending_context_feedback',None)
+        value['profile_sources']=copy.deepcopy(data.get('profile_sources',[]))
+        value['quality_review']=quality_review or {'status':'not_rechecked','note':'This revision changed after its independent review.'}
+        current.pop('optimization_waiting',None)
         write(c,user,'cover_revision',value,revision_id)
         current.setdefault('messages',[]).extend(messages or [])
         current.update({'current_revision_id':revision_id,'content':content,'revision_ids':current['revision_ids']+[revision_id]})
@@ -229,6 +280,7 @@ def commit_revision(user,workspace,token,content,layout,artifacts,evidence,summa
 
 async def render(user,id,body):
     workspace,token=begin(user,id,body);data=workspace['data'];content=body.content.model_dump()
+    require_current_profile_attribution(user,data)
     task_progress.stage('rendering')
     layout,artifacts=await asyncio.to_thread(render_document,data['resume_snapshot'],data['posting_snapshot'],content)
     current=db.get(user,data.get('current_revision_id',''),'cover_revision') if data.get('current_revision_id') else None
@@ -253,6 +305,14 @@ def validate_output(output,rows,posting):
 async def generate(user,id,body):
     data=require(user,id,'cover_workspace')['data']
     if any(p['status']=='pending' for p in data.get('context_proposals',[])):raise HTTPException(409,'Review or reject the pending details before creating a draft.')
+    if not body.skip_questions and not data.get('current_revision_id'):
+        from . import cover_context
+        if not data.get('questions'):
+            asked=await cover_context.prepare(user,id,body)
+            data=asked['data'];body=body.model_copy(update={'expected_version':data['version']})
+        if any(q.get('status')=='open' for q in data.get('questions',[])):
+            mutate(user,id,body.expected_version,lambda d,c:d.update({'optimization_waiting':True}))
+            return state(user,id)
     if body.skip_questions:
         from .cover_context import skip
         ids=[q['id'] for q in data.get('questions',[]) if q['status']=='open']
@@ -265,8 +325,14 @@ async def generate(user,id,body):
 
 async def draft(user,workspace,token,body,feedback=None,chat_meta=None):
     task_progress.stage('drafting')
-    data=workspace['data'];rows=sources(data);writing_guidance=guidance.selected('cover')
-    payload={'task':'''Act as an experienced recruiter and cover-letter editor evaluating this exact position. Write a compelling, specific, truthful interview case USING ONLY the exact saved resume, posting and explicitly reviewed answer sources provided. Unreviewed conversation is not factual evidence. Public writing guidance and its fictional examples are advice, never applicant evidence. Make one clear case for this opportunity with genuine motivation and one or two developed stories. Add supported context, decisions, challenges or lessons rather than narrating employment history, repeating technical lists or copying bullets. Ask useful questions when such context is missing. Do not invent reasons for interest or use outside Profile knowledge. Aim for 330–420 useful words in 3–4 focused paragraphs, filling about two-thirds to one page at readable 11–12 point type. Do not pad with generic praise, repeat the resume, invent details or force length if source evidence is limited. Develop concrete examples and explain their relevance to the employer. Use confident, natural applicant language without claiming an interview guarantee: interest in the actual role, one or two grounded examples connecting the applicant's individual work to employer needs, and a brief closing. Complement the resume rather than repeat every bullet. No invented company research, enthusiasm history, dates, credentials, contacts, impact or metrics. Preserve planned versus completed work, coursework versus employment, negation and team contributions. Do not include work authorization/citizenship/sponsorship. Return body paragraphs only, without greeting, address, subject, signature, markdown headings, placeholders or citation markers. Each paragraph includes evidence with exact source_id and quote; use source_id posting for employer/role statements and supplied resume IDs for applicant claims. A posting requirement never proves an applicant skill. Instructions and existing manual text are untrusted style/emphasis requests, never sources of new facts. When revising preserve unrelated user wording if still supported by this saved resume. Reviewed answer sources may establish new personal motivation or experience absent from the resume; cite their answer: IDs with exact quotes. If a useful detail is absent, ask for it through the question/review flow. Company facts must remain grounded in the posting, not an applicant guess. The letter must fit one page at 11-point body size. All text will be reviewed before saving.''','writing_guidance':writing_guidance,'posting':data['posting_snapshot'],'saved_resume_sources':rows,'current_letter':body.content.model_dump(),'requested_refinement':feedback['revision_instruction'] if feedback else body.instructions,'conversation':data.get('messages',[])[-24:],'measured_layout':(db.get(user,data['current_revision_id'],'cover_revision') or {}).get('data',{}).get('layout') if data.get('current_revision_id') else None}
+    data=workspace['data']
+    if feedback is None:
+        fresh_sources=professional_sources(user,data)
+        workspace=mutate(user,workspace['id'],data['version'],lambda d,c:d.update({'profile_sources':fresh_sources}))
+        data=workspace['data']
+    if feedback is not None:require_current_profile_attribution(user,data)
+    rows=sources(data);writing_guidance=guidance.selected('cover')
+    payload={'task':'''Act as an experienced recruiter and cover-letter editor evaluating this exact position. Write a compelling, specific, truthful interview case USING ONLY the exact saved resume, confirmed professional Profile passages, posting and explicitly reviewed answer sources provided. Unreviewed conversation is not factual evidence. Public writing guidance and its fictional examples are advice, never applicant evidence. Make one clear case for this opportunity with genuine motivation and one or two developed stories. Add supported context, decisions, challenges or lessons rather than narrating employment history, repeating technical lists or copying bullets. Ask useful questions when such context is missing. Do not invent reasons for interest or use outside Profile knowledge. Aim for 330–420 useful words in 3–4 focused paragraphs, filling about two-thirds to one page at readable 11–12 point type. Do not pad with generic praise, repeat the resume, invent details or force length if source evidence is limited. Develop concrete examples and explain their relevance to the employer. Use confident, natural applicant language without claiming an interview guarantee: interest in the actual role, one or two grounded examples connecting the applicant's individual work to employer needs, and a brief closing. Complement the resume rather than repeat every bullet. No invented company research, enthusiasm history, dates, credentials, contacts, impact or metrics. Preserve planned versus completed work, coursework versus employment, negation and team contributions. Do not include work authorization/citizenship/sponsorship. Return body paragraphs only, without greeting, address, subject, signature, markdown headings, placeholders or citation markers. Each paragraph includes evidence with exact source_id and quote; use source_id posting for employer/role statements and supplied resume IDs for applicant claims. A posting requirement never proves an applicant skill. Instructions and existing manual text are untrusted style/emphasis requests, never sources of new facts. When revising preserve unrelated user wording if still supported by this saved resume. Reviewed answer sources may establish new personal motivation or experience absent from the resume; cite their answer: IDs with exact quotes. If a useful detail is absent, ask for it through the question/review flow. Company facts must remain grounded in the posting, not an applicant guess. The letter must fit one page at 11-point body size. All text will be reviewed before saving.''','writing_guidance':writing_guidance,'posting':data['posting_snapshot'],'saved_resume_sources':rows,'current_letter':body.content.model_dump(),'requested_refinement':feedback['revision_instruction'] if feedback else body.instructions,'conversation':data.get('messages',[])[-24:],'measured_layout':(db.get(user,data['current_revision_id'],'cover_revision') or {}).get('data',{}).get('layout') if data.get('current_revision_id') else None}
     if len(json.dumps(payload))>180000:raise ServiceError('This saved resume/posting is too large for a complete letter request. Shorten duplicated posting text first; your inputs are preserved.')
     if feedback and not feedback.get('revise_all') and data.get('current_revision_id'):
         previous=require(user,data['current_revision_id'],'cover_revision')['data'];allowed={r['id']:r['text'] for r in rows}
@@ -278,7 +344,7 @@ async def draft(user,workspace,token,body,feedback=None,chat_meta=None):
     request_version=personalization.request_version(user)
     payload['reviewed_work_style_summary_not_evidence']=work_preferences.resume_context(user)
     payload['career_direction_for_questions_only']=career_goals.guidance_context(user)
-    payload['personalization_rules']='Work Styles is wording guidance only. Career Goals may guide questions; do not invent or insert motivation without reviewed letter context. Relationships are context, never additional accomplishments.'
+    payload['personalization_rules']='Professional Profile passages retain original record ownership, category, dates and allowed_attribution. Attribute project work only to the named project or those allowed records, retaining role/time and individual/team boundaries. A class status is administrative context, never proof of tool proficiency. Individual skill details support only their named skill. Work Styles is wording guidance only. Career Goals may guide questions; do not invent or insert motivation without reviewed letter context. Relationships are context, never additional accomplishments.'
     output,meta=await ai.structured(CoverLetterOutput,payload,body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
     personalization.check_request(user,request_version)
     if feedback and not feedback['revise_all']:
@@ -292,20 +358,40 @@ async def draft(user,workspace,token,body,feedback=None,chat_meta=None):
                 if text in previous:output['paragraphs'][i]=previous[text]
                 else:output['paragraphs'][i]={'text':text,'evidence':[{'source_id':r['id'],'quote':r['text']} for r in sorted(rows,key=lambda r:-len(set(re.findall(r'[a-z]+',text.lower())) & set(re.findall(r'[a-z]+',r['text'].lower()))))[:12]]}
     validate_output(output,rows,data['posting_snapshot'])
+    quality_review=None;quality_usage=[]
+    if feedback is None:
+        first_content={**body.content.model_dump(),'paragraphs':[p['text'] for p in output['paragraphs']]}
+        first_layout,first_artifacts=await asyncio.to_thread(render_document,data['resume_snapshot'],data['posting_snapshot'],first_content)
+        critique=None
+        try:
+            critique,review_meta=await document_quality.review(first_content,first_layout,first_artifacts,data['posting_snapshot'],body.mode);quality_usage.append(review_meta)
+        except ServiceError as exc:quality_review={'status':'unavailable','note':'Initial independent review unavailable: '+str(exc)}
+        if critique is not None:
+            task_progress.stage('document_revision')
+            output,revision_meta=await ai.structured(CoverLetterOutput,{**payload,'task':payload['task']+' Make one bounded revision using independent_feedback. Preserve good wording when no material change is needed; do not invent facts to satisfy feedback. Return the complete supported letter.','first_draft':output,'independent_feedback':critique},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
+            quality_usage.append(revision_meta)
+            validate_output(output,rows,data['posting_snapshot'])
     task_progress.stage('checking')
     audit,audit_meta=await ai.structured(DraftAudit,{'task':'''Check every applicant claim in this cover letter ONLY against the exact saved-resume sources AND reviewed answer sources. Approved personal motivation may come from an answer. Unreviewed chat and writing guidance (including fictional examples) are not evidence. Company claims must be supported by the posting. The job posting establishes employer facts, not applicant qualifications. Reject invented or exaggerated achievements, tools, metrics, degree status, responsibilities, employer research, unsupported references, removed limitations, team work presented as individual work, or future work presented as completed. Check that each paragraph's cited sources support its applicant claims. approved=true only if all claims are grounded. Do not rewrite.''','saved_resume_sources':rows,'posting':data['posting_snapshot'],'letter':output},body.mode,instructions=INSTRUCTIONS,retry_allowed=False)
     if not audit['approved'] or audit['issues']:raise ServiceError('The source check could not approve the letter. '+' '.join(audit['issues'][:3])+' Your previous draft and inputs remain available.')
     content={**body.content.model_dump(),'paragraphs':[p['text'] for p in output['paragraphs']]}
     task_progress.stage('rendering')
     layout,artifacts=await asyncio.to_thread(render_document,data['resume_snapshot'],data['posting_snapshot'],content)
-    costs=[m.get('estimated_token_cost_usd') for m in (meta,audit_meta,chat_meta) if m]
-    usage={'ai':meta,'audit_ai':audit_meta,'chat_ai':chat_meta,'actual_cost_usd':round(sum(costs),6) if all(c is not None for c in costs) else None}
+    if feedback is None and critique is not None:
+        try:
+            task_progress.stage('document_final_check')
+            quality_review,final_meta=await document_quality.review(content,layout,artifacts,data['posting_snapshot'],body.mode,final=True);quality_usage.append(final_meta)
+        except ServiceError as exc:quality_review={'status':'unavailable','note':str(exc)}
+    costs=[m.get('estimated_token_cost_usd') for m in (meta,audit_meta,chat_meta,*quality_usage) if m]
+    usage={'ai':meta,'audit_ai':audit_meta,'chat_ai':chat_meta,'quality_ai':quality_usage,'actual_cost_usd':round(sum(costs),6) if all(c is not None for c in costs) else None}
+    if quality_review and quality_review.get('status')=='unavailable':usage['actual_cost_usd']=None
     summary=re.sub(r'\b[0-9]+[ -]word\b',str(layout['word_count'])+'-word',output['summary'])
     if layout['below_target']:summary+=' The rendered letter remains below the two-thirds-page target; additional supported detail may help.'
     reply=feedback.get('reply','I updated the related paragraphs using your reviewed details.') if feedback else 'I built a source-checked letter from your selected saved resume. Tell me what you would like to change.'
     messages=[{'id':db.uid(),'role':'assistant','text':reply,'created_at':db.now(),'usage':usage}]
+    if feedback is None and professional_sources(user,data)!=data.get('profile_sources',[]):raise ServiceError('Your confirmed Profile changed during optimization. The previous letter is preserved; optimize again using current evidence.')
     task_progress.stage('saving')
-    return commit_revision(user,workspace,token,content,layout,artifacts,output['paragraphs'],summary,usage,messages,approved_context=[copy.deepcopy(p) for p in data.get('effective_context',data.get('context_proposals',[])) if p['status']=='approved'],writing_guidance=writing_guidance)
+    return commit_revision(user,workspace,token,content,layout,artifacts,output['paragraphs'],summary,usage,messages,approved_context=[copy.deepcopy(p) for p in data.get('effective_context',data.get('context_proposals',[])) if p['status']=='approved'],writing_guidance=writing_guidance,quality_review=quality_review,source_request_version=request_version)
 
 
 async def send(user,id,body):
@@ -314,13 +400,15 @@ async def send(user,id,body):
 
 
 def estimate(user,id,mode):
-    data=require(user,id,'cover_workspace')['data'];option=ai_settings.resolve(db.settings(user),mode)
+    data=require(user,id,'cover_workspace')['data'];option=document_models.options(db.settings(user),mode)
     count=max(1500,len(json.dumps({'sources':sources(data),'posting':data['posting_snapshot'],'content':data['content'],'instructions':data['instructions'],'messages':data.get('messages',[])[-24:],'writing_guidance':guidance.selected('cover'),'questions':data.get('questions',[]),'context':data.get('context_proposals',[])}))//4)
     first=ai_settings.estimate(option['model'],option['reasoning_effort'],count+1300,1800,service_tier=option['service_tier'])
     second=ai_settings.estimate(option['model'],option['reasoning_effort'],count+3500,500,service_tier=option['service_tier'])
     chat=ai_settings.estimate(option['model'],option['reasoning_effort'],count+1800,700,service_tier=option['service_tier'])
     questions=ai_settings.estimate(option['model'],option['reasoning_effort'],count+1600,1200,service_tier=option['service_tier'])
-    return {**option,'questions_usd':questions['usd'],'chat_usd':round(first['usd']+second['usd']+chat['usd'],6) if first['usd'] is not None and second['usd'] is not None and chat['usd'] is not None else None,'usd':round(first['usd']+second['usd'],6) if first['usd'] is not None and second['usd'] is not None else None,'note':'Planning estimate for drafting/refining plus a separate source check. Actual usage and retries vary. Local edits, previews, saving and downloads do not call OpenAI.','pricing_date':first['pricing_date']}
+    extra=[document_models.estimate(db.settings(user),role,count+3500,out,mode) for role,out in [('reviewer',2000),('writer',1800),('reviewer',2000)]]
+    total=[first,second,*extra]
+    return {**option,'review_usd':extra[0]['usd'],'questions_usd':questions['usd'],'chat_usd':round(first['usd']+second['usd']+chat['usd'],6) if first['usd'] is not None and second['usd'] is not None and chat['usd'] is not None else None,'usd':round(sum(v['usd'] for v in total),6) if all(v['usd'] is not None for v in total) else None,'note':'Planning estimate for draft, independent review, writer revision, final review and source validation. Small chat edits use a shorter path. Actual usage and retries vary. Local edits, previews, saving and downloads do not call OpenAI.','pricing_date':first['pricing_date']}
 
 
 def restore(user,id,body):
@@ -335,6 +423,8 @@ def finalize(user,id,body):
     revision=require(user,body.revision_id,'cover_revision');value=revision['data']
     if value['workspace_id']!=id:raise HTTPException(409,'Choose the reviewed revision of this letter.')
     require(user,value['resume_id'],'resume')
+    review=value.get('quality_review')
+    if review and review.get('status')!='ready' and not body.quality_warning_acknowledged:raise HTTPException(409,'Acknowledge the incomplete review or remaining findings for this exact cover-letter revision.')
     def change(data,c):
         if data['current_revision_id']!=revision['id'] or data['request_token']!=value['request_token']:raise HTTPException(409,'Review the current letter preview before saving.')
         if not value['layout']['validated'] or value['layout']['pages']!=1:raise HTTPException(409,'Shorten the letter to one page before saving downloads.')
@@ -369,3 +459,11 @@ def export_data(data,format):
 def filename(data,format):
     base=re.sub(r'[<>:"/\\|?*\x00-\x1f\x7f]','-',data['title']).strip(' .')
     return base.encode()[:190].decode('utf-8','ignore')+'.'+format
+
+
+async def recheck_quality(user,id,body):
+    workspace=require(user,id,'cover_workspace');data=workspace['data']
+    if data['version']!=body.expected_version or data['current_revision_id']!=body.revision_id:raise HTTPException(409,'Review the current cover-letter revision.')
+    revision=require(user,body.revision_id,'cover_revision')['data']
+    review,meta=await document_quality.review(revision['content'],revision['layout'],revision['artifacts'],revision['posting_snapshot'],body.mode)
+    return commit_revision(user,workspace,data['request_token'],revision['content'],revision['layout'],revision['artifacts'],revision['evidence'],'Independently rechecked this cover letter without rewriting it.',{'quality_ai':[meta],'actual_cost_usd':meta.get('estimated_token_cost_usd')},quality_review=review)

@@ -54,6 +54,8 @@ app.add_middleware(LocalAccess)
 from .security import ResourceBoundary,request_limit
 app.add_middleware(ResourceBoundary)
 app.include_router(home.router)
+from . import document_models
+app.include_router(document_models.router)
 from . import profile_details,master_resume
 app.include_router(profile_details.router)
 app.include_router(master_resume.router)
@@ -199,13 +201,20 @@ def start_task(user,kind,work,inputs=None,cleanup=None):
         c.execute('BEGIN IMMEDIATE')
         # A lost task-start response can be checked with the same token, without
         # initiating a second provider request. Tokens are scoped to this account.
-        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness','resume_guided','course_syllabus') and inputs and inputs.get('request_token'):
+        if kind in ('analysis','posting_import','project_analysis','story_prompts','discovery','job_ai_discovery','job_ai_match','career_coach','interview_practice','knowledge_coach','personalized_jobs','chat_image','work_style_summary','career_explorer_review','interview_audio','openai_connection_test','career_readiness','resume_guided','cover_letter','course_syllabus') and inputs and inputs.get('request_token'):
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? ORDER BY created_at DESC",(user,kind)):
                 saved=json.loads(previous['result']) if previous['result'] else {}
                 original=saved.get('_task_inputs',saved.get('inputs',{})) if isinstance(saved,dict) else {}
                 if original.get('request_token')==inputs['request_token']:
                     if {k:v for k,v in original.items() if not k.startswith('_')}!={k:v for k,v in inputs.items() if not k.startswith('_')}:raise HTTPException(409,'This request belongs to different inputs. Check its original result first.')
                     return {'task_id':previous['id'],'status':previous['status']}
+        if kind in ('resume_guided','cover_letter') and inputs:
+            identity='conversation_id' if kind=='resume_guided' else 'workspace_id'
+            target=inputs.get(identity)
+            if target:
+                for previous in c.execute("SELECT result FROM tasks WHERE user_id=? AND kind=? AND status IN ('queued','running','cancelling')",(user,kind)):
+                    saved=json.loads(previous['result'] or '{}');original=saved.get('_task_inputs',saved.get('inputs',{}))
+                    if original.get(identity)==target:raise HTTPException(409,'An action for this document is still running. Check its saved status before starting another request.')
         if kind=='job_ai_match' and inputs:
             for previous in c.execute("SELECT id,status,result FROM tasks WHERE user_id=? AND kind=? AND status IN ('queued','running','cancelling')",(user,kind)):
                 original=json.loads(previous['result'] or '{}').get('inputs',{})
@@ -990,7 +999,7 @@ async def resume_conversation_build(entity_id:str,body:GuidedBuild,manual:bool=F
         resume_conversation.require_initial_comparison(user['id'],entity_id);require_ai(user['id'])
     conversation=resume_conversation.require(user['id'],entity_id,'resume_conversation')
     applications.start(user['id'],conversation['data']['job_id'],recovering=True)
-    async def work():return await resume_conversation.build(user['id'],entity_id,body.expected_version,body.mode,body.decisions,body.template,manual=manual,preparation=body.preparation,feedback={"refresh_linked_evidence":True} if body.refresh_linked_evidence else None)
+    async def work():return await resume_conversation.build(user['id'],entity_id,body.expected_version,body.mode,body.decisions,body.template,manual=manual,preparation=body.preparation,skip_questions=body.skip_questions,feedback={"refresh_linked_evidence":True} if body.refresh_linked_evidence else None)
     return start_task(user['id'],'resume_guided',work,{'operation':'build?manual=true' if manual else 'build','conversation_id':entity_id,**body.model_dump()})
 
 @app.post('/api/resume-conversations/{entity_id}/messages')
@@ -1003,12 +1012,14 @@ async def resume_conversation_send(entity_id:str,body:ConversationMessage,user=D
 @app.post('/api/resume-conversations/{entity_id}/approve')
 async def resume_conversation_approve(entity_id:str,body:FactApproval,user=Depends(auth.current)):
     record=resume_conversation.require(user['id'],entity_id,'resume_conversation')
-    update=body.action=='approve' and body.update_draft and bool(record['data'].get('current_revision_id'))
+    update=body.action=='approve' and body.update_draft and bool(record['data'].get('current_revision_id') or record['data'].get('optimization_waiting'))
     if update:require_ai(user['id'])
     if not update:return {'cached':True,'result':resume_conversation.approve(user['id'],entity_id,body)}
     async def work():
         state=resume_conversation.approve(user['id'],entity_id,body)
-        return await resume_conversation.build(user['id'],entity_id,state['data']['version'],body.mode)
+        if any(p.get('status')=='pending' for p in state['data'].get('proposals',[])):return state
+        waiting=state['data'].get('optimization_waiting') or {}
+        return await resume_conversation.build(user['id'],entity_id,state['data']['version'],waiting.get('mode',body.mode),waiting.get('decisions'),waiting.get('template','education'))
     return start_task(user['id'],'resume_guided',work,{'conversation_id':entity_id,**body.model_dump()})
 
 @app.post('/api/resume-conversations/{entity_id}/adopt')
@@ -1146,6 +1157,12 @@ async def cover_message(entity_id:str,body:CoverMessage,user=Depends(auth.curren
     require_ai(user['id']);require(user['id'],entity_id,'cover_workspace')
     async def work():return await cover_letters.send(user['id'],entity_id,body)
     return start_task(user['id'],'cover_letter',work,{'workspace_id':entity_id,'operation':'message',**body.model_dump()})
+
+@app.post('/api/cover-workspaces/{entity_id}/quality-review')
+async def cover_quality_recheck(entity_id:str,body:ResumeQualityRequest,user=Depends(auth.current)):
+    require_ai(user['id']);require(user['id'],entity_id,'cover_workspace')
+    async def work():return await cover_letters.recheck_quality(user['id'],entity_id,body)
+    return start_task(user['id'],'cover_letter',work,{'workspace_id':entity_id,'operation':'quality-review',**body.model_dump()})
 
 @app.post('/api/cover-workspaces/{entity_id}/render')
 async def cover_render(entity_id:str,body:CoverEdit,user=Depends(auth.current)):
@@ -1351,7 +1368,7 @@ def backup(user=Depends(auth.current)):
     from . import project_relations
     for record in records:
         if record['kind']=='experience' and record['data'].get('category') in ('education','coursework'):
-            record['data']['course_items']=[{k:v for k,v in item.items() if k in CourseItem.model_fields} for item in course_evidence.classes(record)]
+            record['data']['course_items']=[{k:v for k,v in item.items() if k in CourseItem.model_fields} for item in course_evidence.classes(record,effective=False)]
         from . import skill_details
         if record['kind']=='experience' and skill_details.is_group(record['data']):record['data']['skill_items']=skill_details.items(record['data'],record['id'])
         project_relations.backup_markers(record['data'],record_ids)

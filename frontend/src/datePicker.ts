@@ -49,3 +49,6 @@ export function dateYears(policy:DatePolicy,today=new Date(),preserved=''){
  const future=policy==='education-end'?upcoming.slice(1):[];
  const old=Number(dateParts(preserved).y);return {normal,future,saved:old&&![...normal,...future].includes(old)?old:null};
 }
+
+export function monthDate(value:string){const parts=dateParts(value);return parts.legacy?value:value==='Present'?value:formatDate({...parts,d:''});}
+export function monthDateRange(value:string){return value.split(/\s*[–—]\s*|\s+-\s+/).map(monthDate).join(' – ');}

@@ -12,6 +12,17 @@ def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,ensure_a
 def parents(data):
  return list(dict.fromkeys([*data.get('linked_employment_ids',[]),*data.get('linked_education_ids',[]),*[v['education_id'] for v in data.get('linked_courses',[])]]))
 def timeline_enabled(data):return data.get('category')=='project' and len(parents(data))>=2
+def pending_assignments(records,details):
+ from . import profile_answers
+ result=[]
+ for record in records:
+  data=record['data']
+  if not data.get('confirmed') or not timeline_enabled(data):continue
+  overview=sum(v['scope']['kind']=='unassigned' for v in statements(data))
+  supporting=sum(d['data'].get('status')=='confirmed' and d['data'].get('answer_kind')=='experience' and not d['data'].get('course_refs') and not d['data'].get('skill_ref') and record['id'] in profile_answers.experience_ids(d['data']) and scope_for_detail(d['data'],record['id'],data)['kind']=='unassigned' for d in details)
+  if overview or supporting:result.append({'project_id':record['id'],'title':data['title'],'overview_count':overview,'detail_count':supporting})
+ return result
+
 def stage_id(parent):return parent+':stage'
 def stages(data):
  saved={v['parent_id']:copy.deepcopy(v) for v in data.get('project_stages') or []}

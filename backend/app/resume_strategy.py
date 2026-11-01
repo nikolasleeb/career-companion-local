@@ -362,26 +362,37 @@ async def create(user,snapshot,analysis,mode,feedback=None,guided=False,current=
                 if set(lock.get('source_ids',[]))=={r['source_id'] for r in i.get('source_refs',[])}:i['text']=lock['text']
             e['bullets']=[i['text'] for i in e['content_items']]
     task_progress.stage('rendering');rendered=await asyncio.to_thread(resume_layout.render,selected)
+    from . import resume_quality
+    quality_usage=[];quality_note='';quality_result=None
+    try:
+        quality_result,review_meta=await resume_quality.review(rendered,mode);quality_usage.append(review_meta)
+    except ServiceError as exc:
+        quality_note='Initial independent review unavailable: '+str(exc)
     # One bounded editorial revision: strengthen the actual rendered selection,
     # with measured layout available. No automatic retries or paid polishing loop.
-    task_progress.stage('resume_editorial')
-    editorial,editorial_meta=await ai.structured(composition_schema,{
-        'task': """Act as a demanding resume editor for this exact posting. Revise this first draft into the strongest truthful ONE-PAGE application case. Evaluate the finished document, not just source validity. Keep its best elements; change only what improves employer relevance, clarity, specific individual contributions, complementary coverage or readable layout.
-Review the full canonical evidence for stronger omitted examples. Put the strongest matching project first; put the strongest contribution first within each entry. Keep employment and education chronology (the renderer preserves those). Use useful space for distinct evidence of the employer's important qualifications and duties. Keep concise confirmed skills explicitly requested by the posting in the Skills section even when a bullet also demonstrates them; those labels aid scanning and are not redundant narrative. Remove irrelevant skills, repetitive coursework, generic duties, redundant bullets and weak examples that displace stronger evidence. A sparse Profile may yield a shorter resume; never pad it or invent impact to fill a page. Retain a qualification/skill label when it aids finding a relevant verified competency, without repeating tool lists everywhere.
-Bullets should read as positive, precise contributions: action, useful technical/analytical detail, and supported purpose or result. Do not invent benefits, causality, metrics or employer industry experience. Do not copy teammate bookkeeping or gratuitous disclaimers. Preserve material scope through accurate language (practice environment, coursework, prototype, approximate amount, individual contribution); an unrelated absence-of-impact disclaimer can be omitted only if the bullet makes no such impact claim. Never erase a limit that changes the claim. A colleague's contribution does not belong to the applicant.
-Use the measured line counts to shorten dense bullets and dangling words before removing distinct important evidence. Font/margins/spacing stay fixed at 10.5-point body text. Keep all essential supported priorities and user_constraints, including chosen headline, exact locked wording and excluded source_ids. Headline should reflect the strongest evidence actually selected, not an unheld job title. Headers render automatically. Structured skills/courses/credentials must be selected separately from narrative passages by exact source IDs; the server owns their text. Return complete revised entries in intended order, source IDs for each bullet and specific reasons for omissions. Each source can appear once under one allowed destination. Combine only passages from the SAME original experience. Posting and guidance are not applicant facts. No hidden keywords or ATS score.""",
-        'first_draft':map_source_ids(rendered_without_artifacts(rendered),to_alias),
-        'measured_layout':rendered['layout'],
-        'useful_omitted_evidence':[{**f,'id':to_alias[f['id']]} for f in space_candidates(rendered,evidence,plan,rules)],
-        'page_space_instruction':'When remaining_body_lines is at least two, reconsider useful_omitted_evidence and ALL canonical facts for stronger distinct evidence or supported development of compressed bullets. Use the measured printable space, not the page margin. Keep a one-page readable result and all protected choices. Leave space when no relevant evidence fits; never pad. This is the existing single editorial pass, not permission for further requests.',
-        'strategy':map_source_ids(plan,to_alias),
-        'professional_evidence':model_evidence,
-        'posting':snapshot.get('posting_snapshot',{}),
-        'user_constraints':map_source_ids(rules,to_alias),
-        'writing_guidance':writing,
-        'source_id_rules':'Use only the short F-prefixed fact IDs in source_ids; no record/item IDs.',
-        'headline_policy':('Preserve the exact headline in user_constraints.' if 'headline' in rules else 'Write a concise professional-focus headline supported by the selected evidence and exact source quotes.' if snapshot.get('use_professional_headline',True) else 'Headline disabled: return an empty headline and no headline evidence.')
-    },mode,instructions=RULES,retry_allowed=False)
+    editorial_meta=None
+    if quality_result is None:
+        editorial=composition
+    else:
+        task_progress.stage('resume_editorial')
+        editorial,editorial_meta=await ai.structured(composition_schema,{
+            'task': """Act as a demanding resume editor for this exact posting. Revise this first draft into the strongest truthful ONE-PAGE application case. Evaluate the finished document, not just source validity. Keep its best elements; change only what improves employer relevance, clarity, specific individual contributions, complementary coverage or readable layout.
+    Review the full canonical evidence for stronger omitted examples. Put the strongest matching project first; put the strongest contribution first within each entry. Keep employment and education chronology (the renderer preserves those). Use useful space for distinct evidence of the employer's important qualifications and duties. Keep concise confirmed skills explicitly requested by the posting in the Skills section even when a bullet also demonstrates them; those labels aid scanning and are not redundant narrative. Remove irrelevant skills, repetitive coursework, generic duties, redundant bullets and weak examples that displace stronger evidence. A sparse Profile may yield a shorter resume; never pad it or invent impact to fill a page. Retain a qualification/skill label when it aids finding a relevant verified competency, without repeating tool lists everywhere.
+    Bullets should read as positive, precise contributions: action, useful technical/analytical detail, and supported purpose or result. Do not invent benefits, causality, metrics or employer industry experience. Do not copy teammate bookkeeping or gratuitous disclaimers. Preserve material scope through accurate language (practice environment, coursework, prototype, approximate amount, individual contribution); an unrelated absence-of-impact disclaimer can be omitted only if the bullet makes no such impact claim. Never erase a limit that changes the claim. A colleague's contribution does not belong to the applicant.
+    Use the measured line counts to shorten dense bullets and dangling words before removing distinct important evidence. Font/margins/spacing stay fixed at 10.5-point body text. Keep all essential supported priorities and user_constraints, including chosen headline, exact locked wording and excluded source_ids. Headline should reflect the strongest evidence actually selected, not an unheld job title. Headers render automatically. Structured skills/courses/credentials must be selected separately from narrative passages by exact source IDs; the server owns their text. Return complete revised entries in intended order, source IDs for each bullet and specific reasons for omissions. Each source can appear once under one allowed destination. Combine only passages from the SAME original experience. Posting and guidance are not applicant facts. No hidden keywords or ATS score.""",
+            'independent_feedback':quality_result,
+            'first_draft':map_source_ids(rendered_without_artifacts(rendered),to_alias),
+            'measured_layout':rendered['layout'],
+            'useful_omitted_evidence':[{**f,'id':to_alias[f['id']]} for f in space_candidates(rendered,evidence,plan,rules)],
+            'page_space_instruction':'When remaining_body_lines is at least two, reconsider useful_omitted_evidence and ALL canonical facts for stronger distinct evidence or supported development of compressed bullets. Use the measured printable space, not the page margin. Keep a one-page readable result and all protected choices. Leave space when no relevant evidence fits; never pad. This is the existing single editorial pass, not permission for further requests.',
+            'strategy':map_source_ids(plan,to_alias),
+            'professional_evidence':model_evidence,
+            'posting':snapshot.get('posting_snapshot',{}),
+            'user_constraints':map_source_ids(rules,to_alias),
+            'writing_guidance':writing,
+            'source_id_rules':'Use only the short F-prefixed fact IDs in source_ids; no record/item IDs.',
+            'headline_policy':('Preserve the exact headline in user_constraints.' if 'headline' in rules else 'Write a concise professional-focus headline supported by the selected evidence and exact source quotes.' if snapshot.get('use_professional_headline',True) else 'Headline disabled: return an empty headline and no headline evidence.')
+        },mode,instructions=RULES,retry_allowed=False)
     editorial=map_source_ids(editorial,aliases)
     if 'headline' in rules:editorial['headline']=rules['headline']
     if not snapshot.get('use_professional_headline',True):editorial['headline']='';editorial['headline_evidence']=[]
@@ -392,54 +403,21 @@ Use the measured line counts to shorten dense bullets and dangling words before 
     if editorial_sources&set(rules.get('excluded_source_ids',[])) or any(set(lock.get('source_ids',[]))-editorial_sources for lock in rules['locked_items'].values()):
         raise ServiceError('The editorial review changed your protected evidence choices. Your previous draft remains intact.')
     from . import resume_quality
-    rendered,output,_=await fit_candidate(snapshot,analysis,output,rules,plan,evidence,mode)
-    original=copy.deepcopy(rendered);original_output=copy.deepcopy(output)
-    quality_usage=[];quality_result=None;quality_note='';repair_meta=None;comparison_meta=None
-    try:
-        quality_result,review_meta=await resume_quality.review(rendered,mode);quality_usage.append(review_meta)
-    except ServiceError as exc:
-        quality_note='Independent review unavailable: '+str(exc)
-    # The critic gets no Profile/history. Only this writer receives its critique,
-    # together with the same confirmed source catalog and protected choices.
-    repair_attempted=bool(quality_result and any(f['material'] for f in quality_result['findings']))
-    if repair_attempted:
-        task_progress.stage('resume_quality_repair')
-        try:
-            repair,repair_meta=await ai.structured(composition_schema,{
-                'task': 'Make ONE targeted repair addressing material independent-review findings. Use only confirmed evidence. Keep good content and protected headline/exclusions/wording. Do not invent missing qualifications. Preserve approximate quantities, intent, individual contribution, role/time boundaries and all essential supported priorities. Return complete entries with canonical source_ids. Minor preferences need no rewrite. Leave unresolved missing evidence as a question, not a new claim.',
-                'critique':quality_result,'current_resume':map_source_ids(rendered_without_artifacts(rendered),to_alias),
-                'professional_evidence':model_evidence,'strategy':map_source_ids(plan,to_alias),
-                'user_constraints':map_source_ids(rules,to_alias),'posting':snapshot.get('posting_snapshot',{}),
-                'source_id_rules':'Use only F-prefixed fact IDs; headers render automatically.'
-            },mode,instructions=RULES,retry_allowed=False)
-            repair=map_source_ids(repair,aliases)
-            if 'headline' in rules:repair['headline']=rules['headline']
-            if not snapshot.get('use_professional_headline',True):repair['headline']='';repair['headline_evidence']=[]
-            repaired=enforce_constraints(retain_posting_skills(materialize(repair,evidence,snapshot),evidence,snapshot,rules,plan),rules)
-            if current and repair['headline']==current.get('headline'):repaired['headline_evidence']=copy.deepcopy(current.get('optimization',{}).get('headline_evidence',repaired['headline_evidence']))
-            rendered,output,_=await fit_candidate(snapshot,analysis,repaired,rules,plan,evidence,mode)
-            quality_note='One targeted repair was attempted.'
-        except ServiceError as exc:
-            rendered=copy.deepcopy(original);output=copy.deepcopy(original_output)
-            quality_note='The targeted repair could not be used; the original candidate was retained. '+str(exc)
     rendered,output,layout_meta=await fit_candidate(snapshot,analysis,output,rules,plan,evidence,mode,allow_layout=True)
-    if quality_result and resume_quality.content_hash(rendered)!=resume_quality.content_hash(original):
+    repair_meta=None;comparison_meta=None;repair_attempted=False
+    if quality_result is None:
+        quality_review=resume_quality.stamp(rendered,None,quality_usage,quality_note)
+    else:
         try:
-            chosen,quality_result,comparison_meta,reason=await resume_quality.compare(original,rendered,mode)
-            quality_usage.append(comparison_meta)
-            if chosen is original:output=original_output
-            rendered=chosen;quality_note+=' Blinded comparison: '+reason
+            task_progress.stage('document_final_check')
+            quality_result,review_meta=await resume_quality.review(rendered,mode,final=True);quality_usage.append(review_meta)
+            quality_review=resume_quality.stamp(rendered,quality_result,quality_usage,quality_note)
         except ServiceError as exc:
-            # A changed candidate has no usable quality approval. Keep the reviewed
-            # original; cancellation still propagates and never publishes output.
-            rendered=original;output=original_output
-            quality_note+=' Comparison unavailable; retained the original candidate. '+str(exc)
-    quality_review=resume_quality.stamp(rendered,quality_result,quality_usage,quality_note)
-    quality_review['repair']=ResumeRepairResolution(attempted=repair_attempted,
-        outcome=('revised' if resume_quality.content_hash(rendered)!=resume_quality.content_hash(original) else 'retained_original') if repair_attempted else 'not_needed',
-        explanation=quality_note[:4000]).model_dump()
+            quality_note+=' Final independent review unavailable: '+str(exc)
+            quality_review=resume_quality.stamp(rendered,None,quality_usage,quality_note)
     expanded=install(snapshot,output['composed_items'])
     cov=coverage(plan,rendered)
+    quality_review['repair']={'attempted':True,'outcome':'revised','explanation':'One writer revision followed independent feedback; the final check reports remaining issues.'}
     selected_choices=[{'record_id':rid,'reason':e.get('selection_reason','Selected for this posting.'),'items':[{k:i[k] for k in ('item_id','text','priority','reason')} for i in e['content_items']]} for rid,e in entries(rendered).items()]
     final_output={**output,'entries':selected_choices}
     optimization.validate(final_output,expanded,records)

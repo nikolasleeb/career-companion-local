@@ -1,3 +1,4 @@
+import {monthDate,monthDateRange} from './datePicker';
 // Match backend project_structure.parents/timeline_enabled. Course links are
 // grouped by their education owner, not counted as separate timeline stages.
 export const projectParents=(data:any):string[]=>[...new Set<string>([
@@ -6,8 +7,8 @@ export const projectParents=(data:any):string[]=>[...new Set<string>([
 ])];
 export const hasProjectTimeline=(data:any)=>data.category==='project'&&projectParents(data).length>=2;
 export function projectDisplayDates(data:any,parentId:string){
- const whole=[data.start_date,data.end_date].filter(Boolean).join(' – ')||data.dates||'';
+ const whole=[data.start_date,data.end_date].filter(Boolean).map(monthDate).join(' – ')||monthDateRange(data.dates||'');
  if(!hasProjectTimeline(data))return whole;
  const stage=data.project_stages?.find((value:any)=>value.parent_id===parentId);
- return [stage?.start_date,stage?.end_date].filter(Boolean).join(' – ')||(whole?'Whole project dates: '+whole:'');
+ return [stage?.start_date,stage?.end_date].filter(Boolean).map(monthDate).join(' – ')||(whole?'Whole project dates: '+whole:'');
 }

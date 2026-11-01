@@ -26,7 +26,11 @@ def write(c,user,kind,data,id=None):
     row=c.execute('SELECT user_id,kind,payload FROM entities WHERE id=?',(id,)).fetchone()
     if row and (row['user_id']!=user or row['kind']!=kind):raise HTTPException(404,'Record not found.')
     from . import skill_details
-    if kind=='experience':data=skill_details.prepare(c,user,id,data,json.loads(row['payload']) if row else {})
+    if kind=='experience':
+        from . import course_evidence
+        previous=json.loads(row['payload']) if row else {}
+        data=course_evidence.prepare(data,previous)
+        data=skill_details.prepare(c,user,id,data,previous)
     if kind=='profile_answer' and data.get('status')!='archived':skill_details.validate_ref(c,user,data)
     if row:c.execute('UPDATE entities SET payload=?,updated_at=? WHERE id=?',(json.dumps(data),stamp,id))
     else:c.execute('INSERT INTO entities VALUES(?,?,?,?,?,?)',(id,user,kind,json.dumps(data),stamp,stamp))
@@ -55,6 +59,8 @@ def source(user,data,decisions=None,template='education'):
         value=linked_project_evidence.apply(value,linked_project_evidence.checked(user,data["linked_project_placements"]))
     else:value=linked_project_evidence.automatic(value)
     value['schema_version']=4
+    value['document_format_version']=5
+    value['separate_certifications']=True
     value['project_snapshot_ids']=list(data.get('project_snapshot_ids',[]))
     return value
 
@@ -181,6 +187,7 @@ def save_revision(user,id,version,snapshot,catalog,summary,token,usage=None,sour
         resume_quality.invalidate(snapshot)
         value={'conversation_id':id,'job_id':data['job_id'],'parent_id':data['current_revision_id'],'snapshot':snapshot,'catalog':catalog,'summary':summary,'request_token':token,'usage':usage,'draft_id':draft_id,'source_snapshot':source_snapshot,'project_snapshot_ids':list(data.get('project_snapshot_ids',[]))}
         write(c,user,'resume_revision',value,revision_id)
+        data.pop('optimization_waiting',None)
         data['revision_ids'].append(revision_id);data['current_revision_id']=revision_id;data.pop('workspace_request',None)
         if snapshot.get('optimization',{}).get('user_constraints') is not None:
             data['user_constraints']=copy.deepcopy(snapshot['optimization']['user_constraints'])
@@ -197,10 +204,27 @@ def save_revision(user,id,version,snapshot,catalog,summary,token,usage=None,sour
     mutate(user,id,version,change)
     return state(user,id)
 
-async def build(user,id,version,mode,decisions=None,template='education',feedback=None,manual=False,preparation=None):
+async def build(user,id,version,mode,decisions=None,template='education',feedback=None,manual=False,preparation=None,skip_questions=False):
     task_progress.stage('preparing')
     data=require(user,id,'resume_conversation')['data']
     if data['version']!=version:raise HTTPException(409,'Reload the conversation before building.')
+    if not manual and not feedback:
+        questions=profile_answers.stable_questions(data,'resume')
+        open_ids=[q['id'] for q in questions if q.get('status')=='open']
+        pending=any(p.get('status')=='pending' for p in data.get('proposals',[]))
+        if (open_ids or pending) and not skip_questions:
+            def wait(d,c):
+                d['optimization_waiting']={'mode':mode,'template':template,'decisions':decisions or []}
+            mutate(user,id,version,wait)
+            return state(user,id)
+        if skip_questions and open_ids:
+            def skip(d,c):
+                for q in profile_answers.stable_questions(d,'resume'):
+                    if q['id'] in open_ids:q['status']='skipped'
+                profile_answers.sync_questions(d,'resume')
+            record=mutate(user,id,version,skip);data=record['data'];version=data['version']
+        if pending:raise HTTPException(409,'Confirm or reject the pending Supporting Details before continuing.')
+
     if data.get('workspace_request') and not empty_preparation(data):raise HTTPException(409,'Render or restore your retained local edits before requesting an AI revision.')
     prepared=preparation or (ResumeRequest.model_validate(data['workspace_request']) if empty_preparation(data) else None)
     if prepared:
@@ -225,11 +249,10 @@ async def build(user,id,version,mode,decisions=None,template='education',feedbac
     current=require(user,data['current_revision_id'],'resume_revision')['data'] if data.get('current_revision_id') else None
     comparison_usage=None
     if data['profile_dirty'] and not manual:
-        task_progress.stage('comparison')
-        job=require(user,data['job_id'],'job');result=await ai.analyze(user,job['data'],mode)
-        analysis=db.save(user,'analysis',{**result,'job_id':job['id']});comparison_usage=result['ai']
-        def refresh(d,c):d.update({'analysis_id':analysis['id'],'profile_dirty':False})
-        record=mutate(user,id,version,refresh);version=record['data']['version'];data=record['data']
+        # The explicit optimization consumes fresh confirmed evidence. Comparison
+        # remains a separate user action; do not start a hidden paid comparison.
+        record=mutate(user,id,version,lambda d,c:d.update({'profile_dirty':False}))
+        version=record['data']['version'];data=record['data']
     # Suggested edits refer to their original analysis. Approved facts append rather than replace source text.
     snapshot=source(user,{**data,'linked_project_placements':placements},decisions if not data['profile_dirty'] and not comparison_usage else [],(feedback or {}).get('template') if (feedback or {}).get('template') in ('education','experience') else current['snapshot']['template'] if current else template)
     if prepared:

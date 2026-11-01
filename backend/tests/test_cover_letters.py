@@ -25,6 +25,7 @@ def env(client,account,monkeypatch):
     calls=[]
     async def model(schema,payload,*args,**kwargs):
         calls.append((schema.__name__,payload))
+        if schema.__name__=='ResumeQualityReview':return {'strengths':['Specific grounded examples.'],'findings':[],'next_actions':[]},META
         if schema.__name__=='DraftAudit':return {'approved':True,'issues':[]},META
         rows=payload['saved_resume_sources'];body=[r for r in rows if r['id'].endswith((':0',':1'))]
         return {'paragraphs':[{'text':'I am interested in the Analyst Intern position at Fictional Employer.','evidence':[{'source_id':'posting','quote':'Analyst Intern'}]},{'text':body[0]['text'],'evidence':[{'source_id':body[0]['id'],'quote':body[0]['text']}]},{'text':body[1]['text'],'evidence':[{'source_id':body[1]['id'],'quote':body[1]['text']}]}],'summary':'Drafted a letter using your analytical project.'},META
@@ -34,7 +35,7 @@ def env(client,account,monkeypatch):
 
 def generate(env):
     user,job,resume,state,calls=env
-    return asyncio.run(letters.generate(user,state['id'],CoverGenerate(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']))))
+    return asyncio.run(letters.generate(user,state['id'],CoverGenerate(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),skip_questions=True)))
 
 
 def test_exact_saved_resume_sources_and_privacy(env):
@@ -42,7 +43,7 @@ def test_exact_saved_resume_sources_and_privacy(env):
     assert letters.start(user,CoverStart(job_id=job['id'],resume_id=resume['id']))['id']==state['id']
     assert not calls and letters.estimate(user,state['id'],'economy')['usd']>0
     result=generate(env)
-    assert len(calls)==2 and result['current']['data']['layout']['pages']==1
+    assert len(calls)==5 and result['current']['data']['layout']['pages']==1
     request=json.dumps(calls)
     for secret in ('OMITTED PRIVATE','SECRET OMITTED','sponsorship_now','authorized_us','increased revenue 50%'):
         assert secret not in request
@@ -67,7 +68,7 @@ def test_review_finalize_same_artifacts_filenames_and_application_status(env):
     assert app['status']=='interviewing' and app['applied_date']=='2026-10-01' and app['submitted_resume_id']==resume['id']
     assert app['attachments']==[{'kind':'cover_letter','record_id':record['id']}]
     letters.finalize(user,result['id'],FinalizeRevision(expected_version=saved['data']['version'],revision_id=head['id'],reviewed=True))
-    assert len(db.list_entities(user,'cover_letter'))==1 and len(calls)==2
+    assert len(db.list_entities(user,'cover_letter'))==1 and len(calls)==5
 
 
 def test_manual_edits_render_without_provider_and_restore(env):
@@ -136,7 +137,7 @@ def test_authenticated_tasks_manual_flow_and_download_headers(env,client):
     content=CoverContent(paragraphs=['I analyzed demand data using Python and SQL.'])
     task=wait_task(client,client.post('/api/cover-workspaces/'+state['id']+'/render',json={'expected_version':0,'content':content.model_dump()}));assert task['status']=='completed',task
     state=task['result'];assert client.get('/api/cover-revisions/'+state['current']['id']+'/pages/1').content.startswith(b'\x89PNG')
-    response=client.post('/api/cover-workspaces/'+state['id']+'/finalize',json={'expected_version':state['data']['version'],'revision_id':state['current']['id'],'reviewed':True});assert response.status_code==200,response.text
+    response=client.post('/api/cover-workspaces/'+state['id']+'/finalize',json={'expected_version':state['data']['version'],'revision_id':state['current']['id'],'reviewed':True,'quality_warning_acknowledged':True});assert response.status_code==200,response.text
     rid=response.json()['data']['last_saved_letter_id']
     for fmt in ('pdf','docx','txt'):
         response=client.get('/api/cover-letters/'+rid+'/export/'+fmt);assert response.status_code==200
@@ -176,7 +177,7 @@ def test_chat_question_persists_without_changing_preview(env,monkeypatch,client)
     assert state['current']['id']==head and not state['preview_stale']
     assert state['data']['messages'][-2]['role']=='user' and state['data']['messages'][-1]['role']=='assistant'
     reloaded=client.get('/api/cover-workspaces/'+state['id']).json();assert reloaded['data']['messages']==state['data']['messages']
-    assert len(calls)==2 # Only initial generation and audit in the fixture; no redrafting for the question.
+    assert len(calls)==5 # Only initial generation and audit in the fixture; no redrafting for the question.
 
 
 def test_chat_targeted_revision_preserves_unrelated_manual_wording(env,monkeypatch):
@@ -187,7 +188,7 @@ def test_chat_targeted_revision_preserves_unrelated_manual_wording(env,monkeypat
     state=asyncio.run(letters.send(user,state['id'],CoverMessage(expected_version=state['data']['version'],content=content,text='Clarify paragraph 2.',request_token='revise-one')))
     assert state['current']['data']['content']['paragraphs'][2]==content.paragraphs[2]
     assert state['current']['data']['usage']['chat_ai'] and not state['preview_stale']
-    assert len(calls)==4 and state['data']['messages'][-1]['role']=='assistant'
+    assert len(calls)==7 and state['data']['messages'][-1]['role']=='assistant'
 
 
 def test_chat_new_facts_and_failure_keep_sources_and_history(env,monkeypatch):
@@ -196,7 +197,7 @@ def test_chat_new_facts_and_failure_keep_sources_and_history(env,monkeypatch):
     chat_model(monkeypatch,{'reply':'That result is absent from the selected resume. Update Profile and save a new resume first.'})
     body=CoverMessage(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),text='Add that I increased revenue 90%.',request_token='unsupported')
     state=asyncio.run(letters.send(user,state['id'],body));assert state['current']['id']==head
-    assert '90%' not in json.dumps(state['current']['data']['content']) and len(calls)==2
+    assert '90%' not in json.dumps(state['current']['data']['content']) and len(calls)==5
     async def failed(*args,**kwargs):raise ServiceError('Provider unavailable')
     monkeypatch.setattr(ai,'structured',failed)
     body=body.model_copy(update={'text':'Make it warmer.','expected_version':state['data']['version'],'request_token':'retry-me'})
@@ -212,7 +213,7 @@ def test_chat_header_only_renders_locally_no_body_rewrite(env,monkeypatch):
     chat_model(monkeypatch,{'action':'revise','reply':'I showed the subject line.','subject':'show'})
     state=asyncio.run(letters.send(user,state['id'],CoverMessage(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),text='Show the subject line.')))
     assert state['current']['data']['content']['show_subject'] and state['current']['data']['content']['paragraphs']==before
-    assert not state['preview_stale'] and len(calls)==2
+    assert not state['preview_stale'] and len(calls)==5
 
 
 def test_header_privacy_and_measured_readable_page_target(env):

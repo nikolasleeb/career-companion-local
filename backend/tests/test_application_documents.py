@@ -159,14 +159,15 @@ def test_cover_draft_uses_reviewed_uploaded_source_only(client,account,monkeypat
     state=client.post('/api/cover-letters/workspace',json={'job_id':app['data']['job_id'],'resume_id':resume['id']}).json();calls=[]
     async def fake(schema,payload,*args,**kwargs):
         calls.append(payload)
+        if schema.__name__=='ResumeQualityReview':return {'strengths':[],'findings':[],'next_actions':[]},{'model':'fixture','usage':{}}
         if schema.__name__=='DraftAudit':return {'approved':True,'issues':[]},{'model':'fixture','usage':{}}
         source=next(r for r in payload['saved_resume_sources'] if 'SQL reports' in r['text'])
         return {'paragraphs':[{'text':'I am interested in the Example analyst position.','evidence':[{'source_id':'posting','quote':'Example analyst'}]},{'text':source['text'],'evidence':[{'source_id':source['id'],'quote':source['text']}]}],'summary':'Used the reviewed original.'},{'model':'fixture','usage':{}}
     monkeypatch.setattr(ai,'structured',fake);monkeypatch.setattr(config,'OPENAI_KEY','fictional-not-sent')
-    result=asyncio.run(cover_letters.generate(account['id'],state['id'],CoverGenerate(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']))))
+    result=asyncio.run(cover_letters.generate(account['id'],state['id'],CoverGenerate(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),skip_questions=True)))
     assert result['current']['data']['layout']['pages']==1
     assert 'PRIVATE EMAIL NOT EVIDENCE' not in json.dumps(calls)
-    assert len(calls)==2
+    assert len(calls)==5
 
 
 def test_upload_and_advance_without_generation_preserves_other_versions(client,account,monkeypatch):

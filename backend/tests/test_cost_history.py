@@ -113,6 +113,7 @@ def test_failed_or_incomplete_response_still_records_billed_tokens(client,accoun
 
 
 def test_contract_failure_is_recorded_before_validation(client,account,monkeypatch):
+    db.update_settings(account['id'],{'document_models':{'writer':{'model':'gpt-6.1-sol','reasoning_effort':'high','speed':'standard'},'reviewer':{'model':'gpt-5.6-terra','reasoning_effort':'medium','speed':'standard'}}})
     user=account['id'];credentials.save(user,KEY)
     mocked(monkeypatch,lambda _:httpx.Response(200,json=response(output=[{'type':'message','content':[{'type':'output_text','text':'{"wrong": true}'}]}])))
     class Expected(BaseModel):answer:str
@@ -254,6 +255,7 @@ def test_history_available_before_onboarding_without_api_key(client):
 
 def test_task_context_records_multiple_calls_and_survives_later_failure(client,account,monkeypatch):
     from app.main import run_task
+    db.update_settings(account['id'],{'document_models':{'writer':{'model':'gpt-6.1-sol','reasoning_effort':'high','speed':'standard'},'reviewer':{'model':'gpt-5.6-terra','reasoning_effort':'medium','speed':'standard'}}})
     user=account['id'];credentials.save(user,KEY);task=db.uid();calls=[]
     def handler(req):
         calls.append(req);return httpx.Response(200,json=response(identity='task-'+str(len(calls))))

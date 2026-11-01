@@ -12,11 +12,12 @@ def fingerprint(snapshot,ids=None):
     if snapshot.get('linked_project_placements'):rows.append({'linked_project_placements':snapshot['linked_project_placements']})
     return hashlib.sha256(json.dumps(sorted(rows,key=lambda e:json.dumps(e,sort_keys=True)),sort_keys=True).encode()).hexdigest()
 
-def estimate(snapshot,mode,profile):
-    option=ai_settings.resolve(profile,mode)
-    count=max(1000,(len(json.dumps(snapshot))+3)//4)
-    stages=[ai_settings.estimate(option['model'],option['reasoning_effort'],count+extra,out,service_tier=option['service_tier'],max_output_tokens=profile.get('ai_max_output_tokens') or None) for extra,out in ((2000,2200),(3500,4500),(5000,4500),(7000,2000),(7000,4500),(6500,3000),(9000,4000),(7000,1500))]
-    return {**option,'usd':round(sum(v['usd'] for v in stages),6) if all(v['usd'] is not None for v in stages) else None,'input_tokens':sum(v['input_tokens'] for v in stages),'answer_tokens':26200,'assumed_reasoning_tokens':sum(v['assumed_reasoning_tokens'] for v in stages),'pricing_date':stages[0]['pricing_date'],'note':'Planning estimate for evidence strategy, drafting, editorial review, isolated quality review, one optional repair, one measured layout correction, blinded comparison and final auditing (at most eight model requests). No automatic paid retries.'}
+def estimate(snapshot,mode,settings):
+    from . import document_models
+    opt=document_models.options(settings,mode)
+    count=max(1500,len(json.dumps(snapshot))//4+7000)
+    stages=[document_models.estimate(settings,role,count,answer,mode) for role,answer in [('writer',4000),('writer',6000),('reviewer',2000),('writer',6000),('reviewer',2000),('writer',3000),('writer',2000),('writer',1200)]]
+    return {**opt,'usd':round(sum(v['usd'] for v in stages),6) if all(v['usd'] is not None for v in stages) else None,'pricing_date':ai_settings.PRICE_DATE,'note':'Planning maximum for evidence planning, drafting, independent review, one writer revision, final independent check, bounded layout correction and source validation. No automatic paid retries.'}
 
 
 def apply(snapshot,draft,overrides=None):

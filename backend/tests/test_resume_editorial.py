@@ -54,7 +54,7 @@ def test_editorial_receives_rendered_draft_and_full_canonical_sources(scenario,m
  calls=provider(monkeypatch,scenario)
  user,job,session,rows=scenario
  out=asyncio.run(guided.build(user,session['id'],session['data']['version'],'economy'))
- editing=calls[2][1];assert editing['first_draft']['sections'] and editing['measured_layout']['pages']==1
+ editing=next(payload for name,payload in calls if name=='ResumeComposition' and 'first_draft' in payload);assert editing['first_draft']['sections'] and editing['measured_layout']['pages']==1
  ids={f['id'] for f in editing['professional_evidence']['facts']}
  assert all(fid in ids for s in editing['first_draft']['sections'] for e in s['entries'] for i in e['items'] for fid in i['source_ids'])
  assert out['current']['data']['snapshot']['optimization']['strategy']['editorial_reviewed']
@@ -142,4 +142,4 @@ def test_high_reasoning_planner_has_bounded_automatic_allowance(scenario,monkeyp
  monkeypatch.setattr(ai,'structured',capture);monkeypatch.setattr(ai,'effort',lambda mode:'high')
  asyncio.run(guided.build(scenario[0],scenario[2]['id'],scenario[2]['data']['version'],'economy'))
  assert seen[0]==('ResumeStrategy',32000)
- assert len(seen)==5
+ assert len(seen)==6

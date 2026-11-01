@@ -35,9 +35,9 @@ def test_material_quality_issues_have_honest_verdicts_and_bounded_repair(scenari
  state=asyncio.run(guided.build(scenario[0],scenario[2]['id'],0,'economy'))
  value=state['current']['data']['snapshot']['optimization']['quality_review']
  assert value['status']==expected and len(calls)<=8
- repairs=[p for name,p in calls if name=='ResumeComposition' and 'critique' in p]
- assert len(repairs)==int(repair)
- if repair:assert repairs[0]['professional_evidence'] and repairs[0]['critique']['findings']
+ repairs=[p for name,p in calls if name=='ResumeComposition' and 'independent_feedback' in p]
+ assert len(repairs)==1 # Exactly one writer revision, even when it preserves an already-good draft.
+ if repair:assert repairs[0]['professional_evidence'] and repairs[0]['independent_feedback']['findings']
 
 
 def test_blinded_comparison_keeps_original_on_tie_or_regression(scenario,monkeypatch):
@@ -104,7 +104,7 @@ def test_recheck_preserves_bytes_factual_status_and_pending_feedback(scenario,mo
  new=db.get(uid,out['current']['id'],'resume_revision')['data']['snapshot']
  assert new['artifacts']==before['artifacts'] and new['optimization']['source_checked']==before['optimization']['source_checked']
  assert out['data']['pending_feedback']['revision_instruction']=='Retained separately.'
- assert len(calls)==6 and out['current']['id']!=state['current']['id']
+ assert len(calls)==7 and out['current']['id']!=state['current']['id']
  with pytest.raises(HTTPException):asyncio.run(guided.recheck_quality(uid,state['id'],ResumeQualityRequest(expected_version=0,revision_id=state['current']['id'],request_token='stale')))
 
 
@@ -167,7 +167,7 @@ def test_mixed_batch_applies_clear_edit_without_dispatching_unapproved_facts(env
  assert not any('forty' in str(r['data']) for r in db.list_entities(uid,'experience'))
 
 
-def test_complete_changed_repair_path_is_eight_calls_with_fresh_blinded_recheck(scenario,monkeypatch):
+def test_revised_document_gets_final_independent_check_with_bounded_layout_correction(scenario,monkeypatch):
  from app import resume_layout
  calls=provider(monkeypatch,scenario);raw=ai.structured;render=resume_layout.render
  def measured(snap):
@@ -181,15 +181,15 @@ def test_complete_changed_repair_path_is_eight_calls_with_fresh_blinded_recheck(
    calls.append((schema.__name__,payload));assert set(payload)=={'task','posting','a','b'}
    return {'preferred':'b','reason':'Clearer supported cloud contribution.','a':finding(),'b':READY},META
   value,meta=await raw(schema,payload,*args,**kwargs)
-  if schema.__name__=='ResumeQualityReview':value=finding()
-  if schema.__name__=='ResumeComposition' and payload.get('critique'):
+  if schema.__name__=='ResumeQualityReview':value=READY if sum(n=='ResumeQualityReview' for n,p in calls)>1 else finding()
+  if schema.__name__=='ResumeComposition' and payload.get('independent_feedback'):
    for entry in value['entries']:
     for item in entry['items']:
      if item['text'].startswith('Designed AWS ingestion'):item['text']='Designed AWS ingestion pipelines.'
   return value,meta
  monkeypatch.setattr(ai,'structured',model)
  out=asyncio.run(guided.build(scenario[0],scenario[2]['id'],0,'economy'))
- assert [name for name,p in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','ResumeQualityReview','ResumeComposition','OptimizationOutput','ResumeQualityComparison','DraftAudit']
+ assert [name for name,p in calls]==['ResumeStrategy','ResumeComposition','ResumeQualityReview','ResumeComposition','OptimizationOutput','ResumeQualityReview','DraftAudit']
  assert out['current']['data']['snapshot']['optimization']['quality_review']['status']=='ready'
 
 
@@ -208,7 +208,7 @@ def test_quality_action_token_deduplicates_without_dispatching_twice(scenario,mo
   if status['status'] not in ('queued','running'):break
   time.sleep(.01)
  assert status['status']=='completed',status
- assert sum(name=='ResumeQualityReview' for name,p in calls)==2
+ assert sum(name=='ResumeQualityReview' for name,p in calls)==3
 
 
 def test_source_changes_during_recheck_reject_late_output(scenario,monkeypatch):
@@ -220,23 +220,22 @@ def test_source_changes_during_recheck_reject_late_output(scenario,monkeypatch):
   return result
  monkeypatch.setattr(ai,'structured',change)
  with pytest.raises((ServiceError,HTTPException)):asyncio.run(guided.recheck_quality(uid,state['id'],ResumeQualityRequest(expected_version=state['data']['version'],revision_id=old,request_token='freshness')))
- assert guided.state(uid,state['id'])['current']['id']==old and len(calls)==6
+ assert guided.state(uid,state['id'])['current']['id']==old and len(calls)==7
 
 
-def test_repair_cannot_publish_unsupported_claim_and_truthful_original_remains(scenario,monkeypatch):
+def test_writer_revision_cannot_publish_unsupported_claim(scenario,monkeypatch):
  calls=provider(monkeypatch,scenario);raw=ai.structured
  async def bad_repair(schema,payload,*args,**kwargs):
   value,meta=await raw(schema,payload,*args,**kwargs)
   if schema.__name__=='ResumeQualityReview':value=finding()
-  if schema.__name__=='ResumeComposition' and payload.get('critique'):
+  if schema.__name__=='ResumeComposition' and payload.get('independent_feedback'):
    item=next(item for entry in value['entries'] for item in entry['items'] if item['text'].startswith('Built a Python'))
    item['text']='Improved outcomes by 97%.'
   return value,meta
  monkeypatch.setattr(ai,'structured',bad_repair)
- out=asyncio.run(guided.build(scenario[0],scenario[2]['id'],0,'economy'))
- snap=out['current']['data']['snapshot'];report=snap['optimization']['quality_review']
- assert report['status']=='needs_manual_changes' and 'could not be used' in report['note']
- assert '97%' not in json.dumps(snap['sections']) and snap['optimization']['source_checked']
+ with pytest.raises(ServiceError,match='unsupported number'):
+  asyncio.run(guided.build(scenario[0],scenario[2]['id'],0,'economy'))
+ assert not db.list_entities(scenario[0],'resume_revision')
 
 
 def test_deferred_requests_cannot_expand_another_requests_edit_scope():

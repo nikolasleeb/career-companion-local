@@ -80,7 +80,7 @@ def test_existing_draft_can_update_presentation_locally_without_altering_old_rev
     state=guided.state(user,state['id']);body=request(state);body.compact_skills=True
     changed=guided.render(user,state['id'],WorkingRender(expected_version=state['data']['version'],request_token='clean-skills',resume=body))
     assert changed['current']['id']!=head and changed['current']['data']['snapshot']['compact_skills']
-    assert len(calls)==5 # Only the original planning, draft, editorial review and audit.
+    assert len(calls)==6 # Only the original planning, draft, editorial review and audit.
     assert db.get(user,head,'resume_revision')['data']==old
     assert changed['current']['data']['snapshot']['experience_ids']==state['current']['data']['snapshot']['experience_ids']
 

@@ -5,6 +5,19 @@ from . import auth,db,documents,resume_data,project_structure as structure,cours
 router=APIRouter()
 CONTACT=('name','contact','contact_reviewed','email','phone','city','state','country','county','website','linkedin','github')
 
+def project_month(value):
+ from .graduation_defaults import interval
+ import calendar
+ span=interval(value)
+ if not span:return value or ''
+ first,last=span
+ return str(first.year) if first.month==1 and first.day==1 and last.month==12 and last.day==31 else calendar.month_name[first.month]+' '+str(first.year)
+
+def project_dates(data):
+ if data.get('start_date') or data.get('end_date'):return ' – '.join(filter(None,[project_month(data.get('start_date')),project_month(data.get('end_date'))]))
+ import re
+ return ' – '.join(project_month(part.strip()) for part in re.split(r'\s*[–—]\s*|\s+-\s+',data.get('dates','')))
+
 def snapshot(user):
  with db.connect() as c:
   c.execute('BEGIN')
@@ -51,9 +64,9 @@ def snapshot(user):
   d=r['data'];shared=structure.timeline_enabled(d)
   stage=next((v for v in structure.stages(d) if v['parent_id']==parent),None) if shared else None
   add('entry',d['title'],depth)
-  dates=' - '.join(filter(None,[stage.get('start_date'),stage.get('end_date')])) if stage else resume_data.record_dates(d)
+  dates=' – '.join(filter(None,[project_month(stage.get('start_date')),project_month(stage.get('end_date'))])) if stage else project_dates(d)
   if stage and not dates:
-   dates=resume_data.record_dates(d)
+   dates=project_dates(d)
    if dates and len(structure.parents(d))>1:dates='Whole project dates: '+dates
   add('meta',dates,depth)
   if shared and parent is None and (any(v['scope']['kind']=='unassigned' for v in structure.statements(d)) or any(structure.scope_for_detail(a['data'],r['id'],d)['kind']=='unassigned' for a in answers(r['id']))):add('meta','Timeline assignment pending',depth)
@@ -93,8 +106,8 @@ def snapshot(user):
   if children:
    add('subsection','Projects',1)
    for p in children:project(p,r['id'],2,seen=seen)
- for category,title in [('education','Education'),('employment','Work Experience'),('volunteering','Volunteering'),('coursework','Additional Coursework'),('skills','Skills and Certifications')]:
-  values=ordered([r for r in confirmed.values() if r['data']['category']==category])
+ for category,title in [('education','Education'),('employment','Work Experience'),('volunteering','Volunteering'),('coursework','Additional Coursework'),('skills','Skills'),('certifications','Certifications')]:
+  values=ordered([r for r in confirmed.values() if (r['data']['category']==category and (category!='skills' or not certifications.is_group(r['data']))) or (category=='certifications' and certifications.is_group(r['data']))])
   if values:
    add('section',title)
    for r in values:normal(r)
@@ -117,7 +130,7 @@ def snapshot(user):
    for v in supporting:add('bullet',v,2)
  for a in details:
   if not any(id in confirmed for id in profile_answers.experience_ids(a['data'])):omitted['unattached_details']+=1
- value={'name':profile.get('name') or 'Master Resume','contact_lines':resume_data.contact_lines(profile),'blocks':blocks,'omitted':omitted,'pending_projects':sum(structure.timeline_enabled(r['data']) and (any(v['scope']['kind']=='unassigned' for v in structure.statements(r['data'])) or any(structure.scope_for_detail(a['data'],r['id'],r['data'])['kind']=='unassigned' for a in answers(r['id']))) for r in confirmed.values())}
+ value={'name':profile.get('name') or 'Master Resume','contact_lines':resume_data.contact_lines(profile),'blocks':blocks,'omitted':omitted,'pending_projects':len(structure.pending_assignments(entries,details)),'pending_project_assignments':structure.pending_assignments(entries,details)}
  return {**value,'revision':structure.digest(value)}
 
 def render_docx(value):

@@ -8,7 +8,7 @@ import base64
 import copy
 import hashlib
 import secrets
-from . import ai, ai_settings, db, job_parser, resume_layout, resume_presentation, task_progress
+from . import document_models, ai, ai_settings, db, job_parser, resume_layout, resume_presentation, task_progress
 from .models import ResumeQualityReview, ResumeQualityComparison
 from .network import ServiceError
 
@@ -90,10 +90,11 @@ def acknowledgment_required(snapshot):
     return bool(review and (review.get('status')!='ready' or review.get('document_hash')!=document_hash(snapshot) or review.get('posting_hash')!=job_parser.posting_hash(snapshot.get('posting_snapshot',{}))))
 
 
-async def review(snapshot,mode):
-    task_progress.stage('resume_quality')
+async def review(snapshot,mode,*,final=False):
+    task_progress.stage('document_final_check' if final else 'resume_quality')
     doc=await asyncio.to_thread(document,snapshot);posting=snapshot.get('posting_snapshot',{})
-    result,meta=await ai.structured(ResumeQualityReview,{'task':TASK,'posting':posting,'resume':doc},mode,instructions=RULES,retry_allowed=False)
+    with document_models.role('reviewer'):
+        result,meta=await ai.structured(ResumeQualityReview,{'task':TASK,'posting':posting,'resume':doc},mode,instructions=RULES,retry_allowed=False)
     return validate(result,doc,posting),meta
 
 
@@ -110,7 +111,7 @@ async def compare(original,revised,mode):
 
 
 def estimate(snapshot,mode,settings):
-    option=ai_settings.resolve(settings,mode)
+    with document_models.role('reviewer'):option=document_models.options(settings,mode)
     # The estimate is local and deliberately does not extract or send any text.
     count=max(1500,len(str(snapshot.get('sections',[])))//4+len(str(snapshot.get('posting_snapshot',{})))//4+1800)
     return ai_settings.estimate(option['model'],option['reasoning_effort'],count,2000,service_tier=option['service_tier'],max_output_tokens=settings.get('ai_max_output_tokens') or None)

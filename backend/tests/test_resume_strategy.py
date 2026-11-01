@@ -181,7 +181,7 @@ def provider(monkeypatch,scenario,mutate=None):
 def test_shell_like_selection_explanation_and_local_render_are_free(scenario,monkeypatch):
  calls=provider(monkeypatch,scenario);user,job,session,rows=scenario
  result=asyncio.run(guided.build(user,session['id'],session['data']['version'],'economy'))
- assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','ResumeQualityReview','DraftAudit']
+ assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeQualityReview','ResumeComposition','ResumeQualityReview','DraftAudit']
  snap=result['current']['data']['snapshot'];included=set(snap['experience_ids'])
  assert rows['cloud']['id'] in included and rows['energy']['id'] not in included
  assert snap['optimization']['strategy']['focus'] and snap['optimization']['strategy']['priorities'][0]['included']
@@ -203,7 +203,7 @@ def test_mixed_source_group_finishes_without_retrying_paid_stages(scenario,monke
   return value,meta
  monkeypatch.setattr(ai,'structured',grouped)
  result=asyncio.run(guided.build(user,session['id'],session['data']['version'],'economy'))
- assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','ResumeQualityReview','DraftAudit']
+ assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeQualityReview','ResumeComposition','ResumeQualityReview','DraftAudit']
  values=strategy.entries(result['current']['data']['snapshot'])[rid]['content_items']
  assert any(i['field']=='tools' and i['text']=='Tools: AWS, Spark' for i in values)
  assert all(len(i['source_refs'])==1 for i in values if i['field']=='tools')
@@ -236,7 +236,7 @@ def test_backup_import_remaps_composed_sources_and_detaches_missing_history(scen
  refs=[ref for e in strategy.entries(imported['data']['snapshot']).values() for i in e['content_items'] for ref in i.get('source_refs',[])]
  assert refs and all(ref['record_id']!=old_source for ref in refs)
  assert all(db.get(user,ref['record_id'],'experience') for ref in refs)
- assert len(calls)==5
+ assert len(calls)==6
  # A historical missing record can be imported read-only, but cannot become current evidence.
  ref={'source_id':'a'*24,'record_id':'deleted-source','quote':'Former reviewed source.','supporting_details':[]}
  value={'source_refs':[ref]};strategy.backup_markers(value,set());assert ref['unavailable_record']
@@ -327,5 +327,5 @@ def test_all_composition_stages_use_owner_constrained_contract(scenario,monkeypa
  user,_,session,rows=scenario
  result=asyncio.run(guided.build(user,session['id'],session['data']['version'],'economy'))
  assert result['current'] and len(schemas)==2 and schemas[0] is schemas[1]
- assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeComposition','ResumeQualityReview','DraftAudit']
+ assert [c[0] for c in calls]==['ResumeStrategy','ResumeComposition','ResumeQualityReview','ResumeComposition','ResumeQualityReview','DraftAudit']
  assert result['current']['data']['snapshot']['separate_certifications']

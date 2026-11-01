@@ -7,3 +7,5 @@
 .project-attachment-summary{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.overview-assignment{border-top:1px solid #ccd7e7;padding:12px 0}.overview-assignment>p{font-weight:400;white-space:pre-wrap}.project-timeline .bullet-editor{margin-top:24px}.project-timeline .bullet-editor textarea{font-weight:400;max-height:300px;overflow:auto}.project-stage .date-select{min-width:0}.project-stage .date-columns{gap:8px}
 
 .statement-text textarea,.individual-skill-name{font-weight:400}.statement-actions{justify-content:flex-start}.statement-actions .text-button{white-space:normal}
+
+.date-columns.month-columns{grid-template-columns:repeat(2,minmax(0,1fr))}.statement-row:has(select option[value="unassigned"]:checked){border-left:3px solid var(--accent,#ab0520)}

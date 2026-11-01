@@ -44,13 +44,13 @@ def test_cover_draft_source_check_and_local_render_stages(guided,monkeypatch):
         seen.append((schema.__name__,get_task(identity,user={'id':user})['progress']['code']))
         return await original(schema,payload,*args,**kwargs)
     monkeypatch.setattr(ai,'structured',model)
-    async def work():return await letters.generate(user,state['id'],CoverGenerate(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content'])))
+    async def work():return await letters.generate(user,state['id'],CoverGenerate(expected_version=state['data']['version'],content=CoverContent.model_validate(state['data']['content']),skip_questions=True))
     asyncio.run(run_task(identity,user,work));result=get_task(identity,user={'id':user})
     assert result['status']=='completed',result
-    assert seen==[('CoverLetterOutput','drafting'),('DraftAudit','checking')]
+    assert seen==[('CoverLetterOutput','drafting'),('ResumeQualityReview','document_review'),('CoverLetterOutput','document_revision'),('DraftAudit','checking'),('ResumeQualityReview','document_final_check')]
     progress=result['progress'];assert progress['code']=='saving'
     assert 'rendering' in [v['code'] for v in progress['history']]
-    assert len(calls)==2
+    assert len(calls)==5
 
 
 @pytest.mark.parametrize('kind',['analysis','project_analysis','discovery','interview','preparation','resume_optimize'])

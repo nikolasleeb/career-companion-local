@@ -221,3 +221,8 @@ test('account cleanup revisions travel with mutations and reject stale responses
   globalThis.fetch=async()=>new Response('{}');await requestJSON('/auth/logout','POST',{},'csrf');
  }finally{globalThis.fetch=oldFetch;}
 });
+test('document start and recovery transports have deadlines without timing out server-side generation',async()=>{
+ const original=globalThis.fetch,seen=[];
+ globalThis.fetch=async(path,options)=>{seen.push(options.signal);return new Response('{}',{status:200});};
+ try{await requestJSON('/resume-conversations/one/build','POST',{},'csrf');await requestJSON('/cover-workspaces/two/generate','POST',{},'csrf');await requestJSON('/document-models/tasks/status?request_token=existing');assert(seen.every(signal=>signal instanceof AbortSignal));}finally{globalThis.fetch=original;}
+});

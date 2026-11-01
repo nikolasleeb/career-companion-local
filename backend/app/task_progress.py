@@ -7,6 +7,9 @@ _context=ContextVar('task_progress',default=None)
 KINDS={'course_syllabus','career_readiness','career_explorer_review','interview_audio','work_style_summary','knowledge_coach','personalized_jobs','chat_image','interview_practice','career_coach','job_ai_discovery','job_ai_match','posting_import','resume_guided','cover_letter','analysis','project_analysis','resume','resume_fit','resume_optimize','preparation','interview','assessment','discovery','story_prompts'}
 LABELS={'course_syllabus':'syllabus review','career_readiness':'Career Readiness','interview_audio':'interview audio','work_style_summary':'Work Styles summary','knowledge_coach':'Career Coach reply','personalized_jobs':'personalized job discovery','chat_image':'illustration generation','interview_practice':'interview practice','career_coach':'Career Coach','job_ai_discovery':'AI job discovery','job_ai_match':'Profile fit review','posting_import':'job posting import','cover_letter':'cover-letter action','analysis':'Profile comparison','project_analysis':'project analysis','resume':'resume action','resume_fit':'resume fitting','resume_optimize':'resume optimization','preparation':'practice preparation','interview':'interview review','assessment':'assessment scoring','discovery':'job search','story_prompts':'story prompts'}
 STAGES={
+    'document_final_check':('Final independent document check','provider'),
+    'document_review':('Independent document review','provider'),
+    'document_revision':('Writer revising with reviewer feedback','provider'),
     'readiness_investigation':('Investigating career directions and evidence','provider'),
     'readiness_synthesis':('Preparing your readiness findings','provider'),
     'readiness_validation':('Checking readiness sources and saving','local'),
@@ -31,7 +34,7 @@ STAGES={
     'resume_quality':('Independently reviewing the finished resume','provider'),
     'resume_quality_repair':('Addressing material review findings','provider'),
     'resume_quality_compare':('Comparing the reviewed and revised drafts','provider'),
-    'resume_editorial':('Reviewing relevance, ordering and concise writing','provider'),
+    'resume_editorial':('Writer revising with reviewer feedback','provider'),
     'resume_planning':('Matching employer priorities to confirmed evidence','provider'),
     'fitting':('Fitting content to one page','local'),
     'rendering':('Rendering and inspecting the PDF','local'),
