@@ -2,3 +2,5 @@
 
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #2363a8;outline-offset:2px}
 .stay{line-height:1.6;margin-bottom:8px}#status{white-space:pre-line;line-height:1.6}#reason{line-height:1.5}details{margin-top:16px}summary{cursor:pointer;color:#163d6d;font-weight:600}select{max-width:100%}[hidden]{display:none!important}#start{min-height:44px;font-weight:650}#contact{margin:4px 0}
+
+#reason {white-space:pre-line;overflow-wrap:anywhere;}

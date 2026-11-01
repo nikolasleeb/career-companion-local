@@ -7,16 +7,29 @@ const extensionRoot=api.runtime.getURL('');
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function config(){return (await storage.get('connection')).connection||{};}
 async function save(connection){await storage.set({connection});}
-function appOrigin(raw){const url=new URL(raw);if(!((url.protocol==='http:'&&['localhost','127.0.0.1'].includes(url.hostname)))||url.username||url.password)throw Error('Use a localhost Career Companion address.');return url.origin;}
+function appOrigin(raw){const url=new URL(raw);if(!((url.protocol==='http:'&&['localhost','127.0.0.1'].includes(url.hostname))||url.origin==='https://career-companion.austrich-server.com')||url.username||url.password)throw Error('Use localhost or the configured Career Companion HTTPS origin.');return url.origin;}
 async function bounded(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Request timed out after 15 seconds. Check your connection before resuming.')),15000);})]);}finally{clearTimeout(timer);}}
+const missingRelay=error=>/Receiving end does not exist|Could not establish connection|Career Companion connection was interrupted/i.test(String(error?.message||error||''));
+async function ensureRelay(c){
+ // Reloading the app destroys its programmatic relay. Restore only that script
+ // in the exact already-paired tab; never repeat a server operation or filling.
+ const expected=appOrigin(c.appOrigin);
+ let tab;try{tab=await bounded(api.tabs.get(c.relayTab));}catch{throw Error('The Career Companion tab was closed. Open it, sign in, then choose Connect this browser in Connection & installation help.');}
+ let origin='';try{origin=new URL(tab.url).origin;}catch{}
+ if(tab.incognito||origin!==expected)throw Error('The paired Career Companion tab is no longer open at the expected address. Open and sign in to Career Companion, then choose Connect this browser.');
+ try{await bounded(api.scripting.executeScript({target:{tabId:c.relayTab},world:'ISOLATED',files:['relay.js']}));}
+ catch{throw Error('Cannot reconnect to the Career Companion tab. Check its sign-in and the extension website permission, then choose Connect this browser.');}
+}
 async function relay(operation,body={},runId){const c=await config();if(!c.relayTab||!c.appOrigin)throw Error('Connect to a signed-in Career Companion tab first.');
- const reply=await bounded(api.tabs.sendMessage(c.relayTab,{channel:'career-companion-relay-v1',appOrigin:c.appOrigin,accountId:c.accountId,operation,body:operation==='status'?{pairing_id:c.pairingId,secret:c.secret}:body,runId}));
+ await ensureRelay(c);
+ let reply;try{reply=await bounded(api.tabs.sendMessage(c.relayTab,{channel:'career-companion-relay-v1',appOrigin:c.appOrigin,accountId:c.accountId,operation,body:operation==='status'?{pairing_id:c.pairingId,secret:c.secret}:body,runId}));}
+ catch(error){if(missingRelay(error))throw Error('Career Companion connection was interrupted by a tab refresh. Reopen this popup to reconnect. Filling stays paused until you resume explicitly.');throw error;}
  if(!reply?.ok)throw Object.assign(Error(reply?.error||'App connection lost. Keep a signed-in Career Companion tab open, then resume.'),{code:reply?.errorCode});
  if(c.accountId&&c.accountId!==reply.accountId)throw Object.assign(Error('Account switched. Pair again.'),{code:'account_changed'});
  await storage.set({lastContact:Date.now()});return reply;}
 async function execute(tabId,func,args=[]){const result=await bounded(api.scripting.executeScript({target:{tabId},world:'ISOLATED',func,args}));return result[0]?.result;}
 const terminal=run=>!run||['stopped','failed','ready_for_final_review'].includes(run.state);
-function summary(run){if(!run)return null;return {id:run.id,account_id:run.account_id,application_id:run.application_id,state:run.state,reason:run.reason,version:run.version,pages:run.pages,writes:run.writes,questions:run.unresolved.length,documents:run.documents,expires:run.expires};}
+function summary(run){if(!run)return null;return {id:run.id,account_id:run.account_id,application_id:run.application_id,state:run.state,reason:run.reason,version:run.version,pages:run.pages,writes:run.writes,questions:run.unresolved.filter(q=>!q.manual_only&&!['file','unsupported'].includes(q.control)).length,manual:run.unresolved.filter(q=>q.manual_only||['file','unsupported'].includes(q.control)).length,remaining:run.unresolved.map(q=>({label:q.label,where:q.manual_only||['file','unsupported'].includes(q.control)?'Employer page':'Career Companion',reason:q.reason})),page_handoffs:run.page_handoffs||[],documents:run.documents,expires:run.expires};}
 async function rememberRun(run){await storage.set({lastRun:summary(run)});return run;}
 async function receipt(run,ids=[]){await storage.set({receipt:{runId:run.id,version:run.version,baseline:run.writes,ids}});}
 async function tabOrigin(id){const tab=await api.tabs.get(id);if(!tab.url)throw Error('Tab access expired. Activate again.');return new URL(tab.url).origin;}
@@ -53,7 +66,10 @@ async function drive(){
     item.value=''; // Private values remain transient and are never persisted in extension storage.
    }
    planned.writes.length=0;
-   const state=stopRequested?'paused':failed_ids.length||run.unresolved.length?'needs_input':scan.final_review?'ready_for_final_review':'advancing';
+   // A country/other selection can reveal more fields. Rescan the changed
+   // page before reporting its final checklist; never overwrite existing values.
+   if(!stopRequested&&!failed_ids.length){const current=await execute(c.employerTab,()=>globalThis.CareerCompanionDOM.inspect());if(await signature(current,c.employerTab)!==sig)continue;}
+   const state=stopRequested?'paused':failed_ids.length||run.unresolved.length||run.page_handoffs?.length?'needs_input':scan.final_review?'ready_for_final_review':'advancing';
    run=await report(c,run,state,stopRequested?'user_action':scan.final_review?'final_review':'',[],failed_ids);
    if(state!=='advancing')break;
    const latest=(await relay('status',{},run.id)).result;
@@ -89,6 +105,7 @@ async function handle(message){
    const actual=data.runs.find(r=>r.id===c.runId)||(!c.runId?data.runs.find(r=>r.expires>Date.now()/1000&&((c.employerTab!=null&&r.pairing_id===c.pairingId&&r.tab_id===c.employerTab&&r.allowed_origin===c.employerOrigin&&!terminal(r))||(r.state==='paused'&&r.tab_id===active?.id&&r.allowed_origin===new URL(active.url).origin))):null);
    if(actual&&!c.runId)await save({...c,runId:actual.id,employerTab:actual.tab_id,employerOrigin:actual.allowed_origin});if(actual){run=summary(actual);await storage.set({lastRun:run});}
    if(!pairing||pairing.status==='revoked')throw Error('Connection expired or revoked. Reconnect this browser.');
+   if(!busy&&!starting&&missingRelay((await storage.get('lastError')).lastError))await storage.remove('lastError');
   }}catch(e){error=e.message;if(e.code==='account_changed'){stopRequested=true;await storage.remove(['connection','lastRun','receipt','selections','reviewVisited']);await storage.set({lastError:error});return {connection:{status:'disconnected'},run:null,busy,verified:0,lastError:error,selections:null};}if(busy){stopRequested=true;await storage.set({lastError:error});}}
   const r=(await storage.get('receipt')).receipt;
   const verified=run?Math.max(run.writes,r?.runId===run.id?r.baseline+r.ids.length:0):0;
@@ -120,7 +137,6 @@ async function handle(message){
    try{return new URL(tab.url).origin===origin;}catch{return false;}
   });
   if(!target?.id)throw Error('Open and sign in to Career Companion in this browser first.');
-  await api.scripting.executeScript({target:{tabId:target.id},world:'ISOLATED',files:['relay.js']});
   const secret=[...crypto.getRandomValues(new Uint8Array(32))].map(x=>x.toString(16).padStart(2,'0')).join('');
   const label=api.runtime.getURL('').startsWith('safari-web-extension:')?'Safari on this computer':'Chrome on this computer';
   await save({appOrigin:origin,relayTab:target.id,secret});

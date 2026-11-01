@@ -1,10 +1,10 @@
 /* Structured DOM adapter: data in, bounded readback-verified writes out. */
 (()=>{
- if(globalThis.CareerCompanionDOM?.version===2)return;
+ if(globalThis.CareerCompanionDOM?.version===3)return;
  const visible=el=>!!(el.getClientRects().length)&&getComputedStyle(el).visibility!=='hidden'&&!el.closest('[hidden],[aria-hidden="true"],[inert]');
  const clean=s=>String(s||'').replace(/\s+/g,' ').trim().slice(0,500);
  const norm=s=>clean(s).toLocaleLowerCase();
- const boundary=/consent|i agree|i confirm|opt[ -]?in|subscribe|signature|attest|under penalty|certify that|certification of|credit card|payment|captcha|recaptcha|hcaptcha|sign in|log in|login/i;
+ const boundary=/password|passcode|one[ -]time code|verification code|i acknowledge|consent|i agree|i confirm|opt[ -]?in|subscribe|signature|attest|under penalty|certify that|certification of|credit card|payment|captcha|recaptcha|hcaptcha|sign in|log in|login/i;
  const edited=new WeakSet();for(const type of ['input','change'])document.addEventListener(type,event=>{if(event.isTrusted&&event.target instanceof Element)edited.add(event.target);},true);
  let refs=new Map();let snapshots=new Map();let stopped=false;
  function label(el){
@@ -17,23 +17,27 @@
  function groupLabel(el){const group=el.closest('fieldset,[role="radiogroup"],[role="group"]');return clean(group?.querySelector('legend')?.textContent||group?.getAttribute('aria-label')||label(el));}
  function inspect(){
   refs=new Map();snapshots=new Map();stopped=false;
-  const fields=[];const manual_fields=[];const boundaries=new Set();const radios=new Set();const repeatGroups={education:[],employment:[]};
-  if(document.querySelector('input[type="password"]'))boundaries.add('login');
+  const fields=[];const manual_fields=[];const review_existing=[];const boundaries=new Set();const radios=new Set();const repeatGroups={education:[],employment:[]};
+  if([...document.querySelectorAll('input[type="password"]')].some(x=>visible(x)&&!x.disabled))boundaries.add('login');
   if([...document.querySelectorAll('iframe')].some(x=>visible(x)&&/captcha/i.test((x.src||'')+' '+x.title)))boundaries.add('captcha');
   for(const frame of document.querySelectorAll('iframe')){
    if(!visible(frame))continue;
    try{if(!frame.contentDocument||frame.contentDocument.querySelector('input,select,textarea,button'))boundaries.add('inaccessible_frame');}catch{boundaries.add('inaccessible_frame');}
   }
-  for(const el of document.querySelectorAll('input:not([type="hidden"]),textarea,select,[role="combobox"],[role="checkbox"],[role="radio"],[contenteditable="true"],canvas')){
+  const controls=[...document.querySelectorAll('input:not([type="hidden"]),textarea,select,[role="combobox"],[role="checkbox"],[role="radio"],[contenteditable="true"],canvas')];
+  // Process rows top to bottom, then left to right; preserve DOM order on ties.
+  controls.sort((a,b)=>{const x=a.getBoundingClientRect(),y=b.getBoundingClientRect();return Math.abs(x.top-y.top)>3?x.top-y.top:x.left-y.left;});
+  for(const el of controls){
    if(!visible(el)||el.disabled||(el.readOnly&&el.getAttribute('role')!=='combobox')||el.closest('[data-career-companion-ui]'))continue;
    if(['submit','button','reset','image'].includes(el.type))continue;
    const text=label(el);const context=clean(el.closest('fieldset,[role="group"],[role="radiogroup"]')?.querySelector('legend')?.textContent||'');
    const description=clean((el.getAttribute('aria-describedby')||'').split(/\s+/).map(id=>{const x=document.getElementById(id);return x&&!x.closest('[role="status"],[role="alert"],[aria-live]')?x.textContent:'';}).join(' '));
    let control=el.tagName==='SELECT'?'select':el.tagName==='TEXTAREA'?'textarea':el.getAttribute('role')==='combobox'?'combobox':el.type||'unsupported';
    if(!['text','email','tel','url','number','date','textarea','select','radio','checkbox','combobox','file'].includes(control))control='unsupported';
-   let manual=control==='unsupported'||control==='file';
+   const credential=el.type==='password'||/^(current-password|new-password|one-time-code)$/.test(el.autocomplete);
+   let manual=credential||control==='unsupported'||control==='file';
    const protectedText=text+' '+context+' '+description;
-   if(boundary.test(protectedText)){manual=true;if(/captcha/i.test(protectedText))boundaries.add('captcha');else if(/payment|credit card/i.test(protectedText))boundaries.add('payment');else if(/sign in|log in|login/i.test(protectedText))boundaries.add('login');}
+   if(boundary.test(protectedText)){manual=true;if(/captcha/i.test(protectedText))boundaries.add('captcha');else if(/payment|credit card/i.test(protectedText))boundaries.add('payment');else if(/password|passcode|verification code|sign in|log in|login/i.test(protectedText))boundaries.add('login');else if(/signature/i.test(protectedText))boundaries.add('signature');else boundaries.add('attestation');}
    let options=[];let members=null;let question=text;
    if(control==='radio'){
     const name=el.name;if(!name){manual=true;control='unsupported';}
@@ -57,15 +61,24 @@
    if(text.length>=500||description.length>=500||context.length>=500||options.some(x=>x.length>=500)||options.length>500){manual=true;options=[];}
    const group=el.closest('fieldset,[role="group"],[role="radiogroup"]');
    if(/veteran|disab|gender|race|ethnic|clearance/i.test(question+' '+context)&&group?.querySelector('p')&&!el.getAttribute('aria-describedby'))manual=true;
-   const id='f'+fields.length;if(manual)manual_fields.push(id);refs.set(id,{el,members,control,question,description,context,options,manual});snapshots.set(id,members?members.map(value):value(el));
-   fields.push({id,label:question,description,context,control,autocomplete:clean(el.autocomplete).replace(/^section-\S+\s*/,'').replace(/^(shipping|billing)\s*/,''),options,has_value:members?members.some(x=>x.checked||edited.has(x)):edited.has(el)||(control==='checkbox'?el.checked:!!String(value(el)).trim()),required:!!el.required||el.getAttribute('aria-required')==='true',section,repeat_index});
+   const id='f'+fields.length;if(manual)manual_fields.push(id);
+   const existing=credential?'':value(el);
+   if(!credential&&/^(unknown|undefined|null|n\/a)$/i.test(String(existing).trim()))review_existing.push(id);
+   refs.set(id,{el,members,control,question,description,context,options,manual});snapshots.set(id,credential?null:members?members.map(value):existing);
+   fields.push({id,label:question,description,context,control,autocomplete:clean(el.autocomplete).replace(/^section-\S+\s*/,'').replace(/^(shipping|billing)\s*/,''),options,has_value:credential?false:members?members.some(x=>x.checked||edited.has(x)):edited.has(el)||(control==='checkbox'?el.checked:!!String(existing).trim()),required:!!el.required||el.getAttribute('aria-required')==='true',section,repeat_index});
   }
+  // Mixed application pages can be filled without touching protected controls.
+  // Keep page barriers for navigation, and pure login/payment pages fail closed.
+  if(fields.some(f=>f.control==='unsupported'))boundaries.add('unsupported_control');
+  const page_handoffs=[...boundaries];
+  const applicationFields=fields.filter(f=>!manual_fields.includes(f.id)&&/name|address|city|postal|zip|country|state|school|degree|major|employer|job title|phone/i.test(f.label+' '+f.autocomplete));
+  if(applicationFields.length)boundaries.clear();
   if(fields.length>120)boundaries.add('unsupported_control');
   const buttons=[...document.querySelectorAll('button,input[type="submit"],a[role="button"]')].filter(visible);
   const names=buttons.map(x=>clean(x.innerText||x.value||x.getAttribute('aria-label')));
   const reviewHeading=[...document.querySelectorAll('h1,h2,h3,[role="heading"]')].some(x=>visible(x)&&/final review|review (?:your )?application|confirm (?:your )?submission/i.test(clean(x.textContent)));
   const final_review=reviewHeading||names.some(x=>/^(submit|submit application|submit my application|send application|apply now|finish application|complete application)$/i.test(x));
-  return {fields:fields.slice(0,120),boundaries:[...boundaries],final_review,metadata:{version:2,manual_fields:manual_fields.slice(0,120)}};
+  return {fields:fields.slice(0,120),boundaries:[...boundaries],final_review,metadata:{version:3,manual_fields:manual_fields.slice(0,120),review_existing:review_existing.slice(0,120),page_handoffs}};
  }
  function unchanged(id){
   const ref=refs.get(id);if(!ref||!ref.el.isConnected||!visible(ref.el)||ref.el.disabled||(ref.el.readOnly&&ref.control!=='combobox'))return false;
@@ -78,7 +91,10 @@
   return JSON.stringify(ref.members?ref.members.map(value):value(ref.el))===JSON.stringify(snapshots.get(id));
  }
  function write(id,wanted){
-  const ref=refs.get(id);if(stopped||!ref||!unchanged(id))return {id,ok:false,reason:'conflict'};
+  const ref=refs.get(id);if(stopped||!ref)return {id,ok:false,reason:'conflict'};
+  // Reject manual controls before reading their current value or snapshot.
+  if(ref.manual)return {id,ok:false,reason:'manual_handoff'};
+  if(!unchanged(id))return {id,ok:false,reason:'conflict'};
   const {el,members,control}=ref;
   if(ref.manual||['file','unsupported'].includes(control)||boundary.test(ref.question+' '+ref.context+' '+ref.description))return {id,ok:false,reason:'manual_handoff'};
   if(control==='checkbox'){
@@ -104,7 +120,7 @@
  }
  function next(){
   if(stopped)return {ok:false,reason:'stopped'};
-  const scan=inspect();if(scan.boundaries.length||scan.final_review)return {ok:false,reason:'boundary'};
+  const scan=inspect();if(scan.boundaries.length||scan.metadata.page_handoffs.length||scan.metadata.manual_fields.length||scan.final_review)return {ok:false,reason:'boundary'};
   if([...document.querySelectorAll('[aria-invalid="true"],input:invalid,select:invalid,textarea:invalid')].some(visible))return {ok:false,reason:'validation'};
   // Only literal ordinary Next/Continue controls; all mixed/ambiguous labels require a person.
   const candidates=[...document.querySelectorAll('button,input[type="button"],input[type="submit"]')].filter(x=>visible(x)&&!x.disabled&&/^(next|continue|save and continue)$/i.test(clean(x.innerText||x.value||x.getAttribute('aria-label'))));
@@ -114,5 +130,5 @@
   const labelText=clean(button.innerText||button.value||button.getAttribute('aria-label'));
   button.click();return {ok:true,label:labelText};
  }
- globalThis.CareerCompanionDOM={inspect,write,next,stop:()=>{stopped=true;refs.clear();snapshots.clear();},version:2};
+ globalThis.CareerCompanionDOM={inspect,write,next,stop:()=>{stopped=true;refs.clear();snapshots.clear();},version:3};
 })();

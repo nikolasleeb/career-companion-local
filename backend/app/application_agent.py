@@ -14,7 +14,7 @@ from .models import StrictModel
 STATES=('disconnected','scanning','filling','advancing','needs_input','paused','ready_for_final_review','stopped','failed')
 TERMINAL={'stopped','failed','ready_for_final_review'}
 PRIVATE=re.compile(r'veteran|disab|gender|\bsex\b|race|ethnic|clearance|government employ|family|relativ|conflict|citizen|nationalit|hispanic|latino|sponsor|authoriz',re.I)
-BOUNDARY=re.compile(r'consent|i agree|i confirm|opt[ -]?in|subscribe|captcha|recaptcha|hcaptcha|signature|attest|certif(?:y|ication of)|under penalty|payment|credit card|password|sign[ -]?in|log[ -]?in|submit application|submit my application',re.I)
+BOUNDARY=re.compile(r'password|passcode|one[ -]?time code|verification code|i acknowledge|consent|i agree|i confirm|opt[ -]?in|subscribe|captcha|recaptcha|hcaptcha|signature|attest|certif(?:y|ication of)|under penalty|payment|credit card|password|sign[ -]?in|log[ -]?in|submit application|submit my application',re.I)
 
 def init(c):
     c.executescript('''
@@ -80,8 +80,10 @@ class FieldInfo(StrictModel):
         if any(len(x)>500 for x in v):raise ValueError('Choice too long.')
         return v
 class ScanMetadata(StrictModel):
-    version: Literal[2]
+    version: Literal[2,3]
     manual_fields: list[str] = Field(default_factory=list,max_length=120)
+    review_existing: list[str] = Field(default_factory=list,max_length=120)
+    page_handoffs: list[Literal['login','captcha','signature','attestation','payment','inaccessible_frame','unsupported_control']] = Field(default_factory=list,max_length=7)
 
 class Scan(Relay):
     expected_version: int = Field(ge=1)
@@ -141,7 +143,7 @@ def persist(user,run,expected):
         if run['state'] in TERMINAL or run['state']=='paused':c.execute('DELETE FROM cc_run_answers WHERE run_id=? AND user_id=?',(run['id'],user))
     return public(run)
 
-def public(run):return {k:v for k,v in run.items() if k not in ('plan_ids','session_hash')}
+def public(run):return {k:v for k,v in run.items() if k not in ('plan_ids','plan_fields','session_hash')}
 
 def relay_run(user,id,body):
     pair=paired(user,body);run=load(user['id'],id)
@@ -182,7 +184,7 @@ def local_value(user,field,application):
     if private_answers.classify(field.label,field.description,field.context) in private_answers.REVIEW_CATEGORIES|{'family_connection'}:return None
     if field.control=='checkbox':return private_answers.match(user,field.label,field.options,application,field.description,field.context)
     if PRIVATE.search(' '.join((field.label,field.description,field.context))):return private_answers.match(user,field.label,field.options,application,field.description,field.context)
-    mapping={'name':'name','full name':'name','email':'email','email address':'email','confirm email':'email','confirm email address':'email','phone':'phone','phone number':'phone','city':'city','state':'state','country':'country','linkedin':'linkedin','linkedin profile':'linkedin','website':'website','portfolio website':'website'}
+    mapping={'name':'name','full name':'name','email':'email','email address':'email','preferred email':'email','confirm email':'email','confirm email address':'email','phone':'phone','phone number':'phone','city':'city','state':'state','country':'country','linkedin':'linkedin','linkedin profile':'linkedin','website':'website','portfolio website':'website'}
     auto={'name':'name','email':'email','tel':'phone','address-level2':'city','address-level1':'state','country-name':'country','url':'website'}
     key=('github' if label in ('github','github profile','github url','github profile url','github link','github profile link') else None) if re.search(r'\bgithub\b',label) else auto.get(field.autocomplete) or mapping.get(label)
     value=settings.get(key,'') if key else ''
@@ -277,9 +279,10 @@ def scan(id:str,body:Scan,user=Depends(auth.current)):
     manual=set(body.metadata.manual_fields) if body.metadata else set()
     if manual-{f.id for f in body.fields}:raise HTTPException(422,'Manual handoff references an unknown field.')
     hard=re.compile(r'captcha|payment|credit card|password|sign[ -]?in|log[ -]?in',re.I)
-    blocked=bool(body.boundaries) or any((hard if body.metadata else BOUNDARY).search(' '.join((f.label,f.description,f.context))) for f in body.fields)
+    blocked=bool(body.boundaries) or (not body.metadata or body.metadata.version<3) and any((hard if body.metadata else BOUNDARY).search(' '.join((f.label,f.description,f.context))) for f in body.fields)
     if blocked:
-        run.update(state='needs_input',reason='A login, verification, attestation, signature, payment, frame or unsupported control requires your action.',plan_ids=[])
+        reasons={'login':'Sign in or create your account personally on the employer website.','captcha':'Complete the verification on the employer website.','payment':'Complete the payment controls personally on the employer website.','inaccessible_frame':'A form inside a frame needs your input on the employer website.'}
+        run.update(state='needs_input',reason=' '.join(dict.fromkeys(reasons.get(b,'Complete the protected controls personally on the employer website.') for b in body.boundaries)) or 'Complete the protected controls personally on the employer website.',plan_ids=[],unresolved=[],page_handoffs=list(body.boundaries))
         return {'run':persist(user['id'],run,body.expected_version),'writes':[]}
     if body.final_review and not body.fields:
         run.update(state='ready_for_final_review',reason='Review and submit personally.',plan_ids=[])
@@ -288,10 +291,16 @@ def scan(id:str,body:Scan,user=Depends(auth.current)):
         run.update(state='paused',reason='Page limit, repeated page or stalled navigation. Review the form personally.',plan_ids=[])
         return {'run':persist(user['id'],run,body.expected_version),'writes':[]}
     run['pages']+=1;run['signatures'].append(body.signature);run['unresolved']=[];writes=[]
+    run['page_handoffs']=body.metadata.page_handoffs if body.metadata else []
+    existing=set(body.metadata.review_existing) if body.metadata else set()
+    if existing-{f.id for f in body.fields}:raise HTTPException(422,'Existing-value review references an unknown field.')
     application=owned(user['id'],run['application_id'],'application')
     with db.connect() as c:once={r['id']:private_answers.unseal(user['id'],r['id'],r['ciphertext']) for r in c.execute('SELECT * FROM cc_run_answers WHERE user_id=? AND run_id=?',(user['id'],id))}
     for f in body.fields:
         protected=bool(BOUNDARY.search(' '.join((f.label,f.description,f.context))))
+        if f.id in existing:
+            run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'private':False,'reason':'existing_value','manual_only':True})
+            continue
         if f.has_value:continue
         if f.id in manual or protected:
             run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'private':bool(PRIVATE.search(f.label)),'reason':'manual_handoff','manual_only':True})
@@ -303,7 +312,8 @@ def scan(id:str,body:Scan,user=Depends(auth.current)):
             run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':f.options,'control':f.control,'required':f.required,'private':bool(category or PRIVATE.search(' '.join((f.label,f.description,f.context)))),'private_category':category,'reason':'family_connection_manual' if category=='family_connection' else 'manual_handoff' if f.control=='file' else 'review_required'})
         elif run['writes']+len(writes)<300:writes.append({'id':f.id,'value':value})
     run['plan_ids']=[w['id'] for w in writes]
-    run.update(state='filling' if writes else 'needs_input' if run['unresolved'] else 'advancing',reason='Review unresolved questions in Career Companion.' if run['unresolved'] else '')
+    run['plan_fields']=[{'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'reason':'validation','manual_only':True} for f in body.fields if f.id in run['plan_ids']]
+    run.update(state='filling' if writes else 'needs_input' if run['unresolved'] or run['page_handoffs'] else 'advancing',reason='Fill supported fields first, then review the remaining items for this page.' if run['unresolved'] or run['page_handoffs'] else '')
     return {'run':persist(user['id'],run,body.expected_version),'writes':writes}
 @router.get('/runs/{id}/questions/{question_id}/suggestions')
 def question_suggestions(id:str,question_id:str,user=Depends(auth.current)):
@@ -322,10 +332,15 @@ def progress(id:str,body:Progress,user=Depends(auth.current)):
     if set(body.write_ids+body.failed_ids)-set(run['plan_ids']) or len(set(body.write_ids))!=len(body.write_ids):raise HTTPException(422,'Progress does not match the approved write plan.')
     if len(set(body.failed_ids))!=len(body.failed_ids) or set(body.write_ids)&set(body.failed_ids):raise HTTPException(422,'Duplicate progress IDs.')
     run['writes']+=len(body.write_ids)
+    for f in run.get('plan_fields',[]):
+        if f['id'] in body.failed_ids and not any(q['id']==f['id'] for q in run['unresolved']):run['unresolved'].append(f)
     completed=set(body.write_ids+body.failed_ids)
     run['plan_ids']=[i for i in run['plan_ids'] if i not in completed] if body.state=='filling' else []
     if run['writes']>300:raise HTTPException(422,'Write limit exceeded.')
+    if body.state=='advancing' and (run.get('unresolved') or run.get('page_handoffs')):raise HTTPException(409,'Review the remaining page items before advancing.')
     run.update(state=body.state,reason=body.reason)
+    if body.state=='needs_input' and not body.reason:
+        run['reason']='Supported fields have been processed. Complete the remaining items below, then resume from the employer tab.'
     if body.failed_ids:run.update(state='needs_input',reason='Some fields did not pass readback or validation. Review them personally.')
     run['activity']=(run['activity']+[{'event':run['state'],'at':db.now(),'write_count':len(body.write_ids),'failed_count':len(body.failed_ids)}])[-100:]
     return persist(user['id'],run,body.expected_version)

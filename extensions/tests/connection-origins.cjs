@@ -32,7 +32,7 @@ async function background(origin,tabs){
  const api={
   runtime:{id:'test-extension',getURL:()=> 'safari-web-extension://test-extension/',onMessage:{addListener:fn=>listener=fn}},
   storage:{session:{get:async key=>({[key]:saved[key]}),set:async values=>Object.assign(saved,values),remove:async key=>{delete saved[key];}}},
-  tabs:{query:async query=>{queries.push(query);return tabs;},sendMessage:async (tabId,message)=>{
+  tabs:{get:async id=>tabs.find(t=>t.id===id),query:async query=>{queries.push(query);return tabs;},sendMessage:async (tabId,message)=>{
    relays.push({tabId,message});return {ok:true,result:{id:'pair-id',code:'123456'},accountId:'account-id'};
   }},
   scripting:{executeScript:async details=>{injections.push(details);return [];}}

@@ -278,6 +278,16 @@ def test_production_model_key_fallback_disabled(client,account,monkeypatch):
     assert credentials.effective(account['id'])=='sk-fictional-owned-key'
 
 
+def test_invites_are_single_use_email_bound_and_capacity_limited(client,account,monkeypatch):
+    from app import pilot
+    monkeypatch.setattr(config,'REGISTRATION_MODE','invite')
+    assert client.post('/api/auth/register',json={'username':'invitee','password':'fictional-only-password'}).status_code==403
+    token=pilot.create_invite('fixture@example.test')
+    result=client.post('/api/auth/register',json={'username':'invitee','password':'fictional-only-password','invite_token':token})
+    assert result.status_code==200,result.text
+    assert client.post('/api/auth/register',json={'username':'otherinvitee','password':'fictional-only-password','invite_token':token}).status_code==403
+    for i in range(5):pilot.create_invite(f'fixture{i}@example.test')
+    with pytest.raises(ValueError):pilot.create_invite('seventh@example.test')
 
 
 def test_full_single_page_form_fills_and_stops_before_final_submit(client,account):
@@ -307,6 +317,15 @@ def test_expired_pairing_is_checked_before_each_browser_write(client,account):
     assert client.post('/api/application-agent/runs/'+r['id']+'/relay-status',json=c).status_code==403
 
 
+def test_production_origin_headers_and_cookie_flags(client,account,monkeypatch):
+    monkeypatch.setattr(config,'PRODUCTION',True);monkeypatch.setattr(config,'PUBLIC_ORIGIN','https://testserver');monkeypatch.setattr(config,'COOKIE_SECURE',True)
+    bad=client.post('/api/auth/login',json={'username':'student','password':'fictional-test-password'},headers={'Origin':'https://evil.example','X-Forwarded-Host':'evil.example','X-Forwarded-Proto':'https'})
+    assert bad.status_code==403
+    result=client.post('/api/auth/login',json={'username':'student','password':'fictional-test-password'},headers={'Origin':'https://testserver'})
+    assert result.status_code==200
+    cookie=result.headers['set-cookie'].lower()
+    assert 'secure' in cookie and 'httponly' in cookie and 'samesite=strict' in cookie
+    assert result.headers['strict-transport-security']=='max-age=31536000'
 
 
 def test_streamed_body_limit_without_content_length():
@@ -457,3 +476,60 @@ def test_reconnected_extension_recovers_only_paused_original_tab(client,account)
     assert recovered.json()['documents']==r['documents']
     assert scan(client,recovered.json(),c,[field()]).status_code==403
     assert scan(client,recovered.json(),new_pair,[field()]).status_code==200
+
+
+def test_mixed_registration_fills_in_order_then_lists_manual_items(client,account,monkeypatch):
+    from app import ai
+    async def no_ai(*args,**kwargs):raise AssertionError('Filling must not use AI')
+    monkeypatch.setattr(ai,'structured',no_ai)
+    db.update_settings(account['id'],{'email':'fictional@example.test','phone':'5550100111','city':'Fixture City'})
+    r,c,_=run(client,account['id'])
+    fields=[field('f0','First name (legal)',has_value=True),field('f1','Preferred email',control='email'),field('f2','Password',control='unsupported'),field('f3','Phone number'),field('f4','I acknowledge',control='checkbox'),field('f5','City')]
+    response=scan(client,r,c,fields,metadata={'version':3,'manual_fields':['f2','f4'],'review_existing':['f0'],'page_handoffs':['login','attestation']})
+    assert response.status_code==200,response.text
+    result=response.json()
+    assert [w['id'] for w in result['writes']]==['f1','f3','f5']
+    assert [q['label'] for q in result['run']['unresolved']]==['First name (legal)','Password','I acknowledge']
+    assert all(q['manual_only'] for q in result['run']['unresolved'])
+    state=result['run']
+    progress={**c,'origin':r['allowed_origin'],'tab_id':12,'expected_version':state['version'],'state':'needs_input','write_ids':['f1','f3','f5']}
+    done=client.post('/api/application-agent/runs/'+r['id']+'/progress',json=progress)
+    assert done.status_code==200,done.text
+    assert done.json()['writes']==3 and 'Complete the remaining items' in done.json()['reason']
+    assert client.post('/api/application-agent/runs/'+r['id']+'/answers',json={'question_id':'f2','value':'never-store-this','decision':'once','expected_version':done.json()['version']}).status_code==422
+    with db.connect() as conn:assert conn.execute('SELECT count(*) FROM cc_ai_requests').fetchone()[0]==0
+
+
+def test_protected_controls_cannot_be_written_if_manual_ids_missing(client,account):
+    db.update_settings(account['id'],{'email':'fictional@example.test'})
+    r,c,_=run(client,account['id'])
+    result=scan(client,r,c,[field(),field('f1','Password'),field('f2','I acknowledge'),field('f3','Verification code')],metadata={'version':3}).json()
+    assert result['writes']==[{'id':'f0','value':'fictional@example.test'}]
+    assert all(q['manual_only'] for q in result['run']['unresolved'])
+    p={**c,'origin':r['allowed_origin'],'tab_id':12,'expected_version':result['run']['version'],'state':'advancing','write_ids':['f0']}
+    assert client.post('/api/application-agent/runs/'+r['id']+'/progress',json=p).status_code==409
+
+
+def test_frame_handoff_preserves_safe_main_page_fields(client,account):
+    db.update_settings(account['id'],{'city':'Fixture City'})
+    r,c,_=run(client,account['id'])
+    result=scan(client,r,c,[field(label='City')],metadata={'version':3,'page_handoffs':['inaccessible_frame']}).json()
+    assert result['writes']==[{'id':'f0','value':'Fixture City'}]
+    assert result['run']['page_handoffs']==['inaccessible_frame']
+
+
+def test_unknown_review_ids_fail_without_persisting_scan(client,account):
+    r,c,_=run(client,account['id'])
+    assert scan(client,r,c,[field()],metadata={'version':3,'review_existing':['missing']}).status_code==422
+    assert client.get('/api/application-agent/runs/'+r['id']).json()['version']==r['version']
+
+
+def test_failed_readback_names_the_field_for_manual_review(client,account):
+    db.update_settings(account['id'],{'email':'fictional@example.test'})
+    r,c,_=run(client,account['id'])
+    state=scan(client,r,c,[field(label='Preferred email')],metadata={'version':3}).json()['run']
+    assert 'plan_fields' not in state
+    response=client.post('/api/application-agent/runs/'+r['id']+'/progress',json={**c,'origin':r['allowed_origin'],'tab_id':12,'expected_version':state['version'],'state':'needs_input','failed_ids':['f0']})
+    assert response.status_code==200,response.text
+    assert response.json()['unresolved'][0]['label']=='Preferred email'
+    assert response.json()['unresolved'][0]['manual_only']

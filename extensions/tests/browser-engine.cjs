@@ -6,8 +6,8 @@ const root=path.resolve(__dirname,'../fixtures'),engine=path.resolve(__dirname,'
  const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+decodeURIComponent(req.url.split('?')[0]));if(!file.startsWith(root+path.sep)){res.writeHead(404).end();return;}try{res.setHeader('Content-Type','text/html');res.end(fs.readFileSync(file));}catch{res.writeHead(404).end();}});
  await new Promise(r=>server.listen(3219,'127.0.0.1',r));
  let checks=0;
- try{for(const type of [chromium,webkit]){
-  const browser=await type.launch({headless:true});const page=await browser.newPage();
+ try{for(const type of (process.env.CHROME_ONLY?[chromium]:[chromium,webkit])){
+  const browser=await type.launch({headless:true,...(process.env.CHROME_ONLY?{channel:'chrome'}:{})});const page=await browser.newPage();
   async function open(name){await page.goto('http://127.0.0.1:3219/'+name);await page.addScriptTag({path:engine});return page.evaluate(()=>CareerCompanionDOM.inspect());}
   async function inspect(){return page.evaluate(()=>CareerCompanionDOM.inspect());}
   async function write(label,value){const scan=await inspect();const id=scan.fields.find(f=>f.label===label)?.id;assert(id,'Missing '+label);return page.evaluate(([id,value])=>CareerCompanionDOM.write(id,value),[id,value]);}
@@ -29,8 +29,16 @@ const root=path.resolve(__dirname,'../fixtures'),engine=path.resolve(__dirname,'
   for(const [html,boundary] of [['<label>Password<input type="password"></label>','login'],['<label>Signature<input></label>','signature'],['<label>I certify that this is true<input type="checkbox"></label>','attestation'],['<label>Credit card<input></label>','payment'],['<iframe src="https://captcha.example/"></iframe>','captcha'],['<label>Custom control<div contenteditable="true"></div></label>','unsupported_control']]){
    await page.setContent(html);await page.addScriptTag({path:engine});assert((await inspect()).boundaries.includes(boundary),boundary);assert.equal((await page.evaluate(()=>CareerCompanionDOM.next())).ok,false);checks++;
   }
+  await page.setContent(`<form action="/Register"><style>#email{position:absolute;top:20px}#city{position:absolute;top:120px}</style><label>City<input id="city"></label><label>Email<input id="email" type="email"></label><label>First name<input id="existing" value="Unknown"></label><label>Password<input id="password" type="password"></label><label>I acknowledge<input id="consent" type="checkbox"></label><button onclick="document.body.dataset.advanced='yes'">Save and continue</button></form>`);await page.addScriptTag({path:engine});
+  const mixed=await inspect();assert.deepEqual(mixed.boundaries,[]);assert(mixed.metadata.page_handoffs.includes('login'));assert(mixed.fields.findIndex(f=>f.label==='Email')<mixed.fields.findIndex(f=>f.label==='City'));checks++;
+  assert(mixed.metadata.review_existing.includes(mixed.fields.find(f=>f.label==='First name').id));checks++;
+  // Even reading the password value must be unnecessary to inspect or reject writes.
+  await page.locator('#password').evaluate(el=>Object.defineProperty(el,'value',{get(){throw Error('Credential value was read');},set(){throw Error('Credential value was changed');}}));
+  assert.equal((await write('Email','fictional@example.test')).ok,true);assert.equal((await write('City','Fixture City')).ok,true);checks++;
+  assert.equal((await write('Password','forbidden')).ok,false);assert.equal((await write('I acknowledge','Yes')).ok,false);assert.equal(await page.locator('#consent').isChecked(),false);checks++;
+  assert.equal((await page.evaluate(()=>CareerCompanionDOM.next())).ok,false);assert.notEqual(await page.locator('body').getAttribute('data-advanced'),'yes');assert.equal(await page.locator('#existing').inputValue(),'Unknown');checks++;
   await open('native.html');await page.locator('button').evaluate(x=>x.textContent='Next and submit application');assert.equal((await page.evaluate(()=>CareerCompanionDOM.next())).ok,false);checks++;
   await browser.close();console.log(type.name()+': passed fictional controls, edits, changed options, boundaries, repeated/dynamic fields, navigation and uploads');
  }}finally{server.close();}
- console.log('PASS '+checks+' genuine-browser assertions (Chromium and WebKit; not Safari extension acceptance).');
+ console.log('PASS '+checks+' genuine-browser assertions ('+(process.env.CHROME_ONLY?'installed Google Chrome':'Chromium and WebKit')+'; not Safari extension acceptance).');
 })().catch(e=>{console.error(e);process.exitCode=1;});
