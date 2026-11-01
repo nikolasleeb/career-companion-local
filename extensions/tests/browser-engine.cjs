@@ -53,6 +53,21 @@ const root=path.resolve(__dirname,'../fixtures'),engine=path.resolve(__dirname,'
   await page.setContent(`<label>School<div id="wrapped" role="combobox" aria-label="School" aria-haspopup="listbox"><span id="selected">Select an option</span></div></label><script>document.querySelector('#wrapped').onclick=()=>{if(document.querySelector('#results'))return;let list=document.createElement('div');list.id='results';list.role='listbox';let query=document.createElement('input');query.setAttribute('aria-controls','results');query.oninput=()=>{list.innerHTML='';if(query.value==='Fixture University'){let opt=document.createElement('div');opt.role='option';opt.textContent=query.value;opt.onclick=()=>{document.querySelector('#selected').textContent=opt.textContent;list.remove();query.remove();};list.append(opt);}};document.body.append(query,list);document.querySelector('#wrapped').setAttribute('aria-controls','results');};</script>`);await page.addScriptTag({path:engine});
   const wrapped=await inspect();assert.equal(wrapped.fields.length,1);assert.equal(wrapped.fields[0].has_value,false);assert.equal(wrapped.metadata.manual_fields.length,0);checks++;
   assert.equal((await write('School','Fixture University')).ok,true);assert.equal(await page.locator('#selected').innerText(),'Fixture University');checks++;
+  await page.setContent('<label>Primary Major/Program<select><option value="">Select an option</option><option>Other</option><option>Other</option><option>Data Science</option></select></label>');await page.addScriptTag({path:engine});
+  assert.equal((await write('Primary Major/Program','Data Science')).ok,true);checks++;
+  await page.locator('select').selectOption('');assert.equal((await write('Primary Major/Program','Other')).ok,false);checks++;
+  const repeated=await open('repeated-search.html');
+  assert.deepEqual(repeated.metadata.repeat_sections,[{section:'education',count:1},{section:'employment',count:1}]);checks++;
+  assert.equal(repeated.fields.find(f=>f.label==='School').control,'combobox');assert.equal(repeated.metadata.manual_fields.includes(repeated.fields.find(f=>f.label==='School').id),false);checks++;
+  assert.equal((await write('School','Fixture University')).ok,true);assert.equal(await page.locator('[id="6074-anchor-0"]').inputValue(),'Fixture University');checks++;
+  assert.equal((await write('Employer','Example Company')).ok,true);assert.equal(await page.locator('[id="6076-anchor-0"]').inputValue(),'Example Company');checks++;
+  await inspect();assert.equal((await page.evaluate(()=>CareerCompanionDOM.expand('education',2))).added,1);checks++;
+  await inspect();assert.equal((await page.evaluate(()=>CareerCompanionDOM.expand('employment',3))).added,2);checks++;
+  const expanded=await inspect();assert.deepEqual(expanded.fields.filter(f=>f.label==='School').map(f=>f.repeat_index),[0,1]);assert.deepEqual(expanded.fields.filter(f=>f.label==='Job Title').map(f=>f.repeat_index),[0,1,2]);checks++;
+  assert.equal(expanded.metadata.repeat_rows.find(r=>r.section==='employment'&&r.index===0).organization,'Example Company');checks++;
+  assert.equal((await page.evaluate(()=>CareerCompanionDOM.expand('employment',3))).ok,false);assert.equal((await page.evaluate(()=>CareerCompanionDOM.expand('employment',11))).ok,false);checks++;
+  await inspect();await page.locator('#addRowFor_6076').evaluate(x=>x.remove());assert.equal((await page.evaluate(()=>CareerCompanionDOM.expand('employment',4))).ok,false);checks++;
+  await inspect();await page.evaluate(()=>CareerCompanionDOM.stop());assert.equal((await page.evaluate(()=>CareerCompanionDOM.expand('education',3))).ok,false);assert.equal(await page.locator('#consent').isChecked(),false);checks++;
   await open('native.html');await page.locator('button').evaluate(x=>x.textContent='Next and submit application');assert.equal((await page.evaluate(()=>CareerCompanionDOM.next())).ok,false);checks++;
   await browser.close();console.log(type.name()+': passed fictional controls, edits, changed options, boundaries, repeated/dynamic fields, navigation and uploads');
  }}finally{server.close();}

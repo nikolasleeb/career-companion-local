@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><title>Fictional repeated application controls</title>
+<style>.select2-hidden-accessible,.TableSampleRow{display:none}.select2-selection{display:block;padding:10px;border:1px solid}.select2-results__option{padding:8px}</style>
+<fieldset><legend>Education History</legend><div class="multipleDatasetWrapper" id="6074"><div id="multipleDatasetRowsContainer_6074"></div><a href="#" role="button" class="addDatasetRow" id="addRowFor_6074">Add Another</a><div class="TableSampleRow" id="multipleDatasetEntry_6074_sample"><label>School<input></label></div></div></fieldset>
+<fieldset><legend>Work Experience</legend><div class="multipleDatasetWrapper" id="6076"><div id="multipleDatasetRowsContainer_6076"></div><a href="#" role="button" class="addDatasetRow" id="addRowFor_6076">Add Another</a></div></fieldset>
+<label>Password<input type="password" id="secret"></label><label>I acknowledge<input type="checkbox" id="consent"></label><button id="submit">Submit application</button>
+<script>
+const catalogs={School:['Fixture University','Example College'],Employer:['Fixture Lab','Example Company']};
+function add(id){const section=id==='6074'?'education':'employment';const box=document.getElementById('multipleDatasetRowsContainer_'+id);const index=box.children.length;const row=document.createElement('div');row.id='multipleDatasetEntry_'+id+'_'+index;
+ const anchor=section==='education'?'School':'Employer';const fieldId=id+'-anchor-'+index;
+ row.innerHTML=`<label id="${fieldId}-label" for="${fieldId}">${anchor}<span aria-hidden="true">Select an option</span></label><div class="ui-widget"><select class="select2-hidden-accessible" id="${fieldId}"><option value="">Select an option</option></select><span class="select2-container"><span role="combobox" class="select2-selection" aria-haspopup="true" aria-labelledby="select2-${fieldId}-container"><span id="select2-${fieldId}-container">Select an option</span></span></span></div>`;
+ if(section==='education')row.innerHTML+='<label>Education Level<select><option value="">Select an option</option><option>Master\'s Degree</option><option>Bachelor\'s Degree</option></select></label>';
+ else row.innerHTML+='<label>Job Title<input></label><label>Start Date<input type="month"></label>';
+ box.append(row);const selection=row.querySelector('[role=combobox]'),original=row.querySelector('select');selection.onclick=()=>{
+ document.querySelector('.select2-dropdown')?.remove();const drop=document.createElement('div');drop.className='select2-dropdown';const listId='select2-'+fieldId+'-results';drop.innerHTML=`<input class="select2-search__field" aria-controls="${listId}"><ul id="${listId}" role="listbox"></ul>`;document.body.append(drop);selection.setAttribute('aria-owns',listId);const query=drop.querySelector('input'),list=drop.querySelector('ul');
+ function render(){list.innerHTML='';for(const text of catalogs[anchor].filter(t=>t.toLowerCase().includes(query.value.toLowerCase()))){const opt=document.createElement('li');opt.role='option';opt.className='select2-results__option';opt.textContent=text;opt.onmouseup=()=>{original.innerHTML=`<option selected>${text}</option>`;selection.querySelector('span').textContent=text;original.dispatchEvent(new Event('change',{bubbles:true}));drop.remove();selection.removeAttribute('aria-owns');};list.append(opt);}}
+ query.oninput=()=>setTimeout(render,150);render();query.focus();};
+}
+for(const id of ['6074','6076']){add(id);document.getElementById('addRowFor_'+id).onclick=e=>{e.preventDefault();add(id);};}
+</script>

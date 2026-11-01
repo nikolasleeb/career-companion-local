@@ -37,7 +37,10 @@ def section_for(field):
 
 
 def rows(user, section):
-    return sorted([r for r in db.list_entities(user,'experience') if r['data'].get('confirmed') and r['data'].get('category')==section],key=lambda r:(r['data'].get('start_date',''),r['created_at'],r['id']),reverse=True)
+    def started(r):
+        data=r['data'];start=data.get('start_date','') or re.split(r'\s+[–—-]\s+',data.get('dates',''))[0]
+        return month_value(start,'month') or ''
+    return sorted([r for r in db.list_entities(user,'experience') if r['data'].get('confirmed') and r['data'].get('category')==section],key=lambda r:(started(r),r['created_at'],r['id']),reverse=True)
 
 
 def month_value(value, control):
@@ -69,6 +72,10 @@ def entry_value(row,field):
     if not value and prop in ('start_date','end_date'):
         period=re.split(r'\s+[–—-]\s+',data.get('dates',''))
         if len(period)==2:value=period[0 if prop=='start_date' else 1]
+    # A saved business-unit name can use its unambiguous employer catalog name.
+    # Keep the original Profile record intact; never pick arbitrary near matches.
+    if prop=='organization' and data.get('category')=='employment':
+        value={'amazon fulfillment centers':'Amazon'}.get(label_key(value),value)
     value=month_value(value,field.control)
     return option_value(value,field.options,prop or '')
 
@@ -104,6 +111,9 @@ def automatic(user,field):
         saved=rows(user,section)
         # Without a recognized repeated section, several entries require an explicit choice.
         if not field.section and len(saved)!=1:return None
+        if field.entry_id:
+            selected=next((r for r in saved if r['id']==field.entry_id),None)
+            return entry_value(selected,field) if selected else None
         return entry_value(saved[field.repeat_index],field) if field.repeat_index<len(saved) else None
     settings=db.settings(user)
     props={'name':'name','full name':'name','email':'email','email address':'email','preferred email':'email','confirm email':'email','confirm email address':'email','phone':'phone','phone number':'phone','city':'city','state':'state','country':'country','linkedin':'linkedin','linkedin profile':'linkedin','website':'website','portfolio website':'website','github':'github','github profile':'github','github url':'github','github profile url':'github','github link':'github','github profile link':'github'}
@@ -124,3 +134,31 @@ def authorization_suggestions(user,question):
     for k in keys:
         if values.get(k):result.append({'label':labels[k]+' · saved private setting','value':values[k].capitalize(),'source':'private_profile'})
     return result
+
+
+def organization_key(value):
+    key=label_key(value)
+    return {'amazon fulfillment centers':'amazon'}.get(key,key)
+
+
+def bind_repeated_rows(user, metadata):
+    """Match occupied rows before assigning empty slots; never combine entries."""
+    bindings={};targets=[]
+    for section in ('education','employment'):
+        saved=rows(user,section);physical=[r for r in metadata.repeat_rows if r.section==section]
+        if not physical:continue
+        used=set();ambiguous=False
+        for row in physical:
+            if not row.organization and not row.title:continue
+            matches=[r for r in saved if (not row.organization or organization_key(r['data'].get('organization',''))==organization_key(row.organization)) and (not row.title or (option_value(r['data'].get('degree',''),[row.title],'degree') if section=='education' else label_key(r['data'].get('title',''))==label_key(row.title)))]
+            if len(matches)==1 and matches[0]['id'] not in used:
+                bindings[(section,row.index)]=matches[0]['id'];used.add(matches[0]['id'])
+            else:bindings[(section,row.index)]='unmatched';ambiguous=True
+        available=iter(r for r in saved if r['id'] not in used)
+        for row in physical:
+            key=(section,row.index)
+            if key not in bindings:bindings[key]=next(available,{'id':'unmatched'})['id']
+        descriptor=next((r for r in metadata.repeat_sections if r.section==section),None)
+        if not ambiguous and descriptor and descriptor.count==len(physical) and sorted(r.index for r in physical)==list(range(len(physical))) and descriptor.count<len(saved):
+            targets.append({'section':section,'count':min(len(saved),10)})
+    return bindings,targets

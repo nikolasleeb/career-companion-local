@@ -37,7 +37,7 @@ async function signature(scan,tabId){const page=await execute(tabId,()=>location
 function relayCredentials(c){return {pairing_id:c.pairingId,secret:c.secret};}
 async function report(c,run,state,reason='',write_ids=[],failed_ids=[]){return rememberRun((await relay('progress',{...relayCredentials(c),expected_version:run.version,tab_id:c.employerTab,origin:c.employerOrigin,state,reason,write_ids,failed_ids},run.id)).result);}
 async function drive(){
- if(busy)throw Error('This run is already active.');busy=true;await storage.remove('reviewVisited');stopRequested=false;let c=await config();let run;let pendingWrites=[];
+ if(busy)throw Error('This run is already active.');busy=true;await storage.remove('reviewVisited');stopRequested=false;let c=await config();let run;let pendingWrites=[];let expansions=0;
  try{
   for(let page=0;page<20&&!stopRequested;page++){
    c=await config();if(!c.runId)break;
@@ -49,6 +49,17 @@ async function drive(){
    const sig=await signature(scan,c.employerTab);
    const planned=(await relay('scan',{...relayCredentials(c),...scan,signature:sig,origin:c.employerOrigin,tab_id:c.employerTab,expected_version:run.version},run.id)).result;
    run=await rememberRun(planned.run);pendingWrites=planned.writes;
+   if(!['paused','stopped','failed','ready_for_final_review'].includes(run.state)&&!stopRequested&&expansions<2){
+    let added=false;
+    for(const target of planned.repeat_targets||[]){
+     const latest=(await relay('status',{},run.id)).result;
+     if(stopRequested||latest.version!==run.version||['paused','stopped','failed'].includes(latest.state))break;
+     if(await tabOrigin(c.employerTab)!==c.employerOrigin)throw Error('Website origin changed. Renew activation.');
+     const result=await execute(c.employerTab,(section,count)=>globalThis.CareerCompanionDOM.expand(section,count),[target.section,target.count]);
+     expansions++;if(result?.added){added=true;break;}
+    }
+    if(added){pendingWrites=[];continue;} // rescan newly added controls before any write
+   }
    if(['paused','stopped','failed','ready_for_final_review','needs_input'].includes(run.state)&&!planned.writes.length)break;
    const failed_ids=[];
    for(const item of planned.writes){

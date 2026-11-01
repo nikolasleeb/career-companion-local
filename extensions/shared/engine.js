@@ -1,28 +1,34 @@
 /* Structured DOM adapter: data in, bounded readback-verified writes out. */
 (()=>{
- if(globalThis.CareerCompanionDOM?.version===4)return;
+ if(globalThis.CareerCompanionDOM?.version===5)return;
  const visible=el=>!!(el.getClientRects().length)&&getComputedStyle(el).visibility!=='hidden'&&!el.closest('[hidden],[aria-hidden="true"],[inert]');
  const clean=s=>String(s||'').replace(/\s+/g,' ').trim().slice(0,500);
  const norm=s=>clean(s).toLocaleLowerCase();
  const boundary=/password|passcode|one[ -]time code|verification code|i acknowledge|consent|i agree|i confirm|opt[ -]?in|subscribe|signature|attest|under penalty|certify that|certification of|credit card|payment|captcha|recaptcha|hcaptcha|sign in|log in|login/i;
  const edited=new WeakSet();for(const type of ['input','change'])document.addEventListener(type,event=>{if(event.isTrusted&&event.target instanceof Element)edited.add(event.target);},true);
- let refs=new Map();let snapshots=new Map();let stopped=false;
+ let refs=new Map();let snapshots=new Map();let stopped=false;let repeatRefs=new Map();
+ // Select2 keeps the real field hidden beside its visible selection. Use its
+ // associated label and selected option, never the rendered placeholder label.
+ const nativeCombo=el=>el.closest('.select2-container')?.previousElementSibling?.matches('select')?el.closest('.select2-container').previousElementSibling:null;
+ const textOnly=node=>{const copy=node.cloneNode(true);for(const child of copy.querySelectorAll('input,select,textarea,button,[role="combobox"],[role="option"],[aria-hidden="true"],[contenteditable]'))child.remove();return copy.textContent;};
  function label(el){
-   const labelled=(el.getAttribute('aria-labelledby')||'').split(/\s+/).map(id=>document.getElementById(id)?.textContent||'').join(' ');
+   const original=nativeCombo(el);if(original)return label(original);
+   const labelled=(el.getAttribute('aria-labelledby')||'').split(/\s+/).map(id=>(document.getElementById(id)?textOnly(document.getElementById(id)):'')).join(' ');
    const labels=el.labels?[...el.labels]:el.closest('label')?[el.closest('label')]:[];
-   const own=labels.map(x=>{const copy=x.cloneNode(true);for(const child of copy.querySelectorAll('input,select,textarea,button,[role="option"],[contenteditable]' ))child.remove();return copy.textContent;}).join(' ');
+   const own=labels.map(textOnly).join(' ');
    return clean(labelled||el.getAttribute('aria-label')||own||el.getAttribute('placeholder')||el.name||'Unlabelled field');
  }
  const comboInput=el=>el instanceof HTMLInputElement?el:el.querySelector('input');
- const comboList=el=>{const input=comboInput(el);return document.getElementById(el.getAttribute('aria-controls')||el.getAttribute('aria-owns')||input?.getAttribute('aria-controls')||input?.getAttribute('aria-owns')||'');};
+ const comboList=el=>{const input=comboInput(el);const ids=el.getAttribute('aria-controls')||el.getAttribute('aria-owns')||input?.getAttribute('aria-controls')||input?.getAttribute('aria-owns')||'';return ids.split(/\s+/).map(id=>document.getElementById(id)).find(Boolean)||null;};
  let headingNodes=[];
- function value(el){if(el.getAttribute('role')==='combobox'&&!(el instanceof HTMLInputElement))return el.getAttribute('aria-valuetext')||clean(el.textContent)||comboInput(el)?.value||'';return el.type==='checkbox'||el.type==='radio'?el.checked:el.value??el.getAttribute('aria-valuetext')??el.textContent??'';}
+ function value(el){const original=nativeCombo(el);if(original)return clean(original.selectedOptions[0]?.textContent); if(el.getAttribute('role')==='combobox'&&!(el instanceof HTMLInputElement))return el.getAttribute('aria-valuetext')||clean(el.textContent)||comboInput(el)?.value||'';return el.type==='checkbox'||el.type==='radio'?el.checked:el.value??el.getAttribute('aria-valuetext')??el.textContent??'';}
  function groupLabel(el){const group=el.closest('fieldset,[role="radiogroup"],[role="group"]');return clean(group?.querySelector('legend')?.textContent||group?.getAttribute('aria-label')||label(el));}
 
  const placeholder=v=>/^(unknown|undefined|null|n\/a)$/i.test(String(v).trim());
  const emptyChoice=v=>/^(?:select|choose)(?: (?:an?|your))? (?:option|country|state|school|major|degree)|^not required$|^--+$|^please select/i.test(clean(v));
  function sectionInfo(el,text){
   const explicit=el.closest('[data-repeat-section],fieldset,[role="group"]');
+  const row=el.closest('[id^="multipleDatasetEntry_"]:not(.TableSampleRow)');
   let heading=clean(explicit?.getAttribute('data-repeat-section')||explicit?.getAttribute('aria-label')||explicit?.querySelector('legend')?.textContent);
   if(!/education|employment|work experience|previous employer/i.test(heading)){
    const preceding=headingNodes.filter(h=>!!(h.compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING));
@@ -31,7 +37,7 @@
   let section=/education|school/i.test(heading)?'education':/employment|work experience|previous employer/i.test(heading)?'employment':'';
   if(!section&&/^(job title|current job|employer|company name)\s*[:?*]*$/i.test(text))section='employment';
   if(!section&&/^(school|school name|education level|primary major\/program|degree)\s*[:?*]*$/i.test(text))section='education';
-  let container=explicit;
+  let container=row||explicit;
   if(section&&!container){
    // Plain employer layouts often use divs rather than semantic fieldsets.
    // Bind a repeated entry only while it contains one organization anchor and no other section.
@@ -46,7 +52,7 @@
   return {section,container};
  }
  function inspect(){
-  refs=new Map();snapshots=new Map();stopped=false;
+  refs=new Map();snapshots=new Map();repeatRefs=new Map();stopped=false;
   headingNodes=[...document.querySelectorAll('h2,h3,h4,legend,[role="heading"],div,span,p,strong')].filter(h=>visible(h)&&(/^(?:personal information|education history|work experience|employment history|immigration information|deloitte alumni information|password)$/i.test(clean(h.textContent))||h.matches('h2,h3,h4,legend,[role="heading"]')));
   const fields=[];const manual_fields=[];const review_existing=[];const boundaries=new Set();const radios=new Set();const repeatGroups={education:[],employment:[]};
   if([...document.querySelectorAll('input[type="password"]')].some(x=>visible(x)&&!x.disabled))boundaries.add('login');
@@ -75,16 +81,16 @@
     const name=el.name;if(!name){manual=true;control='unsupported';}
     if(radios.has(name))continue;radios.add(name);
     members=[...document.querySelectorAll('input[type="radio"]')].filter(x=>x.name===name&&visible(x));options=members.map(label);question=groupLabel(el);
-    if(new Set(options.map(norm)).size!==options.length)manual=true;
+    if(control==='radio'&&new Set(options.map(norm)).size!==options.length)manual=true;
    }
    if(control==='select')options=[...el.options].filter(x=>!x.disabled&&x.value!=='').map(x=>clean(x.textContent));
    if(control==='checkbox')options=['Yes','No'];
    if(control==='combobox'){
     const list=comboList(el);
     options=list?[...list.querySelectorAll('[role="option"]')].map(x=>clean(x.textContent)):[];
-    if(!options.length&&!el.getAttribute('aria-controls')&&!el.getAttribute('aria-owns')&&!comboInput(el)?.getAttribute('aria-controls')&&el.getAttribute('aria-haspopup')!=='listbox')manual=true;
+    if(!nativeCombo(el)&&!options.length&&!el.getAttribute('aria-controls')&&!el.getAttribute('aria-owns')&&!comboInput(el)?.getAttribute('aria-controls')&&el.getAttribute('aria-haspopup')!=='listbox')manual=true;
    }
-   if(new Set(options.map(norm)).size!==options.length)manual=true;
+   if(control==='radio'&&new Set(options.map(norm)).size!==options.length)manual=true;
    const {section,container}=sectionInfo(el,text);
    let repeat_index=0;
    if(section&&container){if(!repeatGroups[section].includes(container))repeatGroups[section].push(container);repeat_index=repeatGroups[section].indexOf(container);}
@@ -95,7 +101,7 @@
    const existing=credential?'':value(el);
    if(!credential&&placeholder(existing))review_existing.push(id);
    refs.set(id,{el,members,control,question,description,context,options,manual});snapshots.set(id,credential?null:members?members.map(value):existing);
-   fields.push({id,label:question,description,context,control,autocomplete:clean(el.autocomplete).replace(/^section-\S+\s*/,'').replace(/^(shipping|billing)\s*/,''),options,has_value:credential?false:members?members.some(x=>x.checked||edited.has(x)):edited.has(el)||(control==='checkbox'?el.checked:control==='select'?!!el.value&&!emptyChoice(el.selectedOptions[0]?.textContent):control==='combobox'?!!String(existing).trim()&&!emptyChoice(existing):!!String(existing).trim()),required:!!el.required||el.getAttribute('aria-required')==='true',section,repeat_index});
+   fields.push({id,label:question,description,context,control,autocomplete:clean(el.autocomplete).replace(/^section-\S+\s*/,'').replace(/^(shipping|billing)\s*/,''),options,has_value:credential?false:members?members.some(x=>x.checked||edited.has(x)):edited.has(el)||(control==='checkbox'?el.checked:control==='select'?!!el.value&&!emptyChoice(el.selectedOptions[0]?.textContent):control==='combobox'?!!String(existing).trim()&&!emptyChoice(existing):!!String(existing).trim()),required:!!(nativeCombo(el)||el).required||el.getAttribute('aria-required')==='true',section,repeat_index});
   }
   // Mixed application pages can be filled without touching protected controls.
   // Keep page barriers for navigation, and pure login/payment pages fail closed.
@@ -108,7 +114,24 @@
   const names=buttons.map(x=>clean(x.innerText||x.value||x.getAttribute('aria-label')));
   const reviewHeading=[...document.querySelectorAll('h1,h2,h3,[role="heading"]')].some(x=>visible(x)&&/final review|review (?:your )?application|confirm (?:your )?submission/i.test(clean(x.textContent)));
   const final_review=reviewHeading||names.some(x=>/^(submit|submit application|submit my application|send application|apply now|finish application|complete application)$/i.test(x));
-  return {fields:fields.slice(0,120),boundaries:[...boundaries],final_review,metadata:{version:3,manual_fields:manual_fields.slice(0,120),review_existing:review_existing.slice(0,120),page_handoffs}};
+  const repeat_rows=[];const repeat_sections=[];
+  for(const section of ['education','employment']){
+   const groups=repeatGroups[section];
+   for(let index=0;index<groups.length;index++){
+    const row=groups[index];const anchorFields=[...refs.values()].filter(r=>row.contains(r.el));
+    const read=pattern=>{const match=anchorFields.find(r=>pattern.test(r.question));const v=match?clean(value(match.el)):'';return emptyChoice(v)||placeholder(v)?'':v;};
+    repeat_rows.push({section,index,title:read(section==='education'?/^degree$|^education level/i:/^job title/i),organization:read(section==='education'?/^school|^university/i:/^employer|^company/i)});
+   }
+   // Only recognized repeated datasets may add rows. Ordinary page buttons,
+   // templates, Remove and submission actions are never expansion controls.
+   const wrappers=[...new Set(groups.map(row=>row.closest('.multipleDatasetWrapper')).filter(Boolean))];
+   if(groups.length&&groups.length<=10&&wrappers.length===1){
+    const wrapper=wrappers[0];const buttons=[...wrapper.querySelectorAll('a.addDatasetRow[role="button"]')].filter(b=>visible(b)&&/^add another$/i.test(clean(b.textContent))&&b.id==='addRowFor_'+wrapper.id);
+    const rows=[...wrapper.querySelectorAll('[id^="multipleDatasetEntry_"]')].filter(r=>visible(r)&&!r.classList.contains('TableSampleRow'));
+    if(buttons.length===1&&rows.length===groups.length){repeatRefs.set(section,{wrapper,button:buttons[0],count:rows.length});repeat_sections.push({section,count:rows.length});}
+   }
+  }
+  return {fields:fields.slice(0,120),boundaries:[...boundaries],final_review,metadata:{version:4,repeat_rows,repeat_sections,manual_fields:manual_fields.slice(0,120),review_existing:review_existing.slice(0,120),page_handoffs}};
  }
  function unchanged(id){
   const ref=refs.get(id);if(!ref||!ref.el.isConnected||!visible(ref.el)||ref.el.disabled||(ref.el.readOnly&&ref.control!=='combobox'))return false;
@@ -140,7 +163,8 @@
    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(el,choices[0].value);
   }else if(control==='combobox'){
    const options=()=>{const list=comboList(el);return list?[...list.querySelectorAll('[role="option"]')].filter(x=>visible(x)&&x.getAttribute('aria-disabled')!=='true'):[];};
-   el.click();await new Promise(resolve=>setTimeout(resolve,100));
+   if(nativeCombo(el)&&el.getAttribute('aria-expanded')!=='true'){const down=new MouseEvent('mousedown',{bubbles:true,button:0,buttons:1,view:window});Object.defineProperty(down,'which',{value:1});el.dispatchEvent(down);}
+   if(el.getAttribute('aria-expanded')!=='true')el.click();await new Promise(resolve=>setTimeout(resolve,100));
    const list=comboList(el);const input=comboInput(el)||(list?.id?document.querySelector('input[aria-controls="'+CSS.escape(list.id)+'"]'):null);
    const originalQuery=input?.value||'';
    if(input instanceof HTMLInputElement&&!options().some(x=>norm(x.textContent)===norm(wanted))){
@@ -148,7 +172,7 @@
     input.dispatchEvent(new Event('input',{bubbles:true}));
    }
    let choices=[];
-   for(let i=0;i<15;i++){
+   for(let i=0;i<35;i++){
     if(stopped||edited.has(el)||input&&edited.has(input)||!el.isConnected||label(el)!==ref.question)return {id,ok:false,reason:'conflict'};
     choices=options().filter(x=>norm(x.textContent)===norm(wanted));
     if(choices.length)break;await new Promise(resolve=>setTimeout(resolve,100));
@@ -159,7 +183,7 @@
     el.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
     return {id,ok:false,reason:'manual_handoff'};
    }
-   choices[0].click();await new Promise(resolve=>setTimeout(resolve,50));
+   choices[0].dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));if(choices[0].isConnected)choices[0].click();await new Promise(resolve=>setTimeout(resolve,50));
   }else{
    const prototype=el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
    Object.getOwnPropertyDescriptor(prototype,'value').set.call(el,wanted);
@@ -168,6 +192,21 @@
   const actual=control==='radio'?members.find(x=>x.checked):control==='select'?clean(el.selectedOptions[0]?.textContent):control==='checkbox'?(el.checked?'Yes':'No'):String(value(el));
   const ok=(control==='radio'?actual&&label(actual)===wanted:(control==='combobox'?norm(actual)===norm(wanted):actual===wanted))&&el.getAttribute('aria-invalid')!=='true'&&(!el.validity||el.validity.valid);
   return {id,ok:!!ok,reason:ok?'':'validation'};
+ }
+ async function expand(section,target){
+  const ref=repeatRefs.get(section);
+  if(stopped||!ref||!Number.isInteger(target)||target<=ref.count||target>10)return {ok:false};
+  const count=()=>[...ref.wrapper.querySelectorAll('[id^="multipleDatasetEntry_"]')].filter(r=>visible(r)&&!r.classList.contains('TableSampleRow')).length;
+  if(count()!==ref.count||!ref.button.isConnected||!visible(ref.button))return {ok:false};
+  let added=0;
+  while(count()<target&&added<10){
+   if(stopped||!ref.wrapper.isConnected||!ref.button.isConnected||!visible(ref.button)||ref.button.getAttribute('aria-disabled')==='true')return {ok:false,added};
+   const before=count();ref.button.click();
+   for(let i=0;i<20&&count()===before;i++)await new Promise(r=>setTimeout(r,50));
+   if(count()!==before+1)return {ok:false,added};
+   added++;
+  }
+  return {ok:count()===target,added};
  }
  function next(){
   if(stopped)return {ok:false,reason:'stopped'};
@@ -181,5 +220,5 @@
   const labelText=clean(button.innerText||button.value||button.getAttribute('aria-label'));
   button.click();return {ok:true,label:labelText};
  }
- globalThis.CareerCompanionDOM={inspect,write,next,stop:()=>{stopped=true;refs.clear();snapshots.clear();},version:4};
+ globalThis.CareerCompanionDOM={inspect,write,expand,next,stop:()=>{stopped=true;refs.clear();snapshots.clear();},version:5};
 })();

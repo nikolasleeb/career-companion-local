@@ -74,13 +74,24 @@ class FieldInfo(StrictModel):
     required: bool = False
     section: Literal['','education','employment'] = ''
     repeat_index: int = Field(default=0,ge=0,le=30)
+    entry_id: str = Field(default='',max_length=64)
     @field_validator('options')
     @classmethod
     def valid_options(cls,v):
         if any(len(x)>500 for x in v):raise ValueError('Choice too long.')
         return v
+class RepeatRow(StrictModel):
+    section: Literal['education','employment']
+    index: int = Field(ge=0,le=30)
+    title: str = Field(default='',max_length=500)
+    organization: str = Field(default='',max_length=500)
+class RepeatSection(StrictModel):
+    section: Literal['education','employment']
+    count: int = Field(ge=1,le=10)
 class ScanMetadata(StrictModel):
-    version: Literal[2,3]
+    version: Literal[2,3,4]
+    repeat_rows: list[RepeatRow] = Field(default_factory=list,max_length=60)
+    repeat_sections: list[RepeatSection] = Field(default_factory=list,max_length=2)
     manual_fields: list[str] = Field(default_factory=list,max_length=120)
     review_existing: list[str] = Field(default_factory=list,max_length=120)
     page_handoffs: list[Literal['login','captcha','signature','attestation','payment','inaccessible_frame','unsupported_control']] = Field(default_factory=list,max_length=7)
@@ -185,6 +196,7 @@ def local_value(user,field,application):
     if field.control=='checkbox':return private_answers.match(user,field.label,field.options,application,field.description,field.context)
     if PRIVATE.search(' '.join((field.label,field.description,field.context))):return private_answers.match(user,field.label,field.options,application,field.description,field.context)
     value=application_values.automatic(user,field)
+    if field.entry_id:return str(value) if value else None
     if not value:
         for saved in db.list_entities(user,'profile_answer'):
             a=saved['data']
@@ -287,7 +299,12 @@ def scan(id:str,body:Scan,user=Depends(auth.current)):
     if existing-{f.id for f in body.fields}:raise HTTPException(422,'Existing-value review references an unknown field.')
     application=owned(user['id'],run['application_id'],'application')
     with db.connect() as c:once={r['id']:private_answers.unseal(user['id'],r['id'],r['ciphertext']) for r in c.execute('SELECT * FROM cc_run_answers WHERE user_id=? AND run_id=?',(user['id'],id))}
+    bindings,repeat_targets=application_values.bind_repeated_rows(user['id'],body.metadata) if body.metadata and body.metadata.version>=4 else ({},[])
+    if len(bindings)!=len(body.metadata.repeat_rows if body.metadata else []):raise HTTPException(422,'Repeated row identities must be unique.')
     for f in body.fields:
+        # Browser-supplied entry IDs are never authority. Bind only to this
+        # account's confirmed records after matching occupied row anchors.
+        f.entry_id=bindings.get((f.section,f.repeat_index),'')
         protected=bool(BOUNDARY.search(' '.join((f.label,f.description,f.context))))
         if f.id in existing and not protected and f.id not in manual:
             replacement=next((v['value'] for v in once.values() if v.get('replace_placeholder') and v['question']==f.label and v['options']==f.options and v.get('description','')==f.description and v.get('context','')==f.context and v.get('section','')==f.section and v.get('repeat_index',0)==f.repeat_index),None)
@@ -308,7 +325,7 @@ def scan(id:str,body:Scan,user=Depends(auth.current)):
     run['plan_ids']=[w['id'] for w in writes]
     run['plan_fields']=[{'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'reason':'validation','manual_only':True} for f in body.fields if f.id in run['plan_ids']]
     run.update(state='filling' if writes else 'needs_input' if run['unresolved'] or run['page_handoffs'] else 'advancing',reason='Fill supported fields first, then review the remaining items for this page.' if run['unresolved'] or run['page_handoffs'] else '')
-    return {'run':persist(user['id'],run,body.expected_version),'writes':writes}
+    return {'run':persist(user['id'],run,body.expected_version),'writes':writes,'repeat_targets':repeat_targets}
 @router.get('/runs/{id}/questions/{question_id}/suggestions')
 def question_suggestions(id:str,question_id:str,user=Depends(auth.current)):
     run=load(user['id'],id)

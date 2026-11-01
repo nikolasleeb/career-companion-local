@@ -620,3 +620,52 @@ def test_saved_address_alias_suggestion_requires_review_and_is_account_scoped(cl
     assert values.automatic(account['id'],f) is None
     assert values.candidates(account['id'],f)[0]['value']=='100 Fictional Avenue'
     assert values.candidates('other-account',f)==[]
+
+
+def test_repeated_rows_match_existing_then_fill_unused_and_offer_expansion(client,account):
+    from app import application_values as values
+    user=account['id']
+    older=db.save(user,'experience',{'category':'employment','title':'Associate','organization':'Example Company','confirmed':True,'dates':'May 2023 – Present'})
+    newer=db.save(user,'experience',{'category':'employment','title':'Researcher','organization':'Fixture Lab','confirmed':True,'dates':'August 2026 – Present'})
+    assert [r['id'] for r in values.rows(user,'employment')]==[newer['id'],older['id']]
+    r,c,_=run(client,user)
+    metadata={'version':4,'repeat_rows':[{'section':'employment','index':0,'title':'Associate','organization':''}],'repeat_sections':[{'section':'employment','count':1}]}
+    result=scan(client,r,c,[field(label='Employer',section='employment',control='combobox')],metadata=metadata).json()
+    assert result['writes']==[{'id':'f0','value':'Example Company'}]
+    assert result['repeat_targets']==[{'section':'employment','count':2}]
+    metadata['repeat_rows'].append({'section':'employment','index':1});metadata['repeat_sections'][0]['count']=2
+    resumed=client.post('/api/application-agent/runs/'+r['id']+'/control',json={'action':'pause','expected_version':result['run']['version']}).json()
+    resumed=client.post('/api/application-agent/runs/'+r['id']+'/control',json={'action':'resume','expected_version':resumed['version']}).json()
+    result=scan(client,resumed,c,[field(label='Employer',section='employment',control='combobox'),field('f1','Job Title',section='employment',repeat_index=1)],metadata=metadata).json()
+    assert result['writes']==[{'id':'f0','value':'Example Company'},{'id':'f1','value':'Researcher'}]
+    assert not result['repeat_targets']
+
+
+def test_unmatched_repeated_rows_never_mix_sources_or_expand(client,account):
+    db.save(account['id'],'experience',{'category':'employment','title':'Researcher','organization':'Fixture Lab','confirmed':True})
+    r,c,_=run(client,account['id'])
+    metadata={'version':4,'repeat_rows':[{'section':'employment','index':0,'title':'Unrelated role'}],'repeat_sections':[{'section':'employment','count':1}]}
+    result=scan(client,r,c,[field(label='Employer',section='employment',entry_id='forged')],metadata=metadata).json()
+    assert result['writes']==[] and result['repeat_targets']==[]
+    assert result['run']['unresolved'][0]['label']=='Employer'
+
+
+def test_repeated_targets_are_account_scoped_and_duplicates_rejected(client,account):
+    from app import application_values as values
+    db.save(account['id'],'experience',{'category':'education','title':'Degree','organization':'Fixture University','degree':'Master of Science (MS)','confirmed':True})
+    metadata=agent.ScanMetadata(version=4,repeat_rows=[{'section':'education','index':0,'title':"Master's Degree"}],repeat_sections=[{'section':'education','count':1}])
+    bindings,targets=values.bind_repeated_rows('other-account',metadata)
+    assert set(bindings.values())=={'unmatched'} and not targets
+    r,c,_=run(client,account['id'])
+    assert scan(client,r,c,[field(label='School',section='education')],metadata={'version':4,'repeat_rows':[{'section':'education','index':0},{'section':'education','index':0}]}).status_code==422
+
+
+def test_employer_business_unit_uses_exact_catalog_name_without_changing_profile(client,account):
+    from app import application_values as values
+    row=db.save(account['id'],'experience',{'category':'employment','title':'Warehouse Associate','organization':'Amazon Fulfillment Centers','confirmed':True})
+    f=agent.FieldInfo(**field(label='Employer',section='employment',control='combobox'))
+    assert values.automatic(account['id'],f)=='Amazon'
+    meta=agent.ScanMetadata(version=4,repeat_rows=[{'section':'employment','index':0,'organization':'Amazon','title':'Warehouse Associate'}])
+    bindings,_=values.bind_repeated_rows(account['id'],meta)
+    assert bindings[('employment',0)]==row['id']
+    assert db.list_entities(account['id'],'experience')[0]['data']['organization']=='Amazon Fulfillment Centers'

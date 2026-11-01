@@ -75,8 +75,13 @@ Refreshing the signed-in Career Companion tab now restores its connection script
 For Chrome, replace the files in your existing unpacked extension folder with the updated package, then select Reload in chrome://extensions once. Keep your employer form open; do not submit it as part of connection recovery.
 
 
-## Application filling 1.0.7
+## Application filling 1.0.9
 
 The assistant processes supported empty fields in visual page order, then lists the remaining items. Passwords, verification, signatures, acknowledgements, uploads and unsupported controls stay on the employer page. Other questions can be reviewed in Career Companion. Existing values are preserved; obvious placeholders such as Unknown are flagged for your review. Mixed registration pages no longer block routine fields solely because a password appears farther down. The extension never reads or fills passwords, accepts terms, creates an employer account, or submits an application. Advance registration and protected pages personally, then explicitly Resume filling on the employer tab.
 
-Use the updated hosted app with package 1.0.7. Older extension scans retain their prior stop behavior. Updating/reloading the extension can clear pairing; reconnect and approve the matching code yourself before starting or resuming. No update starts filling automatically.
+Use the updated hosted app with package 1.0.9. Older extension scans retain their prior stop behavior. Updating/reloading the extension can clear pairing; reconnect and approve the matching code yourself before starting or resuming. No update starts filling automatically.
+
+
+### Searchable menus and repeated history rows
+
+Package 1.0.9 supports Select2 School and Employer menus using exact available choices. Recognized Add Another controls create up to ten saved education or employment rows per section. Existing occupied rows are matched before empty slots are assigned; ambiguous records and unavailable choices remain in the review list. No Remove or submission control is used to expand history. Existing personal disclosure review remains required.
