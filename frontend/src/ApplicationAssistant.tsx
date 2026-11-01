@@ -3,6 +3,16 @@ import {RelatedExperiences} from './RelatedExperiences';
 import React,{useEffect,useState} from 'react';
 import {PrivateAnswerFields} from './PrivateApplicationAnswers';
 type API=(path:string,method?:string,body?:unknown)=>Promise<any>;
+// Bound and coalesce local GETs across question cards; large forms must not flood the server.
+const questionReads=new WeakMap<API,{active:number;pending:Array<()=>void>;inflight:Map<string,Promise<any>>}>();
+function readQuestion(api:API,path:string):Promise<any>{
+ let queue=questionReads.get(api);if(!queue){queue={active:0,pending:[],inflight:new Map()};questionReads.set(api,queue);}
+ const existing=queue.inflight.get(path);if(existing)return existing;
+ const q=queue;const result=new Promise<any>((resolve,reject)=>{
+  const start=()=>{q.active++;Promise.resolve().then(()=>api(path)).then(resolve,reject).finally(()=>{q.active--;q.inflight.delete(path);q.pending.shift()?.();});};
+  if(q.active<3)start();else q.pending.push(start);
+ });q.inflight.set(path,result);return result;
+}
 export function ApplicationAssistant({api,application,professionalAnswers,profileExperiences=[],onSubmitted}:{api:API;application:any;professionalAnswers:any[];profileExperiences?:any[];onSubmitted:()=>void}){
  const [data,setData]=useState<any>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[selected,setSelected]=useState(window.location.hash.match(/^#assistant-run=([a-f0-9]{32})$/)?.[1]||''),[reviewing,setReviewing]=useState<Record<string,boolean>>({});
  useEffect(()=>{const select=()=>{const id=window.location.hash.match(/^#assistant-run=([a-f0-9]{32})$/)?.[1];if(id)setSelected(id);};window.addEventListener('hashchange',select);return()=>window.removeEventListener('hashchange',select);},[]);
@@ -25,11 +35,11 @@ export function ApplicationAssistant({api,application,professionalAnswers,profil
 function Question({q,run,api,refresh,professionalAnswers,onBusy,profileExperiences}:{q:any;run:any;api:API;refresh:()=>Promise<void>;professionalAnswers:any[];onBusy:(value:boolean)=>void;profileExperiences:any[]}){
  const reviewOnly=['veteran','protected_veteran','sex','gender','sex_gender','race_ethnicity','disability','citizenship'].includes(q.private_category);const manualOnly=q.private_category==='family_connection'||q.reason==='family_connection_manual'||q.manual_only;
  const [suggestions,setSuggestions]=useState<any>(null),[suggestionError,setSuggestionError]=useState('');
- useEffect(()=>{let live=true;setSuggestions(null);setSuggestionError('');if(!manualOnly)api('/application-agent/runs/'+run.id+'/questions/'+q.id+'/suggestions').then(v=>{if(live)setSuggestions(v);}).catch(e=>{if(live)setSuggestionError(e.message);});return()=>{live=false;};},[run.id,q.id,run.version]);
+ useEffect(()=>{let live=true;setSuggestions(null);setSuggestionError('');if(!manualOnly)readQuestion(api,'/application-agent/runs/'+run.id+'/questions/'+q.id+'/suggestions').then(v=>{if(live)setSuggestions(v);}).catch(e=>{if(live)setSuggestionError(e.message);});return()=>{live=false;};},[run.id,q.id,run.version]);
  const [experienceIds,setExperienceIds]=useState<string[]>([]);
  const [answerKind,setAnswerKind]=useState('private'),[value,setValue]=useState(''),[save,setSave]=useState(false),[reviewed,setReviewed]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[ai,setAI]=useState<any>(null),[evidence,setEvidence]=useState<string[]>([]),[token,setToken]=useState(''),[useGoals,setUseGoals]=useState(false),[goalDraft,setGoalDraft]=useState(false);
- useEffect(()=>{let live=true;api('/application-agent/runs/'+run.id+'/assistance').then(data=>{const previous=data.requests.find((x:any)=>x.question_id===q.id);if(live&&previous){setToken(previous.request_token);setAI(previous);}}).catch(()=>{});return()=>{live=false;};},[run.id,q.id]);
- useEffect(()=>{let live=true;const refreshSharing=()=>api('/profile/personalization').then(value=>{if(live)setUseGoals(!!value.goals_shared);}).catch(()=>{if(live)setUseGoals(false);});refreshSharing();window.addEventListener('career-context-updated',refreshSharing);return()=>{live=false;window.removeEventListener('career-context-updated',refreshSharing);};},[api]);
+ useEffect(()=>{let live=true;readQuestion(api,'/application-agent/runs/'+run.id+'/assistance').then(data=>{const previous=data.requests.find((x:any)=>x.question_id===q.id);if(live&&previous){setToken(previous.request_token);setAI(previous);}}).catch(()=>{});return()=>{live=false;};},[run.id,q.id]);
+ useEffect(()=>{let live=true;const refreshSharing=()=>readQuestion(api,'/profile/personalization').then(value=>{if(live)setUseGoals(!!value.goals_shared);}).catch(()=>{if(live)setUseGoals(false);});refreshSharing();window.addEventListener('career-context-updated',refreshSharing);return()=>{live=false;window.removeEventListener('career-context-updated',refreshSharing);};},[api]);
  useEffect(()=>{onBusy(busy);return()=>onBusy(false);},[busy]);
  const [scope,setScope]=useState<any>({category:q.private?'additional':'additional',scope:'application',application_id:run.application_id,employer:'',effective_date:''});
  async function answer(){setError('');setBusy(true);try{await api('/application-agent/runs/'+run.id+'/answers','POST',{question_id:q.id,value,experience_ids:experienceIds,answer_kind:reviewOnly?'private':answerKind,decision:!reviewOnly&&save?'save':'once',expected_version:run.version,private_answer:!reviewOnly&&save&&answerKind==='private'?{...scope,question:q.label,description:q.description||'',context:q.context||'',options:q.options,value,reviewed:true}:null});setValue('');await refresh();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
