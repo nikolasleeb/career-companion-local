@@ -1,0 +1,8 @@
+.suggested-edits-panel>summary h2{display:inline;margin:0;font-size:22px;line-height:1.4;color:var(--ink)}
+.suggested-edits-panel>summary:focus-visible{outline:2px solid var(--ink);outline-offset:6px;border-radius:3px}
+.finished-resume-section{scroll-margin-top:24px;margin-top:24px}
+.finished-resume-section>h2{margin-top:0}
+.finished-resume-section>h2:focus-visible{outline:2px solid var(--ink);outline-offset:6px;border-radius:3px}
+.finished-resume-section .details-document-section{margin:16px 0}
+.finished-resume-actions{display:flex;justify-content:center;margin-top:18px}
+.finished-resume-actions .button{max-width:100%;white-space:normal;text-align:center}

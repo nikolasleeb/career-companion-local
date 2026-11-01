@@ -167,3 +167,23 @@ def test_cover_draft_uses_reviewed_uploaded_source_only(client,account,monkeypat
     assert result['current']['data']['layout']['pages']==1
     assert 'PRIVATE EMAIL NOT EVIDENCE' not in json.dumps(calls)
     assert len(calls)==2
+
+
+def test_upload_and_advance_without_generation_preserves_other_versions(client,account,monkeypatch):
+    from app import ai
+    async def forbidden(*args,**kwargs):raise AssertionError('Upload and navigation must not dispatch AI')
+    monkeypatch.setattr(ai,'call_api',forbidden)
+    job,app=application(client)
+    generated=db.save(account['id'],'resume',{'job_id':job['id'],'title':'Previously generated','sections':[]})
+    applications.attach_resume(account['id'],generated)
+    first=upload(client,app,token='finished-first-upload').json()
+    raw=pdf();second=upload(client,first['application'],token='finished-second-upload',name='finished-version.pdf',raw=raw).json()
+    current=second['application'];rid=second['resume']['id']
+    response=client.put('/api/applications/'+app['id']+'/workflow',json={'expected_updated_at':current['updated_at'],'workflow':{'step':'cover','resume_id':rid,'cover_letter_id':'','cover_skipped':False}})
+    assert response.status_code==200,response.text
+    saved=response.json()['data'];assert saved['workflow']['resume_id']==rid
+    assert set(saved['resume_ids'])=={generated['id'],first['resume']['id'],rid}
+    assert db.get(account['id'],generated['id'],'resume')==generated
+    assert client.get('/api/resumes/'+rid+'/export/original').content==raw
+    assert client.post('/api/cover-letters/workspace',json={'job_id':job['id'],'resume_id':rid}).status_code==409
+    assert not db.list_entities(account['id'],'usage_event')
