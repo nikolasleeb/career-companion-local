@@ -573,16 +573,14 @@ def test_ambiguous_entries_are_offered_not_guessed(client,account):
     assert values.candidates('other-account',f)==[]
 
 
-def test_authorization_settings_suggested_only_after_owned_review(client,account):
+def test_saved_authorization_settings_autofill_matching_questions(client,account):
     from app import private_profile
     with db.connect() as c:private_profile.update_settings(c,account['id'],{'authorized_us':'yes','sponsorship_now':'no','sponsorship_future':'no'})
     r,connection,_=run(client,account['id'])
     fields=[field(label='Legally authorized to work in US? *',control='select',options=['Yes','No']),field('f1','Will you now or in the future require sponsorship for employment visa status?',control='select',options=['Yes','No'])]
-    response=scan(client,r,connection,fields).json();assert response['writes']==[]
-    for q in response['run']['unresolved']:
-        response=client.get('/api/application-agent/runs/'+r['id']+'/questions/'+q['id']+'/suggestions')
-        assert response.status_code==200 and response.json()['suggestions']
-        assert response.json()['requires_review'] is True
+    response=scan(client,r,connection,fields).json()
+    assert response['writes']==[{'id':'f0','value':'Yes'},{'id':'f1','value':'No'}]
+    assert response['run']['unresolved']==[]
     with db.connect() as c:assert c.execute('SELECT COUNT(*) FROM cc_ai_requests').fetchone()[0]==0
 
 
@@ -669,3 +667,56 @@ def test_employer_business_unit_uses_exact_catalog_name_without_changing_profile
     bindings,_=values.bind_repeated_rows(account['id'],meta)
     assert bindings[('employment',0)]==row['id']
     assert db.list_entities(account['id'],'experience')[0]['data']['organization']=='Amazon Fulfillment Centers'
+
+
+@pytest.mark.parametrize('now,future,expected',[('no','no','No'),('yes','no','Yes'),('no','yes','Yes'),('yes','yes','Yes'),('','no',None),('no','unsure',None)])
+def test_combined_sponsorship_uses_both_saved_timeframes(client,account,now,future,expected):
+    from app import private_profile,application_values
+    with db.connect() as c:private_profile.update_settings(c,account['id'],{'sponsorship_now':now,'sponsorship_future':future})
+    f=agent.FieldInfo(**field(label='Will you now or in the future require sponsorship for employment visa status (for example, H-1B Visa)? *',control='select',options=['Select an option','Yes','No']))
+    assert application_values.authorization_value(account['id'],f)==expected
+    assert application_values.authorization_value('another-account',f) is None
+
+
+@pytest.mark.parametrize('label,description,options',[
+ ('Are you legally authorized to work in Canada?','',['Yes','No']),
+ ('Are you authorized to work in the United States without restrictions?','',['Yes','No']),
+ ('Are you a U.S. citizen?','',['Yes','No']),
+ ('Legally authorized to work in US?','Must be permanently authorized without restrictions.',['Yes','No']),
+ ('Will you now or in the future require sponsorship for employment visa status?','',['Yes, immediately','No']),
+ ('Will you now or in the future require sponsorship for employment visa status?','',['Yes','Yes','No']),
+ ('Do you require sponsorship?','',['Yes','No']),
+])
+def test_authorization_does_not_guess_qualified_or_ambiguous_questions(client,account,label,description,options):
+    from app import private_profile,application_values
+    with db.connect() as c:private_profile.update_settings(c,account['id'],{'us_citizen':'yes','authorized_us':'yes','sponsorship_now':'no','sponsorship_future':'no'})
+    f=agent.FieldInfo(**field(label=label,description=description,control='select',options=options))
+    assert application_values.authorization_value(account['id'],f) is None
+
+
+def test_authorization_respects_occupied_controls_and_saved_changes(client,account):
+    from app import private_profile
+    with db.connect() as c:private_profile.update_settings(c,account['id'],{'authorized_us':'yes'})
+    r,connection,_=run(client,account['id'])
+    f=field(label='Legally authorized to work in US?',control='select',options=['Yes','No'],has_value=True)
+    response=scan(client,r,connection,[f]).json();assert response['writes']==[]
+    with db.connect() as c:private_profile.update_settings(c,account['id'],{'authorized_us':'unsure'})
+    f['has_value']=False
+    response=scan(client,response['run'],connection,[f]).json();assert response['writes']==[]
+    assert response['run']['unresolved'][0]['label']==f['label']
+    # Citizenship cannot establish authorization when the explicit answer is missing.
+    with db.connect() as c:private_profile.update_settings(c,account['id'],{'us_citizen':'yes','authorized_us':''})
+    response=scan(client,response['run'],connection,[f]).json();assert response['writes']==[]
+
+
+@pytest.mark.parametrize('label,value',[
+ ('Do you currently require employer sponsorship?','No'),
+ ('Do you require employer sponsorship now?','No'),
+ ('Will you require employer sponsorship in the future?','Yes'),
+ ('Are you currently legally authorized to work in the United States?','Yes'),
+])
+def test_authorization_specific_timeframe_options(client,account,label,value):
+    from app import private_profile,application_values
+    with db.connect() as c:private_profile.update_settings(c,account['id'],{'authorized_us':'yes','sponsorship_now':'no','sponsorship_future':'yes'})
+    f=agent.FieldInfo(**field(label=label,control='radio',options=['Yes','No']))
+    assert application_values.authorization_value(account['id'],f)==value

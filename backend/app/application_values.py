@@ -161,6 +161,29 @@ def automatic(user,field):
     return option_value(settings.get(prop,'') if prop else '',field.options,prop or '')
 
 
+def authorization_value(user,field):
+    """Reuse explicit private settings only for conventional, unqualified questions."""
+    if field.control not in ('select','radio','combobox'):return None
+    # Do not reinterpret qualified legal wording, citizenship or a different country.
+    if re.search(r'citizen|nationalit|without|unrestrict|permanent|indefinit|except|unless|expir|condition|only if',field.description+' '+field.context,re.I):return None
+    key=label_key(field.label)
+    country=r'(?:the )?(?:u\.?s\.?|united states(?: of america)?)'
+    if re.fullmatch(r'(?:are you (?:currently )?)?(?:legally )?authorized to work in '+country,key):
+        keys=['authorized_us']
+    else:
+        suffix=r'(?: for (?:employment visa status|(?:an? )?(?:employment|work) visa|employment|work))?(?: \(for example, h-?1b visa\))?'
+        if re.fullmatch(r'(?:will you now or in the future|do you now or in the future) (?:require|need) (?:employer )?sponsorship'+suffix,key):keys=['sponsorship_now','sponsorship_future']
+        elif re.fullmatch(r'(?:do you|will you) (?:currently |now )?(?:require|need) (?:employer )?sponsorship'+suffix+r' (?:now|currently)',key) or re.fullmatch(r'do you (?:currently|now) (?:require|need) (?:employer )?sponsorship'+suffix,key):keys=['sponsorship_now']
+        elif re.fullmatch(r'(?:will you|do you) (?:require|need) (?:employer )?sponsorship'+suffix+r' in the future',key) or re.fullmatch(r'will you in the future (?:require|need) (?:employer )?sponsorship'+suffix,key):keys=['sponsorship_future']
+        else:return None
+    values=private_profile.authorization(user)
+    if any(values.get(k) not in ('yes','no') for k in keys):return None
+    value='Yes' if any(values[k]=='yes' for k in keys) else 'No'
+    # Use actual, unique Yes/No choices; do not infer a qualified option's meaning.
+    if not all(sum(label_key(o)==v for o in field.options)==1 for v in ('yes','no')):return None
+    return option_value(value,field.options)
+
+
 def authorization_suggestions(user,question):
     key=label_key(question['label']);values=private_profile.authorization(user);result=[]
     if re.search(r'authoriz\w* to work (?:in (?:the )?)?(?:u\.?s\.?|united states)',key):

@@ -194,6 +194,8 @@ def local_value(user,field,application):
     if field.control in ('file','unsupported') or BOUNDARY.search(' '.join((field.label,field.description,field.context))):return None
     if private_answers.classify(field.label,field.description,field.context) in private_answers.REVIEW_CATEGORIES|{'family_connection'}:return None
     if field.control=='checkbox':return private_answers.match(user,field.label,field.options,application,field.description,field.context)
+    authorization=application_values.authorization_value(user,field)
+    if authorization is not None:return authorization
     if application_values.personal_property(field) and private_profile.load(user,'personal_details') is not None and not PRIVATE.search(' '.join((re.sub(r'\bfamily name\b','surname',field.label,flags=re.I),field.description,field.context))):return application_values.personal_value(user,field)
     if PRIVATE.search(' '.join((field.label,field.description,field.context))):return private_answers.match(user,field.label,field.options,application,field.description,field.context)
     value=application_values.automatic(user,field)

@@ -9,3 +9,7 @@ GET and PUT `/api/private-application-profile/personal-details` require the sign
 The extension reuses these explicitly saved values for recognized labels and autocomplete attributes when the user starts/resumes filling. Genuine existing values are preserved; missing details, unmatched dropdown choices and failed readback remain in the review checklist. Country/state options use exact normalized matches, and the existing browser rescan handles dependent controls. Authorization, sponsorship and other private disclosures retain their existing review rules.
 
 This update changes the server mappings and Personal Details form. The compatible browser package remains version 1.0.9; no extension permissions or installed Safari/localhost changes are needed.
+
+## Saved work authorization and sponsorship
+
+The assistant reuses explicitly saved Yes/No authorization and sponsorship settings for matching, unqualified employer questions when the user starts or resumes filling. A combined now-or-future sponsorship question requires both saved timeframes; it uses Yes if either is Yes and No only when both are No. It never infers authorization from citizenship or residence. Missing/Unsure settings, qualified wording, other countries, ambiguous options and personal attestations remain for review. Existing employer values are preserved and each browser write still requires readback. These values stay encrypted and excluded from AI and employer-document generation. No extension replacement is required for this server mapping.
