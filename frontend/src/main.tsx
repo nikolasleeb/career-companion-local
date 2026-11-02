@@ -23,6 +23,7 @@ import {ProfileReviewQueue} from './ProfileReviewQueue';
 import {stageFor,selectedResume,nextApplicationAction,DocumentStage} from './applicationJourney';
 import {WorkspaceDialogHost,confirmAction,requestText,useUnsavedWarning} from './WorkspaceDialog';
 import {DocumentComposer} from './DocumentComposer';
+import {WritingGuide as HandbookGuide} from './WritingGuide';
 import {DailySpendSettings} from './DailySpend';
 import {ImportConflict,CombinedSourceText} from './ImportConflict';
 import {UpdateSettings} from './UpdateSettings';
@@ -591,19 +592,11 @@ function ResumeImportReview({document,onUpdate,close,onManual,embedded=false,tar
  return embedded?panel('all'):<Modal wide title="Review imported information" close={close}>{panel('all')}</Modal>;
 }
 
-const guideTopics:Record<string,string>={resume:'Resume guidance',cover:'Cover-letter guidance',formatting:'Formatting & ATS readability',examples:'Examples & checklists'};
 function GuidanceReferences({value}:{value:any}){
  const {view}=useApp();if(!value?.items)return null;
- return <details className="guidance-references"><summary>Writing principles &amp; sources</summary><p className="small muted">{value.version} · Advice only; these sources do not establish applicant qualifications.</p>{value.items.map((g:any)=><p className="small" key={g.id}><Link url={g.url}>{g.title}</Link><br/>{g.publisher} · reviewed {g.reviewed_at}</p>)}<Button quiet onClick={()=>view('guide')}>Open Resume &amp; Letter Guide ↗</Button></details>;
+ return <details className="guidance-references"><summary>Writing principles &amp; sources</summary><p className="small muted">{value.version} · Advice only; these sources do not establish applicant qualifications.</p>{value.items.map((g:any)=><p className="small" key={g.id}><Link url={g.url}>{g.title}</Link><br/>{g.publisher} · reviewed {g.reviewed_at}</p>)}<Button quiet onClick={()=>view('guide')}>Open Resume &amp; Cover Letter Guide ↗</Button></details>;
 }
-function WritingGuide(){
- const {view}=useApp();const [catalog,setCatalog]=useState<any>(null),[topic,setTopic]=useState('all'),[query,setQuery]=useState(''),[error,setError]=useState('');
- useEffect(()=>{let live=true;api('/guidance').then(v=>live&&setCatalog(v)).catch(e=>live&&setError(e.message));return()=>{live=false;};},[]);
- const items=(catalog?.items||[]).filter((g:any)=>(topic==='all'||g.topic===topic)&&JSON.stringify(g).toLowerCase().includes(query.trim().toLowerCase()));
- return <div className="writing-guide"><Heading eyebrow="04 / WRITING GUIDE" title="Resume & cover letter help" description="Practical advice from career centers and hiring resources. Use the principles, then make the documents your own."/><section className="panel"><div className="card-actions"><Button secondary onClick={()=>window.dispatchEvent(new CustomEvent('open-career-coach',{detail:{context_scope:'writing'}}))}>Ask about resume &amp; cover-letter writing</Button><Button onClick={()=>view('tailor')}>Open Resume Optimizer ↗</Button><Button secondary onClick={()=>view('cover')}>Open Cover Letter ↗</Button></div><p className="small muted">The builders use the same curated principles. Reading this guide needs no API key or AI request.</p><Notice>Follow the employer’s instructions. Next Step’s one-page export policy and cover-letter page target are app choices, not universal rules. Formatting and keyword coverage cannot guarantee an interview.</Notice><div className="form-grid top-space"><label>Topic<select value={topic} onChange={e=>setTopic(e.target.value)}><option value="all">All topics</option>{Object.entries(guideTopics).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><label>Search guidance<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Motivation, bullets, communication, formatting…"/></label></div>{catalog&&<p className="small muted">{items.length} resources · {catalog.version} · Maintained locally; no automatic website monitoring.</p>}{error&&<p role="alert">{error}</p>}</section>
- {!catalog&&!error?<p role="status">Opening the guide…</p>:Object.entries(guideTopics).filter(([key])=>topic==='all'||topic===key).map(([key,label])=>{const rows=items.filter((g:any)=>g.topic===key);return rows.length>0&&<section className="top-space" key={key}><h2>{label}</h2><div className="guidance-grid">{rows.map((g:any)=><article className="panel guidance-card" key={g.id}><span className="tag">{g.publisher}</span><h3>{g.title}</h3><p>{g.text}</p>{g.checklist?.length>0&&<ul>{g.checklist.map((t:string,n:number)=><li key={n}>{t}</li>)}</ul>}{g.example&&<div className="guide-example"><strong>{g.example.label}</strong><p><b>Before:</b> {g.example.before}</p><p><b>After:</b> {g.example.after}</p><details><summary>Facts behind this example</summary><p>{g.example.facts}</p></details></div>}<p className="small muted">{g.context}</p><Link url={g.url}>Open original guidance ↗</Link><p className="small muted">Reviewed {g.reviewed_at}<br/>{g.attribution}</p></article>)}</div></section>;})}
- {catalog&&!items.length&&<p>No guidance matches this search. Try another topic or term.</p>}</div>;
-}
+function WritingGuide(){return <HandbookGuide call={api}/>;}
 function CoverContextReview({session,busy,onReview,onPolish}:{session:any;busy:boolean;onReview:(decisions:any[],build:boolean)=>void;onPolish:(ids:string[])=>void}){
  const {workspace,user}=useApp();const pending=(session.data.context_proposals||[]).filter((p:any)=>p.status==='pending');const [values,setValues]=useState<Record<string,any>>({});
  useEffect(()=>{setValues(old=>Object.fromEntries(pending.map((p:any)=>[p.id,old[p.id]||initialCoverReview(p)])));},[pending.map((p:any)=>p.id).join(',')]);

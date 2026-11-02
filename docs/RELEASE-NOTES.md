@@ -6,6 +6,7 @@ This release brings the current reviewed hosted functionality to the sanitized l
 - Application Assistant: top-to-bottom supported filling, searchable School/Employer choices and repeated history rows, explicit saved Personal Details reuse, and matching saved work-authorization/sponsorship answers. Private values remain excluded from general AI and professional documents.
 - Resume workflow: Standard uses two AI requests normally and at most four with a material correction, saves recoverable previews and pauses under its five-minute budget. Explicit finalization/manual review and Cover Letter navigation are separate controls. Existing optimizer limitations are not described as fixed by packaging this release.
 - Documents: clearer certifications, controlled public profile links, uploaded-resume selection, and preserved historical versions.
+- Writing guide: brings the hosted practical handbook and source-linked examples into the public edition.
 - Documentation: a source-verified Profile/AI data-use chart and permission matrix; updated Chrome/Safari installation instructions.
 
 ## Downloads

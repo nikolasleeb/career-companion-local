@@ -12,7 +12,7 @@ def principles():
     return {'version':version,'items':rows}
 
 def catalog():
-    return principles()
+    return {**principles(),'handbook':handbook()}
 
 def handbook():
     return json.loads((config.CONTENT_DIR/'writing_handbook.json').read_text())
