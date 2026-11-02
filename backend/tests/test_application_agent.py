@@ -278,16 +278,11 @@ def test_production_model_key_fallback_disabled(client,account,monkeypatch):
     assert credentials.effective(account['id'])=='sk-fictional-owned-key'
 
 
-def test_invites_are_single_use_email_bound_and_capacity_limited(client,account,monkeypatch):
-    from app import pilot
-    monkeypatch.setattr(config,'REGISTRATION_MODE','invite')
-    assert client.post('/api/auth/register',json={'username':'invitee','password':'fictional-only-password'}).status_code==403
-    token=pilot.create_invite('fixture@example.test')
-    result=client.post('/api/auth/register',json={'username':'invitee','password':'fictional-only-password','invite_token':token})
+def test_local_registration_needs_no_hosted_invitation(client,account):
+    result=client.post('/api/auth/register',json={'username':'localinvitee','password':'fictional-only-password'})
     assert result.status_code==200,result.text
-    assert client.post('/api/auth/register',json={'username':'otherinvitee','password':'fictional-only-password','invite_token':token}).status_code==403
-    for i in range(5):pilot.create_invite(f'fixture{i}@example.test')
-    with pytest.raises(ValueError):pilot.create_invite('seventh@example.test')
+    assert result.json()['capabilities']['deployment']=='local'
+    assert client.post('/api/auth/register',json={'username':'localinvitee','password':'fictional-only-password'}).status_code==409
 
 
 def test_full_single_page_form_fills_and_stops_before_final_submit(client,account):
@@ -317,15 +312,15 @@ def test_expired_pairing_is_checked_before_each_browser_write(client,account):
     assert client.post('/api/application-agent/runs/'+r['id']+'/relay-status',json=c).status_code==403
 
 
-def test_production_origin_headers_and_cookie_flags(client,account,monkeypatch):
-    monkeypatch.setattr(config,'PRODUCTION',True);monkeypatch.setattr(config,'PUBLIC_ORIGIN','https://testserver');monkeypatch.setattr(config,'COOKIE_SECURE',True)
-    bad=client.post('/api/auth/login',json={'username':'student','password':'fictional-test-password'},headers={'Origin':'https://evil.example','X-Forwarded-Host':'evil.example','X-Forwarded-Proto':'https'})
-    assert bad.status_code==403
-    result=client.post('/api/auth/login',json={'username':'student','password':'fictional-test-password'},headers={'Origin':'https://testserver'})
+def test_local_origin_headers_and_cookie_flags(client,account):
+    body={'username':'student','password':'fictional-test-password'}
+    for headers in ({'Host':'external.example'},{'X-Forwarded-Host':'localhost'},{'Origin':'https://evil.example'}):
+        assert client.post('/api/auth/login',json=body,headers=headers).status_code==403
+    result=client.post('/api/auth/login',json=body,headers={'Origin':'http://localhost'})
     assert result.status_code==200
     cookie=result.headers['set-cookie'].lower()
-    assert 'secure' in cookie and 'httponly' in cookie and 'samesite=strict' in cookie
-    assert result.headers['strict-transport-security']=='max-age=31536000'
+    assert 'httponly' in cookie and 'samesite=strict' in cookie
+    assert result.json()['capabilities']['deployment']=='local'
 
 
 def test_streamed_body_limit_without_content_length():

@@ -1,9 +1,10 @@
 """Build a universal Developer ID Safari DMG without installing or changing permissions."""
-import argparse,hashlib,json,os,shutil,subprocess,zipfile
+import argparse,hashlib,json,os,shutil,subprocess,zipfile,tempfile,plistlib
 from pathlib import Path
 p=argparse.ArgumentParser(description=__doc__)
-p.add_argument('--identity',required=True,help='Developer ID Application identity name or SHA')
-p.add_argument('--team',required=True)
+p.add_argument('--identity',help='Developer ID Application identity name or SHA')
+p.add_argument('--team')
+p.add_argument('--notarized-app',help='An app already notarized and exported by Xcode Direct Distribution; produces a ZIP with the stapled app')
 p.add_argument('--output',required=True)
 p.add_argument('--notary-profile',help='Existing notarytool Keychain profile; credentials are never stored in this repository')
 a=p.parse_args();root=Path(__file__).resolve().parents[1];out=Path(a.output).resolve();out.mkdir(parents=True,exist_ok=True)
@@ -13,6 +14,30 @@ revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).
 assert not subprocess.check_output(['git','status','--porcelain'],cwd=root,text=True).strip(),'Commit the exact source before signing.'
 with zipfile.ZipFile(root/'frontend/public/extensions/career-companion-safari.zip') as z:
  version=json.loads(z.read('manifest.json'))['version'];expected={n:hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist() if not n.endswith('/')}
+if a.notarized_app:
+ app=Path(a.notarized_app).resolve();extension=app/'Contents/PlugIns/Career Companion Extension.appex'
+ for bundle,identifier in ((app,'com.austrich.careercompanion'),(extension,'com.austrich.careercompanion.Extension')):
+  info=plistlib.loads((bundle/'Contents/Info.plist').read_bytes())
+  assert info['CFBundleIdentifier']==identifier and info['CFBundleShortVersionString']==version
+  run('codesign','--verify','--strict','--verbose=2',str(bundle))
+  signature=subprocess.run(['codesign','-dv','--verbose=4',str(bundle)],capture_output=True,text=True,check=True)
+  assert 'Authority=Developer ID Application:' in signature.stderr
+ for n,digest in expected.items():assert hashlib.sha256((extension/'Contents/Resources'/n).read_bytes()).hexdigest()==digest,n
+ for binary in (app/'Contents/MacOS/Career Companion',extension/'Contents/MacOS/Career Companion Extension'):
+  assert set(subprocess.check_output(['lipo','-archs',str(binary)],text=True).split())=={'arm64','x86_64'}
+ run('xcrun','stapler','validate',str(app))
+ run('spctl','--assess','--type','execute','--verbose=2',str(app))
+ artifact=out/f'career-companion-safari-{version}-macos-universal.zip'
+ run('ditto','-c','-k','--sequesterRsrc','--keepParent',str(app),str(artifact))
+ with tempfile.TemporaryDirectory(prefix='career-safari-extracted-') as temp:
+  run('ditto','-x','-k',str(artifact),temp)
+  extracted=Path(temp)/app.name
+  run('codesign','--verify','--deep','--strict','--verbose=2',str(extracted))
+  run('xcrun','stapler','validate',str(extracted))
+  run('spctl','--assess','--type','execute','--verbose=2',str(extracted))
+ receipt={'file':artifact.name,'artifact_type':'notarized_stapled_app_zip','notarization_scope':'contained_application','sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),'extension_version':version,'source_commit':revision,'architectures':['arm64','x86_64'],'signature_valid':True,'notarization_status':'Accepted','staple_valid':True,'gatekeeper_accepted':True,'archive_extraction_verified':True,'notarization_method':'Xcode Direct Distribution','installed':False,'provider_requests':0}
+ (out/'safari-distribution-verification.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt,indent=2));raise SystemExit(0)
+assert a.identity and a.team,'Provide --identity and --team when building, or --notarized-app for an Xcode export.'
 project=root/'extensions/safari-xcode/Career Companion/Career Companion.xcodeproj'
 build=out/'build'
 with (out/'xcode-build.log').open('w') as log:

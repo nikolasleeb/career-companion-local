@@ -16,10 +16,10 @@ The owner granted the native app-origin permission. Installed Chrome 1.0.1 passe
 
 ## Safari on macOS
 
-Release 1.0.12 includes a universal signed/notarized Safari DMG, plus `career-companion-safari.zip` containing the matching WebExtension source. The browser core version is 1.0.9; the app release version is independent.
+Release 1.0.12 includes a universal Safari app ZIP containing a Developer ID-signed, notarized and stapled app, plus `career-companion-safari.zip` containing the matching WebExtension source. The browser core version is 1.0.9; the app release version is independent.
 
-1. Download `career-companion-safari-1.0.9-macos-universal.dmg` and verify its SHA-256 against the release checksums.
-2. Drag Career Companion to Applications and open it. In Safari Settings → Extensions, enable Career Companion and approve only the needed app and active employer-site permissions.
+1. Download `career-companion-safari-1.0.9-macos-universal.zip` and verify its SHA-256 against the release checksums.
+2. Extract the ZIP, move Career Companion.app to Applications and open it. In Safari Settings → Extensions, enable Career Companion and approve only the needed app and active employer-site permissions.
 3. Pair explicitly with the signed-in Career Companion tab by comparing the code. Installation never starts filling or shares documents.
 
 The wrapper source is in `extensions/safari-xcode/`. To reproduce a distribution, commit the exact clean source and run:
@@ -86,3 +86,11 @@ Use the updated hosted app with package 1.0.9. Older extension scans retain thei
 ### Searchable menus and repeated history rows
 
 Package 1.0.9 supports Select2 School and Employer menus using exact available choices. Recognized Add Another controls create up to ten saved education or employment rows per section. Existing occupied rows are matched before empty slots are assigned; ambiguous records and unavailable choices remain in the review list. No Remove or submission control is used to expand history. Saved authorization/sponsorship follows the matching rules in [Personal Details](PERSONAL-DETAILS.md); other private disclosures retain review requirements.
+
+An existing Xcode Apple account can notarize through Organizer without a separate command-line Keychain profile. Archive the macOS app for both architectures, choose **Distribute App → Direct Distribution**, wait for notarization success, then Export. Package that export with:
+
+```sh
+python3 scripts/package_safari.py --notarized-app '/path/to/Career Companion.app' --output /tmp/career-safari-distribution
+```
+
+This path verifies Developer ID signatures, matching bundled extension resources, both architectures, the app's stapled ticket and Gatekeeper acceptance. It extracts the resulting ZIP and repeats those checks. Notarization applies to the contained app; the ZIP is its transport archive. A DMG built separately needs its own notarization before it can be advertised as a notarized DMG.

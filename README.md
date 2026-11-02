@@ -79,7 +79,7 @@ For a downloaded image, use the new release's Compose file and archive in the sa
 ## Localhost boundaries and privacy
 
 - The supplied Compose files publish only `127.0.0.1`. The native launcher binds loopback; the app accepts only local Host headers and rejects forwarding headers. There is no remote deployment configuration.
-- The browser extension connects only to localhost. Download it from Application Assistant or build it with `python3 extensions/build.py`.
+- The browser extension pairs only with the Career Companion address you explicitly approve. Download it from Application Assistant or build it with `python3 extensions/build.py`.
 - The app uses no bundled account, API key, documents, private disclosures, or operator credentials. Git history begins with this clean local edition.
 - Optional AI actions send the relevant professional context to OpenAI only when requested. Source integrations contact their respective services. Update checks contact GitHub. This is a local application, not an offline application.
 - Private citizenship and disclosure information remains separate from professional documents and AI prompts. Explicit saved Yes/No work-authorization and sponsorship settings can fill matching unqualified questions when you start or resume filling; other private disclosures require review. Browser filling stops before final submission and hands off login, signatures, CAPTCHA, and file uploads.

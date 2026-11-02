@@ -159,7 +159,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p safari-distribution
-          gh release download "$TAG" --pattern 'career-companion-safari-*-macos-universal.dmg' --pattern 'safari-distribution-verification.json' --dir safari-distribution
+          gh release download "$TAG" --pattern 'career-companion-safari-*-macos-universal.*' --pattern 'safari-distribution-verification.json' --dir safari-distribution
           python3 - <<'PYSAFARI'
           import hashlib,json
           from pathlib import Path
@@ -168,8 +168,9 @@ jobs:
           assert receipt['signature_valid'] and receipt['notarization_status']=='Accepted' and receipt['staple_valid'] and receipt['gatekeeper_accepted']
           assert receipt['source_commit']==__import__('subprocess').check_output(['git','rev-parse','HEAD'],text=True).strip()
           artifact=root/receipt['file']
-          assert artifact.name==receipt['file'] and artifact.suffix=='.dmg'
+          assert artifact.name==receipt['file'] and artifact.suffix in ('.dmg','.zip')
           assert hashlib.sha256(artifact.read_bytes()).hexdigest()==receipt['sha256']
+          if artifact.suffix=='.zip':assert receipt['artifact_type']=='notarized_stapled_app_zip' and receipt['archive_extraction_verified'] and receipt['notarization_scope']=='contained_application'
           manifest=__import__('zipfile').ZipFile('frontend/public/extensions/career-companion-safari.zip')
           assert receipt['extension_version']==json.loads(manifest.read('manifest.json'))['version']
           PYSAFARI
@@ -200,7 +201,11 @@ jobs:
           python3 scripts/package_source.py --output "release-assets/career-companion-$VERSION-source.zip"
           cp safari-distribution/* release-assets/
           cp frontend/public/extensions/career-companion-{chrome,safari}.zip release-assets/
-          (cd release-assets && sha256sum career-companion-*.zip career-companion-*.dmg safari-distribution-verification.json compose.localhost.yaml LOCALHOST-QUICKSTART.md published-image.txt >> SHA256SUMS)
+          (
+            cd release-assets
+            find . -maxdepth 1 -type f \( -name 'career-companion-*.zip' -o -name 'career-companion-*.dmg' \) -print0 | sort -z | xargs -0 sha256sum >> SHA256SUMS
+            sha256sum safari-distribution-verification.json compose.localhost.yaml LOCALHOST-QUICKSTART.md published-image.txt >> SHA256SUMS
+          )
       - name: Publish the release after both architectures pass
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

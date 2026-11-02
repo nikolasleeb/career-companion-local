@@ -156,7 +156,10 @@ def automatic(user,field):
     settings=db.settings(user)
     props={'name':'name','full name':'name','email':'email','email address':'email','preferred email':'email','confirm email':'email','confirm email address':'email','phone':'phone','phone number':'phone','city':'city','state':'state','country':'country','linkedin':'linkedin','linkedin profile':'linkedin','website':'website','portfolio website':'website','github':'github','github profile':'github','github url':'github','github profile url':'github','github link':'github','github profile link':'github'}
     auto={'name':'name','email':'email','tel':'phone','address-level2':'city','address-level1':'state','country-name':'country','country':'country','url':'website'}
-    prop=auto.get(field.autocomplete) or props.get(key)
+    # A platform-specific label takes precedence over a generic URL hint.
+    # Mixed link choices require the user's selection rather than picking a site.
+    if re.search(r'\b(?:github|linkedin)\b',key) and key not in props:return None
+    prop=props.get(key) or auto.get(field.autocomplete)
     # Private application identity never enters the general settings accessor.
     return option_value(settings.get(prop,'') if prop else '',field.options,prop or '')
 
