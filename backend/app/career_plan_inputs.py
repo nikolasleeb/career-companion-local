@@ -6,7 +6,7 @@ from pydantic import Field, field_validator
 from .models import StrictModel
 
 class PlanInput(StrictModel):
-    purpose: Literal['explore', 'internships', 'graduation', 'career_change', 'certification', 'custom'] = 'custom'
+    purpose: Literal['explore', 'internships', 'graduation', 'career_change', 'certification', 'custom', 'skills'] = 'custom'
     objective: str = Field(min_length=1, max_length=8000)
     target: str = Field(default='', max_length=150)
     time_available: str = Field(default='', max_length=200)
@@ -20,7 +20,7 @@ class MilestoneEdit(StrictModel):
     title: str = Field(min_length=1, max_length=160)
     steps: list[Annotated[str, Field(min_length=1, max_length=1000)]] = Field(min_length=1, max_length=5)
     period_label: str = Field(default='', max_length=100)
-    due_date: str = Field(default='', max_length=10)
+    due_date: str = Field(default='', max_length=10, pattern=r'^(?:|[0-9]{4}-[0-9]{2}-[0-9]{2})$')
     effort: str = Field(default='', max_length=250)
 
     @field_validator('due_date')

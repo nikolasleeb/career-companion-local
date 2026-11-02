@@ -9,7 +9,7 @@
 
 .resume-primary-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}.resume-primary-actions>.button,.resume-download>.button{width:100%;height:100%;min-height:52px}.resume-download{position:relative}.resume-download .card-actions{margin-top:10px}.resume-proceed{width:100%;margin-top:16px}.resume-action-group label{margin-top:16px}.resume-action-group .application-files{margin-top:16px}.resume-action-group .details-document-section .details-section-heading{margin-top:12px}
 
-.guided-editor.document-conversation>.resume-chat{padding:20px;border:1px solid var(--border,#d5deeb);border-radius:12px}
+.guided-editor.document-conversation>.resume-chat,.cover-chat-column.document-conversation>.cover-chat{padding:20px;border:1px solid var(--border,#d5deeb);border-radius:12px}
 .guided-builder>.resume-question-panel{margin:20px 0;padding:20px;border:1px solid var(--border,#d5deeb);border-radius:12px;background:var(--surface,#fff)}
 .resume-question-panel>.inline-questions{margin-top:16px}.resume-question-panel>.inline-questions>h4{font-size:1rem}
 
@@ -21,3 +21,19 @@
 .resume-run-recovery {border:1px solid #b8c6db;border-radius:8px;padding:1rem;margin-block:1rem}
 
 @media(max-width:1100px){.resume-primary-actions{grid-template-columns:1fr}.resume-primary-actions>.button,.resume-download>.button{height:auto}}
+
+/* Use available workspace width when zoom or the assistant reduces the page. */
+.cover-letter-page,.application-workflow{container-type:inline-size}
+@container(max-width:800px){
+ .cover-workspace{grid-template-columns:minmax(0,1fr)!important}
+ .cover-preview{position:static;max-height:none}
+ .cover-letter-page .document-model-grid,.cover-letter-page .form-grid{grid-template-columns:minmax(0,1fr)}
+}
+@container(max-width:600px){
+ .application-workflow>.section-header{flex-wrap:wrap;gap:16px}
+ .application-workflow .workflow-status-actions{flex-shrink:1;justify-content:flex-start;max-width:100%}
+ .application-workflow .workflow-status-actions .button{white-space:normal;max-width:100%}
+ .application-workflow.panel nav{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))!important}
+ .cover-letter-page .card-actions,.cover-letter-page .section-header{flex-wrap:wrap}
+ .cover-letter-page .button{white-space:normal;max-width:100%}
+}

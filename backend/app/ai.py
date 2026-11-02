@@ -137,6 +137,23 @@ async def structured(schema, payload, mode='economy', instructions=INSTRUCTIONS,
         return await resume_runs.structured(schema,payload,mode,instructions,files,retry_allowed,max_output_tokens,lambda:_structured(schema,payload,mode,instructions,files=files,retry_allowed=False,max_output_tokens=max_output_tokens))
     return await _structured(schema,payload,mode,instructions,files=files,retry_allowed=retry_allowed,max_output_tokens=max_output_tokens)
 
+def contract_diagnostics(schema, error):
+    """Only schema-owned field names, indices and error types; never values or messages."""
+    fields=set()
+    def collect(value):
+        if isinstance(value,dict):
+            fields.update(value.get('properties',{}))
+            for child in value.values():collect(child)
+        elif isinstance(value,list):
+            for child in value:collect(child)
+    collect(schema.model_json_schema())
+    diagnostics=[]
+    for item in error.errors(include_input=False,include_context=False,include_url=False)[:5] if isinstance(error,ValidationError) else []:
+        path='.'.join(str(v) if type(v) is int else v if v in fields else '<field>' for v in item['loc']) or 'response'
+        kind=item['type'] if re.fullmatch(r'[a-z_]+(?:[.][a-z_]+)*',item['type']) else 'validation_error'
+        diagnostics.append({'path':path,'type':kind})
+    return diagnostics or [{'path':'response','type':'invalid_json'}]
+
 async def _structured(schema, payload, mode='economy', instructions=INSTRUCTIONS, *, files=None,retry_allowed=True,max_output_tokens=None):
     schema_value=schema.model_json_schema()
     def strict(value):
@@ -158,8 +175,11 @@ async def _structured(schema, payload, mode='economy', instructions=INSTRUCTIONS
     response = await call_api(body) if retry_allowed else await call_api(body,retry_allowed=False)
     try:
         result = schema.model_validate_json(output_text(response)).model_dump()
-    except (ValidationError, ValueError):
-        raise ServiceError('The AI response did not meet the output contract. No suggestions were applied; retry the action.') from None
+    except (ValidationError, ValueError) as error:
+        diagnostics=contract_diagnostics(schema,error)
+        __import__('logging').getLogger(__name__).warning('AI response contract validation: %s',json.dumps(diagnostics))
+        fields='; '.join(v['path']+' ('+v['type']+')' for v in diagnostics)
+        raise ServiceError('The AI response did not meet the output contract: '+fields+'. Your draft and previous plans are preserved. No suggestions were applied and no request was automatically retried.') from None
     return result, metadata(response,mode)
 
 def normalized(text):
