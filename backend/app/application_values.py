@@ -12,10 +12,12 @@ def label_key(value):
 def option_value(value, options, field=''):
     if not value:return None
     if not options:return str(value)
+    country_names={key:r['code'].lower() for r in private_profile.countries() for key in (r['code'].lower(),label_key(r['name']))} if field=='country' else {}
     def canonical(v):
         v=label_key(str(v)).replace('’',"'")
         if field=='country':
-            return {'us':'united states','usa':'united states','u.s.':'united states','united states of america':'united states'}.get(v,v)
+            v={'usa':'us','u.s.':'us','united states of america':'us'}.get(v,v)
+            return country_names.get(v,v)
         if field=='degree':
             if re.fullmatch(r"master(?:'s|s)?(?: degree)?|m\.?s\.?|master of (science|arts)(?: \([^)]+\))?",v):return 'masters'
             if re.fullmatch(r"bachelor(?:'s|s)?(?: degree)?|b\.?s\.?|bachelor of (science|arts)(?: \([^)]+\))?",v):return 'bachelors'
@@ -80,6 +82,40 @@ def entry_value(row,field):
     return option_value(value,field.options,prop or '')
 
 
+PERSONAL_LABELS={
+ 'first name':'legal_first_name','first name (legal)':'legal_first_name','legal first name':'legal_first_name','given name':'legal_first_name',
+ 'middle name':'middle_name','middle initial':'middle_initial','last name':'last_name','last/family name':'last_name','family name':'last_name','surname':'last_name',
+ 'first name (preferred)':'preferred_first_name','preferred first name':'preferred_first_name','preferred name':'preferred_first_name',
+ 'address line 1':'address_line1','address line1':'address_line1','street address':'address_line1','address':'address_line1',
+ 'address line 2':'address_line2','address line2':'address_line2','apartment':'address_line2',
+ 'zip/postal code':'postal_code','zip / postal code':'postal_code','zip code':'postal_code','postal code':'postal_code','postcode':'postal_code','zip':'postal_code',
+ 'legal name':'legal_full_name','full legal name':'legal_full_name',
+}
+PERSONAL_AUTO={'given-name':'legal_first_name','additional-name':'middle_name','family-name':'last_name','address-line1':'address_line1','address-line2':'address_line2','postal-code':'postal_code'}
+def personal_property(field):
+    # Autocomplete is a hint, never permission to repurpose a disclosure question.
+    key=label_key(field.label)
+    if key in PERSONAL_LABELS:return PERSONAL_LABELS[key]
+    return PERSONAL_AUTO.get(field.autocomplete)
+
+def personal_value(user,field):
+    prop=personal_property(field)
+    if not prop:return None
+    saved=private_profile.load(user,'personal_details')
+    if saved is None:return None
+    if prop=='preferred_first_name' and saved.get('preferred_same_as_legal'):value=saved.get('legal_first_name','')
+    elif prop=='middle_initial':value=saved.get('middle_name','')[:1]
+    elif prop=='legal_full_name':value=' '.join(saved.get(k,'') for k in ('legal_first_name','middle_name','last_name') if saved.get(k))
+    else:value=saved.get(prop,'')
+    return option_value(value,field.options,prop)
+
+def intentional_blank(user,field):
+    prop=personal_property(field)
+    if field.required or not prop:return False
+    saved=private_profile.load(user,'personal_details')
+    return saved is not None and personal_value(user,field) is None and prop in ('middle_name','middle_initial','address_line2','preferred_first_name') and not (prop=='preferred_first_name' and saved.get('preferred_same_as_legal') and saved.get('legal_first_name'))
+
+
 def candidates(user,field):
     settings=db.settings(user);key=label_key(field.label);result=[]
     section=section_for(field)
@@ -115,11 +151,13 @@ def automatic(user,field):
             selected=next((r for r in saved if r['id']==field.entry_id),None)
             return entry_value(selected,field) if selected else None
         return entry_value(saved[field.repeat_index],field) if field.repeat_index<len(saved) else None
+    personal=personal_value(user,field)
+    if personal_property(field):return personal
     settings=db.settings(user)
     props={'name':'name','full name':'name','email':'email','email address':'email','preferred email':'email','confirm email':'email','confirm email address':'email','phone':'phone','phone number':'phone','city':'city','state':'state','country':'country','linkedin':'linkedin','linkedin profile':'linkedin','website':'website','portfolio website':'website','github':'github','github profile':'github','github url':'github','github profile url':'github','github link':'github','github profile link':'github'}
     auto={'name':'name','email':'email','tel':'phone','address-level2':'city','address-level1':'state','country-name':'country','country':'country','url':'website'}
     prop=auto.get(field.autocomplete) or props.get(key)
-    # given-name/family-name still require review unless separately saved for that exact question.
+    # Private application identity never enters the general settings accessor.
     return option_value(settings.get(prop,'') if prop else '',field.options,prop or '')
 
 

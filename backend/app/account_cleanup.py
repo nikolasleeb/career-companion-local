@@ -122,15 +122,16 @@ def manifest(c,user,body):
   for r in rows:
    if r['kind'] in ('chat_image','resume_run') and r['data'].get('conversation_id') in targets:targets.add(r['id'])
   files={r['id'] for r in rows if r['id'] in targets and r['kind']=='document'}
- private=private_count(c,user) if 'private' in chosen else 0
+ private=private_count(c,user) if 'private' in chosen else (c.execute("SELECT count(*) FROM cc_private_profile WHERE user_id=? AND section='personal_details'",(user,)).fetchone()[0] if 'personal' in chosen else 0)
  settings=json.loads(c.execute('SELECT settings FROM users WHERE id=?',(user,)).fetchone()[0]);personal=sum(bool(settings.get(k)) for k in PERSONAL) if 'personal' in chosen else 0
  private_records=([{'id':r['section'],'kind':'private_section','title':r['section'].replace('_',' ').title()} for r in c.execute('SELECT section FROM cc_private_profile WHERE user_id=?',(user,))]+[{'id':r['id'],'kind':'private_answer','title':'Saved private application answer'} for r in c.execute('SELECT id FROM cc_vault WHERE user_id=?',(user,))]) if 'private' in chosen else []
+ if 'personal' in chosen and 'private' not in chosen and private:private_records.append({'id':'personal_details','kind':'private_section','title':'Application names, street address and postal code'})
  selected=[preview_record(r,body) for r in rows if r['id'] in targets]
  return {'application_range':{'start':body.start,'end':body.end,'timezone':body.timezone,'scope':body.application_scope} if 'applications' in chosen else None,'application_count':sum(r['kind']=='application' for r in rows if r['id'] in targets),'search_history_counts':search_counts(c,user) if 'jobs' in chosen else {},'record_ids':sorted(targets),'records':selected,'private_records':private_records,'files':sorted(files),'preserved_shared_records':sorted(preserved),'preserved_records':[{'id':r['id'],'kind':r['kind'],'title':str(r['data'].get('title') or r['data'].get('filename') or r['kind'])[:200]} for r in rows if r['id'] in preserved],'private_sections':private,'personal_fields':personal,'personal_field_names':[k for k in PERSONAL if settings.get(k)] if 'personal' in chosen else [],'blockers':blocked(c,user),'retained_copies_notice':'Unselected uploads, saved documents and conversations may still contain historical copies. Downloaded and operator-held backups are outside this cleanup.','preserved_documents_notice':'Independently saved resumes and cover letters remain unless their own category is selected.','backup_notice':'Ordinary account backups exclude API credentials and the private-answer vault.'}
 @router.get('')
 def inventory(user=Depends(auth.current)):
  with db.connect() as c:
-  rows=records(c,user['id']);settings=json.loads(c.execute('SELECT settings FROM users WHERE id=?',(user['id'],)).fetchone()[0]);counts={k:sum(category(r)==k for r in rows) for k in CATEGORIES};counts['personal']=sum(bool(settings.get(k)) for k in PERSONAL);counts['private']=private_count(c,user['id']);counts['jobs']+=sum(search_counts(c,user['id']).values())
+  rows=records(c,user['id']);settings=json.loads(c.execute('SELECT settings FROM users WHERE id=?',(user['id'],)).fetchone()[0]);counts={k:sum(category(r)==k for r in rows) for k in CATEGORIES};counts['personal']=sum(bool(settings.get(k)) for k in PERSONAL)+c.execute("SELECT count(*) FROM cc_private_profile WHERE user_id=? AND section='personal_details'",(user['id'],)).fetchone()[0];counts['private']=private_count(c,user['id']);counts['jobs']+=sum(search_counts(c,user['id']).values())
   last=c.execute("SELECT id FROM cc_cleanup_operations WHERE user_id=? AND state='applied' ORDER BY created_at DESC LIMIT 1",(user['id'],)).fetchone()
   return {'categories':[{'id':k,'label':v,'count':counts[k]} for k,v in CATEGORIES.items()],'cleanup_revision':revision(user['id'],c),'last_operation_id':last[0] if last else None,'blockers':blocked(c,user['id'])}
 @router.post('/preview')
@@ -156,6 +157,7 @@ def apply(body:Apply,user=Depends(auth.current)):
    settings=json.loads(c.execute('SELECT settings FROM users WHERE id=?',(u,)).fetchone()[0])
    if 'personal' in chosen:
     for k in PERSONAL:settings.pop(k,None)
+    c.execute("DELETE FROM cc_private_profile WHERE user_id=? AND section='personal_details'",(u,))
    if 'private' in chosen:
     for table in ('cc_private_profile','cc_vault','cc_preferences'):c.execute('DELETE FROM '+table+' WHERE user_id=?',(u,))
     for k in ('us_citizen','authorized_us','sponsorship_now','sponsorship_future','citizenship_countries'):settings.pop(k,None)

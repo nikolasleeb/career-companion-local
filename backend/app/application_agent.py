@@ -194,6 +194,7 @@ def local_value(user,field,application):
     if field.control in ('file','unsupported') or BOUNDARY.search(' '.join((field.label,field.description,field.context))):return None
     if private_answers.classify(field.label,field.description,field.context) in private_answers.REVIEW_CATEGORIES|{'family_connection'}:return None
     if field.control=='checkbox':return private_answers.match(user,field.label,field.options,application,field.description,field.context)
+    if application_values.personal_property(field) and private_profile.load(user,'personal_details') is not None and not PRIVATE.search(' '.join((re.sub(r'\bfamily name\b','surname',field.label,flags=re.I),field.description,field.context))):return application_values.personal_value(user,field)
     if PRIVATE.search(' '.join((field.label,field.description,field.context))):return private_answers.match(user,field.label,field.options,application,field.description,field.context)
     value=application_values.automatic(user,field)
     if field.entry_id:return str(value) if value else None
@@ -313,6 +314,7 @@ def scan(id:str,body:Scan,user=Depends(auth.current)):
             run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'private':False,'reason':'existing_value','section':f.section,'repeat_index':f.repeat_index,'manual_only':False})
             continue
         if f.has_value:continue
+        if not protected and f.id not in manual and application_values.intentional_blank(user['id'],f):continue
         if f.id in manual or protected:
             run['unresolved'].append({'id':f.id,'label':f.label,'description':f.description,'context':f.context,'options':[],'control':f.control,'required':f.required,'private':bool(PRIVATE.search(f.label)),'reason':'manual_handoff','manual_only':True})
             continue

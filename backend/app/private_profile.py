@@ -130,6 +130,18 @@ def save_citizenship(body:Citizenship,user=Depends(auth.current)):
     settings=db.settings(user['id'])
     return {'saved':True,'warnings':warnings(body.countries,settings)}
 
+# Static personal-details routes precede the generic disclosure route.
+from .personal_details import PersonalDetailsSave
+@router.get('/personal-details')
+def get_personal_details(user=Depends(auth.current)):
+    from . import personal_details
+    return personal_details.get(user['id'])
+
+@router.put('/personal-details')
+def save_personal_details(body:PersonalDetailsSave,user=Depends(auth.current)):
+    from . import personal_details
+    return personal_details.save(user['id'],body)
+
 @router.put('/{section}')
 def save_disclosure(section:str,body:Disclosure,user=Depends(auth.current)):
     if section not in SECTIONS or section=='citizenship':raise HTTPException(404,'Private profile section not found.')

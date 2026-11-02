@@ -1,0 +1,7 @@
+.personal-details-form fieldset{border:1px solid var(--border,#cbd5e1);border-radius:12px;padding:20px;margin:24px 0;min-width:0}
+.personal-details-form legend{font-weight:700;padding:0 8px}
+.personal-details-form fieldset:disabled{opacity:.65}
+.personal-details-form .preferred-name{display:block;max-width:32rem;margin-top:16px}
+.personal-details-form .check-line{margin-top:18px}
+.personal-name-suggestion{padding:16px;margin-top:20px;border:1px solid var(--border,#cbd5e1);border-radius:8px}
+.personal-details-form .form-actions{flex-wrap:wrap;gap:12px}
