@@ -16,20 +16,21 @@ The owner granted the native app-origin permission. Installed Chrome 1.0.1 passe
 
 ## Safari on macOS
 
-The deliverable includes `career-companion-safari.zip` (shared WebExtension source) and `extensions/safari-xcode/Career Companion/Career Companion.xcodeproj`. The owner legitimately signed, installed and enabled the extension. Signed 1.0.2 passed the complete fictional localhost workflow and seven zero-write boundary cases. Its approved PDF was attached by the owner through Safari’s native picker. The signed installed resources match this package; hosted-origin pairing remains a separate acceptance check.
+Release 1.0.12 includes a universal signed/notarized Safari DMG, plus `career-companion-safari.zip` containing the matching WebExtension source. The browser core version is 1.0.9; the app release version is independent.
 
-1. Open the Xcode project on the intended Mac.
-2. Choose your legitimate signing team/certificate for the host app and extension. Preserve `com.austrich.careercompanion` and its `.Extension` child identifier unless deliberately configuring another bundle.
-3. Build and run the host app through Xcode, then enable Career Companion in Safari's extension settings and approve only the app/active application website permissions needed.
-4. Repeat the localhost pairing and fictional-form checks before using a real application. Repeat pairing to the hosted origin after protected deployment is verified.
+1. Download `career-companion-safari-1.0.9-macos-universal.dmg` and verify its SHA-256 against the release checksums.
+2. Drag Career Companion to Applications and open it. In Safari Settings → Extensions, enable Career Companion and approve only the needed app and active employer-site permissions.
+3. Pair explicitly with the signed-in Career Companion tab by comparing the code. Installation never starts filling or shares documents.
 
-The owner handled the original signing/enabling and website permission. The 1.0.2 signed rebuild reused that legitimate configuration without changing agreements, machine protections or unsigned-extension settings. Native Safari acceptance is recorded separately from shared WebKit DOM tests in the validation receipts.
+The wrapper source is in `extensions/safari-xcode/`. To reproduce a distribution, commit the exact clean source and run:
 
-### Updating an installed development extension
+```sh
+python3 scripts/package_safari.py --identity 'Developer ID Application: YOUR IDENTITY' --team YOURTEAM --notary-profile YOUR_KEYCHAIN_PROFILE --output /tmp/career-safari-distribution
+```
 
-Version 1.0.2 adds explicit keyboard focus to popup controls, a visible focus indicator, and Enter-to-connect from the address field. In Safari, Tab through the popup and press Return on buttons or Space on the disclosure checkbox. Browser permission prompts still require the user.
+Use your legitimate Developer ID Application certificate and existing notarytool Keychain profile. Signing credentials are never included in source or downloads. The script builds both Apple Silicon and Intel binaries, compares embedded resources with the Safari ZIP, notarizes/staples the app and DMG, and requires Gatekeeper acceptance. Omitting the profile prepares a signed candidate only and exits with a publication blocker; it does not claim notarization. The script does not install the app or change Safari settings.
 
-Version 1.0.1 fixes Safari's rejection of a localhost permission pattern containing a port. Browser permission/tab-query patterns use `http://localhost/*` or `http://127.0.0.1/*`; pairing still selects only the exact entered origin, including its port. Keep `http://localhost:3000` in the popup. Rebuild/run the existing signed project in Xcode, then reopen the Safari popup and reconnect. Existing signing settings do not need to change. Chrome development installations need the updated package and **Reload** in `chrome://extensions`.
+A Development-signed Xcode build is suitable for its existing development installation and is separate from the notarized distribution. The earlier installed 1.0.9 update was Development-signed; this release does not replace that installed copy automatically. New installer acceptance on additional Macs remains separate from shared Chromium/WebKit fixture testing.
 
 ## Form behavior
 
@@ -84,4 +85,4 @@ Use the updated hosted app with package 1.0.9. Older extension scans retain thei
 
 ### Searchable menus and repeated history rows
 
-Package 1.0.9 supports Select2 School and Employer menus using exact available choices. Recognized Add Another controls create up to ten saved education or employment rows per section. Existing occupied rows are matched before empty slots are assigned; ambiguous records and unavailable choices remain in the review list. No Remove or submission control is used to expand history. Existing personal disclosure review remains required.
+Package 1.0.9 supports Select2 School and Employer menus using exact available choices. Recognized Add Another controls create up to ten saved education or employment rows per section. Existing occupied rows are matched before empty slots are assigned; ambiguous records and unavailable choices remain in the review list. No Remove or submission control is used to expand history. Saved authorization/sponsorship follows the matching rules in [Personal Details](PERSONAL-DETAILS.md); other private disclosures retain review requirements.

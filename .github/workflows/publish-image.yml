@@ -7,7 +7,7 @@ on:
       tag:
         description: Existing release tag to build
         required: true
-        default: v1.0.11
+        default: v1.0.12
 permissions:
   contents: read
 concurrency:
@@ -154,6 +154,25 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify the signed Safari distribution before publishing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p safari-distribution
+          gh release download "$TAG" --pattern 'career-companion-safari-*-macos-universal.dmg' --pattern 'safari-distribution-verification.json' --dir safari-distribution
+          python3 - <<'PYSAFARI'
+          import hashlib,json
+          from pathlib import Path
+          root=Path('safari-distribution')
+          receipt=json.loads((root/'safari-distribution-verification.json').read_text())
+          assert receipt['signature_valid'] and receipt['notarization_status']=='Accepted' and receipt['staple_valid'] and receipt['gatekeeper_accepted']
+          assert receipt['source_commit']==__import__('subprocess').check_output(['git','rev-parse','HEAD'],text=True).strip()
+          artifact=root/receipt['file']
+          assert artifact.name==receipt['file'] and artifact.suffix=='.dmg'
+          assert hashlib.sha256(artifact.read_bytes()).hexdigest()==receipt['sha256']
+          manifest=__import__('zipfile').ZipFile('frontend/public/extensions/career-companion-safari.zip')
+          assert receipt['extension_version']==json.loads(manifest.read('manifest.json'))['version']
+          PYSAFARI
       - name: Publish the multi-platform tag
         run: |
           docker buildx imagetools create --tag "$IMAGE:$VERSION" --tag "$IMAGE:latest" \
@@ -178,8 +197,10 @@ jobs:
           PYVERSION
           (cd release-assets && cat *.tar.gz.sha256 > SHA256SUMS)
           cp published-image.txt release-assets/
+          python3 scripts/package_source.py --output "release-assets/career-companion-$VERSION-source.zip"
+          cp safari-distribution/* release-assets/
           cp frontend/public/extensions/career-companion-{chrome,safari}.zip release-assets/
-          (cd release-assets && sha256sum career-companion-*.zip >> SHA256SUMS)
+          (cd release-assets && sha256sum career-companion-*.zip career-companion-*.dmg safari-distribution-verification.json compose.localhost.yaml LOCALHOST-QUICKSTART.md published-image.txt >> SHA256SUMS)
       - name: Publish the release after both architectures pass
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

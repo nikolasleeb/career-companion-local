@@ -1,0 +1,609 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 110;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1FD1A400308B37050069688A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FD1A3FF308B37050069688A /* AppDelegate.swift */; };
+		1FD1A404308B37050069688A /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A402308B37050069688A /* Main.html */; };
+		1FD1A406308B37050069688A /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A405308B37050069688A /* Icon.png */; };
+		1FD1A408308B37050069688A /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A407308B37050069688A /* Style.css */; };
+		1FD1A40A308B37050069688A /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A409308B37050069688A /* Script.js */; };
+		1FD1A40C308B37050069688A /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FD1A40B308B37050069688A /* ViewController.swift */; };
+		1FD1A40F308B37050069688A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A40D308B37050069688A /* Main.storyboard */; };
+		1FD1A411308B37050069688A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A410308B37050069688A /* Assets.xcassets */; };
+		1FD1A418308B37050069688A /* Career Companion Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1FD1A417308B37050069688A /* Career Companion Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1FD1A41D308B37050069688A /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FD1A41C308B37050069688A /* SafariWebExtensionHandler.swift */; };
+		1FD1A431308B37060069688A /* popup.js in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A429308B37060069688A /* popup.js */; };
+		1FD1A432308B37060069688A /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A42A308B37060069688A /* background.js */; };
+		1FD1A433308B37060069688A /* popup.html in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A42B308B37060069688A /* popup.html */; };
+		1FD1A434308B37060069688A /* icons in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A42C308B37060069688A /* icons */; };
+		1FD1A435308B37060069688A /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A42D308B37060069688A /* manifest.json */; };
+		1FD1A436308B37060069688A /* relay.js in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A42E308B37060069688A /* relay.js */; };
+		1FD1A437308B37060069688A /* engine.js in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A42F308B37060069688A /* engine.js */; };
+		1FD1A438308B37060069688A /* popup.css in Resources */ = {isa = PBXBuildFile; fileRef = 1FD1A430308B37060069688A /* popup.css */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1FD1A419308B37050069688A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1FD1A3F4308B37050069688A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1FD1A416308B37050069688A;
+			remoteInfo = "Career Companion Extension";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		1FD1A424308B37050069688A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				1FD1A418308B37050069688A /* Career Companion Extension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		1FD1A3FC308B37050069688A /* Career Companion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Career Companion.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1FD1A3FF308B37050069688A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		1FD1A403308B37050069688A /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = Base.lproj/Main.html; sourceTree = "<group>"; };
+		1FD1A405308B37050069688A /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
+		1FD1A407308B37050069688A /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
+		1FD1A409308B37050069688A /* Script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Script.js; sourceTree = "<group>"; };
+		1FD1A40B308B37050069688A /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		1FD1A40E308B37050069688A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		1FD1A410308B37050069688A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1FD1A412308B37050069688A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1FD1A417308B37050069688A /* Career Companion Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Career Companion Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1FD1A41C308B37050069688A /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
+		1FD1A41E308B37050069688A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1FD1A429308B37060069688A /* popup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = popup.js; path = Resources/popup.js; sourceTree = "<group>"; };
+		1FD1A42A308B37060069688A /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = background.js; path = Resources/background.js; sourceTree = "<group>"; };
+		1FD1A42B308B37060069688A /* popup.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = popup.html; path = Resources/popup.html; sourceTree = "<group>"; };
+		1FD1A42C308B37060069688A /* icons */ = {isa = PBXFileReference; lastKnownFileType = folder; name = icons; path = Resources/icons; sourceTree = "<group>"; };
+		1FD1A42D308B37060069688A /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = Resources/manifest.json; sourceTree = "<group>"; };
+		1FD1A42E308B37060069688A /* relay.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = relay.js; path = Resources/relay.js; sourceTree = "<group>"; };
+		1FD1A42F308B37060069688A /* engine.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = engine.js; path = Resources/engine.js; sourceTree = "<group>"; };
+		1FD1A430308B37060069688A /* popup.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = popup.css; path = Resources/popup.css; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1FD1A3F9308B37050069688A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		1FD1A414308B37050069688A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1FD1A3F3308B37050069688A = {
+			isa = PBXGroup;
+			children = (
+				1FD1A3FE308B37050069688A /* Career Companion */,
+				1FD1A41B308B37050069688A /* Career Companion Extension */,
+				1FD1A3FD308B37050069688A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1FD1A3FD308B37050069688A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1FD1A3FC308B37050069688A /* Career Companion.app */,
+				1FD1A417308B37050069688A /* Career Companion Extension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1FD1A3FE308B37050069688A /* Career Companion */ = {
+			isa = PBXGroup;
+			children = (
+				1FD1A3FF308B37050069688A /* AppDelegate.swift */,
+				1FD1A40B308B37050069688A /* ViewController.swift */,
+				1FD1A40D308B37050069688A /* Main.storyboard */,
+				1FD1A410308B37050069688A /* Assets.xcassets */,
+				1FD1A412308B37050069688A /* Info.plist */,
+				1FD1A401308B37050069688A /* Resources */,
+			);
+			path = "Career Companion";
+			sourceTree = "<group>";
+		};
+		1FD1A401308B37050069688A /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				1FD1A402308B37050069688A /* Main.html */,
+				1FD1A405308B37050069688A /* Icon.png */,
+				1FD1A407308B37050069688A /* Style.css */,
+				1FD1A409308B37050069688A /* Script.js */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		1FD1A41B308B37050069688A /* Career Companion Extension */ = {
+			isa = PBXGroup;
+			children = (
+				1FD1A428308B37060069688A /* Resources */,
+				1FD1A41C308B37050069688A /* SafariWebExtensionHandler.swift */,
+				1FD1A41E308B37050069688A /* Info.plist */,
+			);
+			path = "Career Companion Extension";
+			sourceTree = "<group>";
+		};
+		1FD1A428308B37060069688A /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				1FD1A429308B37060069688A /* popup.js */,
+				1FD1A42A308B37060069688A /* background.js */,
+				1FD1A42B308B37060069688A /* popup.html */,
+				1FD1A42C308B37060069688A /* icons */,
+				1FD1A42D308B37060069688A /* manifest.json */,
+				1FD1A42E308B37060069688A /* relay.js */,
+				1FD1A42F308B37060069688A /* engine.js */,
+				1FD1A430308B37060069688A /* popup.css */,
+			);
+			name = Resources;
+			path = "Career Companion Extension";
+			sourceTree = SOURCE_ROOT;
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1FD1A3FB308B37050069688A /* Career Companion */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1FD1A425308B37050069688A /* Build configuration list for PBXNativeTarget "Career Companion" */;
+			buildPhases = (
+				1FD1A3F8308B37050069688A /* Sources */,
+				1FD1A3F9308B37050069688A /* Frameworks */,
+				1FD1A3FA308B37050069688A /* Resources */,
+				1FD1A424308B37050069688A /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1FD1A41A308B37050069688A /* PBXTargetDependency */,
+			);
+			name = "Career Companion";
+			productName = "Career Companion";
+			productReference = 1FD1A3FC308B37050069688A /* Career Companion.app */;
+			productType = "com.apple.product-type.application";
+		};
+		1FD1A416308B37050069688A /* Career Companion Extension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1FD1A421308B37050069688A /* Build configuration list for PBXNativeTarget "Career Companion Extension" */;
+			buildPhases = (
+				1FD1A413308B37050069688A /* Sources */,
+				1FD1A414308B37050069688A /* Frameworks */,
+				1FD1A415308B37050069688A /* Resources */,
+			);
+			buildRules = (
+			);
+			name = "Career Companion Extension";
+			productName = "Career Companion Extension";
+			productReference = 1FD1A417308B37050069688A /* Career Companion Extension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1FD1A3F4308B37050069688A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2710;
+				LastUpgradeCheck = 2710;
+				TargetAttributes = {
+					1FD1A3FB308B37050069688A = {
+						CreatedOnToolsVersion = 27.1;
+					};
+					1FD1A416308B37050069688A = {
+						CreatedOnToolsVersion = 27.1;
+					};
+				};
+			};
+			buildConfigurationList = 1FD1A3F7308B37050069688A /* Build configuration list for PBXProject "Career Companion" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 1FD1A3F3308B37050069688A;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 1FD1A3FD308B37050069688A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1FD1A3FB308B37050069688A /* Career Companion */,
+				1FD1A416308B37050069688A /* Career Companion Extension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1FD1A3FA308B37050069688A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+				1FD1A406308B37050069688A /* Icon.png in Resources */,
+				1FD1A40F308B37050069688A /* Main.storyboard in Resources */,
+				1FD1A40A308B37050069688A /* Script.js in Resources */,
+				1FD1A404308B37050069688A /* Main.html in Resources */,
+				1FD1A411308B37050069688A /* Assets.xcassets in Resources */,
+				1FD1A408308B37050069688A /* Style.css in Resources */,
+			);
+		};
+		1FD1A415308B37050069688A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+				1FD1A432308B37060069688A /* background.js in Resources */,
+				1FD1A434308B37060069688A /* icons in Resources */,
+				1FD1A435308B37060069688A /* manifest.json in Resources */,
+				1FD1A437308B37060069688A /* engine.js in Resources */,
+				1FD1A438308B37060069688A /* popup.css in Resources */,
+				1FD1A433308B37060069688A /* popup.html in Resources */,
+				1FD1A436308B37060069688A /* relay.js in Resources */,
+				1FD1A431308B37060069688A /* popup.js in Resources */,
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1FD1A3F8308B37050069688A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				1FD1A40C308B37050069688A /* ViewController.swift in Sources */,
+				1FD1A400308B37050069688A /* AppDelegate.swift in Sources */,
+			);
+		};
+		1FD1A413308B37050069688A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				1FD1A41D308B37050069688A /* SafariWebExtensionHandler.swift in Sources */,
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1FD1A41A308B37050069688A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1FD1A416308B37050069688A /* Career Companion Extension */;
+			targetProxy = 1FD1A419308B37050069688A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		1FD1A402308B37050069688A /* Main.html */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1FD1A403308B37050069688A /* Base */,
+			);
+			name = Main.html;
+			sourceTree = "<group>";
+		};
+		1FD1A40D308B37050069688A /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1FD1A40E308B37050069688A /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		1FD1A41F308B37050069688A /* Debug configuration for PBXProject "Career Companion" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		1FD1A420308B37050069688A /* Release configuration for PBXProject "Career Companion" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		1FD1A422308B37050069688A /* Debug configuration for PBXNativeTarget "Career Companion Extension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Career Companion Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Career Companion Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.austrich.careercompanion.Extension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		1FD1A423308B37050069688A /* Release configuration for PBXNativeTarget "Career Companion Extension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Career Companion Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Career Companion Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.austrich.careercompanion.Extension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		1FD1A426308B37050069688A /* Debug configuration for PBXNativeTarget "Career Companion" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Career Companion/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Career Companion";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_NSViewGestureRecognizerIsExclusive = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.austrich.careercompanion;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		1FD1A427308B37050069688A /* Release configuration for PBXNativeTarget "Career Companion" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Career Companion/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Career Companion";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_NSViewGestureRecognizerIsExclusive = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.austrich.careercompanion;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1FD1A3F7308B37050069688A /* Build configuration list for PBXProject "Career Companion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1FD1A41F308B37050069688A /* Debug configuration for PBXProject "Career Companion" */,
+				1FD1A420308B37050069688A /* Release configuration for PBXProject "Career Companion" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		1FD1A421308B37050069688A /* Build configuration list for PBXNativeTarget "Career Companion Extension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1FD1A422308B37050069688A /* Debug configuration for PBXNativeTarget "Career Companion Extension" */,
+				1FD1A423308B37050069688A /* Release configuration for PBXNativeTarget "Career Companion Extension" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		1FD1A425308B37050069688A /* Build configuration list for PBXNativeTarget "Career Companion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1FD1A426308B37050069688A /* Debug configuration for PBXNativeTarget "Career Companion" */,
+				1FD1A427308B37050069688A /* Release configuration for PBXNativeTarget "Career Companion" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1FD1A3F4308B37050069688A /* Project object */;
+	validationLevel = 1;
+}

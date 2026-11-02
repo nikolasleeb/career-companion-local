@@ -5,9 +5,32 @@ A personal career workspace that runs at **http://localhost:3000** on the comput
 Applications can also use your own uploaded resume or be saved without a resume. Attach interview prep, email copies, and other documents to an entry. Application details now use Overview, Documents, and Activity tabs; see [Application details](docs/APPLICATION-DETAILS.md) and [Application documents](docs/APPLICATION-DOCUMENTS.md).
 Each installation starts empty. Accounts, documents, saved API keys, and encrypted private disclosures belong to that installation. Each account supplies its own OpenAI API key in Settings. Manual features work without one.
 
-Latest update: **app 1.0.11 · extension 1.0.4**. Reviewed Profile imports, project ZIPs and common document/image formats, Explore Occupations and Plans, private Career Coach chats and visible AI progress. See [release notes](docs/RELEASE-NOTES.md).
+Latest update: **app 1.0.12 · extension 1.0.9**. Structured Personal Details and application autofill, linked Supporting Details and coursework, recoverable resume optimization, explicit resume finalization, and clearer application navigation. See [release notes](docs/RELEASE-NOTES.md).
 
 Interview Practice is separate from Skills. Practice behavioral answers, build STAR responses, or generate original coding problems with AI code review (code is not executed). Sessions can use a saved job/application, company and role, plus up to four private interview-preparation PDFs. Questions, guidance and feedback are manual AI actions using the account’s own key; previous practice remains saved and is included in account backups.
+
+## Profile and AI data use
+
+Eligibility for context does not mean every saved item is sent. Each AI action selects a bounded context; review status, sharing choices and the feature determine what can be used. Routine application autofill makes no AI request.
+
+```mermaid
+flowchart TD
+    P[Profile entries and linked Supporting Details] --> C{Confirmed and eligible?}
+    C -->|Yes| E[Professional evidence with source attribution]
+    C -->|No| Q[Review queue: excluded from qualification evidence]
+    E --> M[Local master resume and application mapping]
+    E --> G{AI personalization and action context}
+    G --> A[Selected AI comparison, writing or guidance]
+    W[Reviewed Work Styles summary and Career Goals] --> S{Sharing enabled for this feature?}
+    S -->|Yes| A
+    W -.->|Guidance only, never qualification evidence| A
+    V[Encrypted application names, street address, postal code and eligibility answers] --> F[User-started application autofill]
+    V --> N[Excluded from general AI and optimizer documents]
+    R[Raw Work Styles answers and scores] --> L[Local assessment]
+    L --> D[Explicit summary drafting uses bounded broad results and work choices]
+```
+
+See the [data-use and permission table](docs/PROFILE-AI-DATA-USE.md) for exact limits, exceptions and the source-code checks behind this chart. These are the implemented boundaries, not a claim that every feature uses every eligible source.
 
 ## Run from source
 
@@ -59,7 +82,7 @@ For a downloaded image, use the new release's Compose file and archive in the sa
 - The browser extension connects only to localhost. Download it from Application Assistant or build it with `python3 extensions/build.py`.
 - The app uses no bundled account, API key, documents, private disclosures, or operator credentials. Git history begins with this clean local edition.
 - Optional AI actions send the relevant professional context to OpenAI only when requested. Source integrations contact their respective services. Update checks contact GitHub. This is a local application, not an offline application.
-- Private citizenship and disclosure information remains separate from professional documents and AI prompts. Employer disclosures require review. Browser filling stops before final submission and hands off login, signatures, CAPTCHA, and file uploads.
+- Private citizenship and disclosure information remains separate from professional documents and AI prompts. Explicit saved Yes/No work-authorization and sponsorship settings can fill matching unqualified questions when you start or resume filling; other private disclosures require review. Browser filling stops before final submission and hands off login, signatures, CAPTCHA, and file uploads.
 - Public source can be modified by its installer. The localhost restrictions describe the supplied code and configuration; they cannot prevent someone from changing their own copy.
 
 ## Development and validation
@@ -78,7 +101,7 @@ Frontend: install the locked dependencies in `frontend` using pnpm, then run `pn
 - Test installation and upgrades on more clean x64/ARM64 systems, including volume backup and recovery.
 - Expand PDF job-posting fixtures for complex columns, printing artifacts, and scanned PDFs; scanned documents currently need pasted text.
 - Expand employer-form fixtures for dynamic fields, inaccessible widgets, and multi-page flows. Unsupported controls must continue to pause for manual completion.
-- Validate the optional Safari extension through each installer's own signing and permission flow.
+- Validate Safari installation and permissions on additional supported macOS versions.
 - Continue accessibility checks with assistive technology and narrow screens.
 - Review model pricing and capability catalogs as providers change; estimates are not bills.
 - Add release notes and update/recovery regression checks for every future release.
