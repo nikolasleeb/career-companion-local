@@ -24,8 +24,7 @@ flowchart TD
     E --> G{AI personalization and action context}
     G --> A[Selected AI comparison, writing or guidance]
     W[Reviewed Work Styles summary and Career Goals] --> S{Sharing enabled for this feature?}
-    S -->|Yes| A
-    W -.->|Guidance only, never qualification evidence| A
+    S -->|Yes, for guidance only| A
     V[Encrypted application names, street address, postal code and eligibility answers] --> F[User-started application autofill]
     V --> N[Excluded from general AI and optimizer documents]
     R[Raw Work Styles answers and scores] --> L[Local assessment]
@@ -57,15 +56,15 @@ Open [Releases](https://github.com/nikolasleeb/career-companion-local/releases/l
 | Intel/AMD x64 | `linux-amd64.tar.gz` |
 | ARM64 | `linux-arm64.tar.gz` |
 
-Verify the archive against `SHA256SUMS`, then follow [LOCALHOST-QUICKSTART.md](LOCALHOST-QUICKSTART.md). Public release downloads require no GitHub token. The source build above also works without registry access.
+Verify the archive against `SHA256SUMS`, then follow [LOCALHOST-QUICKSTART.md](LOCALHOST-QUICKSTART.md). Public release downloads require no GitHub token. Building from source does not require access to the Career Companion image registry. Docker may still need internet access to download base images and dependencies.
 
 ## Job search without API keys
 
-Public Greenhouse, Ashby and Lever employer feeds and GitHub community listings work without API keys. Complete reviewed education in Profile, choose roles and a location, then search. OpenAI is needed only for optional AI features. USAJOBS, O*NET and notification delivery require your own optional installation configuration; Adzuna connections belong to individual accounts in Settings → Job Search. No hosted credentials, accounts or cached results are included.
+Public Greenhouse, Ashby and Lever employer feeds and GitHub community listings work without API keys. Complete reviewed education in Profile, choose roles and a location, then search. OpenAI is needed only for optional AI features. USAJOBS and O*NET use optional installation configuration. Adzuna connections belong to individual accounts in Settings → Job Search. Job Search runs on demand. No hosted credentials, accounts or cached results are included.
 
 ## Check for updates
 
-Settings → **App & storage** shows the installed version, latest complete stable release, and last successful check. Opening Settings checks once per day; **Check now** refreshes manually, subject to a short cooldown. A check sends no account data or API keys and never installs an update.
+Settings → **App & storage** → **App version & updates** shows the installed version, latest complete stable release, and last successful check. Opening Settings checks once per day; **Check now** refreshes manually, subject to a short cooldown. A check sends no account data or API keys and never installs an update.
 
 Published images contain their release version and revision. Locally built source images show **Custom build** unless built by the release workflow. Missing connectivity, incomplete releases, and stale results are shown explicitly.
 
@@ -101,7 +100,7 @@ Frontend: install the locked dependencies in `frontend` using pnpm, then run `pn
 ## Work remaining
 
 - Test installation and upgrades on more clean x64/ARM64 systems, including volume backup and recovery.
-- Expand PDF job-posting fixtures for complex columns, printing artifacts, and scanned PDFs; scanned documents currently need pasted text.
+- Expand PDF job-posting tests for complex columns, printing artifacts, and scanned PDFs. If text extraction fails, paste the posting text or upload a text-based PDF.
 - Expand employer-form fixtures for dynamic fields, inaccessible widgets, and multi-page flows. Unsupported controls must continue to pause for manual completion.
 - Validate Safari installation and permissions on additional supported macOS versions.
 - Continue accessibility checks with assistive technology and narrow screens.
@@ -124,17 +123,17 @@ reported explicitly. Checks only read this public repository; they send no
 account data, cookies or credentials. Pushing to GitHub does not deploy the
 separately operated hosted server.
 
-## Explore Occupations
+## Explore careers
 
-Resources → **Explore Occupations** offers occupation search, education links, skills, national pay/outlook comparisons and an account-owned shortlist. Browsing needs no AI key and works before Profile setup. See [Explore Occupations](docs/CAREER-EXPLORER.md) for data sources, limitations and saving behavior.
+Resources → **Explore careers** offers occupation search, education links, skills, national pay/outlook comparisons and an account-owned shortlist. Browsing needs no AI key and works before Profile setup. See the [Explore careers guide](docs/CAREER-EXPLORER.md) for data sources, limitations and saving behavior.
 
 ## Overall career direction
 
 Profile → Career Goals separates one optional overall statement from specific milestones. Use guided fields, skip education, or edit your statement directly. Empty fields or `[blank]` omit a part. Goals remain aspirations and automatic AI guidance stays opt-in. See [Career Goals](docs/CAREER-GOALS.md).
 
-## Career Readiness
+## Career fit & direction
 
-Resources → **Career Readiness** uses the OpenAI Python Agents SDK to explore directions, compare a reviewed shortlist, and assess preparation using sourced evidence. Ask follow-up questions or create a new assessment version when information changes. Proposed next steps connect to Action Plans, Skills, Interview Practice and Career Goals. Public research is optional and off by default; each explicit AI action uses your own key and an adjustable estimated spending ceiling. See [Career Readiness](docs/CAREER-READINESS.md) for evidence boundaries, costs and recovery.
+Resources → **Career fit & direction · AI** uses the OpenAI Python Agents SDK to explore directions, compare a reviewed shortlist, and assess preparation using sourced evidence. Ask follow-up questions or create a new assessment version when information changes. Proposed next steps connect to Action Plans, Skills, Interview Practice and Career Goals. Public research is optional and off by default; each explicit AI action uses your own key and an adjustable estimated spending ceiling. See [Career Readiness](docs/CAREER-READINESS.md) for evidence boundaries, costs and recovery.
 
 ## Profile and master resume
 
