@@ -5,7 +5,9 @@ A personal career workspace that runs at **http://localhost:3000** on the comput
 Applications can also use your own uploaded resume or be saved without a resume. Attach interview prep, email copies, and other documents to an entry. Application details now use Overview, Documents, and Activity tabs; see [Application details](docs/APPLICATION-DETAILS.md) and [Application documents](docs/APPLICATION-DOCUMENTS.md).
 Each installation starts empty. Accounts, documents, saved API keys, and encrypted private disclosures belong to that installation. Each account supplies its own OpenAI API key in Settings. Manual features work without one.
 
-Latest update: **app 1.0.12 · extension 1.0.9**. Structured Personal Details and application autofill, linked Supporting Details and coursework, recoverable resume optimization, explicit resume finalization, and clearer application navigation. See [release notes](docs/RELEASE-NOTES.md).
+**Latest release** · [App 1.0.14](https://github.com/nikolasleeb/career-companion-local/releases/tag/v1.0.14) · **Extension 1.0.9**
+
+Version 1.0.14 widens Home on large screens, aligns the Explore careers button with its search field, and gives job card actions a consistent size. See the [release notes](docs/RELEASE-NOTES.md) for details.
 
 Interview Practice is separate from Skills. Practice behavioral answers, build STAR responses, or generate original coding problems with AI code review (code is not executed). Sessions can use a saved job/application, company and role, plus up to four private interview-preparation PDFs. Questions, guidance and feedback are manual AI actions using the account’s own key; previous practice remains saved and is included in account backups.
 
