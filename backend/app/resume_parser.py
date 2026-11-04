@@ -23,7 +23,8 @@ DEGREE=re.compile(r'\b(Master(?:s|\u2019s|\'s)? of (?:Science|Arts|Business Admi
 YEAR=re.compile(r'\b(?:19|20)\d{2}\b')
 DATE_RANGE=re.compile(r'(?:(?:[A-Za-z]{3,9}\s+)?(?:19|20)\d{2}|[A-Za-z]{3,9})\s*[–—-]\s*(?:Present|Current|Now|(?:[A-Za-z]{3,9}\s+)?(?:19|20)\d{2})\b',re.I)
 ACTION=re.compile(r'^(?:I\b|Designed|Built|Developed|Created|Managed|Used|Led|Owned|Collaborated|Supported|Assisted|Held|Provided?|Continue|Refine|Plan|Prepare|Conducted|Cleaned|Leveraged|Engineered|Implemented|Analyzed|Worked|Responsible|Collected|Trained|Demonstrated|Independently|Identified|Adapted|Wrote|Configured|Performed|Maintained)\b',re.I)
-BULLET=re.compile(r'^\s*(?:[•●▪◦*\u25cf]|[-–]\s|\d+[.)]\s)\s*')
+# Some PDF fonts extract their bullet glyph as the DEL control character.
+BULLET=re.compile(r'^\s*(?:[•●▪◦*\u25cf\x7f]|[-–]\s|\d+[.)]\s)\s*')
 SCHOOL=re.compile(r'\b(?:university|college|institute|polytechnic|school|tech)\b',re.I)
 URL=re.compile(r'(?:https?://|www\.)[^\s<>|)]+',re.I)
 

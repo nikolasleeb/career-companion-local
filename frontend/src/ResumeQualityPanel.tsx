@@ -5,6 +5,7 @@ export function ResumeQualityPanel({review,busy,estimate,onRecheck,kind='resume'
  const reviewEstimate=kind==='cover'?estimate?.review_usd:estimate?.usd;
  return <details className={'resume-quality quality-'+(review?.status||'not_rechecked')}><summary>{kind==='cover'?'Cover Letter':'Resume'} quality review · {labels[review?.status]||'Not rechecked'}</summary><p><strong>{labels[review?.status]||'Not rechecked'}</strong></p>
  {!review&&<p>This draft has not had an independent quality review. Choose Recheck draft quality to review it, or Optimize for this posting to rebuild and review it.</p>}
+ {review?.omitted_findings>0&&<p role="status">Findings withheld due to missing or mismatched quotes: {review.omitted_findings}. You can recheck this draft.</p>}
  {review?.note&&<p className="small">{review.note}</p>}
  {!!review?.strengths?.length&&<><h4>Strengths</h4><ul>{review.strengths.map((s:string,i:number)=><li key={i}>{s}</li>)}</ul></>}
  {!!review?.findings?.length&&<><h4>Remaining issues</h4><ul>{review.findings.map((f:any,i:number)=><li key={i}><strong>{f.material?'Priority: ':'Suggestion: '}</strong>{f.issue}{f.resume_quote&&<blockquote>{f.resume_quote}</blockquote>}{f.posting_quote&&<details><summary>Posting reference</summary><blockquote>{f.posting_quote}</blockquote></details>}<p>{f.action}</p></li>)}</ul></>}

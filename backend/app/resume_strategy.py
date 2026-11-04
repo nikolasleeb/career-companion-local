@@ -29,7 +29,8 @@ def entries(snapshot):
 def passages(text,field):
     if field not in NARRATIVE:return [text]
     # Exact contiguous spans: do not split decimal numbers, abbreviations or URLs.
-    parts=re.split(r'(?<=[.!?])\s+(?=[A-Z])|;\s+(?=[A-Z])',text)
+    # A bullet glyph from an imported PDF (\x7f) also separates passages.
+    parts=[part for piece in text.split('\x7f') for part in re.split(r'(?<=[.!?])\s+(?=[A-Z])|;\s+(?=[A-Z])',piece.strip())]
     return [p.strip() for p in parts if p.strip()]
 
 

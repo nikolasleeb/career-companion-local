@@ -106,7 +106,7 @@ def test_professional_snapshot_no_drafts_or_private_fields(client,account):
  assert 'PRIVATE_ORG' in value # Professional organizations now distinguish linked experiences.
 
 def output(payload):
- return {'assessments':[{'job_id':j['id'],'fit':'possible','summary':'Some relevant evidence; verify requirements.','evidence':[{'profile_source_id':payload['profile_sources'][0]['id'],'profile_quote':payload['profile_sources'][0]['text'],'posting_quote':'SQL'}],'gaps':[],'unknowns':['Detailed duties need review.']} for j in payload['jobs']]}
+ return {'assessments':[{'job_id':j['id'],'fit':'possible','summary':'Some relevant evidence; verify requirements.','evidence':[{'profile_source_id':payload['profile_sources'][0]['id'],'posting_passage_id':next((part['id'] for part in j['posting_passages'] if 'SQL' in part['text']),j['posting_passages'][0]['id'])}],'gap_ids':[],'unknowns':['Detailed duties need review.']} for j in payload['jobs']]}
 def prepare_match(client,account,search,depth='quick',token='fictional-match'):
  credentials.save(account['id'],'sk-fictional-not-used')
  return job_ai.Match(search_id=search['id'],depth=depth,request_token=token)
@@ -140,11 +140,21 @@ def test_quick_matching_checkpoints_cancel_resume_and_no_discovery(client,accoun
  db.save(account['id'],'experience',{'category':'skills','title':'SQL development','confirmed':True})
  assert client.get('/api/job-search/ai/matches/'+r['id']).json()['profile_changed']
 
-def test_invalid_evidence_rejected_and_restart_has_no_automatic_ai(client,account,monkeypatch):
+def test_invalid_evidence_withheld_and_restart_has_no_automatic_ai(client,account,monkeypatch):
  search=saved(account['id'],1);profile=job_ai.profile(account['id']);rows=results.all_rows(account['id'],search['id'])
- payload={'profile_sources':profile['sources'],'jobs':[{'id':rows[0]['id']}]};value=output(payload)
- value['assessments'][0]['evidence'][0]['posting_quote']='INVENTED'
- with pytest.raises(ServiceError):job_ai.validate(value,rows,profile,'detailed')
+ job=rows[0]
+ passages=job_ai.posting_passages(job['data'])
+ value=output({'profile_sources':profile['sources'],'jobs':[{'id':job['id'],'posting_passages':passages}]})
+ row=value['assessments'][0]
+ valid=row['evidence'][0]
+ invalid={**valid,'posting_passage_id':'INVENTED'}
+ row['evidence']=[invalid,valid]
+ result=job_ai.validate(value,rows,profile,'detailed')[job['id']]
+ assert result['fit']=='possible'
+ assert result['evidence'][0]['posting_quote']==next(p['text'] for p in passages if p['id']==valid['posting_passage_id'])
+ row.update(fit='strong',evidence=[invalid])
+ result=job_ai.validate(value,rows,profile,'detailed')[job['id']]
+ assert result['fit']=='insufficient_information' and not result['evidence']
  id=db.uid();db.save(account['id'],'ai_job_match',{'state':'running','profile_revision':profile['revision'],'use_profile':True,'search_id':search['id'],'assessments':{}},id)
  db.init();assert db.get(account['id'],id,'ai_job_match')['data']['state']=='interrupted'
 

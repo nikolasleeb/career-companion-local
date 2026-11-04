@@ -82,3 +82,26 @@
 .job-result-actions>label {margin:0;}
 .job-result-actions select {height:44px;min-height:44px;box-sizing:border-box;margin:8px 0 0;}
 .job-result-actions>.button {height:44px;min-height:44px;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;}
+
+/* Keep the search actions and result controls aligned as labels wrap. */
+.job-search-tabs button,.job-search-submit>.button,.search-settings-launch>.button {
+ display:inline-flex;align-items:center;justify-content:center;min-height:44px;box-sizing:border-box;margin:0;
+}
+.job-search-form .job-search-submit {gap:8px 12px;margin-top:16px;}
+.job-search-form .job-external-links {gap:8px 12px;padding-top:16px;border-top:1px solid var(--line);}
+.result-browser .result-toolbar {align-items:end;gap:10px 12px;}
+.result-browser .result-toolbar h2 {align-self:center;}
+.result-browser .result-toolbar input,.result-browser .result-toolbar select {
+ height:44px;min-height:44px;box-sizing:border-box;margin:6px 0 0;
+}
+.ask-jobs-ai .career-option {
+ display:flex;flex-direction:column;justify-content:flex-start;
+ border-width:2px;padding:14px;text-align:left;
+}
+.ask-jobs-ai .career-option.selected {padding:14px;}
+.ask-jobs-ai .ai-match-panel>h2:first-child {margin-top:0;}
+.ask-jobs-ai .ai-estimate {margin:16px 0 0;}
+.ask-jobs-ai .ai-estimate>p:first-child {margin-top:0;}
+.job-search-result {display:flex;flex-direction:column;}
+.job-search-result>.card-actions {margin-top:auto;padding-top:12px;gap:8px;}
+.job-search-result>.card-actions>.button {margin:0;}

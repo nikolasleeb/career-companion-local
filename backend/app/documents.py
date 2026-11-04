@@ -80,7 +80,9 @@ def extract(filename, raw, *, max_upload=None, repair_font_mappings=False):
             if repair_font_mappings:
                 from .pdf_text import repair_ligatures
                 repair_ligatures(reader)
+            # Some fonts extract their bullet glyph as the DEL control character.
             text = '\n\n'.join(page.extract_text() or '' for page in reader.pages)
+            text = re.sub(r'[ \t]*\x7f[ \t]*','\n• ',text)
             if len(text.strip())<30:
                 raise ServiceError('This PDF appears to be scanned or contains too little selectable text. Paste the text or upload a text-based PDF.')
         elif suffix=='.docx':

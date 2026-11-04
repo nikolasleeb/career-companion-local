@@ -39,7 +39,7 @@ def test_source_ids_change_with_content_and_record_ownership():
             comparison.attach_evidence_sources({'duty_assessments':[{'evidence':[{'source_id':original}]}]},catalog)
 
 
-@pytest.mark.parametrize('section',['qualification','duty_assessments','recommendations','keywords'])
+@pytest.mark.parametrize('section',['qualification','duty_assessments','recommendations'])
 def test_private_source_ids_rejected_outside_eligibility(section):
     catalog=comparison.evidence_catalog([],{'authorized_us':'yes'})
     row={'kind':'qualification','record_id':'profile:authorized_us','evidence':[{'source_id':catalog['eligibility'][0]['source_id']}]}
@@ -87,6 +87,10 @@ def test_first_comparison_binds_multiple_professional_passages_once_without_priv
         eligibility.update(status='supported',evidence=[{'source_id':payload['private_eligibility_catalog'][0]['source_id']}])
         value['recommendations']=[{'record_id':record['id'],'reason':'Relevant documentation work.','evidence':[source('Documented the workflow.')]}]
         value['keywords']=[{'term':'Document','job_quote':'Document your work clearly and present findings to technical audiences.','evidence':[source('Documented the workflow.')]}]
+        value['keywords'] += [
+            {'term':'findings','job_quote':'Document your work clearly and present findings to technical audiences.','evidence':[{'source_id':'missing'}]},
+            {'term':'Invented','job_quote':'Invented posting sentence','evidence':[]},
+        ]
         return {'status':'completed','model':body['model'],'usage':{'input_tokens':100,'output_tokens':100,'total_tokens':200},'output':[{'content':[{'type':'output_text','text':json.dumps(value)}]}]}
     monkeypatch.setattr(ai,'call_api',fake)
     token='single-evidence-dispatch'
@@ -99,6 +103,7 @@ def test_first_comparison_binds_multiple_professional_passages_once_without_priv
     for field in ('duty_assessments','recommendations','keywords'):
         assert all(e['record_id']==record['id'] and ai.valid_quote(e['quote'],ai.experience_text(record['data'])) for row in result[field] for e in row['evidence'])
     assert all('source_id' not in e for row in result['requirements'] for e in row['evidence'])
+    assert [(k['term'],bool(k['evidence'])) for k in result['keywords']]==[('Document',True),('findings',False)]
     assert without_setup(client.get('/api/workspace').json()['experience'])==[record]
 
 
@@ -131,3 +136,11 @@ def test_legacy_duty_errors_distinguish_private_unknown_and_mismatched(evidence,
     row={'criterion_id':criterion['id'],'job_quote':criterion['source'],'evidence':[evidence]}
     with pytest.raises(ServiceError,match=message):
         role_alignment.validate({'duty_assessments':[row]},job,{'project':'Prepared data.','profile:us_citizen':'us_citizen = yes'})
+
+
+def test_optional_keyword_discards_unavailable_or_private_evidence():
+    catalog=comparison.evidence_catalog([],{'authorized_us':'yes'})
+    for identity in ('missing',catalog['eligibility'][0]['source_id']):
+        value={'keywords':[{'term':'SQL','job_quote':'Use SQL.','evidence':[{'source_id':identity}]}]}
+        result=comparison.attach_evidence_sources(value,catalog)
+        assert result['keywords']==[{'term':'SQL','job_quote':'Use SQL.','evidence':[]}]

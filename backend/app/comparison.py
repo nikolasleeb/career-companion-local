@@ -84,6 +84,9 @@ def attach_evidence_sources(output,catalog):
             evidence=[]
             for ref in row['evidence']:
                 identity=ref.get('source_id');source=professional.get(identity)
+                if field=='keywords' and not source:
+                    evidence=[]
+                    break
                 if identity in private:
                     if field!='requirements' or row['kind']!='eligibility':
                         raise ServiceError('The comparison used private eligibility evidence outside an eligibility assessment. No result was saved.')
@@ -174,10 +177,15 @@ def validate(output,job,retrieved,profile):
         except ServiceError:omitted+=1
         else:verified.append(suggestion)
     output['suggestions']=verified;output['omitted_suggestions']=omitted
+    keywords=[]
     for keyword in output.get('keywords',[]):
-        if not valid_quote(keyword['job_quote'],job['description']) or not valid_quote(keyword['term'],keyword['job_quote']):raise ServiceError('A keyword did not quote the posting.')
-        for e in keyword['evidence']:
-            if e['record_id'].startswith('profile:') or e['record_id'] not in records or not valid_quote(e['quote'],records[e['record_id']]):raise ServiceError('A keyword had invalid Profile evidence.')
+        if not valid_quote(keyword['job_quote'],job['description']) or not valid_quote(keyword['term'],keyword['job_quote']):
+            continue
+        evidence=keyword['evidence']
+        if any(e['record_id'].startswith('profile:') or e['record_id'] not in records or not valid_quote(e['quote'],records[e['record_id']]) for e in evidence):
+            evidence=[]
+        keywords.append({**keyword,'evidence':evidence})
+    output['keywords']=keywords
     output['score']=score(requirements);output['schema_version']=3
     output['posting_hash']=job_parser.posting_hash(job)
     return output

@@ -1,3 +1,14 @@
+# Career Companion Local 1.0.13
+
+- Job postings with an unknown country preserve the city and region.
+- Profile fit reviews use original posting and Profile passages. A bad reference does not erase other assessments.
+- Application comparisons retain their results when an optional keyword citation fails.
+- Resume answer review keeps valid proposals and explains when it withholds a proposal. Both optimizers require saved Writer and Reviewer settings for answer review.
+- PDF imports preserve affected bullet boundaries. Document quality reviews retain supported findings and flag omitted material findings.
+- Applications use compact rows with direct workspace access and separate activity and details actions. Job Search and Comparison have tighter alignment and spacing.
+
+## Previous release
+
 # Career Companion Local 1.0.12
 
 This release brings the current reviewed hosted functionality to the sanitized localhost edition. Installations start empty; hosted accounts, data, credentials and deployment configuration are not included.

@@ -602,3 +602,25 @@ def test_resume_ai_gets_only_the_approved_work_style_summary(env):
     assert 'SECRET_REPORT_NAME' not in json.dumps(calls) and 'SECRET_RAW_ANSWER' not in json.dumps(calls)
     assert 'professional evidence' in payload['work_style_guidance']['purpose']
     assert result['current']
+
+
+def test_answer_review_keeps_valid_proposal_and_reports_bad_siblings(env,monkeypatch):
+    user,job,rows,session,calls=env
+    text='Wrote analytical reports for the project sponsors.'
+    before=db.list_entities(user,'experience')
+    async def model(schema,payload,*args,**kwargs):
+        record=next(r for r in payload['confirmed_profile'] if r['data']['category']=='project')
+        assert record['id'].startswith('r')
+        good=proposal(env,text,rid=record['id'])
+        unknown={**good,'record_id':'missing'}
+        conflict={**good,'fields':[good['fields'][0],{**good['fields'][0],'value':'Wrote analytical reports'}]}
+        return response([unknown,conflict,good]),META
+    monkeypatch.setattr(ai,'structured',model)
+    state=asyncio.run(guided.send(user,session['id'],ConversationMessage(
+        text=text,expected_version=0,question_answers=[{'question_id':'test','answer':text}])))
+    proposals=state['data']['proposals']
+    assert len(proposals)==1 and proposals[0]['status']=='pending'
+    assert any(r['id']==proposals[0]['record_id'] for r in before)
+    assert 'unknown Profile record' in state['data']['messages'][-1]['text']
+    assert 'listed one field twice' in state['data']['messages'][-1]['text']
+    assert db.list_entities(user,'experience')==before

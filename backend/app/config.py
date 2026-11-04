@@ -18,6 +18,7 @@ ADZUNA_KEY = os.getenv('ADZUNA_APP_KEY', '')
 ENABLE_JOBSPY = os.getenv('ENABLE_JOBSPY', 'false').lower() == 'true'
 ENABLE_WEB_SEARCH = os.getenv('ENABLE_WEB_SEARCH', 'true').lower() == 'true'
 COOKIE_SECURE = False
+SESSION_COOKIE = os.getenv('CAREER_SESSION_COOKIE', 'next_step_session')
 
 def capabilities():
     return {'deployment': 'local','openai': bool(OPENAI_KEY), 'onet': bool(ONET_KEY),

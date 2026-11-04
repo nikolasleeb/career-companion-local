@@ -37,11 +37,11 @@ def issue(response, user):
     with db.connect() as c:
         c.execute('DELETE FROM sessions WHERE expires_at < ?', (time.time(),))
         c.execute('INSERT INTO sessions VALUES(?,?,?,?)', (digest(token), user, csrf, time.time() + 7*86400))
-    response.set_cookie('next_step_session', token, max_age=7*86400, httponly=True, secure=config.COOKIE_SECURE, samesite='strict', path='/')
+    response.set_cookie(config.SESSION_COOKIE, token, max_age=7*86400, httponly=True, secure=config.COOKIE_SECURE, samesite='strict', path='/')
     return csrf
 
 def current(request: Request):
-    token = request.cookies.get('next_step_session', '')
+    token = request.cookies.get(config.SESSION_COOKIE, '')
     with db.connect() as c:
         row = c.execute('SELECT u.id,u.username,s.csrf,coalesce(d.revision,0) AS cleanup_revision FROM sessions s JOIN users u ON u.id=s.user_id LEFT JOIN cc_cleanup_state d ON d.user_id=u.id WHERE s.token_hash=? AND s.expires_at>?', (digest(token), time.time())).fetchone()
     if not row:

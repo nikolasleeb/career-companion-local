@@ -90,7 +90,7 @@ async def boundaries(request, call_next):
         expected=request.url.scheme+'://'+request.headers.get('host','')
         if origin and origin!=expected: return JSONResponse({'detail':'Cross-origin changes are not allowed.'},403)
     mutation_owner=None
-    if request.method not in ('GET','HEAD','OPTIONS') and request.url.path.startswith('/api/') and not request.url.path.startswith('/api/auth/') and request.cookies.get('next_step_session'):
+    if request.method not in ('GET','HEAD','OPTIONS') and request.url.path.startswith('/api/') and not request.url.path.startswith('/api/auth/') and request.cookies.get(config.SESSION_COOKIE):
         try:mutation_owner=auth.current(request)['id']
         except HTTPException as error:return JSONResponse({'detail':error.detail},error.status_code)
         account_cleanup.mutations[mutation_owner]+=1
@@ -270,7 +270,7 @@ def login(body:Credentials,request:Request,response:Response):
     with db.connect() as c: row=c.execute('SELECT * FROM users WHERE username=?',(body.username.lower(),)).fetchone()
     if not row or not auth.verify(row['password'],body.password): raise HTTPException(401,'Username or password is incorrect.')
     with db.connect() as c:
-        previous=c.execute('SELECT user_id,csrf FROM sessions WHERE token_hash=?',(auth.digest(request.cookies.get('next_step_session','')),)).fetchone()
+        previous=c.execute('SELECT user_id,csrf FROM sessions WHERE token_hash=?',(auth.digest(request.cookies.get(config.SESSION_COOKIE,'')),)).fetchone()
     if previous:application_agent.revoke_session(previous['user_id'],previous['csrf'])
     csrf=auth.issue(response,row['id'])
     return {'id':row['id'],'username':row['username'],'csrf':csrf,'settings':db.settings(row['id']),'capabilities':capabilities_for(row['id']),'onboarding':onboarding.status(row['id'])}
@@ -293,8 +293,8 @@ def setup_complete(body:onboarding.Finish,user=Depends(auth.current)):return onb
 @app.post('/api/auth/logout')
 def logout(request:Request,response:Response,user=Depends(auth.current)):
     application_agent.revoke_session(user['id'],user['csrf'])
-    with db.connect() as c: c.execute('DELETE FROM sessions WHERE token_hash=?',(auth.digest(request.cookies.get('next_step_session','')),))
-    response.delete_cookie('next_step_session',path='/');return {'ok':True}
+    with db.connect() as c: c.execute('DELETE FROM sessions WHERE token_hash=?',(auth.digest(request.cookies.get(config.SESSION_COOKIE,'')),))
+    response.delete_cookie(config.SESSION_COOKIE,path='/');return {'ok':True}
 
 @app.post('/api/auth/password')
 def change_password(body:PasswordChange,user=Depends(auth.current)):
@@ -1711,7 +1711,7 @@ def delete_account(body:DeleteAccount,response:Response,user=Depends(auth.curren
         c.execute('DELETE FROM users WHERE id=?',(user['id'],))
     shutil.rmtree(config.DATA_DIR/'uploads'/user['id'],ignore_errors=True)
     credentials.remove(user['id'])
-    response.delete_cookie('next_step_session',path='/')
+    response.delete_cookie(config.SESSION_COOKIE,path='/')
     return {'ok':True}
 
 @app.get('/{path:path}')

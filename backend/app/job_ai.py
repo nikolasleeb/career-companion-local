@@ -49,12 +49,16 @@ class Reference(StrictModel):
  profile_source_id:str
  profile_quote:str=Field(max_length=1000)
  posting_quote:str=Field(max_length=1000)
+class FitReference(StrictModel):
+ profile_source_id:str
+ posting_passage_id:str
+
 class Assessment(StrictModel):
  job_id:str
  fit:Literal['strong','possible','stretch','insufficient_information']
  summary:str=Field(max_length=700)
- evidence:list[Reference]=Field(max_length=6)
- gaps:list[str]=Field(max_length=6)
+ evidence:list[FitReference]=Field(max_length=6)
+ gap_ids:list[str]=Field(max_length=6)
  unknowns:list[str]=Field(max_length=6)
 class Assessments(StrictModel):
  assessments:list[Assessment]=Field(max_length=12)
@@ -176,20 +180,31 @@ async def full_posting(job):
   except ServiceError:pass
  return d
 
+def posting_passages(job):
+ # Preserve literal posting text, including case and punctuation.
+ text='\n'.join(str(job.get(k) or '') for k in ('title','company','description','location'))
+ chunks=re.split(r'\n+|(?<=[.!?])\s+(?=[A-Z0-9])',text)
+ passages=(part.strip() for chunk in chunks for part in re.findall(r'.{1,900}',chunk))
+ return [{'id':f'p{i}','text':part} for i,part in enumerate(dict.fromkeys(filter(None,passages)),1)]
+
 def validate(output,batch,p,scope):
  jobs={j['id']:j for j in batch};sources={s['id']:s for s in p['sources']};out={}
  for value in output['assessments']:
   if value['job_id'] not in jobs or value['job_id'] in out:raise ServiceError('AI returned an invalid or duplicate job reference. No batch was applied.')
-  job=jobs[value['job_id']]['data'];text='\n'.join(str(job.get(k) or '') for k in ('title','company','description','location'))
+  job=jobs[value['job_id']]['data']
+  passages={r['id']:r['text'] for r in posting_passages(job)}
   evidence=[]
-  for e in value['evidence']:
-   source=sources.get(e['profile_source_id'])
-   if not source or source.get('context_only') or not ai.valid_quote(e['profile_quote'],source['text']) or not ai.valid_quote(e['posting_quote'],text):raise ServiceError('AI cited unsupported Profile or posting evidence. No batch was applied.')
-   evidence.append({**e,'record_id':source['record_id']})
-  if any(not ai.valid_quote(gap,text) for gap in value['gaps']):raise ServiceError('AI gap evidence was not in the posting. No batch was applied.')
-  if not evidence and value['fit'] in ('strong','possible'):value={**value,'fit':'insufficient_information'}
+  for ref in value['evidence']:
+   source=sources.get(ref['profile_source_id'])
+   quote=passages.get(ref['posting_passage_id'])
+   if not source or source.get('context_only') or not quote:continue
+   pair={'profile_source_id':source['id'],'profile_quote':source['text'],'posting_quote':quote,'record_id':source['record_id']}
+   if pair not in evidence:evidence.append(pair)
+  gaps=[passages[id] for id in dict.fromkeys(value['gap_ids']) if id in passages]
+  if not evidence:
+   value={**value,'fit':'insufficient_information','summary':'There is insufficient verified Profile evidence to rate this posting.'}
   if job.get('description_incomplete') and scope=='detailed':value={**value,'fit':'insufficient_information'}
-  out[value['job_id']]={**value,'evidence':evidence,'scope':'limited' if scope=='detailed' and job.get('description_incomplete') else scope,'posting_source_url':job.get('posting_source_url') or job.get('url'),'assessed_at':db.now()}
+  out[value['job_id']]={**{k:v for k,v in value.items() if k!='gap_ids'},'evidence':evidence,'gaps':gaps,'scope':'limited' if scope=='detailed' and job.get('description_incomplete') else scope,'posting_source_url':job.get('posting_source_url') or job.get('url'),'assessed_at':db.now()}
  if set(out)!=set(jobs):raise ServiceError('AI omitted a job. No partial batch was applied.')
  return out
 
@@ -220,9 +235,10 @@ async def assess(user,id):
      else:r['data']={**r['data'],'description':r['data'].get('description','')[:2400]}
     if not checkpoint(user,id,d):d['state']='cancelled';checkpoint(user,id,d);return public_run(user,job_results.owned(user,id,'ai_job_match'))
     d['in_flight']={'scope':scope,'job_ids':[r['id'] for r in batch],'started_at':db.now()};checkpoint(user,id,d)
-    output,meta=await ai.structured(Assessments,{'task':'Assess every supplied job exactly once against reviewed professional evidence. Use a consistent rubric: relevant duties, supported skills, required education and documented experience. Strong requires substantial evidence for core duties and qualifications, not merely a matching degree or job title. Possible means some support with gaps/unknowns; stretch means explicit unsupported requirements; insufficient_information means too little evidence. Missing detail is unknown, not failure. Each gap must be a literal posting quote. Every evidence item must quote both a provided Profile source and the posting. Do not assess private eligibility or give hiring probabilities. For screened scope assess only these excerpts and do not claim full review; keep each summary under 50 words and provide at most two evidence pairs with quotes under 160 characters each.','scope':scope,'criteria':d['criteria_snapshot'],'profile_sources':__import__('app.profile_context',fromlist=['select']).select(p,' '.join(str(r['data'].get('title',''))+' '+str(r['data'].get('description','')) for r in batch))['sources'],'reviewed_work_style_summary_not_evidence':__import__('app.work_preferences',fromlist=['context']).context(user),'jobs':[{'id':r['id'],**{k:r['data'].get(k,'') for k in ('title','company','description','location','salary','description_incomplete')}} for r in batch]},d['mode'],instructions=INSTRUCTIONS)
+    selected=__import__('app.profile_context',fromlist=['select']).select(p,' '.join(str(r['data'].get('title',''))+' '+str(r['data'].get('description','')) for r in batch))
+    output,meta=await ai.structured(Assessments,{'task':'Assess every supplied job exactly once against reviewed professional evidence. Use a consistent rubric: relevant duties, supported skills, required education and documented experience. Strong requires substantial evidence for core duties and qualifications, not merely a matching degree or job title. Possible means some support with gaps/unknowns; stretch means explicit unsupported requirements; insufficient_information means too little evidence. Missing detail is unknown, not failure. Return gaps as passage IDs in gap_ids. Each evidence pair selects a Profile source ID and posting passage ID. The server copies the literal text. Do not assess private eligibility or give hiring probabilities. For screened scope assess only these excerpts and do not claim full review; keep each summary under 50 words and provide at most two evidence pairs.','scope':scope,'criteria':d['criteria_snapshot'],'profile_sources':selected['sources'],'reviewed_work_style_summary_not_evidence':__import__('app.work_preferences',fromlist=['context']).context(user),'jobs':[{'id':r['id'],**{k:r['data'].get(k,'') for k in ('title','company','location','salary','description_incomplete')},'posting_passages':posting_passages(r['data'])} for r in batch]},d['mode'],instructions=INSTRUCTIONS)
     personalization.check_request(user,request_version)
-    d['assessments'].update(validate(output,batch,p,scope));d['ai_calls'].append(meta);d['in_flight']=None
+    d['assessments'].update(validate(output,batch,selected,scope));d['ai_calls'].append(meta);d['in_flight']=None
     d['screened_count']=sum(v['scope'] in ('screened','detailed','limited') for v in d['assessments'].values());d['detailed_count']=sum(v['scope'] in ('detailed','limited') for v in d['assessments'].values());checkpoint(user,id,d)
   d['state']='completed';checkpoint(user,id,d)
  except (Exception,asyncio.CancelledError) as error:

@@ -87,8 +87,11 @@ def html_job(content, *, structured_only=False):
         addresses = [loc.get('address', {}) for loc in locations if isinstance(loc, dict)]
         addresses = [a for a in addresses if isinstance(a, dict)]
         countries = [a.get('addressCountry', '') for a in addresses]
-        countries = [c.get('name', '') if isinstance(c, dict) else str(c) for c in countries]
-        location = '; '.join(', '.join(str(a[k]) for k in ('addressLocality', 'addressRegion', 'addressCountry') if isinstance(a.get(k), str)) for a in addresses)
+        countries = [c.get('name') if isinstance(c, dict) else c for c in countries]
+        countries = [c.strip() if isinstance(c, str) else '' for c in countries]
+        location = '; '.join(part for a,country in zip(addresses,countries) if (part := ', '.join(
+            v.strip() for v in (a.get('addressLocality'),a.get('addressRegion'),country)
+            if isinstance(v,str) and v.strip())))
         eligible = job.get('applicantLocationRequirements') or []
         if isinstance(eligible, dict): eligible = [eligible]
         eligible_names = [str(a.get('name', '')) for a in eligible if isinstance(a, dict)]

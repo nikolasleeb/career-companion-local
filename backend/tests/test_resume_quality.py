@@ -29,7 +29,11 @@ def test_material_quality_issues_have_honest_verdicts_and_bounded_repair(scenari
  calls=provider(monkeypatch,scenario);original=ai.structured
  async def model(schema,payload,*a,**kw):
   result,meta=await original(schema,payload,*a,**kw)
-  if schema.__name__=='ResumeQualityReview':result=finding(kind,material)
+  if schema.__name__=='ResumeQualityReview':
+   result=finding(kind,material)
+   item=result['findings'][0]
+   item['evidence_scope']='posting' if kind=='evidence_gap' else 'comparison'
+   if kind!='evidence_gap':item['resume_quote']=payload['resume']['text'].splitlines()[0]
   return result,meta
  monkeypatch.setattr(ai,'structured',model)
  state=asyncio.run(guided.build(scenario[0],scenario[2]['id'],0,'economy'))
@@ -71,9 +75,17 @@ def test_review_failure_or_cancellation_never_claims_success_or_retries(scenario
  assert sum(name=='ResumeQualityReview' for name,p in calls)==1
 
 
-def test_fabricated_review_excerpt_is_rejected():
- bad=finding();bad['findings'][0]['resume_quote']='Invented excerpt'
- with pytest.raises(ServiceError,match='rendered resume'):quality.validate(bad,{'text':'Confirmed text.'},{'description':'Build digital solutions'})
+def test_invalid_material_comparison_is_withheld_without_losing_supported_finding():
+ bad=finding()
+ original=bad['findings'][0]
+ bad['findings']=[
+  {**original,'evidence_scope':'comparison','material':True,'resume_quote':'Invented excerpt','posting_quote':'Build digital solutions'},
+  {**original,'evidence_scope':'document','material':False,'resume_quote':'Confirmed text.','posting_quote':''},
+ ]
+ bad=quality.validate(bad,{'text':'Confirmed text.'},{'description':'Build digital solutions'})
+ assert [f['resume_quote'] for f in bad['findings']]==['Confirmed text.']
+ assert bad['omitted_findings']==bad['omitted_material']==1
+ assert quality.verdict(bad)=='needs_manual_changes'
 
 
 def test_quality_acknowledgment_is_exact_revision_scoped_and_legacy_compatible(scenario,monkeypatch):

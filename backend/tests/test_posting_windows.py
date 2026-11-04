@@ -61,3 +61,15 @@ def test_archive_removes_chart_cohort_but_keeps_historical_coach_context(client,
  assert client.get('/api/applications/dashboard?start=2026-01-01&end=2026-12-31').json()['cohort_count']==1
  item=next(s for s in assistant_context.sources(account['id']) if s['record_id']==app['id']);assert item['label'].startswith('Application · ') and 'historical record' not in item['text']
  assert db.get(account['id'],app['id'],'application')['data']['applied_date']==before['applied_date']
+
+
+@pytest.mark.parametrize('country',[None,'',{'name':None}])
+def test_employer_posting_missing_country_preserves_city_and_region(country):
+    import json
+    from app.network import html_job
+    posting={'@type':'JobPosting','title':'GIS analyst','jobLocation':{'address':{
+        'addressLocality':'Phoenix','addressRegion':'AZ','addressCountry':country,
+    }}}
+    html=('<script type="application/ld+json">'+json.dumps(posting)+'</script>').encode()
+    result=html_job(html)
+    assert result['country']=='' and result['location']=='Phoenix, AZ'

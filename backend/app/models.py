@@ -604,6 +604,7 @@ class DraftAudit(StrictModel):
     coverage: list[ResumeCoverageCheck] = Field(default_factory=list,max_length=24,description='Assess every final_coverage priority when supplied. Otherwise return an empty list. Coverage gaps are separate from factual issues; required supported priorities remain mandatory.')
 
 class ResumeQualityFinding(StrictModel):
+    evidence_scope: Literal['document','posting','comparison'] | None = None
     kind: Literal['writing','selection','presentation','evidence_gap']
     material: bool
     issue: str = Field(min_length=1,max_length=800)

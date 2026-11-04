@@ -246,3 +246,17 @@ def test_delete_uploaded_copy_preserves_imported_records_versions_and_original_o
     assert client.get('/api/resumes/'+version['id']+'/export/txt').status_code==200
     backup=client.get('/api/account/export').json()
     assert first['id'] not in backup['files'] and second['id'] in backup['files']
+
+
+def test_pdf_control_character_bullets_stay_under_one_project(monkeypatch):
+    from types import SimpleNamespace
+    from app import documents, resume_parser, resume_strategy
+    text='Alex Example\nProjects\nFlood Mapping\n\x7f Designed weekly maps\x7f Built a validation checklist'
+    reader=SimpleNamespace(is_encrypted=False,pages=[SimpleNamespace(extract_text=lambda:text)])
+    monkeypatch.setattr(documents,'PdfReader',lambda _:reader)
+    extracted=documents.extract('resume.pdf',b'fictional')['text']
+    entries=resume_parser.parse(extracted)['entries']
+    assert len(entries)==1 and entries[0]['data']['title']=='Flood Mapping'
+    assert entries[0]['data']['description'].splitlines()==['Designed weekly maps','Built a validation checklist']
+    assert resume_strategy.passages('Designed weekly maps\x7fBuilt a validation checklist','accomplishment')==[
+        'Designed weekly maps','Built a validation checklist']

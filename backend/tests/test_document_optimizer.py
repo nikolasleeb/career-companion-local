@@ -244,3 +244,63 @@ def test_real_canonical_profile_source_can_commit_inside_revision_transaction(en
  result=completed['result']
  assert result['current']['data']['quality_review']['status']=='ready'
  assert result['current']['data']['evidence'][1]['evidence'][0]['source_id'].startswith('profile:')
+
+
+def test_both_export_tailored_text_without_rewriting_profile(scenario,monkeypatch):
+ from base64 import b64decode
+ from pypdf import PdfReader
+ from app import resume_layout,resume_quality
+ from app.models import CoverStart
+ from resume_strategy_fixtures import composition
+ render,document=resume_layout.render,resume_quality.document
+ provider(monkeypatch,scenario)
+ monkeypatch.setattr(resume_layout,'render',render)
+ monkeypatch.setattr(resume_quality,'document',document)
+ model=ai.structured
+ user,job,session,records=scenario
+ original=db.get(user,records['project']['id'],'experience')
+ resume_line='Developed a Python prototype for retrieval.'
+ letter_line='For this graduate program, I bring experience developing a retrieval prototype in Python.'
+
+ async def controlled(schema,payload,*args,**kwargs):
+  if schema.__name__=='ResumeComposition':
+   def rewrite(value):
+    for entry in value['entries']:
+     for item in entry['items']:
+      if item['text']=='Built a Python retrieval prototype.':
+       item.update(text=resume_line,priority=100)
+   return composition(payload,rewrite),{'estimated_token_cost_usd':.001}
+  if schema.__name__=='CoverLetterOutput':
+   source=next(r for r in payload['saved_resume_sources'] if resume_line in r['text'])
+   return {'paragraphs':[{'text':letter_line,'evidence':[{'source_id':source['id'],'quote':source['text']}]}],
+     'summary':'Emphasized a verified Python project.'},{'estimated_token_cost_usd':.001}
+  if schema.__name__=='ResumeQualityReview' and 'letter_text' in payload:
+   text=payload['letter_text']
+   quote='retrieval prototype in Python'
+   assert quote in text
+   good={'kind':'writing','material':False,'evidence_scope':'document','issue':'The wording can be tightened.',
+     'resume_quote':quote,'posting_quote':'','action':'Keep concise.'}
+   bad={**good,'material':True,'evidence_scope':'comparison','resume_quote':'Invented letter wording',
+     'posting_quote':'Python, SQL and cloud technologies.'}
+   return {'strengths':[],'next_actions':[],'findings':[good,bad]},{'estimated_token_cost_usd':.001}
+  return await model(schema,payload,*args,**kwargs)
+ monkeypatch.setattr(ai,'structured',controlled)
+
+ resume_state=asyncio.run(guided.build(user,session['id'],0,'economy',skip_questions=True))
+ resume=guided.finalize(user,session['id'],FinalizeRevision(expected_version=resume_state['data']['version'],
+     revision_id=resume_state['current']['id'],reviewed=True))
+ saved_resume=db.get(user,resume['data']['last_saved_resume_id'],'resume')
+ def pdf_text(record):
+  return ' '.join(' '.join(page.extract_text().split()) for page in PdfReader(io.BytesIO(
+      b64decode(record['data']['artifacts']['pdf']))).pages)
+ assert resume_line in pdf_text(saved_resume)
+ state=letters.start(user,CoverStart(job_id=job['id'],resume_id=saved_resume['id']))
+ letter=asyncio.run(letters.generate(user,state['id'],CoverGenerate(expected_version=state['data']['version'],
+     content=CoverContent.model_validate(state['data']['content']),skip_questions=True)))
+ review=letter['current']['data']['quality_review']
+ assert review['omitted_findings']==1 and review['status']=='needs_manual_changes'
+ assert len(review['findings'])==1
+ saved=letters.finalize(user,state['id'],FinalizeRevision(expected_version=letter['data']['version'],
+     revision_id=letter['current']['id'],reviewed=True,quality_warning_acknowledged=True))
+ assert letter_line in pdf_text(db.get(user,saved['data']['last_saved_letter_id'],'cover_letter'))
+ assert db.get(user,records['project']['id'],'experience')==original
