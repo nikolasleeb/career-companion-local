@@ -105,3 +105,6 @@
 .job-search-result {display:flex;flex-direction:column;}
 .job-search-result>.card-actions {margin-top:auto;padding-top:12px;gap:8px;}
 .job-search-result>.card-actions>.button {margin:0;}
+
+.job-result-actions-row.card-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;max-width:33rem}
+.job-result-actions-row.card-actions>button{width:100%;min-height:44px;padding:8px;text-align:center;white-space:normal}

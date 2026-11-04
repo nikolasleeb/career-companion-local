@@ -1,3 +1,11 @@
+# Career Companion Local 1.0.14
+
+- Explore careers aligns the search and action controls.
+- Job result actions share a consistent size.
+- Home uses a wider desktop layout with the application chart and action plan side by side.
+
+## Previous release
+
 # Career Companion Local 1.0.13
 
 - Job postings with an unknown country preserve the city and region.
